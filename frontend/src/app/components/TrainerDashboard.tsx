@@ -6,21 +6,21 @@ import {
 } from 'recharts'
 import {
   LayoutDashboard, Users, ClipboardList, BarChart2, Dumbbell, Calendar,
-  Brain, TrendingUp, AlertTriangle, Clock, Activity, Target, Award,
-  ChevronRight, Search, Plus, ArrowUp, ArrowDown, Zap, Sparkles,
-  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, BarChart3, Settings,
+  TrendingUp, AlertTriangle, Clock, Activity, Target, Award,
+  ChevronRight, Search, Plus, ArrowUp, ArrowDown, Sparkles,
+  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, BarChart3, Settings, Menu,
 } from 'lucide-react'
 import { StudentProfile } from './StudentProfile'
-import logotipo from '../../assets/images/Logotipo.png'
+import coachImg from '../../assets/illustrations/dashboard/coach.png'
 
 // ── Colors ──
 
-const RED = '#E63946'
-const BLUE = '#007AFF'
-const YELLOW = '#F5A623'
-const BLUE_GRAD = 'linear-gradient(135deg, #007AFF, #00C7FF, #0055FF)'
-const YELLOW_GRAD = 'linear-gradient(135deg, #F5A623, #FFD60A, #E89600)'
-const RED_GRAD = 'linear-gradient(135deg, #E63946, #FF6B8A, #CC0033)'
+const RED = '#F43843'
+const BLUE = '#1270B7'
+const YELLOW = '#F1C827'
+const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
+const YELLOW_GRAD = 'linear-gradient(135deg, #F1C827, #FFD60A, #D4A800)'
+const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 
 // ── Data ──
 
@@ -191,6 +191,7 @@ interface Assessment {
 
 export function TrainerDashboard() {
   const [section, setSection] = useState<Section>('dashboard')
+  const [expanded, setExpanded] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<typeof students[0] | null>(null)
   const [search, setSearch] = useState('')
   const [riskFilter, setRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
@@ -266,75 +267,196 @@ export function TrainerDashboard() {
 
   return (
     <div className="flex size-full overflow-hidden mesh-bg relative">
-      <div className="floating-sphere" style={{ width: 450, height: 450, background: 'radial-gradient(circle, rgba(0,122,255,0.15), transparent)', top: '-120px', right: '-60px', animationDelay: '0s' }} />
-      <div className="floating-sphere" style={{ width: 350, height: 350, background: 'radial-gradient(circle, rgba(230,57,70,0.12), transparent)', bottom: '10%', left: '-80px', animationDelay: '-5s' }} />
-      <div className="floating-sphere" style={{ width: 250, height: 250, background: 'radial-gradient(circle, rgba(245,166,35,0.1), transparent)', top: '35%', right: '15%', animationDelay: '-10s' }} />
+      <div className="floating-sphere" style={{ width: 600, height: 600, background: 'radial-gradient(circle, rgba(18,112,183,0.25), transparent 60%)', top: '-180px', right: '-120px' }} />
+      <div className="floating-sphere" style={{ width: 450, height: 450, background: 'radial-gradient(circle, rgba(244,56,67,0.2), transparent 60%)', bottom: '5%', left: '-120px' }} />
+      <div className="floating-sphere" style={{ width: 350, height: 350, background: 'radial-gradient(circle, rgba(241,200,39,0.18), transparent 60%)', top: '25%', right: '15%' }} />
+
+      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+        <defs>
+          <filter id="goo">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -8" result="goo" />
+          </filter>
+        </defs>
+      </svg>
 
       <aside
-        className="w-[68px] flex flex-col items-center pt-5 pb-4 gap-1 flex-shrink-0 z-50 relative overflow-hidden"
+        className={`${expanded ? 'w-52' : 'w-[68px]'} flex flex-col items-center pt-8 pb-4 gap-1 flex-shrink-0 z-50 relative`}
         style={{
           background: 'linear-gradient(180deg, #0A1A3A 0%, #2A0A10 40%, #101014 65%, #2A1E08 100%)',
           borderRight: '1px solid rgba(255,255,255,0.04)',
+          overflow: 'hidden',
+          transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 mb-6 hover:bg-white/5 transition-colors"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
+          title={expanded ? 'Colapsar' : 'Expandir'}
+        >
+          <Menu size={20} />
+        </button>
+
         <div
-          className="flex items-center justify-center mb-3 overflow-hidden"
+          className="flex flex-col w-full relative"
           style={{
-            width: 36, height: 36, borderRadius: 12,
-            background: 'linear-gradient(135deg, rgba(0,122,255,0.2), rgba(230,57,70,0.1), rgba(245,166,35,0.08))',
-            border: '1px solid rgba(255,255,255,0.04)',
+            alignItems: 'center',
+            paddingLeft: expanded ? 12 : 0,
+            paddingRight: expanded ? 12 : 0,
+            transition: 'padding 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <img src={logotipo} alt="UNIFIT" style={{ width: 26, height: 26, objectFit: 'contain' }} />
+          {/* Gooey layer */}
+          <div className="absolute inset-0 flex flex-col items-center pointer-events-none" style={{ filter: 'url(#goo)' }}>
+            {sidebarItems.filter(i => i.id !== 'configuration').flatMap((item, i, arr) => {
+              const groups = [[arr[0]], [arr[1], arr[3]], [arr[2], arr[4]], [arr[5], arr[6]]]
+              const groupIdx = groups.findIndex(g => g.includes(item))
+              const isFirstInGroup = groups[groupIdx]?.[0] === item
+              return [
+                ...(groupIdx > 0 && isFirstInGroup ? [{ type: 'divider' as const, h: 20 }] : []),
+                { type: 'indicator' as const, id: item.id, isActive: section === item.id },
+              ]
+            }).map((entry, idx) =>
+              entry.type === 'divider' ? (
+                <div key={`div-${idx}`} />
+              ) : (
+                <div key={entry.id} className="overflow-hidden flex-shrink-0" style={{
+                  height: 44,
+                  width: expanded ? 184 : 68,
+                  borderRadius: expanded ? 10 : 0,
+                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease',
+                }}>
+                  {entry.isActive && (
+                    <motion.div
+                      layoutId="goo-indicator"
+                      className="size-full"
+                      style={{
+                      background: 'linear-gradient(135deg, #e42332, #2b2c8a, #efbb29)',
+                      boxShadow: 'inset 0 0 60px rgba(228,35,50,0.35), inset 0 0 120px rgba(43,44,138,0.3), 0 0 30px rgba(228,35,50,0.12), 0 0 60px rgba(43,44,138,0.06)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 22, mass: 0.6 }}
+                    />
+                  )}
+                </div>
+              )
+            )}
+          </div>
+          {/* Buttons layer */}
+          {sidebarItems.filter(i => i.id !== 'configuration').flatMap((item, i, arr) => {
+            const groups = [[arr[0]], [arr[1], arr[3]], [arr[2], arr[4]], [arr[5], arr[6]]]
+            const groupIdx = groups.findIndex(g => g.includes(item))
+            const isFirstInGroup = groups[groupIdx]?.[0] === item
+            return [
+              ...(groupIdx > 0 && isFirstInGroup ? [{ type: 'divider' as const }] : []),
+              { type: 'item' as const, item },
+            ]
+          }).map((entry, idx) =>
+            entry.type === 'divider' ? (
+              <div key={`div-${idx}`} className="h-px rounded-full my-0.5 flex-shrink-0" style={{
+                width: expanded ? 160 : 20,
+                background: 'linear-gradient(90deg, rgba(18,112,183,0.12), rgba(244,56,67,0.08), rgba(241,200,39,0.06), transparent)',
+                transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
+              }} />
+            ) : (
+              <button
+                key={entry.item.id}
+                onClick={() => setSection(entry.item.id)}
+                title={entry.item.label}
+                className="relative flex items-center overflow-hidden flex-shrink-0"
+                style={{
+                  height: 44,
+                  width: expanded ? 184 : 68,
+                  paddingLeft: expanded ? 0 : 12,
+                  borderRadius: expanded ? 10 : 0,
+                  background: 'transparent',
+                  color: section === entry.item.id ? '#fff' : 'rgba(255,255,255,0.2)',
+                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), padding-left 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease, color 0.3s ease',
+                }}
+              >
+                <div className="flex items-center justify-center w-11 h-11 flex-shrink-0">
+                  <entry.item.icon size={19} />
+                </div>
+                <span style={{
+                  opacity: expanded ? 1 : 0,
+                  transition: 'opacity 0.3s ease 0.05s',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {entry.item.label}
+                </span>
+              </button>
+            )
+          )}
         </div>
 
-        <div className="w-8 h-px rounded-full mb-2" style={{
-          background: 'linear-gradient(90deg, rgba(0,122,255,0.3), rgba(230,57,70,0.2), rgba(245,166,35,0.12), transparent)',
-        }} />
-
-        {sidebarItems.filter(i => i.id !== 'configuration').map(item => (
-          <motion.button
-            key={item.id}
-            onClick={() => setSection(item.id)}
-            title={item.label}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            className="relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200"
+        <div className="w-full mt-auto pt-3 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+          <div
+            className="flex flex-col relative"
             style={{
-              background: section === item.id
-                ? 'linear-gradient(135deg, rgba(0,122,255,0.75), rgba(230,57,70,0.5), rgba(245,166,35,0.35))'
-                : 'transparent',
-              color: section === item.id ? '#fff' : 'rgba(255,255,255,0.2)',
-              boxShadow: section === item.id
-                ? 'inset 0 0 50px rgba(0,122,255,0.2), inset 0 0 100px rgba(230,57,70,0.1), 0 0 20px rgba(0,122,255,0.08)'
-                : 'none',
+              alignItems: 'center',
+              paddingLeft: expanded ? 12 : 0,
+              paddingRight: expanded ? 12 : 0,
+              transition: 'padding 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            <item.icon size={19} />
-          </motion.button>
-        ))}
-        {sidebarItems.filter(i => i.id === 'configuration').map(item => (
-          <motion.button
-            key={item.id}
-            onClick={() => setSection(item.id)}
-            title={item.label}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            className="relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 mt-auto pt-4"
-            style={{
-              borderTop: '1px solid rgba(255,255,255,0.03)',
-              background: section === item.id
-                ? 'linear-gradient(135deg, rgba(0,122,255,0.75), rgba(230,57,70,0.5), rgba(245,166,35,0.35))'
-                : 'transparent',
-              color: section === item.id ? '#fff' : 'rgba(255,255,255,0.2)',
-              boxShadow: section === item.id
-                ? 'inset 0 0 40px rgba(0,122,255,0.12), inset 0 0 80px rgba(230,57,70,0.06)'
-                : 'none',
-            }}
-          >
-            <item.icon size={19} />
-          </motion.button>
-        ))}
+            {/* Gooey layer */}
+            <div className="absolute inset-0 flex flex-col items-center pointer-events-none" style={{ filter: 'url(#goo)' }}>
+              {sidebarItems.filter(i => i.id === 'configuration').map(item => (
+                <div key={item.id} className="overflow-hidden flex-shrink-0" style={{
+                  height: 44,
+                  width: expanded ? 184 : 68,
+                  borderRadius: expanded ? 10 : 0,
+                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease',
+                }}>
+                  {section === item.id && (
+                    <motion.div
+                      layoutId="goo-indicator"
+                      className="size-full"
+                      style={{
+                      background: 'linear-gradient(135deg, #e42332, #2b2c8a, #efbb29)',
+                      boxShadow: 'inset 0 0 60px rgba(228,35,50,0.35), inset 0 0 120px rgba(43,44,138,0.3), 0 0 30px rgba(228,35,50,0.12), 0 0 60px rgba(43,44,138,0.06)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 22, mass: 0.6 }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Buttons layer */}
+            {sidebarItems.filter(i => i.id === 'configuration').map(item => (
+              <button
+                key={item.id}
+                onClick={() => setSection(item.id)}
+                title={item.label}
+                className="relative flex items-center overflow-hidden flex-shrink-0"
+                style={{
+                  height: 44,
+                  width: expanded ? 184 : 68,
+                  paddingLeft: expanded ? 0 : 12,
+                  borderRadius: expanded ? 10 : 0,
+                  background: 'transparent',
+                  color: section === item.id ? '#fff' : 'rgba(255,255,255,0.2)',
+                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), padding-left 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease, color 0.3s ease',
+                }}
+              >
+                <div className="flex items-center justify-center w-11 h-11 flex-shrink-0">
+                  <item.icon size={19} />
+                </div>
+                <span style={{
+                  opacity: expanded ? 1 : 0,
+                  transition: 'opacity 0.3s ease 0.05s',
+                  fontSize: 12,
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap',
+                }}>
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
       </aside>
 
       <div className="flex-1 overflow-y-auto relative z-10">
@@ -369,7 +491,7 @@ export function TrainerDashboard() {
           >
             <div
               className="w-7 h-7 rounded-xl flex items-center justify-center text-white text-[10px] font-bold"
-              style={{ background: 'linear-gradient(135deg, #E63946, #8B001A)' }}
+              style={{ background: 'linear-gradient(135deg, #F43843, #8B001A)' }}
             >
               SM
             </div>
@@ -413,13 +535,14 @@ export function TrainerDashboard() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="relative rounded-3xl overflow-hidden gradient-border"
+          className="relative rounded-3xl gradient-border"
           style={{
             background: 'linear-gradient(145deg, #FFFFFF 0%, #F0F7FF 25%, #EBF5FF 50%, #FFF8E8 100%)',
             boxShadow: '0 20px 60px rgba(0,122,255,0.06), 0 8px 20px rgba(0,0,0,0.02)',
           }}
         >
-          {/* Animated mesh overlay */}
+          {/* Clipped container for mesh (keeps rounded corners clean) */}
+          <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
           <div
             className="absolute inset-0 opacity-60"
             style={{
@@ -432,6 +555,7 @@ export function TrainerDashboard() {
               animation: 'mesh-shift 15s ease-in-out infinite',
             }}
           />
+          </div>
 
           <div className="relative z-10 p-8">
             {/* Top bar */}
@@ -447,18 +571,8 @@ export function TrainerDashboard() {
                   </h1>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(0,122,255,0.06)', border: '1px solid rgba(0,122,255,0.1)' }}>
-                  <div className="dot-live" style={{ width: 6, height: 6 }} />
-                  <span className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.45)' }}>IA Activa</span>
-                </div>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.12)' }}>
-                  <Zap size={13} style={{ color: YELLOW }} />
-                  <span className="text-xs font-bold" style={{ color: YELLOW }}>82/100</span>
-                </div>
-              </div>
             </div>
-
+ 
             {/* AI Insights Grid */}
             <div className="grid grid-cols-3 gap-4">
               <motion.div
@@ -499,46 +613,33 @@ export function TrainerDashboard() {
                   ))}
                 </div>
               </motion.div>
-
-              {/* Predictive Card — with gradient */}
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25 }}
-                className="rounded-2xl p-6 flex flex-col justify-between gradient-border"
-                style={{
-                  background: 'linear-gradient(145deg, rgba(0,122,255,0.04), rgba(255,255,255,0.4))',
-                }}
-              >
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Brain size={15} style={{ color: BLUE }} />
-                    <span className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: 'rgba(0,0,0,0.3)' }}>Predicción IA</span>
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <p className="text-4xl font-black" style={{ color: '#1A1A1E', letterSpacing: '-0.04em' }}>87</p>
-                    <p className="text-lg font-bold" style={{ color: BLUE }}>%</p>
-                  </div>
-                  <p className="text-sm font-medium mt-1" style={{ color: 'rgba(0,0,0,0.45)' }}>Adherencia proyectada</p>
-                </div>
-                <div className="mt-5">
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,122,255,0.1)' }}>
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: '87%' }}
-                      transition={{ duration: 1.5, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                      className="h-full rounded-full"
-                      style={{ background: BLUE_GRAD, backgroundSize: '200% 100%', animation: 'shimmer 3s linear infinite' }}
-                    />
-                  </div>
-                  <div className="flex justify-between mt-2">
-                    <span className="text-[11px]" style={{ color: 'rgba(0,0,0,0.3)' }}>Progreso: +2.3%</span>
-                    <span className="text-[11px] font-bold" style={{ color: '#30D158' }}>▲ Estable</span>
-                  </div>
-                </div>
-              </motion.div>
             </div>
+
           </div>
+
+          {/* Coach image — pops out above the card */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            style={{
+              position: 'absolute',
+              right: 24,
+              top: 10,
+              width: 440,
+              height: 'auto',
+              zIndex: 20,
+            }}
+          >
+            <img
+              src={coachImg}
+              alt="Coach Dashboard"
+              className="w-full h-auto"
+            />
+            <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none z-10" style={{
+              background: 'linear-gradient(to top, transparent 0%, transparent 100%)',
+            }} />
+          </motion.div>
         </motion.div>
 
         {/* KPI Cards — with accent tops */}
@@ -668,7 +769,6 @@ export function TrainerDashboard() {
             </div>
           </motion.div>
         </div>
-
       </div>
     )
   }
@@ -1601,7 +1701,7 @@ export function TrainerDashboard() {
         <div className="rounded-2xl p-6 premium-card">
           <h3 className="text-[#1A1A1E] font-bold mb-5" style={{ fontSize: '0.95rem' }}>Vista Previa</h3>
           <div className="flex items-center gap-5 p-5 rounded-xl" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)' }}>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #E63946, #CC0033)' }}>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #F43843, #CC0033)' }}>
               <Dumbbell size={28} color="white" />
             </div>
             <div className="flex-1 min-w-0">
