@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, Plus, ClipboardList, Menu, ChevronRight } from 'lucide-react'
 import studentsImg from '../../assets/illustrations/characters/students.png'
+import NewStudentModal from './NewStudentModal'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -39,8 +40,9 @@ interface Props {
 export default function StudentsModule({ students, search, riskFilter, onSelectStudent }: Props) {
   const [showFilters, setShowFilters] = useState(false)
   const [filterCategory, setFilterCategory] = useState<'eps' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
-  const [filterValue, setFilterValue] = useState<string>('all')
+  const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
   const [filterSearch, setFilterSearch] = useState('')
+  const [showNewStudent, setShowNewStudent] = useState(false)
 
   const filterLabels: Record<string, string> = {
     eps: 'EPS', gender: 'Género', institution: 'Institución',
@@ -60,16 +62,18 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
     students.filter(s => {
       const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.faculty.toLowerCase().includes(search.toLowerCase())
       const matchRisk = riskFilter === 'all' || s.risk === riskFilter
-      const matchCategory = filterValue === 'all' || (s as any)[filterCategory] === filterValue
+      const entries = Object.entries(filterSelections).filter(([, v]) => v.size > 0)
+      const matchCategory = entries.length === 0 || entries.every(([cat, vals]) => vals.has((s as any)[cat]))
       return matchSearch && matchRisk && matchCategory
     }),
-    [students, search, riskFilter, filterValue, filterCategory]
+    [students, search, riskFilter, filterSelections]
   )
 
   const tableHeaders = ['Nombre', 'Documento', 'Carrera', 'Último Ingreso', 'Valoraciones', 'Estado']
 
   return (
-    <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
+    <>
+      <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
 
       {/* Banner card */}
       <motion.div className="relative rounded-3xl mb-6" style={{ background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)', boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
@@ -88,7 +92,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
           <div className="flex items-center gap-6 ml-56">
             <div className="w-1 h-12 rounded-full" style={{ background: RED_GRAD }} />
             <div>
-              <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Estudiantes</h1>
+              <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>UniFitters</h1>
               <p className="text-xs text-black/40">Gestión avanzada y seguimiento de comunidad.</p>
             </div>
           </div>
@@ -108,6 +112,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
               initial="initial"
               whileHover="hover"
               whileTap={{ scale: 0.9, boxShadow: '0 0 40px rgba(244,56,67,0.6), 0 0 80px rgba(18,112,183,0.4), 0 0 120px rgba(241,200,39,0.2)', transition: { duration: 0.15 } }}
+              onClick={() => setShowNewStudent(true)}
               className="flex items-center rounded-2xl overflow-hidden relative text-white"
               style={{ 
                 height: 44, 
@@ -173,25 +178,31 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
               backdropFilter: 'blur(12px)',
               border: '1px solid rgba(255,255,255,0.5)',
             }}>
-              {Object.entries(filterLabels).map(([key, label]) => (
-                <button key={key}
-                  onClick={() => { setFilterCategory(key as any); setFilterValue('all'); setFilterSearch('') }}
-                  className="relative px-4 py-1.5 rounded-xl text-[11px] font-bold transition-colors flex-1 text-center hover:bg-white/40"
-                  style={{
-                    color: filterCategory === key ? '#1A1A1E' : 'rgba(0,0,0,0.35)',
-                  }}
-                >
-                  {filterCategory === key && (
-                    <motion.div
-                      layoutId="activeFilterBg"
-                      className="absolute inset-0 rounded-xl"
-                      style={{ background: '#FFFFFF', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10">{label}</span>
-                </button>
-              ))}
+              {Object.entries(filterLabels).map(([key, label]) => {
+                const hasSelection = (filterSelections[key]?.size ?? 0) > 0
+                return (
+                  <button key={key}
+                    onClick={() => { setFilterCategory(key as any); setFilterSearch('') }}
+                    className="relative px-4 py-1.5 rounded-xl text-[11px] font-bold transition-colors flex-1 text-center hover:bg-white/40"
+                    style={{
+                      color: filterCategory === key ? '#1A1A1E' : hasSelection ? '#1270B7' : 'rgba(0,0,0,0.35)',
+                    }}
+                  >
+                    {filterCategory === key && (
+                      <motion.div
+                        layoutId="activeFilterBg"
+                        className="absolute inset-0 rounded-xl"
+                        style={{ background: '#FFFFFF', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center justify-center gap-1.5">
+                      {hasSelection && <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#1270B7' }} />}
+                      {label}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </motion.div>
         )}
@@ -225,35 +236,115 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
               </div>
 
               <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-                <motion.button
-                  onClick={() => { setFilterValue('all'); setFilterSearch('') }}
-                  whileHover={{ background: 'rgba(18,112,183,0.06)' }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-colors"
-                  style={{
-                    background: filterValue === 'all' ? 'rgba(18,112,183,0.1)' : 'transparent',
-                    color: filterValue === 'all' ? '#1270B7' : 'rgba(0,0,0,0.45)',
-                  }}
-                >
-                  Todos
-                </motion.button>
-                {filterOptions[filterCategory]
-                  ?.filter(opt => opt.toLowerCase().includes(filterSearch.toLowerCase()))
-                  .map(opt => (
-                    <motion.button key={opt}
-                      onClick={() => { setFilterValue(opt); setFilterSearch('') }}
-                      whileHover={{ background: 'rgba(18,112,183,0.06)' }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-colors"
-                      style={{
-                        background: filterValue === opt ? 'rgba(18,112,183,0.1)' : 'transparent',
-                        color: filterValue === opt ? '#1270B7' : 'rgba(0,0,0,0.45)',
-                      }}
-                    >
-                      {opt}
-                    </motion.button>
-                  ))}
+                {(() => {
+                  const currentSelected = filterSelections[filterCategory] ?? new Set()
+                  return (
+                    <>
+                      <motion.button layout
+                        onClick={() => {
+                          setFilterSelections(prev => {
+                            const next = { ...prev }
+                            delete next[filterCategory]
+                            return next
+                          })
+                          setFilterSearch('')
+                        }}
+                        whileHover={{ background: 'rgba(18,112,183,0.06)' }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-2 transition-colors duration-300"
+                        style={{
+                          background: currentSelected.size === 0 ? 'rgba(18,112,183,0.1)' : 'transparent',
+                          color: currentSelected.size === 0 ? '#1270B7' : 'rgba(0,0,0,0.45)',
+                        }}
+                        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        <motion.div className="w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0"
+                          animate={{
+                            borderColor: currentSelected.size === 0 ? '#1270B7' : 'rgba(0,0,0,0.15)',
+                            background: currentSelected.size === 0 ? '#1270B7' : 'transparent',
+                          }}
+                          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                          <motion.span
+                            animate={{
+                              scale: currentSelected.size === 0 ? 1 : 0,
+                              opacity: currentSelected.size === 0 ? 1 : 0,
+                              filter: currentSelected.size === 0 ? 'blur(0px)' : 'blur(6px)',
+                            }}
+                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                            className="text-white text-[9px] font-bold"
+                          >✓</motion.span>
+                        </motion.div>
+                        Todos
+                      </motion.button>
+                      {filterOptions[filterCategory]
+                        ?.filter(opt => opt.toLowerCase().includes(filterSearch.toLowerCase()))
+                        .map(opt => (
+                          <motion.button key={opt} layout
+                            onClick={() => {
+                              setFilterSelections(prev => {
+                                const catSet = new Set(prev[filterCategory] ?? [])
+                                if (catSet.has(opt)) catSet.delete(opt)
+                                else catSet.add(opt)
+                                if (catSet.size === 0) {
+                                  const next = { ...prev }
+                                  delete next[filterCategory]
+                                  return next
+                                }
+                                return { ...prev, [filterCategory]: catSet }
+                              })
+                              setFilterSearch('')
+                            }}
+                            whileHover={{ background: 'rgba(18,112,183,0.06)' }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-2 transition-colors duration-300"
+                            style={{
+                              background: currentSelected.has(opt) ? 'rgba(18,112,183,0.1)' : 'transparent',
+                              color: currentSelected.has(opt) ? '#1270B7' : 'rgba(0,0,0,0.45)',
+                            }}
+                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                          >
+                            <motion.div className="w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0"
+                              animate={{
+                                borderColor: currentSelected.has(opt) ? '#1270B7' : 'rgba(0,0,0,0.15)',
+                                background: currentSelected.has(opt) ? '#1270B7' : 'transparent',
+                              }}
+                              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                            >
+                              <motion.span
+                                animate={{
+                                  scale: currentSelected.has(opt) ? 1 : 0,
+                                  opacity: currentSelected.has(opt) ? 1 : 0,
+                                  filter: currentSelected.has(opt) ? 'blur(0px)' : 'blur(6px)',
+                                }}
+                                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                className="text-white text-[9px] font-bold"
+                              >✓</motion.span>
+                            </motion.div>
+                            {opt}
+                          </motion.button>
+                        ))}
+                    </>
+                  )
+                })()}
               </div>
+              <AnimatePresence>
+                {Object.values(filterSelections).some(s => s.size > 0) && (
+                  <motion.button
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    onClick={() => setFilterSelections({})}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="w-full mt-2 py-2 rounded-xl text-[11px] font-bold text-center"
+                    style={{ background: 'rgba(244,56,67,0.08)', color: '#F43843' }}
+                  >
+                    Limpiar filtros
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
@@ -290,6 +381,9 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
             ))}
           </div>
         </motion.div>
-    </div>
+      </div>
+      <NewStudentModal open={showNewStudent} onClose={() => setShowNewStudent(false)} />
+    </>
   )
 }
+
