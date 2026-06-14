@@ -796,57 +796,146 @@ export function TrainerDashboard() {
   // ── STUDENTS ──
 
   function renderStudents() {
+    const tableHeaders = ['Nombre', 'Documento', 'Carrera', 'Último Ingreso', 'Valoraciones']
+
     return (
-      <div className="p-8 space-y-6 max-w-[1440px] mx-auto">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-[#1A1A1E]">Estudiantes</h2>
-            <p className="text-sm mt-1 font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{students.length} registrados · <span style={{ color: RED }}>{students.filter(s => s.risk === 'high').length} en riesgo alto</span></p>
+      <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
+        {/* Hero — Cinematic Banner (Refined with Fade and New Button) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="relative rounded-3xl mb-8"
+          style={{
+            background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)',
+            boxShadow: '0 10px 30px rgba(0,122,255,0.02)',
+            border: '1px solid rgba(0,0,0,0.03)',
+          }}
+        >
+          {/* Clipped container for mesh with gradient fade */}
+          <div className="absolute inset-0 pointer-events-none rounded-3xl overflow-hidden" style={{
+            maskImage: 'linear-gradient(to right, black 60%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, black 60%, transparent 100%)'
+          }}>
+            <div
+              className="absolute inset-0 opacity-30"
+              style={{
+                background: `
+                  radial-gradient(ellipse at 80% 10%, rgba(0,122,255,0.03) 0%, transparent 40%),
+                  radial-gradient(ellipse at 10% 80%, rgba(245,166,35,0.02) 0%, transparent 40%),
+                  radial-gradient(ellipse at 50% 50%, rgba(230,57,70,0.02) 0%, transparent 50%)
+                `,
+                backgroundSize: '200% 200%',
+                animation: 'mesh-shift 15s ease-in-out infinite',
+              }}
+            />
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2.5 px-4 py-2 rounded-xl" style={{
-              background: 'rgba(255,255,255,0.5)',
-              border: '1px solid rgba(0,0,0,0.05)',
-              backdropFilter: 'blur(12px)',
-            }}>
-              <Search size={14} style={{ color: 'rgba(0,0,0,0.2)' }} />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar estudiante..." className="bg-transparent text-[#1A1A1E] text-sm outline-none w-48 placeholder:text-[rgba(0,0,0,0.2)]" />
+
+          <div className="relative z-10 p-8 flex items-center justify-between">
+            <div className="flex items-center gap-6 ml-44">
+              <div className="w-1 h-12 rounded-full" style={{ background: RED_GRAD }} />
+              <div>
+                <h1 style={{ color: '#1A1A1E', fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
+                  Estudiantes
+                </h1>
+                <p className="text-sm font-medium mt-0.5 max-w-sm" style={{ color: 'rgba(0,0,0,0.4)', lineHeight: 1.4 }}>
+                  Gestiona y haz seguimiento detallado al progreso físico y adherencia de tu comunidad.
+                </p>
+              </div>
             </div>
-            <div className="flex gap-1 p-1 rounded-xl" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.04)' }}>
-              {(['all', 'high', 'medium', 'low'] as const).map(f => (
-                <motion.button key={f} onClick={() => setRiskFilter(f)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-                  style={{ background: riskFilter === f ? 'rgba(0,122,255,0.08)' : 'transparent', color: riskFilter === f ? BLUE : 'rgba(0,0,0,0.3)' }}
-                >
-                  {f === 'all' ? 'Todos' : f === 'high' ? 'Alto Riesgo' : f === 'medium' ? 'Alerta' : 'Activos'}
-                </motion.button>
-              ))}
-            </div>
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold premium-btn">
-              <Plus size={15} /><span>Nuevo Estudiante</span>
+            
+            {/* Expandable Plus Button */}
+            <motion.button 
+              initial="initial"
+              whileHover="hover"
+              className="flex items-center rounded-2xl premium-btn overflow-hidden relative"
+              style={{ height: 48, padding: '0 14px' }}
+            >
+              <div className="flex items-center justify-center flex-shrink-0">
+                <Plus size={20} strokeWidth={3} />
+              </div>
+              <motion.div
+                variants={{
+                  hover: { width: 'auto', opacity: 1, marginLeft: 10 },
+                  initial: { width: 0, opacity: 0, marginLeft: 0 }
+                }}
+                className="overflow-hidden whitespace-nowrap"
+              >
+                <span className="text-sm font-bold">Nuevo Estudiante</span>
+              </motion.div>
             </motion.button>
           </div>
-        </div>
-        <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-4 px-5 mb-2">
-          {['Estudiante', '', 'Sesiones', 'Adherencia', 'Última visita', 'Estado'].map((h, i) => (
-            <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.2)' }}>{h}</p>
+
+          {/* Coach image — Left-aligned, Flipped, Elevated, Popping Out */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            style={{
+              position: 'absolute',
+              left: 20,
+              top: -65,
+              width: 190,
+              height: 'auto',
+              zIndex: 20,
+              transform: 'scaleX(-1)', // Flipped horizontally
+            }}
+          >
+            <img
+              src={coachImg}
+              alt="Coach Students"
+              className="w-full h-auto drop-shadow-2xl"
+            />
+          </motion.div>
+        </motion.div>
+
+        {/* Updated Table Column Headers */}
+        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
+          {tableHeaders.map((h, i) => (
+            <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
           ))}
+          <div className="w-5" /> {/* Spacer for chevron */}
         </div>
+
+        {/* Updated Student List */}
         <div className="space-y-2">
           {filtered.map((s, i) => (
-            <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => setSelectedStudent(s)} whileHover={{ y: -3 }} className="flex items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 14 }}>{s.avatar}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.3)' }}>{s.faculty} · {s.goal}</p>
+            <motion.div 
+              key={s.id} 
+              initial={{ opacity: 0, y: 8 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ delay: i * 0.03 }} 
+              onClick={() => setSelectedStudent(s)} 
+              whileHover={{ y: -3, scale: 1.002 }} 
+              className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer"
+            >
+              {/* Nombre */}
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
+                <div className="min-w-0">
+                  <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
+                  <RiskBadge risk={s.risk} />
+                </div>
               </div>
-              <div className="text-center w-16"><p className="text-[#1A1A1E] text-sm font-extrabold">{s.sessions}</p><p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.25)' }}>sesiones</p></div>
-              <div className="w-28">
-                <div className="flex justify-between mb-1"><span className="text-[11px]" style={{ color: 'rgba(0,0,0,0.3)' }}>adherencia</span><span className="text-[11px] font-extrabold" style={{ color: '#1A1A1E' }}>{s.adherence}%</span></div>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.04)' }}><div className="h-full rounded-full" style={{ width: `${s.adherence}%`, background: s.adherence >= 80 ? '#30D158' : s.adherence >= 60 ? '#FF9500' : '#FF3B30' }} /></div>
+
+              {/* Documento (Placeholder using ID) */}
+              <p className="text-xs font-mono font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>1098{s.id}76{s.id}</p>
+
+              {/* Carrera */}
+              <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.faculty}</p>
+
+              {/* Último Ingreso */}
+              <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{s.lastVisit}</p>
+
+              {/* Valoraciones */}
+              <div className="flex items-center gap-1.5">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.06)' }}>
+                  <ClipboardList size={14} style={{ color: BLUE }} />
+                </div>
+                <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal opacity-40">registros</span></p>
               </div>
-              <p className="text-xs w-28 text-right" style={{ color: 'rgba(0,0,0,0.3)' }}>{s.lastVisit}</p>
-              <div className="flex items-center gap-2"><RiskBadge risk={s.risk} /><ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} /></div>
+
+              <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
             </motion.div>
           ))}
         </div>
