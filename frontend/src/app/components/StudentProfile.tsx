@@ -7,7 +7,7 @@ import {
 } from 'recharts'
 import {
   TrendingUp, AlertTriangle, Activity,
-  Calendar, FileText, Dumbbell, ChevronLeft,
+  Calendar, FileText, Dumbbell,
   Zap, Flame, Shield, BarChart2,
 } from 'lucide-react'
 import { TrophyView } from './TrophyModel'
@@ -127,9 +127,9 @@ export const TABS = [
   { id: 'documents', label: 'Documentos', icon: FileText },
 ] as const
 
-export function StudentProfile({ student, onBack, tab: externalTab, onTabChange }: { student: Student; onBack?: () => void; tab?: string; onTabChange?: (t: string) => void }) {
+export function StudentProfile({ student, tab = 'overview', onTabChange }: { student: Student; tab?: string; onTabChange?: (t: string) => void }) {
   const [localTab, setLocalTab] = useState('overview')
-  const tab = externalTab ?? localTab
+  const currentTab = tab ?? localTab
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
@@ -142,47 +142,10 @@ export function StudentProfile({ student, onBack, tab: externalTab, onTabChange 
         top: '-60px', right: '-40px',
       }} />
 
-      {/* Tab Bar */}
-      <div className="sticky top-0 z-30 px-7 pt-4 pb-0 flex items-center gap-4" style={{ background: 'transparent' }}>
-        {onBack && (
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={onBack}
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{
-              border: '1px solid rgba(255,255,255,0.35)',
-              background: 'rgba(255,255,255,0.25)',
-              backdropFilter: 'blur(45px) saturate(1.8)',
-              boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
-            }}
-          >
-            <ChevronLeft size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
-          </motion.button>
-        )}
-        <div className="flex items-center gap-1 p-1 rounded-2xl" style={{
-          background: 'rgba(255,255,255,0.3)',
-          backdropFilter: 'blur(20px) saturate(1.8)',
-          border: '1px solid rgba(255,255,255,0.4)',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-        }}>
-          {TABS.map(t => (
-            <motion.button key={t.id} onClick={() => setTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-              style={{
-                background: tab === t.id ? '#FFFFFF' : 'transparent',
-                color: tab === t.id ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
-                boxShadow: tab === t.id ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
-              }}
-            >
-              <t.icon size={14} />
-              {t.label}
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto relative z-10">
+      <div className="flex-1 overflow-y-auto relative z-10 pt-6">
         <AnimatePresence mode="wait">
-          {tab === 'overview' && (
+          {currentTab === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               {/* Header - centered avatar half-in-half-out glass card */}
               <div className="relative z-10 flex-shrink-0 px-8 pt-8">
@@ -305,7 +268,7 @@ export function StudentProfile({ student, onBack, tab: externalTab, onTabChange 
             </motion.div>
           )}
 
-          {tab === 'progress' && (
+          {currentTab === 'progress' && (
             <motion.div key="progress" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 space-y-6 max-w-[1440px]">
               <div className="grid grid-cols-3 gap-4">
                 {[
@@ -353,7 +316,7 @@ export function StudentProfile({ student, onBack, tab: externalTab, onTabChange 
             </motion.div>
           )}
 
-          {tab === 'routines' && (
+          {currentTab === 'routines' && (
             <motion.div key="routines" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 max-w-[1440px]">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -416,7 +379,7 @@ export function StudentProfile({ student, onBack, tab: externalTab, onTabChange 
             </motion.div>
           )}
 
-          {tab === 'attendance' && (
+          {currentTab === 'attendance' && (
             <motion.div key="attendance" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 max-w-[1440px]">
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-2xl p-6" style={cardStyle}>
@@ -478,9 +441,9 @@ export function StudentProfile({ student, onBack, tab: externalTab, onTabChange 
             </motion.div>
           )}
 
-          {(tab === 'assessment' || tab === 'documents') && (
+          {(currentTab === 'assessment' || currentTab === 'documents') && (
             <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 space-y-6 max-w-[1440px]">
-              {tab === 'assessment' && (
+              {currentTab === 'assessment' && (
                 <>
                   {/* Valoraciones Físicas */}
                   <div className="grid grid-cols-3 gap-4">
@@ -548,7 +511,7 @@ export function StudentProfile({ student, onBack, tab: externalTab, onTabChange 
                   </div>
                 </>
               )}
-              {tab === 'documents' && (
+              {currentTab === 'documents' && (
                 <div className="grid grid-cols-3 gap-4">
                   {[
                     { name: 'Contrato de Matrícula', date: '15 Ene 2026', type: 'PDF', signed: true },

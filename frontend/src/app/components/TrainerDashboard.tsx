@@ -10,7 +10,7 @@ import {
   ChevronRight, Search, Plus, ArrowUp, ArrowDown, Sparkles,
   Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu,
 } from 'lucide-react'
-import { StudentProfile } from './StudentProfile'
+import { StudentProfile, TABS } from './StudentProfile'
 import coachImg from '../../assets/illustrations/dashboard/coach.png'
 
 // ── Colors ──
@@ -193,6 +193,7 @@ export function TrainerDashboard() {
   const [section, setSection] = useState<Section>('dashboard')
   const [expanded, setExpanded] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<typeof students[0] | null>(null)
+  const [studentTab, setStudentTab] = useState('overview')
   const [search, setSearch] = useState('')
   const [riskFilter, setRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
   const [showScheduleModal, setShowScheduleModal] = useState(false)
@@ -466,32 +467,67 @@ export function TrainerDashboard() {
 
       <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable' }}>
         <div className="sticky top-0 px-7 pt-5 pb-3 z-30 flex items-center">
-          <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-md">
-            {section === 'students' && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-3 px-4 py-2 rounded-2xl"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(20px) saturate(1.8)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.04)',
-                }}
-              >
-                <Search size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
-                <input 
-                  value={search} 
-                  onChange={e => setSearch(e.target.value)} 
-                  placeholder="Buscar por nombre o documento..." 
-                  className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
-                />
-              </motion.div>
-            )}
-          </div>
+          {!selectedStudent && (
+            <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-md">
+              {section === 'students' && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 px-4 py-2 rounded-2xl"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    backdropFilter: 'blur(20px) saturate(1.8)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <Search size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                  <input 
+                    value={search} 
+                    onChange={e => setSearch(e.target.value)} 
+                    placeholder="Buscar por nombre o documento..." 
+                    className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
+                  />
+                </motion.div>
+              )}
+            </div>
+          )}
 
-          <div className="ml-auto flex items-center gap-3">
+          {selectedStudent && (
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setSelectedStudent(null)}
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{
+                border: '1px solid rgba(255,255,255,0.35)',
+                background: 'rgba(255,255,255,0.25)',
+                backdropFilter: 'blur(45px) saturate(1.8)',
+                boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
+              }}
+            >
+              <ChevronLeft size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
+            </motion.button>
+          )}
+
+          {selectedStudent && (
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
+              {TABS.map(t => (
+                <motion.button key={t.id} onClick={() => setStudentTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                  style={{
+                    background: studentTab === t.id
+                      ? 'radial-gradient(ellipse at 20% 30%, rgba(230,57,70,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(230,57,70,0.85)'
+                      : 'transparent',
+                    color: studentTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                    boxShadow: studentTab === t.id ? '0 2px 8px rgba(230,57,70,0.2), 0 0 20px rgba(230,57,70,0.1)' : 'none',
+                  }}
+                >
+                  <t.icon size={14} />
+                  {t.label}
+                </motion.button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 ml-auto">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -500,7 +536,6 @@ export function TrainerDashboard() {
                 border: '1px solid rgba(255,255,255,0.35)',
                 background: 'rgba(255,255,255,0.25)',
                 backdropFilter: 'blur(45px) saturate(1.8)',
-                WebkitBackdropFilter: 'blur(45px) saturate(1.8)',
                 boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
               }}
             >
@@ -516,7 +551,6 @@ export function TrainerDashboard() {
                 border: '1px solid rgba(255,255,255,0.35)',
                 background: 'rgba(255,255,255,0.25)',
                 backdropFilter: 'blur(45px) saturate(1.8)',
-                WebkitBackdropFilter: 'blur(45px) saturate(1.8)',
                 boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
                 height: 38,
               }}
@@ -545,7 +579,7 @@ export function TrainerDashboard() {
         </div>
 
         {selectedStudent ? (
-          <StudentProfile student={selectedStudent} onBack={() => setSelectedStudent(null)} />
+          <StudentProfile student={selectedStudent} tab={studentTab} onTabChange={setStudentTab} />
         ) : (
           <AnimatePresence mode="wait">
             <motion.div
