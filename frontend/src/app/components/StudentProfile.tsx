@@ -1,20 +1,41 @@
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip, ResponsiveContainer,
   BarChart, Bar,
 } from 'recharts'
 import {
-  ArrowLeft, Brain, TrendingUp, AlertTriangle, Activity, Award, Heart,
-  Calendar, FileText, Dumbbell, Utensils, Clock, Star, Zap,
-  ChevronRight, Target, Flame, Shield, BarChart2, Sparkles,
+  TrendingUp, AlertTriangle, Activity,
+  Calendar, FileText, Dumbbell,
+  Zap, Flame, Shield, BarChart2,
 } from 'lucide-react'
+import { TrophyView } from './TrophyModel'
+import coachImg from '../../assets/illustrations/dashboard/coach.png'
 
 interface Student {
   id: number
   name: string
+  document: string
+  carnetId: string
+  age: number
+  email: string
+  phone: string
+  eps: string
+  bloodType: string
+  gender: string
+  institution: string
   faculty: string
+  program: string
+  modality: string
+  jornada: string
+  semestre: number
+  graduated: boolean
+  enrollmentDate: string
+  allergies: string
+  emergencyContact: string
+  city: string
+  address: string
+  nationality: string
   adherence: number
   risk: 'low' | 'medium' | 'high'
   lastVisit: string
@@ -66,13 +87,6 @@ const attendanceCalendar = [
   [true, true, false, false, true, true, false],
 ]
 
-const aiInsightsProfile = [
-  { priority: 'medium', text: 'Baja adherencia detectada en las últimas 2 semanas. Se recomienda sesión motivacional.' },
-  { priority: 'low', text: 'Progreso en fuerza superior al promedio de su facultad (+14%).' },
-  { priority: 'medium', text: 'Disminución en rendimiento cardiovascular. Considerar incremento gradual de LISS.' },
-  { priority: 'high', text: 'Probabilidad de abandono calculada en 34% si persiste la tendencia actual.' },
-]
-
 const nutritionData = [
   { day: 'L', calorias: 2100 },
   { day: 'M', calorias: 1950 },
@@ -104,30 +118,20 @@ function ChartTooltip({ active, payload, label }: any) {
   )
 }
 
-const TABS = [
+export const TABS = [
   { id: 'overview', label: 'General', icon: Activity },
   { id: 'progress', label: 'Progreso', icon: TrendingUp },
-  { id: 'assessment', label: 'Valoraciones', icon: BarChart2 },
   { id: 'routines', label: 'Rutinas', icon: Dumbbell },
   { id: 'attendance', label: 'Asistencia', icon: Calendar },
-  { id: 'risks', label: 'Riesgos', icon: AlertTriangle },
-  { id: 'ai', label: 'IA Insights', icon: Brain },
-  { id: 'nutrition', label: 'Nutrición', icon: Utensils },
-  { id: 'history', label: 'Historial', icon: Clock },
+  { id: 'assessment', label: 'Valoraciones', icon: BarChart2 },
   { id: 'documents', label: 'Documentos', icon: FileText },
 ] as const
 
-type Tab = typeof TABS[number]['id']
-
-export function StudentProfile({ student, onBack }: { student: Student; onBack: () => void }) {
-  const [tab, setTab] = useState<Tab>('overview')
-
+export function StudentProfile({ student, tab, onTabChange }: { student: Student; tab: string; onTabChange: (t: string) => void }) {
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
-  const imcLabel = imcNum < 18.5 ? 'Bajo peso' : imcNum < 25 ? 'Saludable' : imcNum < 30 ? 'Sobrepeso' : 'Obesidad'
-
   return (
-    <div className="flex flex-col size-full overflow-hidden mesh-bg">
+    <div className="flex flex-col size-full">
       {/* Background orbs */}
       <div className="floating-sphere" style={{
         width: 280, height: 280,
@@ -135,150 +139,127 @@ export function StudentProfile({ student, onBack }: { student: Student; onBack: 
         top: '-60px', right: '-40px',
       }} />
 
-      {/* Header */}
-      <div className="relative z-10 flex-shrink-0 px-8 py-4 flex items-center gap-4" style={{
-        borderBottom: '1px solid rgba(0,0,0,0.05)',
-        background: 'rgba(250,250,250,0.75)',
-        backdropFilter: 'blur(30px) saturate(1.4)',
-        WebkitBackdropFilter: 'blur(30px) saturate(1.4)',
-      }}>
-        <motion.button
-          whileHover={{ x: -2 }}
-          onClick={onBack}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all"
-          style={{ color: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,0,0,0.06)', background: 'rgba(255,255,255,0.3)' }}
-        >
-          <ArrowLeft size={15} /> Volver
-        </motion.button>
-
-        <div className="flex items-center gap-4 ml-2">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold"
-            style={{
-              background: student.risk === 'high'
-                ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
-                : student.risk === 'medium'
-                ? 'linear-gradient(135deg, #FF9500, #E68600)'
-                : 'linear-gradient(135deg, #30D158, #20A040)',
-              fontSize: 16,
-            }}
-          >
-            {student.avatar}
-          </div>
-          <div>
-            <h2 className="text-[#1D1D1F]">{student.name}</h2>
-            <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>
-              {student.faculty} · Objetivo: {student.goal} · ID #{student.id.toString().padStart(4, '0')}
-            </p>
-          </div>
-        </div>
-
-        <div className="ml-auto flex items-center gap-3">
-          {[
-            { label: 'Adherencia', value: `${student.adherence}%`, color: student.adherence >= 80 ? '#30D158' : student.adherence >= 60 ? '#FF9500' : '#FF3B30' },
-            { label: 'Sesiones', value: `${student.sessions}`, color: '#FF6B8A' },
-            { label: 'Última visita', value: student.lastVisit, color: 'rgba(0,0,0,0.5)' },
-          ].map(m => (
-            <div key={m.label} className="text-right px-4 py-2 rounded-xl" style={cardStyle}>
-              <p style={{ color: m.color, fontWeight: 700, fontSize: 15, lineHeight: 1 }}>{m.value}</p>
-              <p className="text-[10px] mt-1" style={{ color: 'rgba(0,0,0,0.3)' }}>{m.label}</p>
-            </div>
-          ))}
-          <div
-            className="px-3 py-2 rounded-xl text-xs font-semibold"
-            style={{
-              background: student.risk === 'high' ? 'rgba(255,59,48,0.06)' : student.risk === 'medium' ? 'rgba(255,149,0,0.06)' : 'rgba(48,209,88,0.06)',
-              color: student.risk === 'high' ? '#FF3B30' : student.risk === 'medium' ? '#FF9500' : '#30D158',
-              border: `1px solid ${student.risk === 'high' ? 'rgba(255,59,48,0.15)' : student.risk === 'medium' ? 'rgba(255,149,0,0.15)' : 'rgba(48,209,88,0.15)'}`,
-            }}
-          >
-            {student.risk === 'high' ? '⚠ Alto Riesgo' : student.risk === 'medium' ? '● Alerta' : '✓ Activo'}
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="relative z-10 flex-shrink-0 flex items-center gap-0.5 px-8 py-3" style={{
-        borderBottom: '1px solid rgba(0,0,0,0.04)',
-        overflowX: 'auto',
-      }}>
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap flex-shrink-0"
-            style={{ color: tab === t.id ? RED : 'rgba(0,0,0,0.3)' }}
-          >
-            {tab === t.id && (
-              <motion.div
-                layoutId="stab-bg"
-                className="absolute inset-0 rounded-lg"
-                style={{ background: 'rgba(230,57,70,0.06)', border: '1px solid rgba(230,57,70,0.1)' }}
-                transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
-              />
-            )}
-            <t.icon size={12} className="relative z-10" />
-            <span className="relative z-10">{t.label}</span>
-          </button>
-        ))}
-      </div>
-
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto relative z-10">
         <AnimatePresence mode="wait">
           {tab === 'overview' && (
-            <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 grid grid-cols-3 gap-4 max-w-[1440px]">
-              <div className="rounded-2xl p-6" style={cardStyle}>
-                <h3 className="text-[#1D1D1F] text-sm font-semibold mb-5">Información General</h3>
-                <div className="space-y-1">
-                  {[
-                    { label: 'Peso actual', value: `${student.weight} kg` },
-                    { label: 'Altura', value: `${student.height} cm` },
-                    { label: 'IMC', value: `${imc} — ${imcLabel}` },
-                    { label: 'Objetivo', value: student.goal },
-                    { label: 'Facultad', value: student.faculty },
-                    { label: 'Sesiones totales', value: `${student.sessions} sesiones` },
-                  ].map(item => (
-                    <div key={item.label} className="flex items-center justify-between py-2.5" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                      <span className="text-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>{item.label}</span>
-                      <span className="text-xs font-semibold" style={{ color: '#1D1D1F' }}>{item.value}</span>
+            <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              {/* Header - centered avatar half-in-half-out glass card */}
+              <div className="relative z-10 flex-shrink-0 px-8 pt-8">
+                <div className="relative rounded-2xl p-6 pt-14 text-center" style={{
+                  background: 'rgba(255,255,255,0.65)',
+                  backdropFilter: 'blur(30px) saturate(1.4)',
+                  WebkitBackdropFilter: 'blur(30px) saturate(1.4)',
+                  border: '1px solid rgba(255,255,255,0.5)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03), 0 12px 32px rgba(0,0,0,0.02)',
+                  borderRadius: 20,
+                }}>
+                  <div className="absolute left-1/2 -translate-x-1/2 -top-8">
+                    <div
+                      className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg"
+                      style={{
+                        background: student.risk === 'high'
+                          ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
+                          : student.risk === 'medium'
+                          ? 'linear-gradient(135deg, #FF9500, #E68600)'
+                          : 'linear-gradient(135deg, #30D158, #20A040)',
+                        fontSize: 26,
+                      }}
+                    >
+                      {student.avatar}
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-2xl p-6" style={cardStyle}>
-                <h3 className="text-[#1D1D1F] text-sm font-semibold mb-2">Perfil Físico</h3>
-                <p className="text-xs mb-3" style={{ color: 'rgba(0,0,0,0.35)' }}>Capacidades funcionales</p>
-                <ResponsiveContainer width="100%" height={240}>
-                  <RadarChart data={bodyRadar}>
-                    <PolarGrid stroke="rgba(0,0,0,0.06)" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(0,0,0,0.35)', fontSize: 11 }} />
-                    <Radar name="Capacidad" dataKey="value" stroke={RED} fill={RED} fillOpacity={0.08} strokeWidth={2.5} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="rounded-2xl p-6" style={{
-                background: 'linear-gradient(160deg, rgba(230,57,70,0.03), rgba(255,255,255,0.3))',
-                border: '1px solid rgba(230,57,70,0.08)',
-              }}>
-                <div className="flex items-center gap-2 mb-5">
-                  <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.08)' }}>
-                    <Brain size={13} style={{ color: RED }} />
                   </div>
-                  <span className="text-[#1D1D1F] text-sm font-semibold">Resumen IA</span>
-                  <span className="w-1.5 h-1.5 rounded-full ml-auto" style={{ background: RED }} />
-                </div>
-                <div className="space-y-3">
-                  {aiInsightsProfile.map((msg, i) => (
-                    <div key={i} className="p-3.5 rounded-xl" style={{
-                      background: msg.priority === 'high' ? 'rgba(255,59,48,0.04)' : msg.priority === 'medium' ? 'rgba(255,149,0,0.04)' : 'rgba(48,209,88,0.04)',
-                      border: `1px solid ${msg.priority === 'high' ? 'rgba(255,59,48,0.12)' : msg.priority === 'medium' ? 'rgba(255,149,0,0.12)' : 'rgba(48,209,88,0.12)'}`,
+                  <h2 className="text-[#1D1D1F] text-2xl font-bold">{student.name}</h2>
+
+                  {/* Inner sub-cards - 3 columnas iguales */}
+                  <div className="grid grid-cols-3 gap-4 mt-6 text-left">
+                    {/* Info General */}
+                    <div className="rounded-2xl p-5" style={{
+                      background: 'rgba(255,255,255,0.5)',
+                      border: '1px solid rgba(255,255,255,0.4)',
+                      borderRadius: 16,
                     }}>
-                      <p className="text-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.6)' }}>{msg.text}</p>
+                      <h3 className="text-[#1D1D1F] text-sm font-semibold mb-3">Información General</h3>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                        {[
+                          { label: 'Documento', value: student.document },
+                          { label: 'N. Carnet', value: student.carnetId },
+                          { label: 'Edad', value: `${student.age} años` },
+                          { label: 'Email', value: student.email },
+                          { label: 'Teléfono', value: student.phone },
+                          { label: 'EPS', value: student.eps },
+                          { label: 'G. sanguíneo', value: student.bloodType },
+                          { label: 'Género', value: student.gender },
+                          { label: 'Institución', value: student.institution },
+                          { label: 'Programa', value: student.program },
+                          { label: 'Modalidad', value: student.modality },
+                          { label: 'Jornada', value: student.jornada },
+                          { label: 'Semestre', value: `${student.semestre}°` },
+                          { label: 'Egresado', value: student.graduated ? 'Sí' : 'No' },
+                          { label: 'Fecha inscripción', value: student.enrollmentDate },
+                          { label: 'Alergias', value: student.allergies },
+                          { label: 'Contacto emergencia', value: student.emergencyContact },
+                          { label: 'Ciudad', value: student.city },
+                          { label: 'Dirección', value: student.address },
+                          { label: 'Nacionalidad', value: student.nationality },
+                        ].map(item => (
+                          <div key={item.label} className="py-1" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                            <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>{item.label}</p>
+                            <p className="text-xs font-semibold" style={{ color: '#1D1D1F' }}>{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+
+                    {/* Meta del usuario */}
+                    <div className="rounded-2xl p-5 flex flex-col items-center justify-center text-center relative overflow-hidden" style={{
+                      background: 'linear-gradient(145deg, rgba(255,215,0,0.07), rgba(255,180,0,0.02), rgba(255,215,0,0.05))',
+                      border: '1px solid rgba(255,200,0,0.15)',
+                      borderRadius: 16,
+                    }}>
+                      <div className="absolute inset-0 rounded-[inherit] pointer-events-none" style={{
+                        background: 'radial-gradient(ellipse at 50% 30%, rgba(255,215,0,0.08), transparent 70%)',
+                      }} />
+                      <div className="absolute inset-0 rounded-[inherit] pointer-events-none holo-overlay" />
+                      <div className="w-full aspect-square max-w-[150px] mb-1 mx-auto relative z-10">
+                        <TrophyView />
+                      </div>
+                      <span className="relative z-10 inline-block px-3 py-0.5 rounded-full text-[10px] font-semibold tracking-wide mb-1" style={{
+                        background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,180,0,0.08))',
+                        color: 'rgba(180,130,0,0.8)',
+                        letterSpacing: '0.06em',
+                      }}>
+                        META DEL USUARIO
+                      </span>
+                      <p className="relative z-10 text-base font-extrabold" style={{
+                        background: 'linear-gradient(135deg, #1D1D1F, rgba(0,0,0,0.6))',
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}>
+                        {student.goal}
+                      </p>
+                    </div>
+
+                    {/* Perfil Físico */}
+                    <div className="rounded-2xl p-5 flex flex-col" style={{
+                      background: 'rgba(255,255,255,0.5)',
+                      border: '1px solid rgba(255,255,255,0.4)',
+                      borderRadius: 16,
+                    }}>
+                      <h3 className="text-[#1D1D1F] text-sm font-semibold mb-1">Perfil Físico</h3>
+                      <p className="text-xs mb-2" style={{ color: 'rgba(0,0,0,0.35)' }}>Capacidades funcionales</p>
+                      <div className="flex-1" style={{ minHeight: 240 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart data={bodyRadar} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                            <PolarGrid stroke="rgba(0,0,0,0.06)" />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(0,0,0,0.35)', fontSize: 11 }} />
+                            <Radar name="Capacidad" dataKey="value" stroke="#E63946" fill="#E63946" fillOpacity={0.08} strokeWidth={2.5} />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -457,128 +438,19 @@ export function StudentProfile({ student, onBack }: { student: Student; onBack: 
             </motion.div>
           )}
 
-          {tab === 'risks' && (
-            <motion.div key="risks" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 space-y-6 max-w-[1440px]">
-              <div className="rounded-2xl p-8" style={{
-                background: 'linear-gradient(145deg, rgba(255,59,48,0.04), rgba(255,255,255,0.3))',
-                border: '1px solid rgba(255,59,48,0.08)',
-              }}>
-                <div className="flex items-center gap-3 mb-6">
-                  <AlertTriangle size={22} style={{ color: '#FF3B30' }} />
-                  <h3 className="text-[#1D1D1F] font-semibold">Análisis de Riesgo</h3>
-                </div>
-                <div className="grid grid-cols-3 gap-6">
-                  {[
-                    { label: 'Riesgo de abandono', value: student.risk === 'high' ? '76%' : student.risk === 'medium' ? '42%' : '8%', color: student.risk === 'high' ? '#FF3B30' : student.risk === 'medium' ? '#FF9500' : '#30D158' },
-                    { label: 'Riesgo de lesión', value: '18%', color: '#FF9500' },
-                    { label: 'Nivel de fatiga', value: '34%', color: '#BF5AF2' },
-                  ].map(m => (
-                    <div key={m.label} className="text-center">
-                      <p style={{ color: m.color, fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>{m.value}</p>
-                      <p className="text-sm mt-2 font-medium" style={{ color: 'rgba(0,0,0,0.45)' }}>{m.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { title: 'Factores de riesgo', items: ['Baja adherencia sostenida', 'Ausencias sin justificar', 'Reducción en intensidad de sesiones', 'Sin respuesta a comunicaciones'], icon: AlertTriangle, color: '#FF3B30' },
-                  { title: 'Factores protectores', items: ['Progreso en masa muscular', 'Historial previo de adherencia alta', 'Rutina adaptada correctamente', 'Sin lesiones registradas'], icon: Shield, color: '#30D158' },
-                ].map(section => (
-                  <div key={section.title} className="rounded-2xl p-6" style={cardStyle}>
-                    <div className="flex items-center gap-2 mb-4">
-                      <section.icon size={16} style={{ color: section.color }} />
-                      <h3 className="text-[#1D1D1F] text-sm font-semibold">{section.title}</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {section.items.map((item, i) => (
-                        <div key={i} className="flex items-start gap-2.5">
-                          <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: section.color }} />
-                          <p className="text-sm" style={{ color: 'rgba(0,0,0,0.55)' }}>{item}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {tab === 'ai' && (
-            <motion.div key="ai" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 space-y-6 max-w-[1440px]">
-              <div className="rounded-2xl p-8" style={{
-                background: 'linear-gradient(160deg, rgba(230,57,70,0.03), rgba(255,255,255,0.3))',
-                border: '1px solid rgba(230,57,70,0.08)',
-              }}>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.08)' }}>
-                    <Brain size={18} style={{ color: RED }} />
-                  </div>
-                  <div>
-                    <p className="text-[#1D1D1F] font-semibold">Análisis IA — {student.name}</p>
-                    <p className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>Generado hoy · Confianza: 89%</p>
-                  </div>
-                  <div className="ml-auto w-2 h-2 rounded-full" style={{ background: '#30D158' }} />
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { label: 'Resumen ejecutivo', content: `${student.name} muestra ${student.adherence >= 80 ? 'excelente' : student.adherence >= 60 ? 'buena' : 'baja'} adherencia (${student.adherence}%). Su progreso en composición corporal es positivo. ${student.risk === 'high' ? 'Se requiere intervención inmediata para prevenir abandono.' : 'Continuar con plan actual.'}` },
-                    { label: 'Recomendación de rutina', content: 'Mantener volumen actual en tren superior. Incrementar 5-10% en carga de ejercicios compuestos. Agregar 2 sesiones de cardio suave (LISS) para mejorar recuperación.' },
-                    { label: 'Predicción a 30 días', content: `Si mantiene la tendencia actual, ${student.name} alcanzará su objetivo de ${student.goal.toLowerCase()} en aproximadamente 45 días. La probabilidad de éxito es del ${student.adherence >= 80 ? '87' : student.adherence >= 60 ? '64' : '38'}%.` },
-                  ].map(item => (
-                    <div key={item.label} className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(0,0,0,0.04)' }}>
-                      <p className="text-xs font-bold mb-2" style={{ color: RED }}>{item.label}</p>
-                      <p className="text-sm leading-relaxed" style={{ color: 'rgba(0,0,0,0.6)' }}>{item.content}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {tab === 'nutrition' && (
-            <motion.div key="nutrition" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 space-y-6 max-w-[1440px]">
-              <div className="grid grid-cols-4 gap-4">
-                {[
-                  { label: 'Calorías objetivo', value: '2.200', unit: 'kcal', color: RED },
-                  { label: 'Proteína', value: '180', unit: 'g/día', color: '#FF6B8A' },
-                  { label: 'Carbohidratos', value: '220', unit: 'g/día', color: '#FF9500' },
-                  { label: 'Grasas', value: '65', unit: 'g/día', color: '#30D158' },
-                ].map(m => (
-                  <div key={m.label} className="rounded-2xl p-5" style={cardStyle}>
-                    <p className="stat-value" style={{ color: m.color, fontSize: '1.8rem', fontWeight: 700, lineHeight: 1 }}>{m.value}</p>
-                    <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.3)' }}>{m.unit}</p>
-                    <p className="text-xs mt-2 font-semibold" style={{ color: '#1D1D1F' }}>{m.label}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-2xl p-6" style={cardStyle}>
-                <h3 className="text-[#1D1D1F] text-sm font-semibold mb-5">Calorías esta semana</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={nutritionData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" vertical={false} />
-                    <XAxis dataKey="day" tick={{ fill: 'rgba(0,0,0,0.3)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fill: 'rgba(0,0,0,0.3)', fontSize: 11 }} axisLine={false} tickLine={false} width={45} domain={[1500, 2500]} />
-                    <ReTooltip content={<ChartTooltip />} />
-                    <Bar dataKey="calorias" name="kcal" fill={RED} fillOpacity={0.7} radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </motion.div>
-          )}
-
-          {(tab === 'assessment' || tab === 'history' || tab === 'documents') && (
-            <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 max-w-[1440px]">
+          {(tab === 'assessment' || tab === 'documents') && (
+            <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="p-8 space-y-6 max-w-[1440px]">
               {tab === 'assessment' && (
-                <div className="space-y-4">
+                <>
+                  {/* Valoraciones Físicas */}
                   <div className="grid grid-cols-3 gap-4">
                     {[
                       { section: 'Antropometría', items: [{ label: 'Peso', value: `${student.weight} kg` }, { label: 'Altura', value: `${student.height} cm` }, { label: 'IMC', value: imc }, { label: 'Grasa corporal', value: '17%' }, { label: 'Masa muscular', value: '52 kg' }, { label: 'Circunf. cintura', value: '82 cm' }] },
                       { section: 'Capacidades Físicas', items: [{ label: 'Fuerza máx. (1RM)', value: '100 kg' }, { label: 'VO2 Max', value: '42 ml/kg/min' }, { label: 'Flexibilidad', value: '28 cm (sit & reach)' }, { label: 'Potencia', value: '85/100' }, { label: 'Movilidad', value: '72/100' }, { label: 'Equilibrio', value: '78/100' }] },
                       { section: 'Salud y Bienestar', items: [{ label: 'Nivel de estrés', value: '4/10' }, { label: 'Calidad de sueño', value: '7.2 h/noche' }, { label: 'Energía percibida', value: '7/10' }, { label: 'Dolor muscular', value: 'Leve' }, { label: 'Lesiones activas', value: 'Ninguna' }, { label: 'Frecuencia card.', value: '68 bpm' }] },
                     ].map(s => (
-                      <div key={s.section} className="rounded-2xl p-6" style={cardStyle}>
-                        <h3 className="text-sm font-semibold mb-5" style={{ color: RED }}>{s.section}</h3>
+                      <div key={s.section} className="rounded-2xl p-6 premium-card">
+                        <h3 className="text-sm font-semibold mb-5" style={{ color: '#E63946' }}>{s.section}</h3>
                         <div className="space-y-1">
                           {s.items.map(item => (
                             <div key={item.label} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
@@ -590,38 +462,51 @@ export function StudentProfile({ student, onBack }: { student: Student; onBack: 
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-              {tab === 'history' && (
-                <div className="space-y-2">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-5 p-5 rounded-2xl" style={cardStyle}>
-                      <div className="text-center w-14 flex-shrink-0">
-                        <p className="text-[#1D1D1F] font-bold text-xs">{28 - i * 3} May</p>
-                        <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.3)' }}>2026</p>
-                      </div>
-                      <div className="w-px h-8" style={{ background: 'rgba(0,0,0,0.06)' }} />
-                      <div className="flex-1">
-                        <p className="text-[#1D1D1F] text-sm font-semibold">Sesión #{student.sessions - i}</p>
-                        <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>
-                          {['Hipertrofia Superior', 'Cardio HIIT', 'Full Body', 'Core & Estabilidad', 'Hipertrofia Inferior', 'Cardio LISS', 'Movilidad', 'Full Body'][i]} · {45 + (i % 3) * 15} min
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <p className="text-[#1D1D1F] font-bold text-xs">{300 + i * 45} kcal</p>
-                          <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.3)' }}>quemadas</p>
-                        </div>
-                        <span
-                          className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
-                          style={{ background: 'rgba(48,209,88,0.08)', color: '#30D158', border: '1px solid rgba(48,209,88,0.15)' }}
-                        >
-                          Completada
-                        </span>
-                      </div>
+
+                  {/* Análisis de Riesgo */}
+                  <div className="rounded-2xl p-8" style={{
+                    background: 'linear-gradient(145deg, rgba(255,59,48,0.04), rgba(255,255,255,0.3))',
+                    border: '1px solid rgba(255,59,48,0.08)',
+                  }}>
+                    <div className="flex items-center gap-3 mb-6">
+                      <AlertTriangle size={22} style={{ color: '#FF3B30' }} />
+                      <h3 className="text-[#1D1D1F] font-semibold">Análisis de Riesgo</h3>
                     </div>
-                  ))}
-                </div>
+                    <div className="grid grid-cols-3 gap-6 mb-6">
+                      {[
+                        { label: 'Riesgo de abandono', value: student.risk === 'high' ? '76%' : student.risk === 'medium' ? '42%' : '8%', color: student.risk === 'high' ? '#FF3B30' : student.risk === 'medium' ? '#FF9500' : '#30D158' },
+                        { label: 'Riesgo de lesión', value: '18%', color: '#FF9500' },
+                        { label: 'Nivel de fatiga', value: '34%', color: '#BF5AF2' },
+                      ].map(m => (
+                        <div key={m.label} className="text-center">
+                          <p style={{ color: m.color, fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>{m.value}</p>
+                          <p className="text-sm mt-2 font-medium" style={{ color: 'rgba(0,0,0,0.45)' }}>{m.label}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { title: 'Factores de riesgo', items: ['Baja adherencia sostenida', 'Ausencias sin justificar', 'Reducción en intensidad de sesiones', 'Sin respuesta a comunicaciones'], icon: AlertTriangle, color: '#FF3B30' },
+                        { title: 'Factores protectores', items: ['Progreso en masa muscular', 'Historial previo de adherencia alta', 'Rutina adaptada correctamente', 'Sin lesiones registradas'], icon: Shield, color: '#30D158' },
+                      ].map(section => (
+                        <div key={section.title} className="rounded-2xl p-6 premium-card">
+                          <div className="flex items-center gap-2 mb-4">
+                            <section.icon size={16} style={{ color: section.color }} />
+                            <h3 className="text-[#1D1D1F] text-sm font-semibold">{section.title}</h3>
+                          </div>
+                          <div className="space-y-3">
+                            {section.items.map((item, i) => (
+                              <div key={i} className="flex items-start gap-2.5">
+                                <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: section.color }} />
+                                <p className="text-sm" style={{ color: 'rgba(0,0,0,0.55)' }}>{item}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
               {tab === 'documents' && (
                 <div className="grid grid-cols-3 gap-4">
@@ -639,12 +524,11 @@ export function StudentProfile({ student, onBack }: { student: Student; onBack: 
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.06 }}
                       whileHover={{ y: -4 }}
-                      className="rounded-2xl p-6"
-                      style={cardStyle}
+                      className="rounded-2xl p-6 premium-card"
                     >
                       <div className="flex items-center gap-3 mb-4">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.08)' }}>
-                          <FileText size={17} style={{ color: RED }} />
+                          <FileText size={17} style={{ color: '#E63946' }} />
                         </div>
                         {doc.signed && (
                           <span
