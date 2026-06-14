@@ -127,7 +127,7 @@ export const TABS = [
   { id: 'documents', label: 'Documentos', icon: FileText },
 ] as const
 
-export function StudentProfile({ student, tab, onTabChange }: { student: Student; tab: string; onTabChange: (t: string) => void }) {
+export function StudentProfile({ student, tab = 'overview', onTabChange }: { student: Student; tab?: string; onTabChange?: (t: string) => void }) {
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
   return (

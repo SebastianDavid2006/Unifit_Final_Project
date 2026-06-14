@@ -207,6 +207,8 @@ export function TrainerDashboard() {
   const [assessmentNotes, setAssessmentNotes] = useState('')
   const [assessments, setAssessments] = useState<Assessment[]>([])
 
+  const [showFilters, setShowFilters] = useState(false)
+
   // ── Gym Configuration ──
   const [gymName, setGymName] = useState('Gimnasio Universitario UNIFIT')
   const [gymAddress, setGymAddress] = useState('Av. Universidad 123, Campus Central')
@@ -479,48 +481,87 @@ export function TrainerDashboard() {
         </div>
       </aside>
 
-      <div className="flex-1 overflow-y-auto relative z-10">
+      <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable' }}>
 
-        <div className="sticky top-0 flex items-center justify-end gap-3 px-7 pt-5 pb-3 z-30">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-            style={{
-              border: '1px solid rgba(255,255,255,0.35)',
-              background: 'rgba(255,255,255,0.25)',
-              backdropFilter: 'blur(45px) saturate(1.8)',
-              WebkitBackdropFilter: 'blur(45px) saturate(1.8)',
-              boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
-            }}
-          >
-            <Bell size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
-            <div className="dot-alert absolute -top-1 -right-1" style={{ width: 8, height: 8 }} />
-          </motion.button>
+        <div className="sticky top-0 px-7 pt-5 pb-3 z-30 flex items-center">
+          {/* Centered Glass Search Bar Container */}
+          <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-md">
+            {section === 'students' && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 px-4 py-2 rounded-2xl"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(20px) saturate(1.8)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.04)',
+                }}
+              >
+                <Search size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                <input 
+                  value={search} 
+                  onChange={e => setSearch(e.target.value)} 
+                  placeholder="Buscar por nombre o documento..." 
+                  className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
+                />
+              </motion.div>
+            )}
+          </div>
 
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer transition-all"
-            style={{
-              border: '1px solid rgba(255,255,255,0.35)',
-              background: 'rgba(255,255,255,0.25)',
-              backdropFilter: 'blur(45px) saturate(1.8)',
-              WebkitBackdropFilter: 'blur(45px) saturate(1.8)',
-              boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
-            }}
-          >
-            <div
-              className="w-7 h-7 rounded-xl flex items-center justify-center text-white text-[10px] font-bold"
-              style={{ background: 'linear-gradient(135deg, #F43843, #8B001A)' }}
+          <div className="ml-auto flex items-center gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{
+                border: '1px solid rgba(255,255,255,0.35)',
+                background: 'rgba(255,255,255,0.25)',
+                backdropFilter: 'blur(45px) saturate(1.8)',
+                WebkitBackdropFilter: 'blur(45px) saturate(1.8)',
+                boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
+              }}
             >
-              SM
-            </div>
-            <div>
-              <p className="text-[#1A1A1E] text-xs font-semibold">Sebastián Morales</p>
-              <p style={{ color: 'rgba(0,0,0,0.3)', fontSize: 9 }}>Plataforma de Entrenadores</p>
-            </div>
-            <ChevronDown size={12} style={{ color: 'rgba(0,0,0,0.2)' }} />
-          </motion.div>
+              <Bell size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
+              <div className="dot-alert absolute -top-1 -right-1" style={{ width: 8, height: 8 }} />
+            </motion.button>
+
+            {/* Expandable User Profile - Super Premium */}
+            <motion.div
+              initial="initial"
+              whileHover="hover"
+              className="flex items-center rounded-xl cursor-pointer transition-all overflow-hidden"
+              style={{
+                border: '1px solid rgba(255,255,255,0.35)',
+                background: 'rgba(255,255,255,0.25)',
+                backdropFilter: 'blur(45px) saturate(1.8)',
+                WebkitBackdropFilter: 'blur(45px) saturate(1.8)',
+                boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
+                height: 38,
+              }}
+            >
+              <div
+                className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                style={{ background: RED_GRAD }}
+              >
+                SM
+              </div>
+              <motion.div
+                variants={{
+                  hover: { width: 'auto', opacity: 1, paddingRight: 12, paddingLeft: 10 },
+                  initial: { width: 0, opacity: 0, paddingRight: 0, paddingLeft: 0 }
+                }}
+                className="flex items-center gap-2 overflow-hidden whitespace-nowrap"
+              >
+                <div>
+                  <p className="text-[#1A1A1E] text-xs font-bold leading-none">Sebastián Morales</p>
+                  <p style={{ color: 'rgba(0,0,0,0.3)', fontSize: 9 }} className="mt-0.5">Plataforma de Entrenadores</p>
+                </div>
+                <ChevronDown size={12} style={{ color: 'rgba(0,0,0,0.2)' }} />
+              </motion.div>
+            </motion.div>
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
@@ -1313,7 +1354,7 @@ export function TrainerDashboard() {
     const weekDates = WEEK_DAYS.map((day, i) => {
       const d = new Date(monday)
       d.setDate(monday.getDate() + i)
-      return { label: day, date: d.getDate(), month: d.getMonth() + 1 }
+      return { label: day, date: d.getDate(), month: d.month() + 1 }
     })
 
     const activeTimes = TIME_SLOTS.filter(time => {
@@ -1721,7 +1762,7 @@ export function TrainerDashboard() {
           </div>
         </div>
 
-        {/* Capacidad y Reglas */}
+        {/* Capacidad y Personal */}
         <div className="grid grid-cols-2 gap-4">
           <div className="rounded-2xl p-6 premium-card">
             <h3 className="text-[#1A1A1E] font-bold mb-5" style={{ fontSize: '0.95rem' }}>Capacidad y Personal</h3>
@@ -1850,6 +1891,193 @@ export function TrainerDashboard() {
           >
             <CheckCircle size={18} /><span>Guardar Configuración</span>
           </motion.button>
+        </div>
+      </div>
+    )
+  }
+
+  function renderStudents() {
+    const tableHeaders = ['Nombre', 'Documento', 'Carrera', 'Último Ingreso', 'Valoraciones']
+
+    return (
+      <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
+        {/* Centered Filter Bar - Disappears if not active */}
+        <div className="h-12 flex justify-center items-center">
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="flex items-center gap-2 p-1.5 rounded-2xl" 
+                style={{ 
+                  background: 'rgba(255,255,255,0.4)', 
+                  backdropFilter: 'blur(12px)', 
+                  border: '1px solid rgba(255,255,255,0.6)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.04)'
+                }}
+              >
+                {(['all', 'high', 'medium', 'low'] as const).map(f => (
+                  <motion.button 
+                    key={f} 
+                    onClick={() => setRiskFilter(f)} 
+                    whileHover={{ scale: 1.02 }} 
+                    whileTap={{ scale: 0.98 }}
+                    className="px-5 py-1.5 rounded-xl text-[11px] font-bold transition-all"
+                    style={{ 
+                      background: riskFilter === f ? '#FFFFFF' : 'transparent', 
+                      color: riskFilter === f ? '#1A1A1E' : 'rgba(0,0,0,0.35)',
+                      boxShadow: riskFilter === f ? '0 4px 12px rgba(0,0,0,0.05)' : 'none'
+                    }}
+                  >
+                    {f === 'all' ? 'Todos' : f === 'high' ? 'Alto Riesgo' : f === 'medium' ? 'Alerta' : 'Activos'}
+                  </motion.button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Hero — Cinematic Banner (Compact Version) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="relative rounded-3xl mb-10"
+          style={{
+            background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)',
+            boxShadow: '0 8px 30px rgba(0,122,255,0.02)',
+            border: 'none',
+          }}
+        >
+          {/* Clipped container for mesh with gradient fade */}
+          <div className="absolute inset-0 pointer-events-none rounded-3xl overflow-hidden" style={{
+            maskImage: 'linear-gradient(to right, black 60%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, black 60% , transparent 100%)'
+          }}>
+            <div
+              className="absolute inset-0 opacity-25"
+              style={{
+                background: `
+                  radial-gradient(ellipse at 80% 10%, rgba(0,122,255,0.03) 0%, transparent 40%),
+                  radial-gradient(ellipse at 10% 80%, rgba(245,166,35,0.02) 0%, transparent 40%),
+                  radial-gradient(ellipse at 50% 50%, rgba(230,57,70,0.02) 0%, transparent 50%)
+                `,
+                backgroundSize: '200% 200%',
+                animation: 'mesh-shift 15s ease-in-out infinite',
+              }}
+            />
+          </div>
+
+          <div className="relative z-10 p-6 flex items-center justify-between"> 
+            <div className="flex items-center gap-5 ml-40">
+              <div className="w-1 h-10 rounded-full" style={{ background: RED_GRAD }} />
+              <div>
+                <h1 style={{ color: '#1A1A1E', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
+                  Estudiantes
+                </h1>
+                <p className="text-xs font-medium mt-0.5 max-w-xs" style={{ color: 'rgba(0,0,0,0.4)', lineHeight: 1.4 }}>
+                  Gestiona y haz seguimiento al progreso físico de tu comunidad.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 pr-4">
+              {/* Filter Toggle Icon */}
+              <motion.button
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(0,0,0,0.05)' }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setShowFilters(!showFilters)}
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${showFilters ? 'bg-black/5 text-[#1A1A1E]' : 'text-black/30'}`}
+                style={{ border: '1px solid rgba(0,0,0,0.05)' }}
+              >
+                <Menu size={20} />
+              </motion.button>
+
+              {/* Expandable Plus Button (Organic Mesh Gradient) */}
+              <motion.button 
+                initial="initial"
+                whileHover="hover"
+                className="flex items-center rounded-2xl overflow-hidden relative text-white"
+                style={{ 
+                  height: 44, 
+                  padding: '0 12px',
+                  background: `
+                    radial-gradient(at 15% 15%, #F43843 0%, transparent 50%),
+                    radial-gradient(at 85% 20%, #1270B7 0%, transparent 50%),
+                    radial-gradient(at 50% 50%, #F1C827 0%, transparent 60%),
+                    radial-gradient(at 20% 80%, #1270B7 0%, transparent 50%),
+                    radial-gradient(at 80% 85%, #F43843 0%, transparent 50%),
+                    #1270B7
+                  `,
+                  backgroundSize: '150% 150%',
+                  boxShadow: '0 10px 25px -5px rgba(18,112,183,0.3)',
+                }}
+              >
+                <div className="flex items-center justify-center flex-shrink-0">
+                  <Plus size={18} strokeWidth={3} />
+                </div>
+                <motion.div
+                  variants={{
+                    hover: { width: 'auto', opacity: 1, marginLeft: 8 },
+                    initial: { width: 0, opacity: 0, marginLeft: 0 }
+                  }}
+                  className="overflow-hidden whitespace-nowrap"
+                >
+                  <span className="text-xs font-bold">Nuevo Estudiante</span>
+                </motion.div>
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Coach image */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            style={{
+              position: 'absolute',
+              left: 20,
+              top: -45,
+              width: 160,
+              height: 'auto',
+              zIndex: 20,
+              transform: 'scaleX(-1)',
+            }}
+          >
+            <img src={coachImg} alt="Coach Students" className="w-full h-auto drop-shadow-xl" />
+          </motion.div>
+        </motion.div>
+
+        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
+          {tableHeaders.map((h, i) => (
+            <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
+          ))}
+          <div className="w-5" />
+        </div>
+
+        <div className="space-y-2">
+          {filtered.map((s, i) => (
+            <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => setSelectedStudent(s)} whileHover={{ y: -3, scale: 1.002 }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
+                <div className="min-w-0">
+                  <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
+                  <RiskBadge risk={s.risk} />
+                </div>
+              </div>
+              <p className="text-xs font-mono font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>1098{s.id}76{s.id}</p>
+              <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.faculty}</p>
+              <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{s.lastVisit}</p>
+              <div className="flex items-center gap-1.5">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.06)' }}>
+                  <ClipboardList size={14} style={{ color: BLUE }} />
+                </div>
+                <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal opacity-40">registros</span></p>
+              </div>
+              <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
+            </motion.div>
+          ))}
         </div>
       </div>
     )
