@@ -150,17 +150,22 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
           style={{ position: 'absolute', left: 10, top: -38, width: 220, zIndex: 20, opacity: 0, animation: 'blur-fade 0.6s 0.3s ease forwards' }}
         >
           <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', width: '85%', height: '45%', background: 'rgba(18,112,183,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
-          <img src={studentsImg} alt="Students" className="w-full h-auto drop-shadow-xl relative" style={{ transform: 'scaleX(-1)' }} />
+          <img src={studentsImg} alt="Students" className="w-full h-auto drop-shadow-xl relative" />
         </div>
       </motion.div>
 
       {/* Filter category pills — full width row */}
-      <AnimatePresence>
+      <motion.div
+        layout
+        style={{ overflow: 'clip' }}
+        animate={{ opacity: showFilters ? 1 : 0 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      >
         {showFilters && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
+            initial={{ y: -8 }}
+            animate={{ y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
             className="mb-4"
           >
             <div className="flex items-center justify-between gap-1 p-1 rounded-2xl w-full relative" style={{
@@ -190,101 +195,101 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </motion.div>
 
       {/* Dropdown — overlays student list */}
       <AnimatePresence>
-        {showFilters && (
-          <motion.div
-            key={filterCategory}
-            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-            className="absolute left-6 right-6 z-30 rounded-2xl p-3"
-            style={{
-              background: 'rgba(255,255,255,0.85)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.6)',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
-            }}
-          >
-            <div className="relative mb-2">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(0,0,0,0.2)' }} />
-              <input
-                value={filterSearch}
-                onChange={e => setFilterSearch(e.target.value)}
-                placeholder="Buscar..."
-                className="w-full pl-8 pr-3 py-2 rounded-xl text-xs font-medium outline-none"
-                style={{ background: 'rgba(0,0,0,0.03)', color: '#1A1A1E' }}
-              />
-            </div>
-
-            <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-              <motion.button
-                onClick={() => { setFilterValue('all'); setFilterSearch('') }}
-                whileHover={{ background: 'rgba(18,112,183,0.06)' }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-colors"
-                style={{
-                  background: filterValue === 'all' ? 'rgba(18,112,183,0.1)' : 'transparent',
-                  color: filterValue === 'all' ? '#1270B7' : 'rgba(0,0,0,0.45)',
-                }}
-              >
-                Todos
-              </motion.button>
-              {filterOptions[filterCategory]
-                ?.filter(opt => opt.toLowerCase().includes(filterSearch.toLowerCase()))
-                .map(opt => (
-                  <motion.button key={opt}
-                    onClick={() => { setFilterValue(opt); setFilterSearch('') }}
-                    whileHover={{ background: 'rgba(18,112,183,0.06)' }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-colors"
-                    style={{
-                      background: filterValue === opt ? 'rgba(18,112,183,0.1)' : 'transparent',
-                      color: filterValue === opt ? '#1270B7' : 'rgba(0,0,0,0.45)',
-                    }}
-                  >
-                    {opt}
-                  </motion.button>
-                ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Student list — blurred when filters are open */}
-      <div style={{ filter: showFilters ? 'blur(4px)' : 'none', opacity: showFilters ? 0.5 : 1, transition: 'filter 0.3s ease, opacity 0.3s ease', pointerEvents: showFilters ? 'none' : 'auto' }}>
-        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
-          {tableHeaders.map((h, i) => (
-            <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
-          ))}
-          <div className="w-5" />
-        </div>
-
-        <div className="space-y-2">
-          {filtered.map((s, i) => (
-            <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => onSelectStudent(s)} whileHover={{ y: -3, scale: 1.002, background: 'rgba(255,255,255,0.8)' }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
-                <div className="min-w-0">
-                  <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
-                </div>
+          {showFilters && (
+            <motion.div
+              key={filterCategory}
+              initial={{ opacity: 0, y: -6, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.96 }}
+              className="absolute left-6 right-6 z-30 rounded-2xl p-3"
+              style={{
+                background: 'rgba(255,255,255,0.85)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.6)',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
+              }}
+            >
+              <div className="relative mb-2">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(0,0,0,0.2)' }} />
+                <input
+                  value={filterSearch}
+                  onChange={e => setFilterSearch(e.target.value)}
+                  placeholder="Buscar..."
+                  className="w-full pl-8 pr-3 py-2 rounded-xl text-xs font-medium outline-none"
+                  style={{ background: 'rgba(0,0,0,0.03)', color: '#1A1A1E' }}
+                />
               </div>
-              <p className="text-xs font-mono font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>1098{s.id}76{s.id}</p>
-              <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.faculty}</p>
-              <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{s.lastVisit}</p>
-              <div className="flex items-center gap-1.5">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.06)' }}>
-                  <ClipboardList size={14} style={{ color: BLUE }} />
-                </div>
-                <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal opacity-40">registros</span></p>
+
+              <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                <motion.button
+                  onClick={() => { setFilterValue('all'); setFilterSearch('') }}
+                  whileHover={{ background: 'rgba(18,112,183,0.06)' }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-colors"
+                  style={{
+                    background: filterValue === 'all' ? 'rgba(18,112,183,0.1)' : 'transparent',
+                    color: filterValue === 'all' ? '#1270B7' : 'rgba(0,0,0,0.45)',
+                  }}
+                >
+                  Todos
+                </motion.button>
+                {filterOptions[filterCategory]
+                  ?.filter(opt => opt.toLowerCase().includes(filterSearch.toLowerCase()))
+                  .map(opt => (
+                    <motion.button key={opt}
+                      onClick={() => { setFilterValue(opt); setFilterSearch('') }}
+                      whileHover={{ background: 'rgba(18,112,183,0.06)' }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-colors"
+                      style={{
+                        background: filterValue === opt ? 'rgba(18,112,183,0.1)' : 'transparent',
+                        color: filterValue === opt ? '#1270B7' : 'rgba(0,0,0,0.45)',
+                      }}
+                    >
+                      {opt}
+                    </motion.button>
+                  ))}
               </div>
-              <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
             </motion.div>
-          ))}
-        </div>
-      </div>
+          )}
+        </AnimatePresence>
+
+        {/* Student list — blurred when filters are open */}
+        <motion.div layout transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} style={{ filter: showFilters ? 'blur(4px)' : 'none', opacity: showFilters ? 0.5 : 1, transition: 'filter 0.3s ease, opacity 0.3s ease', pointerEvents: showFilters ? 'none' : 'auto' }}>
+          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
+            {tableHeaders.map((h, i) => (
+              <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
+            ))}
+            <div className="w-5" />
+          </div>
+
+          <div className="space-y-2">
+            {filtered.map((s, i) => (
+              <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => onSelectStudent(s)} whileHover={{ y: -3, scale: 1.002, background: 'rgba(255,255,255,0.8)' }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
+                  <div className="min-w-0">
+                    <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
+                  </div>
+                </div>
+                <p className="text-xs font-mono font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>1098{s.id}76{s.id}</p>
+                <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.faculty}</p>
+                <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{s.lastVisit}</p>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.06)' }}>
+                    <ClipboardList size={14} style={{ color: BLUE }} />
+                  </div>
+                  <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal opacity-40">registros</span></p>
+                </div>
+                <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
     </div>
   )
 }
