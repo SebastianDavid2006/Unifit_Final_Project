@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ClipboardList, BarChart2, Dumbbell, Calendar,
   TrendingUp, AlertTriangle, Clock, Activity, Target, Award,
   ChevronRight, Search, Plus, ArrowUp, ArrowDown, Sparkles,
-  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, BarChart3, Settings, Menu,
+  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu,
 } from 'lucide-react'
 import { StudentProfile } from './StudentProfile'
 import coachImg from '../../assets/illustrations/dashboard/coach.png'
@@ -289,14 +289,25 @@ export function TrainerDashboard() {
           transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 mb-6 hover:bg-white/5 transition-colors"
-          style={{ color: 'rgba(255,255,255,0.4)' }}
-          title={expanded ? 'Colapsar' : 'Expandir'}
-        >
-          <Menu size={20} />
-        </button>
+        <div className="flex-shrink-0" style={{ width: '100%', height: 44, marginBottom: 24, marginTop: 8 }}>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="w-11 h-11 rounded-xl flex items-center justify-center
+              border border-transparent
+              hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/10 hover:shadow-lg"
+            style={{
+              position: 'absolute',
+              top: 8,
+              left: expanded ? 'calc(100% - 56px)' : 'calc(50% - 22px)',
+              color: 'rgba(255,255,255,0.5)',
+              zIndex: 60,
+              transition: 'left 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease',
+            }}
+            title={expanded ? 'Colapsar' : 'Expandir'}
+          >
+            {expanded ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+          </button>
+        </div>
 
         <div
           className="flex flex-col w-full relative"
@@ -327,7 +338,7 @@ export function TrainerDashboard() {
                   borderRadius: expanded ? 10 : 0,
                   transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease',
                 }}>
-                  {entry.isActive && (
+                  {entry.isActive && false && (
                     <motion.div
                       layoutId="goo-indicator"
                       className="size-full"
@@ -363,7 +374,7 @@ export function TrainerDashboard() {
                 key={entry.item.id}
                 onClick={() => setSection(entry.item.id)}
                 title={entry.item.label}
-                className="relative flex items-center overflow-hidden flex-shrink-0"
+                className="relative flex items-center flex-shrink-0"
                 style={{
                   height: 44,
                   width: expanded ? 184 : 68,
@@ -374,6 +385,15 @@ export function TrainerDashboard() {
                   transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), padding-left 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease, color 0.3s ease',
                 }}
               >
+                {/* Resplandor izquierdo vibrante */}
+                {section === entry.item.id && (
+                  <div className="absolute top-0 bottom-0 pointer-events-none" style={{
+                    left: -16,
+                    width: expanded ? 'calc(100% + 200px)' : 'calc(100% + 140px)',
+                    background: 'linear-gradient(90deg, rgba(228,35,50,0.35) 0%, rgba(43,44,138,0.18) 22%, rgba(239,187,41,0.06) 42%, transparent 58%)',
+                    filter: 'blur(8px)',
+                  }} />
+                )}
                 <div className="flex items-center justify-center w-11 h-11 flex-shrink-0">
                   <entry.item.icon size={19} />
                 </div>
@@ -625,8 +645,8 @@ export function TrainerDashboard() {
             style={{
               position: 'absolute',
               right: 24,
-              top: 10,
-              width: 440,
+              top: -50,
+              width: 400,
               height: 'auto',
               zIndex: 20,
             }}
@@ -636,8 +656,8 @@ export function TrainerDashboard() {
               alt="Coach Dashboard"
               className="w-full h-auto"
             />
-            <div className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none z-10" style={{
-              background: 'linear-gradient(to top, transparent 0%, transparent 100%)',
+            <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-10" style={{
+              background: 'linear-gradient(to top, rgba(240,247,255,1) 0%, transparent 60%)',
             }} />
           </motion.div>
         </motion.div>
