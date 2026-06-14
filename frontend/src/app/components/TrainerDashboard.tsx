@@ -44,13 +44,13 @@ const adherenceByFaculty = [
 ]
 
 const students = [
-  { id: 1, name: 'Ana García Martínez', faculty: 'Ingeniería', adherence: 92, risk: 'low' as const, lastVisit: 'Hoy, 7:30 AM', avatar: 'AG', goal: 'Pérdida de peso', sessions: 24, weight: 62, height: 165 },
-  { id: 2, name: 'Carlos Rodríguez', faculty: 'Medicina', adherence: 34, risk: 'high' as const, lastVisit: 'Hace 12 días', avatar: 'CR', goal: 'Fuerza', sessions: 8, weight: 78, height: 178 },
-  { id: 3, name: 'María Fernández', faculty: 'Derecho', adherence: 78, risk: 'low' as const, lastVisit: 'Ayer', avatar: 'MF', goal: 'Resistencia', sessions: 19, weight: 58, height: 162 },
-  { id: 4, name: 'Diego López', faculty: 'Administración', adherence: 51, risk: 'medium' as const, lastVisit: 'Hace 5 días', avatar: 'DL', goal: 'Masa muscular', sessions: 14, weight: 82, height: 181 },
-  { id: 5, name: 'Valentina Torres', faculty: 'Ciencias', adherence: 88, risk: 'low' as const, lastVisit: 'Hoy, 9:15 AM', avatar: 'VT', goal: 'Flexibilidad', sessions: 31, weight: 55, height: 160 },
-  { id: 6, name: 'Sebastián Herrera', faculty: 'Ingeniería', adherence: 22, risk: 'high' as const, lastVisit: 'Hace 18 días', avatar: 'SH', goal: 'Cardio', sessions: 4, weight: 91, height: 183 },
-  { id: 7, name: 'Luisa Mendoza', faculty: 'Arte', adherence: 95, risk: 'low' as const, lastVisit: 'Hoy, 6:00 AM', avatar: 'LM', goal: 'Bienestar', sessions: 42, weight: 60, height: 168 },
+  { id: 1, name: 'Ana García Martínez', faculty: 'Ingeniería', adherence: 92, risk: 'low' as const, status: 'active' as const, lastVisit: 'Hoy, 7:30 AM', avatar: 'AG', goal: 'Pérdida de peso', sessions: 24, weight: 62, height: 165, institution: 'Universitaria de Colombia', gender: 'Femenino', program: 'Sistemas', modality: 'Presencial', jornada: 'Diurna', semester: '6', eps: 'Sanitas' },
+  { id: 2, name: 'Carlos Rodríguez', faculty: 'Medicina', adherence: 34, risk: 'high' as const, status: 'inactive' as const, lastVisit: 'Hace 12 días', avatar: 'CR', goal: 'Fuerza', sessions: 8, weight: 78, height: 178, institution: 'Universitaria de Bogotá', gender: 'Masculino', program: 'Medicina', modality: 'Presencial', jornada: 'Nocturna', semester: '4', eps: 'Compensar' },
+  { id: 3, name: 'María Fernández', faculty: 'Derecho', adherence: 78, risk: 'low' as const, status: 'process' as const, lastVisit: 'Ayer', avatar: 'MF', goal: 'Resistencia', sessions: 19, weight: 58, height: 162, institution: 'Universitaria de Colombia', gender: 'Femenino', program: 'Derecho', modality: 'Virtual', jornada: 'Diurna', semester: '8', eps: 'Sura' },
+  { id: 4, name: 'Diego López', faculty: 'Administración', adherence: 51, risk: 'medium' as const, status: 'active' as const, lastVisit: 'Hace 5 días', avatar: 'DL', goal: 'Masa muscular', sessions: 14, weight: 82, height: 181, institution: 'Universitaria de Bogotá', gender: 'Masculino', program: 'Administración', modality: 'Presencial', jornada: 'Diurna', semester: '2', eps: 'Sanitas' },
+  { id: 5, name: 'Valentina Torres', faculty: 'Ciencias', adherence: 88, risk: 'low' as const, status: 'active' as const, lastVisit: 'Hoy, 9:15 AM', avatar: 'VT', goal: 'Flexibilidad', sessions: 31, weight: 55, height: 160, institution: 'Universitaria de Colombia', gender: 'Femenino', program: 'Biología', modality: 'Presencial', jornada: 'Nocturna', semester: '5', eps: 'Salud Total' },
+  { id: 6, name: 'Sebastián Herrera', faculty: 'Ingeniería', adherence: 22, risk: 'high' as const, status: 'inactive' as const, lastVisit: 'Hace 18 días', avatar: 'SH', goal: 'Cardio', sessions: 4, weight: 91, height: 183, institution: 'Universitaria de Bogotá', gender: 'Masculino', program: 'Industrial', modality: 'Presencial', jornada: 'Diurna', semester: '9', eps: 'Famisanar' },
+  { id: 7, name: 'Luisa Mendoza', faculty: 'Arte', adherence: 95, risk: 'low' as const, status: 'process' as const, lastVisit: 'Hoy, 6:00 AM', avatar: 'LM', goal: 'Bienestar', sessions: 42, weight: 60, height: 168, institution: 'Universitaria de Colombia', gender: 'Femenino', program: 'Artes Plásticas', modality: 'Presencial', jornada: 'Diurna', semester: '3', eps: 'Sanitas' },
 ]
 
 const kpis = [
@@ -208,6 +208,8 @@ export function TrainerDashboard() {
   const [assessments, setAssessments] = useState<Assessment[]>([])
 
   const [showFilters, setShowFilters] = useState(false)
+  const [filterCategory, setFilterCategory] = useState<'status' | 'institution' | 'program' | 'gender' | 'semester'>('status')
+  const [filterValue, setFilterValue] = useState<string>('all')
 
   // ── Gym Configuration ──
   const [gymName, setGymName] = useState('Gimnasio Universitario UNIFIT')
@@ -239,10 +241,6 @@ export function TrainerDashboard() {
   const [allowGuestAccess, setAllowGuestAccess] = useState(false)
   const [maxBookingDays, setMaxBookingDays] = useState('7')
   const [minAge, setMinAge] = useState('15')
-
-  if (selectedStudent) {
-    return <StudentProfile student={selectedStudent} onBack={() => setSelectedStudent(null)} />
-  }
 
   const filtered = students.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.faculty.toLowerCase().includes(search.toLowerCase())
@@ -564,24 +562,28 @@ export function TrainerDashboard() {
           </div>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={section}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-          >
-            {section === 'dashboard' && renderDashboard()}
-            {section === 'students' && renderStudents()}
-            {section === 'routines' && renderRoutines()}
-            {section === 'assessments' && renderAssessments()}
-            {section === 'equipment' && renderEquipment()}
-            {section === 'schedule' && renderSchedule()}
-            {section === 'stats' && renderStats()}
-            {section === 'configuration' && renderConfiguration()}
-          </motion.div>
-        </AnimatePresence>
+        {selectedStudent ? (
+          <StudentProfile student={selectedStudent} onBack={() => setSelectedStudent(null)} />
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={section}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              {section === 'dashboard' && renderDashboard()}
+              {section === 'students' && renderStudents()}
+              {section === 'routines' && renderRoutines()}
+              {section === 'assessments' && renderAssessments()}
+              {section === 'equipment' && renderEquipment()}
+              {section === 'schedule' && renderSchedule()}
+              {section === 'stats' && renderStats()}
+              {section === 'configuration' && renderConfiguration()}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </div>
     </div>
   )
@@ -1897,189 +1899,82 @@ export function TrainerDashboard() {
   }
 
   function renderStudents() {
-    const tableHeaders = ['Nombre', 'Documento', 'Carrera', 'Último Ingreso', 'Valoraciones']
+    const [filterCategory, setFilterCategory] = useState<'status' | 'institution' | 'program' | 'gender' | 'semester'>('status')
+    const [filterValue, setFilterValue] = useState<string>('all')
+
+    const tableHeaders = ['Nombre', 'Documento', 'Carrera', 'Último Ingreso', 'Valoraciones', 'Estado']
+
+    // Get unique filter options
+    const filterOptions = {
+        status: ['active', 'process', 'inactive'],
+        institution: ['Universitaria de Colombia', 'Universitaria de Bogotá'],
+        program: ['Sistemas', 'Medicina', 'Derecho', 'Administración', 'Biología', 'Industrial', 'Artes Plásticas'],
+        gender: ['Masculino', 'Femenino'],
+        semester: ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+    }
+
+    const filtered = students.filter(s => {
+        if (filterValue === 'all') return true
+        return (s as any)[filterCategory] === filterValue
+    })
 
     return (
       <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
-        {/* Centered Filter Bar - Disappears if not active */}
-        <div className="h-12 flex justify-center items-center">
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="flex items-center gap-2 p-1.5 rounded-2xl" 
-                style={{ 
-                  background: 'rgba(255,255,255,0.4)', 
-                  backdropFilter: 'blur(12px)', 
-                  border: '1px solid rgba(255,255,255,0.6)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.04)'
-                }}
-              >
-                {(['all', 'high', 'medium', 'low'] as const).map(f => (
-                  <motion.button 
-                    key={f} 
-                    onClick={() => setRiskFilter(f)} 
-                    whileHover={{ scale: 1.02 }} 
-                    whileTap={{ scale: 0.98 }}
-                    className="px-5 py-1.5 rounded-xl text-[11px] font-bold transition-all"
-                    style={{ 
-                      background: riskFilter === f ? '#FFFFFF' : 'transparent', 
-                      color: riskFilter === f ? '#1A1A1E' : 'rgba(0,0,0,0.35)',
-                      boxShadow: riskFilter === f ? '0 4px 12px rgba(0,0,0,0.05)' : 'none'
-                    }}
-                  >
-                    {f === 'all' ? 'Todos' : f === 'high' ? 'Alto Riesgo' : f === 'medium' ? 'Alerta' : 'Activos'}
-                  </motion.button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* Advanced Filter Bar */}
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="flex justify-center items-center gap-2 p-1.5 rounded-2xl w-fit mx-auto" style={{ 
+            background: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.6)' 
+          }}>
+            {(['status', 'institution', 'program', 'gender', 'semester'] as const).map(cat => (
+              <button key={cat} onClick={() => { setFilterCategory(cat); setFilterValue('all') }} 
+                className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${filterCategory === cat ? 'bg-white shadow-sm' : 'text-black/30'}`}>
+                {cat}
+              </button>
+            ))}
+          </div>
+          <div className="flex justify-center items-center gap-2 flex-wrap">
+            <button onClick={() => setFilterValue('all')} className={`px-4 py-1.5 rounded-xl text-[11px] font-bold ${filterValue === 'all' ? 'bg-black text-white' : 'bg-black/5 text-black/50'}`}>Todos</button>
+            {filterOptions[filterCategory].map(opt => (
+                <button key={opt} onClick={() => setFilterValue(opt)} className={`px-4 py-1.5 rounded-xl text-[11px] font-bold ${filterValue === opt ? 'bg-[#1270B7] text-white' : 'bg-black/5 text-black/50'}`}>
+                    {opt}
+                </button>
+            ))}
+          </div>
         </div>
 
-        {/* Hero — Cinematic Banner (Compact Version) */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="relative rounded-3xl mb-10"
-          style={{
-            background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)',
-            boxShadow: '0 8px 30px rgba(0,122,255,0.02)',
-            border: 'none',
-          }}
-        >
-          {/* Clipped container for mesh with gradient fade */}
-          <div className="absolute inset-0 pointer-events-none rounded-3xl overflow-hidden" style={{
-            maskImage: 'linear-gradient(to right, black 60%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to right, black 60% , transparent 100%)'
-          }}>
-            <div
-              className="absolute inset-0 opacity-25"
-              style={{
-                background: `
-                  radial-gradient(ellipse at 80% 10%, rgba(0,122,255,0.03) 0%, transparent 40%),
-                  radial-gradient(ellipse at 10% 80%, rgba(245,166,35,0.02) 0%, transparent 40%),
-                  radial-gradient(ellipse at 50% 50%, rgba(230,57,70,0.02) 0%, transparent 50%)
-                `,
-                backgroundSize: '200% 200%',
-                animation: 'mesh-shift 15s ease-in-out infinite',
-              }}
-            />
-          </div>
-
-          <div className="relative z-10 p-6 flex items-center justify-between"> 
-            <div className="flex items-center gap-5 ml-40">
-              <div className="w-1 h-10 rounded-full" style={{ background: RED_GRAD }} />
+        {/* Hero Banner */}
+        <motion.div className="relative rounded-3xl mb-10 overflow-hidden" style={{ background: '#FFFFFF', boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
+          <div className="relative z-10 p-8 flex items-center justify-between"> 
+            <div className="flex items-center gap-6 ml-40">
+              <div className="w-1 h-12 rounded-full" style={{ background: RED_GRAD }} />
               <div>
-                <h1 style={{ color: '#1A1A1E', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
-                  Estudiantes
-                </h1>
-                <p className="text-xs font-medium mt-0.5 max-w-xs" style={{ color: 'rgba(0,0,0,0.4)', lineHeight: 1.4 }}>
-                  Gestiona y haz seguimiento al progreso físico de tu comunidad.
-                </p>
+                <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Estudiantes</h1>
+                <p className="text-xs text-black/40">Gestión avanzada y seguimiento de comunidad.</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 pr-4">
-              {/* Filter Toggle Icon */}
-              <motion.button
-                whileHover={{ scale: 1.1, backgroundColor: 'rgba(0,0,0,0.05)' }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setShowFilters(!showFilters)}
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${showFilters ? 'bg-black/5 text-[#1A1A1E]' : 'text-black/30'}`}
-                style={{ border: '1px solid rgba(0,0,0,0.05)' }}
-              >
-                <Menu size={20} />
-              </motion.button>
-
-              {/* Expandable Plus Button (Organic Mesh Gradient) */}
-              <motion.button 
-                initial="initial"
-                whileHover="hover"
-                className="flex items-center rounded-2xl overflow-hidden relative text-white"
-                style={{ 
-                  height: 44, 
-                  padding: '0 12px',
-                  background: `
-                    radial-gradient(at 15% 15%, #F43843 0%, transparent 50%),
-                    radial-gradient(at 85% 20%, #1270B7 0%, transparent 50%),
-                    radial-gradient(at 50% 50%, #F1C827 0%, transparent 60%),
-                    radial-gradient(at 20% 80%, #1270B7 0%, transparent 50%),
-                    radial-gradient(at 80% 85%, #F43843 0%, transparent 50%),
-                    #1270B7
-                  `,
-                  backgroundSize: '150% 150%',
-                  boxShadow: '0 10px 25px -5px rgba(18,112,183,0.3)',
-                }}
-              >
-                <div className="flex items-center justify-center flex-shrink-0">
-                  <Plus size={18} strokeWidth={3} />
-                </div>
-                <motion.div
-                  variants={{
-                    hover: { width: 'auto', opacity: 1, marginLeft: 8 },
-                    initial: { width: 0, opacity: 0, marginLeft: 0 }
-                  }}
-                  className="overflow-hidden whitespace-nowrap"
-                >
-                  <span className="text-xs font-bold">Nuevo Estudiante</span>
-                </motion.div>
-              </motion.button>
-            </div>
+            {/* Premium Button */}
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              className="px-6 py-3 rounded-2xl text-white text-sm font-bold flex items-center gap-2 overflow-hidden relative"
+              style={{
+                background: 'linear-gradient(135deg, #1270B7 0%, #F43843 100%)',
+                backgroundSize: '200% 200%',
+                animation: 'gradient-shift 5s ease infinite'
+              }}
+            >
+              <Plus size={18} /> Nuevo Estudiante
+            </motion.button>
           </div>
-
-          {/* Coach image */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            style={{
-              position: 'absolute',
-              left: 20,
-              top: -45,
-              width: 160,
-              height: 'auto',
-              zIndex: 20,
-              transform: 'scaleX(-1)',
-            }}
-          >
-            <img src={coachImg} alt="Coach Students" className="w-full h-auto drop-shadow-xl" />
-          </motion.div>
         </motion.div>
 
-        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
-          {tableHeaders.map((h, i) => (
-            <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
-          ))}
-          <div className="w-5" />
-        </div>
-
+        {/* Updated Table */}
         <div className="space-y-2">
-          {filtered.map((s, i) => (
-            <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => setSelectedStudent(s)} whileHover={{ y: -3, scale: 1.002 }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
-                <div className="min-w-0">
-                  <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
-                  <RiskBadge risk={s.risk} />
-                </div>
-              </div>
-              <p className="text-xs font-mono font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>1098{s.id}76{s.id}</p>
-              <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.faculty}</p>
-              <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{s.lastVisit}</p>
-              <div className="flex items-center gap-1.5">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.06)' }}>
-                  <ClipboardList size={14} style={{ color: BLUE }} />
-                </div>
-                <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal opacity-40">registros</span></p>
-              </div>
-              <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-}
+          {filtered.map(s => (
+            <div key={s.id} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card">
+              <p className="font-bold">{s.name}</p>
+              <p className="text-xs font-mono">{s.eps}</p>
+              <p className="text-xs">{s.program}</p>
+              <p className="text-xs">{s.lastVisit}</p>
+              <p className="text-xs">{Math.floor(s.sessions / 3)} registros</p>
+              <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${s.status === 'active' ? 'bg-green-100 text-green-700' : s.status === 'process' ? 'bg-yellow-100 te
