@@ -147,10 +147,10 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
         </div>
 
         <div
-          style={{ position: 'absolute', left: 10, top: -45, width: 220, zIndex: 20, transform: 'scaleX(-1)', opacity: 0, animation: 'blur-fade 0.6s 0.3s ease forwards' }}
+          style={{ position: 'absolute', left: 10, top: -38, width: 220, zIndex: 20, opacity: 0, animation: 'blur-fade 0.6s 0.3s ease forwards' }}
         >
           <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', width: '85%', height: '45%', background: 'rgba(18,112,183,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
-          <img src={studentsImg} alt="Students" className="w-full h-auto drop-shadow-xl relative" />
+          <img src={studentsImg} alt="Students" className="w-full h-auto drop-shadow-xl relative" style={{ transform: 'scaleX(-1)' }} />
         </div>
       </motion.div>
 
@@ -163,24 +163,29 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
             exit={{ opacity: 0, y: -8 }}
             className="mb-4"
           >
-            <div className="flex items-center justify-between gap-1 p-1 rounded-2xl w-full" style={{
+            <div className="flex items-center justify-between gap-1 p-1 rounded-2xl w-full relative" style={{
               background: 'rgba(255,255,255,0.35)',
               backdropFilter: 'blur(12px)',
               border: '1px solid rgba(255,255,255,0.5)',
             }}>
               {Object.entries(filterLabels).map(([key, label]) => (
-                <motion.button key={key}
+                <button key={key}
                   onClick={() => { setFilterCategory(key as any); setFilterValue('all'); setFilterSearch('') }}
-                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  className="px-4 py-1.5 rounded-xl text-[11px] font-bold transition-all"
+                  className="relative px-4 py-1.5 rounded-xl text-[11px] font-bold transition-colors flex-1 text-center hover:bg-white/40"
                   style={{
-                    background: filterCategory === key ? '#FFFFFF' : 'transparent',
                     color: filterCategory === key ? '#1A1A1E' : 'rgba(0,0,0,0.35)',
-                    boxShadow: filterCategory === key ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
                   }}
                 >
-                  {label}
-                </motion.button>
+                  {filterCategory === key && (
+                    <motion.div
+                      layoutId="activeFilterBg"
+                      className="absolute inset-0 rounded-xl"
+                      style={{ background: '#FFFFFF', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">{label}</span>
+                </button>
               ))}
             </div>
           </motion.div>
@@ -217,8 +222,9 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
             <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
               <motion.button
                 onClick={() => { setFilterValue('all'); setFilterSearch('') }}
+                whileHover={{ background: 'rgba(18,112,183,0.06)' }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-all"
+                className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-colors"
                 style={{
                   background: filterValue === 'all' ? 'rgba(18,112,183,0.1)' : 'transparent',
                   color: filterValue === 'all' ? '#1270B7' : 'rgba(0,0,0,0.45)',
@@ -231,8 +237,9 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
                 .map(opt => (
                   <motion.button key={opt}
                     onClick={() => { setFilterValue(opt); setFilterSearch('') }}
+                    whileHover={{ background: 'rgba(18,112,183,0.06)' }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-all"
+                    className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold transition-colors"
                     style={{
                       background: filterValue === opt ? 'rgba(18,112,183,0.1)' : 'transparent',
                       color: filterValue === opt ? '#1270B7' : 'rgba(0,0,0,0.45)',
@@ -257,7 +264,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
 
         <div className="space-y-2">
           {filtered.map((s, i) => (
-            <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => onSelectStudent(s)} whileHover={{ y: -3, scale: 1.002 }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
+            <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => onSelectStudent(s)} whileHover={{ y: -3, scale: 1.002, background: 'rgba(255,255,255,0.8)' }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
                 <div className="min-w-0">
