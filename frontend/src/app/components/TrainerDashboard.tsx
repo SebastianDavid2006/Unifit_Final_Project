@@ -11,8 +11,8 @@ import {
   Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu,
 } from 'lucide-react'
 import { StudentProfile, TABS } from './StudentProfile'
+import StudentsModule from './StudentsModule'
 import coachImg from '../../assets/illustrations/characters/coach.png'
-import studentsImg from '../../assets/illustrations/characters/students.png'
 
 // ── Colors ──
 
@@ -209,10 +209,6 @@ export function TrainerDashboard() {
   const [assessmentNotes, setAssessmentNotes] = useState('')
   const [assessments, setAssessments] = useState<Assessment[]>([])
 
-  const [showFilters, setShowFilters] = useState(false)
-  const [filterCategory, setFilterCategory] = useState<'eps' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
-  const [filterValue, setFilterValue] = useState<string>('all')
-
   // ── Gym Configuration ──
   const [gymName, setGymName] = useState('Gimnasio Universitario UNIFIT')
   const [gymAddress, setGymAddress] = useState('Av. Universidad 123, Campus Central')
@@ -243,13 +239,6 @@ export function TrainerDashboard() {
   const [allowGuestAccess, setAllowGuestAccess] = useState(false)
   const [maxBookingDays, setMaxBookingDays] = useState('7')
   const [minAge, setMinAge] = useState('15')
-
-  const filtered = students.filter(s => {
-    const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.faculty.toLowerCase().includes(search.toLowerCase())
-    const matchRisk = riskFilter === 'all' || s.risk === riskFilter
-    const matchCategory = filterValue === 'all' || (s as any)[filterCategory] === filterValue
-    return matchSearch && matchRisk && matchCategory
-  })
 
   // ── RENDERERS ──
 
@@ -592,7 +581,14 @@ export function TrainerDashboard() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
               {section === 'dashboard' && renderDashboard()}
-              {section === 'students' && renderStudents()}
+              {section === 'students' && (
+                <StudentsModule
+                  students={students}
+                  search={search}
+                  riskFilter={riskFilter}
+                  onSelectStudent={setSelectedStudent}
+                />
+              )}
               {section === 'routines' && renderRoutines()}
               {section === 'assessments' && renderAssessments()}
               {section === 'equipment' && renderEquipment()}
@@ -739,202 +735,6 @@ export function TrainerDashboard() {
                 </div>
                 <p className="text-xs mt-1.5 font-semibold" style={{ color: 'rgba(0,0,0,0.45)' }}>{kpi.label}</p>
               </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  function renderStudents() {
-    const tableHeaders = ['Nombre', 'Documento', 'Carrera', 'Último Ingreso', 'Valoraciones', 'Estado']
-
-    const filterLabels: Record<string, string> = {
-      eps: 'EPS', gender: 'Género', institution: 'Institución',
-      program: 'Programa', modality: 'Modalidad', jornada: 'Jornada', semester: 'Semestre'
-    }
-    const filterOptions: Record<string, string[]> = {
-      eps: [...new Set(students.map(s => s.eps))],
-      gender: [...new Set(students.map(s => s.gender))],
-      institution: [...new Set(students.map(s => s.institution))],
-      program: [...new Set(students.map(s => s.program))],
-      modality: [...new Set(students.map(s => s.modality))],
-      jornada: [...new Set(students.map(s => s.jornada))],
-      semester: [...new Set(students.map(s => s.semester))],
-    }
-
-    return (
-      <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
-
-        <motion.div className="relative rounded-3xl mb-6" style={{ background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)', boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
-          <div className="absolute inset-0 pointer-events-none rounded-3xl overflow-hidden" style={{
-            maskImage: 'linear-gradient(to right, black 60%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to right, black 60%, transparent 100%)'
-          }}>
-            <div className="absolute inset-0 opacity-30" style={{
-              background: 'radial-gradient(ellipse at 80% 10%, rgba(0,122,255,0.03) 0%, transparent 40%), radial-gradient(ellipse at 10% 80%, rgba(245,166,35,0.02) 0%, transparent 40%), radial-gradient(ellipse at 50% 50%, rgba(230,57,70,0.02) 0%, transparent 50%)',
-              backgroundSize: '200% 200%',
-              animation: 'mesh-shift 15s ease-in-out infinite',
-            }} />
-          </div>
-
-          <div className="relative z-10 p-8 flex items-center justify-between"> 
-            <div className="flex items-center gap-6 ml-44">
-              <div className="w-1 h-12 rounded-full" style={{ background: RED_GRAD }} />
-              <div>
-                <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Estudiantes</h1>
-                <p className="text-xs text-black/40">Gestión avanzada y seguimiento de comunidad.</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 pr-4">
-              <motion.button
-                whileHover={{ scale: 1.1, backgroundColor: 'rgba(0,0,0,0.05)' }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setShowFilters(!showFilters)}
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${showFilters ? 'bg-black/5 text-[#1A1A1E]' : 'text-black/30'}`}
-                style={{ border: '1px solid rgba(0,0,0,0.05)' }}
-              >
-                <Menu size={20} />
-              </motion.button>
-
-              <motion.button
-                initial="initial"
-                whileHover="hover"
-                className="flex items-center rounded-2xl overflow-hidden relative text-white"
-                style={{ 
-                  height: 44, 
-                  padding: '0 12px',
-                  background: `
-                    radial-gradient(at 20% 20%, #F43843 0%, transparent 50%),
-                    radial-gradient(at 80% 15%, #1270B7 0%, transparent 50%),
-                    radial-gradient(at 50% 80%, #F1C827 0%, transparent 60%),
-                    radial-gradient(at 30% 60%, #F43843 0%, transparent 40%),
-                    radial-gradient(at 70% 70%, #1270B7 0%, transparent 40%),
-                    #F43843
-                  `,
-                  backgroundSize: '150% 150%',
-                  boxShadow: '0 10px 25px -5px rgba(230,57,70,0.3)',
-                }}
-                variants={{
-                  hover: { scale: [1, 1.07, 1.03], transition: { duration: 0.3 } },
-                  initial: { scale: 1 }
-                }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 10px 30px -3px rgba(230,57,70,0.5), 0 0 20px rgba(230,57,70,0.2)' }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(230,57,70,0.3)' }}
-              >
-                <motion.div
-                  variants={{
-                    hover: { width: 'auto', opacity: 1, marginRight: 10, transition: { delay: 0.18, duration: 0.25 } },
-                    initial: { width: 0, opacity: 0, marginRight: 0, transition: { duration: 0.2 } }
-                  }}
-                  className="overflow-hidden whitespace-nowrap"
-                >
-                  <span className="text-xs font-bold">Nuevo Estudiante</span>
-                </motion.div>
-                <motion.div
-                  variants={{
-                    hover: { scale: 1.25, filter: 'brightness(2) drop-shadow(0 0 12px rgba(255,255,255,0.8))', transition: { type: 'spring', stiffness: 500, damping: 12, delay: 0 } },
-                    initial: { scale: 1, filter: 'brightness(1.2)', transition: { duration: 0.2 } }
-                  }}
-                  className="flex items-center justify-center flex-shrink-0"
-                >
-                  <Plus size={18} strokeWidth={3} />
-                </motion.div>
-              </motion.button>
-            </div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            style={{ position: 'absolute', left: 10, top: -10, width: 180, zIndex: 20, transform: 'scaleX(-1)' }}
-          >
-            <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', width: '85%', height: '45%', background: 'rgba(18,112,183,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
-            <img src={studentsImg} alt="Students" className="w-full h-auto drop-shadow-xl relative" />
-          </motion.div>
-        </motion.div>
-
-        {/* Filters - category pills + values */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="mx-auto mb-6"
-              style={{ width: 'fit-content' }}
-            >
-              <div className="flex items-center gap-1 p-1 rounded-2xl mb-2" style={{
-                background: 'rgba(255,255,255,0.35)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.5)',
-              }}>
-                {Object.entries(filterLabels).map(([key, label]) => (
-                  <motion.button key={key} onClick={() => { setFilterCategory(key as any); setFilterValue('all') }}
-                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    className="px-4 py-1.5 rounded-xl text-[11px] font-bold transition-all"
-                    style={{
-                      background: filterCategory === key ? '#FFFFFF' : 'transparent',
-                      color: filterCategory === key ? '#1A1A1E' : 'rgba(0,0,0,0.35)',
-                      boxShadow: filterCategory === key ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
-                    }}
-                  >
-                    {label}
-                  </motion.button>
-                ))}
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap justify-center">
-                <motion.button onClick={() => setFilterValue('all')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  className="px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all"
-                  style={{
-                    background: filterValue === 'all' ? 'rgba(18,112,183,0.12)' : 'rgba(0,0,0,0.03)',
-                    color: filterValue === 'all' ? '#1270B7' : 'rgba(0,0,0,0.4)',
-                  }}
-                >Todos</motion.button>
-                {filterOptions[filterCategory]?.map(opt => (
-                  <motion.button key={opt} onClick={() => setFilterValue(opt)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    className="px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all"
-                    style={{
-                      background: filterValue === opt ? 'rgba(18,112,183,0.12)' : 'rgba(0,0,0,0.03)',
-                      color: filterValue === opt ? '#1270B7' : 'rgba(0,0,0,0.4)',
-                    }}
-                  >
-                    {opt}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
-          {tableHeaders.map((h, i) => (
-            <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
-          ))}
-          <div className="w-5" />
-        </div>
-
-        <div className="space-y-2">
-          {filtered.map((s, i) => (
-            <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => setSelectedStudent(s)} whileHover={{ y: -3, scale: 1.002 }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
-                <div className="min-w-0">
-                  <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
-                </div>
-              </div>
-              <p className="text-xs font-mono font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>1098{s.id}76{s.id}</p>
-              <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.faculty}</p>
-              <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{s.lastVisit}</p>
-              <div className="flex items-center gap-1.5">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.06)' }}>
-                  <ClipboardList size={14} style={{ color: BLUE }} />
-                </div>
-                <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal opacity-40">registros</span></p>
-              </div>
-              <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
             </motion.div>
           ))}
         </div>
