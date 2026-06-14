@@ -11,7 +11,6 @@ import {
   Zap, Flame, Shield, BarChart2,
 } from 'lucide-react'
 import { TrophyView } from './TrophyModel'
-import coachImg from '../../assets/illustrations/dashboard/coach.png'
 
 interface Student {
   id: number
