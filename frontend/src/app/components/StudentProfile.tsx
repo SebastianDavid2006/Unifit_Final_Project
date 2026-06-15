@@ -15,27 +15,28 @@ import { TrophyView } from './TrophyModel'
 interface Student {
   id: number
   name: string
-  document: string
-  carnetId: string
-  age: number
-  email: string
-  phone: string
+  firstName: string
+  secondName: string
+  lastName: string
+  secondLastName: string
+  documentType: string
+  documentNumber: string
+  birthDate: string
+  gender: string
   eps: string
   bloodType: string
-  gender: string
-  institution: string
-  faculty: string
+  epsCertificate?: string
+  email: string
+  phone: string
+  contactName: string
+  contactPhone: string
+  carnetId: string
   program: string
+  institution: string
+  semestre: number
   modality: string
   jornada: string
-  semestre: number
-  graduated: boolean
-  enrollmentDate: string
-  allergies: string
-  emergencyContact: string
-  city: string
-  address: string
-  nationality: string
+  graduationStatus: string
   adherence: number
   risk: 'low' | 'medium' | 'high'
   lastVisit: string
@@ -143,7 +144,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
       }} />
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto relative z-10 pt-6">
+      <div className="relative z-10 pt-6">
         <AnimatePresence mode="wait">
           {currentTab === 'overview' && (
             <motion.div key="overview" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
@@ -183,34 +184,42 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       borderRadius: 16,
                     }}>
                       <h3 className="text-[#1D1D1F] text-sm font-semibold mb-3">Información General</h3>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                        {[
-                          { label: 'Documento', value: student.document },
-                          { label: 'N. Carnet', value: student.carnetId },
-                          { label: 'Edad', value: `${student.age} años` },
-                          { label: 'Email', value: student.email },
-                          { label: 'Teléfono', value: student.phone },
-                          { label: 'EPS', value: student.eps },
-                          { label: 'G. sanguíneo', value: student.bloodType },
-                          { label: 'Género', value: student.gender },
-                          { label: 'Institución', value: student.institution },
-                          { label: 'Programa', value: student.program },
-                          { label: 'Modalidad', value: student.modality },
-                          { label: 'Jornada', value: student.jornada },
-                          { label: 'Semestre', value: `${student.semestre}°` },
-                          { label: 'Egresado', value: student.graduated ? 'Sí' : 'No' },
-                          { label: 'Fecha inscripción', value: student.enrollmentDate },
-                          { label: 'Alergias', value: student.allergies },
-                          { label: 'Contacto emergencia', value: student.emergencyContact },
-                          { label: 'Ciudad', value: student.city },
-                          { label: 'Dirección', value: student.address },
-                          { label: 'Nacionalidad', value: student.nationality },
-                        ].map(item => (
-                          <div key={item.label} className="py-1" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                            <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>{item.label}</p>
-                            <p className="text-xs font-semibold" style={{ color: '#1D1D1F' }}>{item.value}</p>
-                          </div>
-                        ))}
+                      <div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                          {[
+                            { label: 'Primer nombre', value: student.firstName },
+                            { label: 'Segundo nombre', value: student.secondName },
+                            { label: 'Primer apellido', value: student.lastName },
+                            { label: 'Segundo apellido', value: student.secondLastName },
+                            { label: 'Tipo de documento', value: student.documentType },
+                            { label: 'Número de documento', value: student.documentNumber },
+                            { label: 'Fecha de nacimiento', value: student.birthDate },
+                            { label: 'Género', value: student.gender },
+                            { label: 'EPS', value: student.eps },
+                            { label: 'Grupo sanguíneo', value: student.bloodType },
+                            { label: 'Certificado EPS', value: student.epsCertificate ? 'Adjunto' : '—', href: student.epsCertificate },
+                            { label: 'Email', value: student.email },
+                            { label: 'Teléfono', value: student.phone },
+                            { label: 'Nombre contacto', value: student.contactName },
+                            { label: 'Teléfono contacto', value: student.contactPhone },
+                            { label: 'Número carnet', value: student.carnetId },
+                            { label: 'Programa', value: student.program },
+                            { label: 'Institución', value: student.institution },
+                            { label: 'Semestre', value: `${student.semestre}°` },
+                            { label: 'Modalidad', value: student.modality },
+                            { label: 'Jornada', value: student.jornada },
+                            { label: 'Estado', value: student.graduationStatus },
+                          ].map(item => (
+                            <div key={item.label} className="py-1" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                              <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>{item.label}</p>
+                              {'href' in item && item.href ? (
+                                <a href={item.href} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold underline" style={{ color: '#E63946' }}>{item.value}</a>
+                              ) : (
+                                <p className="text-xs font-semibold" style={{ color: '#1D1D1F' }}>{item.value}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
