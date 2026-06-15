@@ -226,6 +226,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                 animate={{
                   scale: s.num === step ? [1.05, 1.25, 1.1, 1.15] : s.num > step ? [1, 0.75, 0.9, 0.85] : 0.85,
                   color: s.num <= step ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
+                  opacity: s.num < step ? Math.max(0.06, 1.2 - (step - s.num) * 0.3) : 1,
                 }}
                 transition={{
                   layout: { type: 'spring', stiffness: 300, damping: 22, mass: 1.2 },
@@ -236,7 +237,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                 style={{
                   width: s.num === step ? 38 : 32,
                   height: s.num === step ? 38 : 32,
-                  background: s.num === step ? MESH_ACTIVE : s.num < step ? GREEN : 'rgba(0,0,0,0.06)',
+                  background: s.num === step ? MESH_ACTIVE : s.num < step ? GREEN_GRAD : 'rgba(0,0,0,0.06)',
                   boxShadow: s.num === step
                     ? '0 0 20px rgba(244,56,67,0.35), 0 0 45px rgba(245,166,35,0.2), 0 0 70px rgba(18,112,183,0.15)'
                     : 'none',
