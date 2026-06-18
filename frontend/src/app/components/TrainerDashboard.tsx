@@ -457,7 +457,8 @@ export function TrainerDashboard() {
       </aside>
 
         <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable' }}>
-        <div className="sticky top-0 px-7 pt-5 pb-3 z-30 flex items-center">
+        <div className="sticky top-0 z-30">
+          <div className="relative px-7 pt-5 pb-3 flex items-center">
           {!selectedStudent && (
             <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-md">
               {section === 'students' && (
@@ -465,12 +466,6 @@ export function TrainerDashboard() {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-center gap-3 px-4 py-2 rounded-2xl"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    backdropFilter: 'blur(20px) saturate(1.8)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.04)',
-                  }}
                 >
                   <Search size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
                   <input 
@@ -487,19 +482,19 @@ export function TrainerDashboard() {
           {selectedStudent && (
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setSelectedStudent(null)}
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{
-                border: '1px solid rgba(255,255,255,0.35)',
-                background: 'rgba(255,255,255,0.25)',
-                backdropFilter: 'blur(45px) saturate(1.8)',
-                boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
-              }}
             >
               <ChevronLeft size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
             </motion.button>
           )}
 
           {selectedStudent && (
-            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
+              background: 'rgba(255,255,255,0.12)',
+              backdropFilter: 'blur(24px) saturate(1.6)',
+              WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+              border: '1px solid rgba(255,255,255,0.25)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+            }}>
               {TABS.map(t => (
                 <motion.button key={t.id} onClick={() => setStudentTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
@@ -523,12 +518,6 @@ export function TrainerDashboard() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-              style={{
-                border: '1px solid rgba(255,255,255,0.35)',
-                background: 'rgba(255,255,255,0.25)',
-                backdropFilter: 'blur(45px) saturate(1.8)',
-                boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
-              }}
             >
               <Bell size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
               <div className="dot-alert absolute -top-1 -right-1" style={{ width: 8, height: 8 }} />
@@ -538,13 +527,7 @@ export function TrainerDashboard() {
               initial="initial"
               whileHover="hover"
               className="flex items-center rounded-xl cursor-pointer transition-all overflow-hidden"
-              style={{
-                border: '1px solid rgba(255,255,255,0.35)',
-                background: 'rgba(255,255,255,0.25)',
-                backdropFilter: 'blur(45px) saturate(1.8)',
-                boxShadow: '0 0 0 0.5px rgba(255,255,255,0.4)',
-                height: 38,
-              }}
+              style={{ height: 38 }}
             >
               <div
                 className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
@@ -566,6 +549,7 @@ export function TrainerDashboard() {
                 <ChevronDown size={12} style={{ color: 'rgba(0,0,0,0.2)' }} />
               </motion.div>
             </motion.div>
+          </div>
           </div>
         </div>
 

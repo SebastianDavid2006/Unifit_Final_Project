@@ -1,15 +1,19 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  X, Upload, Check, Fingerprint, Pen, FileText, User,
+  X, Upload, Check, Pen, FileText, User,
   ChevronLeft, ChevronRight, CheckCircle, RefreshCw, ScanLine
 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import confetti from 'canvas-confetti'
+import huellaImg from '../../assets/illustrations/objects/huella.png'
+import lectorHuellaImg from '../../assets/illustrations/objects/lector_huella.png'
+import coachCongratsImg from '../../assets/illustrations/characters/coach_congratulations.png'
 
 const BLUE = '#1270B7'
 const RED = '#F43843'
 const GREEN = '#22C55E'
+const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN_GRAD = 'linear-gradient(135deg, #00fb64, #009b95)'
 const BRAND_GRADIENT = 'linear-gradient(135deg, #F5A623, #1270B7, #F43843)'
 const MESH_ACTIVE = `
@@ -37,7 +41,7 @@ const STEPS = [
   { num: 2, label: 'Tratamiento de datos', icon: FileText },
   { num: 3, label: 'Contrato', icon: FileText },
   { num: 4, label: 'Firma', icon: Pen },
-  { num: 5, label: 'Huella digital', icon: Fingerprint },
+  { num: 5, label: 'Huella digital', icon: ScanLine },
 ]
 
 interface NewStudentModalProps {
@@ -150,7 +154,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     setFingerprintStatus('scanning')
     setTimeout(() => {
       setFingerprintStatus('captured')
-    }, 1800)
+    }, 5000)
   }
 
   // ── Helpers ──────────────────────────────────────────────────
@@ -221,28 +225,43 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         {STEPS.map((s, i) => (
           <div key={s.num} className="flex items-center" style={{ flex: 1 }}>
             <div className="flex items-center justify-center flex-shrink-0" style={{ width: 38 }}>
-              <motion.div
-                layout
-                animate={{
-                  scale: s.num === step ? [1.05, 1.25, 1.1, 1.15] : s.num > step ? [1, 0.75, 0.9, 0.85] : 0.85,
-                  color: s.num <= step ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
-                  opacity: s.num < step ? Math.max(0.06, 1.2 - (step - s.num) * 0.3) : 1,
-                }}
-                transition={{
-                  layout: { type: 'spring', stiffness: 300, damping: 22, mass: 1.2 },
-                  scale: { type: 'spring', stiffness: 350, damping: 16, mass: 1.5, velocity: 2 },
-                  color: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
-                }}
-                className="rounded-full flex items-center justify-center text-xs font-bold relative flex-shrink-0"
-                style={{
-                  width: s.num === step ? 38 : 32,
-                  height: s.num === step ? 38 : 32,
-                  background: s.num === step ? MESH_ACTIVE : s.num < step ? GREEN_GRAD : 'rgba(0,0,0,0.06)',
-                  boxShadow: s.num === step
-                    ? '0 0 20px rgba(244,56,67,0.35), 0 0 45px rgba(245,166,35,0.2), 0 0 70px rgba(18,112,183,0.15)'
-                    : 'none',
-                }}
-              >
+              <div className="relative flex items-center justify-center">
+                {s.num === step && (
+                  <motion.span
+                    animate={{
+                      scale: [1, 1.25, 1],
+                      opacity: [0.6, 0.1, 0.6],
+                    }}
+                    transition={{
+                      duration: 1.5,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{
+                      boxShadow: '0 0 25px rgba(244,56,67,0.6), 0 0 50px rgba(245,166,35,0.3), 0 0 75px rgba(18,112,183,0.2)',
+                    }}
+                  />
+                )}
+                <motion.div
+                  layout
+                  animate={{
+                    scale: s.num === step ? [1.05, 1.25, 1.1, 1.15] : s.num > step ? [1, 0.75, 0.9, 0.85] : 0.85,
+                    color: s.num <= step ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
+                    opacity: s.num < step ? Math.max(0.06, 1.2 - (step - s.num) * 0.3) : 1,
+                  }}
+                  transition={{
+                    layout: { type: 'spring', stiffness: 300, damping: 22, mass: 1.2 },
+                    scale: { type: 'spring', stiffness: 350, damping: 16, mass: 1.5, velocity: 2 },
+                    color: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+                  }}
+                  className="rounded-full flex items-center justify-center text-xs font-bold relative flex-shrink-0 z-10"
+                  style={{
+                    width: s.num === step ? 38 : 32,
+                    height: s.num === step ? 38 : 32,
+                    background: s.num === step ? MESH_ACTIVE : s.num < step ? GREEN_GRAD : 'rgba(0,0,0,0.06)',
+                  }}
+                >
                 {s.num < step ? (
                   <motion.span initial={{ scale: 0 }} animate={{ scale: [0, 1.3, 0.9, 1] }} transition={{ type: 'spring', stiffness: 500, damping: 18, mass: 0.8 }}>
                     <Check size={14} />
@@ -253,6 +272,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                   </motion.span>
                 )}
               </motion.div>
+            </div>
             </div>
             {i < STEPS.length - 1 && (
               <div className="flex-1 h-0.5 mx-1 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
@@ -366,7 +386,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
           onClick={() => setAceptaDatos(!aceptaDatos)}
           className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
           style={{
-            background: aceptaDatos ? BLUE : 'rgba(0,0,0,0.04)',
+            background: aceptaDatos ? BLUE_GRAD : 'rgba(0,0,0,0.04)',
             border: `1.5px solid ${aceptaDatos ? BLUE : 'rgba(0,0,0,0.1)'}`,
           }}
         >
@@ -414,7 +434,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
           onClick={() => setAceptaContrato(!aceptaContrato)}
           className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
           style={{
-            background: aceptaContrato ? BLUE : 'rgba(0,0,0,0.04)',
+            background: aceptaContrato ? BLUE_GRAD : 'rgba(0,0,0,0.04)',
             border: `1.5px solid ${aceptaContrato ? BLUE : 'rgba(0,0,0,0.1)'}`,
           }}
         >
@@ -436,17 +456,30 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>
         Dibuja tu firma en el recuadro utilizando el mouse o tu dedo (si usas pantalla táctil).
       </p>
-      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
-        <SignatureCanvas
-          ref={sigRef}
-          penColor="#1A1A1E"
-          minWidth={1}
-          maxWidth={2.5}
-          canvasProps={{
-            className: 'w-full',
-            style: { height: 180, background: 'rgba(0,0,0,0.02)', borderRadius: '12px', width: '100%' },
-          }}
-        />
+      <div
+        className="relative rounded-2xl p-4"
+        style={{
+          background: 'linear-gradient(135deg, rgba(18,112,183,0.04), rgba(126,200,227,0.02))',
+          border: '1px solid rgba(18,112,183,0.1)',
+          boxShadow: 'inset 0 0 30px rgba(18,112,183,0.03)',
+        }}
+      >
+        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 rounded-tl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
+        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 rounded-tr pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
+        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
+        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
+          <SignatureCanvas
+            ref={sigRef}
+            penColor="#1A1A1E"
+            minWidth={1}
+            maxWidth={2.5}
+            canvasProps={{
+              className: 'w-full',
+              style: { height: 200, background: 'rgba(0,0,0,0.02)', borderRadius: '12px', width: '100%' },
+            }}
+          />
+        </div>
       </div>
     </div>
   )
@@ -457,58 +490,118 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         Coloca tu dedo sobre el sensor para capturar tu huella digital.
       </p>
 
-      <motion.div
-        animate={
-          fingerprintStatus === 'scanning'
-            ? { scale: [1, 1.05, 1], boxShadow: ['0 0 0 0 rgba(18,112,183,0.4)', '0 0 0 20px rgba(18,112,183,0)', '0 0 0 0 rgba(18,112,183,0.4)'] }
-            : {}
-        }
-        transition={{ duration: 1.5, repeat: fingerprintStatus === 'scanning' ? Infinity : 0, ease: 'easeInOut' }}
-        className="w-32 h-32 rounded-full flex items-center justify-center"
-        style={{
-          background: fingerprintStatus === 'captured' ? 'rgba(34,197,94,0.1)' : fingerprintStatus === 'scanning' ? 'rgba(18,112,183,0.08)' : 'rgba(0,0,0,0.03)',
-          border: `2px solid ${
-            fingerprintStatus === 'captured' ? GREEN
-            : fingerprintStatus === 'scanning' ? BLUE
-            : 'rgba(0,0,0,0.06)'
-          }`,
-        }}
-      >
+      <div className="relative flex items-center justify-center">
+        <motion.div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: 320,
+            height: 320,
+            background: fingerprintStatus === 'scanning'
+              ? 'radial-gradient(circle, rgba(34,197,94,0.5) 0%, rgba(34,197,94,0.15) 40%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(18,112,183,0.5) 0%, rgba(18,112,183,0.12) 40%, transparent 70%)',
+          }}
+          animate={fingerprintStatus !== 'captured' ? {
+            scale: [1, 1.15, 1],
+            opacity: fingerprintStatus === 'scanning' ? [0.3, 1, 0.3] : [0.5, 0.9, 0.5],
+          } : { opacity: 0, scale: 1.5 }}
+          transition={{ duration: 3, repeat: fingerprintStatus === 'captured' ? 0 : Infinity, ease: 'easeInOut' }}
+        />
+
+        {fingerprintStatus === 'scanning' && (
+          <>
+            {[...Array(2)].map((_, i) => (
+              <motion.div
+                key={`ring-${i}`}
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: 64,
+                  height: 64,
+                  border: '1.5px solid rgba(34,197,94,0.4)',
+                }}
+                animate={{ scale: [1, 5], opacity: [0.6, 0] }}
+                transition={{ duration: 3, repeat: Infinity, delay: i * 1.5, ease: 'easeOut' }}
+              />
+            ))}
+          </>
+        )}
+
+        {[...Array(16)].map((_, i) => {
+          const angle = (i / 16) * 360
+          const rad = (angle * Math.PI) / 180
+          const dist = 80 + (i % 5) * 20
+          return (
+            <motion.span
+              key={i}
+              className="absolute pointer-events-none text-sm select-none"
+              style={{ color: '#FFFFFF' }}
+              animate={fingerprintStatus !== 'captured' ? {
+                x: [0, Math.cos(rad) * dist],
+                y: [0, Math.sin(rad) * dist],
+                opacity: [0, 1, 0],
+                scale: [0, 1.2, 0],
+              } : { opacity: 0, scale: 0 }}
+              transition={{
+                duration: 3 + (i % 4) * 0.5,
+                repeat: fingerprintStatus === 'captured' ? 0 : Infinity,
+                delay: i * 0.12,
+                ease: 'easeOut',
+              }}
+            >
+              ✦
+            </motion.span>
+          )
+        })}
+
         {fingerprintStatus === 'captured' ? (
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 15 }}>
-            <CheckCircle size={48} color={GREEN} />
+            <CheckCircle size={80} color={GREEN} />
           </motion.div>
         ) : (
-          <motion.div
-            animate={fingerprintStatus === 'scanning' ? { rotate: [0, 5, -5, 0] } : {}}
-            transition={{ duration: 0.4, repeat: fingerprintStatus === 'scanning' ? Infinity : 0 }}
-          >
-            <Fingerprint size={48} color={fingerprintStatus === 'scanning' ? BLUE : 'rgba(0,0,0,0.15)'} />
-          </motion.div>
+          <div className="relative w-64 h-64">
+            <motion.img
+              src={huellaImg}
+              alt="huella"
+              className="absolute inset-0 w-full h-full object-contain"
+              animate={{
+                scale: fingerprintStatus === 'scanning' ? [1, 1.06, 1] : [1, 1.03, 1],
+                opacity: fingerprintStatus === 'scanning' ? 0 : 0.6,
+              }}
+              transition={{
+                scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+                opacity: { duration: 0.5, ease: 'easeInOut' },
+              }}
+            />
+            <motion.img
+              src={lectorHuellaImg}
+              alt="lector huella"
+              className="absolute inset-0 w-full h-full object-contain"
+              animate={{
+                scale: fingerprintStatus === 'scanning' ? [1, 1.06, 1] : [1, 1.03, 1],
+                opacity: fingerprintStatus === 'scanning' ? 1 : 0,
+                filter: fingerprintStatus === 'scanning'
+                  ? 'brightness(1.2) drop-shadow(0 0 20px rgba(34,197,94,0.6))'
+                  : 'none',
+              }}
+              transition={{
+                scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+                opacity: { duration: 0.5, ease: 'easeInOut' },
+              }}
+            />
+          </div>
         )}
-      </motion.div>
-
-      {fingerprintStatus === 'idle' && (
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={handleCaptureFingerprint}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold text-white cursor-pointer"
-          style={{ background: BLUE }}
-        >
-          <ScanLine size={16} />
-          Capturar huella
-        </motion.button>
-      )}
+      </div>
 
       {fingerprintStatus === 'scanning' && (
-        <div className="flex items-center gap-2">
+        <motion.div
+          className="flex items-center gap-2"
+          animate={{ opacity: [1, 0.3, 1] }}
+          transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+        >
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
-            <RefreshCw size={16} color={BLUE} />
+            <RefreshCw size={16} color={GREEN} />
           </motion.div>
-          <span className="text-xs font-medium" style={{ color: BLUE }}>Escaneando huella...</span>
-        </div>
+          <span className="text-xs font-medium" style={{ color: GREEN }}>Escaneando huella...</span>
+        </motion.div>
       )}
 
       {fingerprintStatus === 'captured' && (
@@ -529,17 +622,88 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="flex flex-col items-center justify-center py-12 px-6"
+      className="flex flex-col items-center pt-8 px-6"
     >
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.1 }}
-        className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-        style={{ background: 'rgba(34,197,94,0.1)' }}
-      >
-        <CheckCircle size={48} color={GREEN} />
-      </motion.div>
+      <div className="relative flex items-center justify-center -mt-28 mb-2">
+        <motion.div
+          className="absolute pointer-events-none"
+          style={{
+            width: 360,
+            height: 360,
+            background: `
+              radial-gradient(ellipse at 30% 40%, rgba(34,197,94,0.5) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 30%, rgba(0,155,149,0.3) 0%, transparent 40%),
+              radial-gradient(ellipse at 50% 70%, rgba(34,197,94,0.2) 0%, transparent 45%),
+              radial-gradient(ellipse at 20% 60%, rgba(74,222,128,0.25) 0%, transparent 35%)
+            `,
+          }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.9, 0.5] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute pointer-events-none"
+          style={{
+            width: 260,
+            height: 260,
+            background: `
+              radial-gradient(ellipse at 60% 50%, rgba(34,197,94,0.35) 0%, transparent 45%),
+              radial-gradient(ellipse at 30% 30%, rgba(0,251,100,0.2) 0%, transparent 40%)
+            `,
+          }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.5, 0.2] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+        />
+        {[...Array(20)].map((_, i) => (
+          <motion.span
+            key={i}
+            className="absolute pointer-events-none text-lg select-none"
+            style={{ color: '#4ADE80' }}
+            animate={{
+              x: [0, Math.cos((i / 20) * Math.PI * 2) * (100 + (i % 5) * 25)],
+              y: [0, Math.sin((i / 20) * Math.PI * 2) * (100 + (i % 5) * 25)],
+              opacity: [0, 1, 0],
+              scale: [0, 1.4, 0],
+            }}
+            transition={{
+              duration: 2.5 + (i % 4) * 0.3,
+              repeat: Infinity,
+              delay: i * 0.08,
+              ease: 'easeOut',
+            }}
+          >
+            ✦
+          </motion.span>
+        ))}
+        <div className="relative w-64">
+          <div
+            className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-72 h-14 rounded-full pointer-events-none"
+            style={{
+              background: 'linear-gradient(135deg, rgba(34,197,94,0.3), rgba(0,155,149,0.2))',
+              filter: 'blur(24px)',
+            }}
+          />
+          <div
+            className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-60 h-10 rounded-full pointer-events-none"
+            style={{
+              background: 'rgba(0,0,0,0.12)',
+              filter: 'blur(20px)',
+            }}
+          />
+          <motion.div
+            className="rounded-2xl p-6"
+            style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(0,155,149,0.05))' }}
+          >
+            <motion.img
+              src={coachCongratsImg}
+              alt="felicitaciones"
+              className="w-full h-auto object-contain relative z-10"
+              initial={{ scale: 0, y: 40 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 14, delay: 0.1 }}
+            />
+          </motion.div>
+        </div>
+      </div>
       <motion.p
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -565,8 +729,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
         onClick={onClose}
-        className="mt-8 px-8 py-3 rounded-xl text-xs font-bold text-white cursor-pointer"
-        style={{ background: BLUE }}
+        className="mt-8 mb-10 px-8 py-3 rounded-xl text-xs font-bold text-white cursor-pointer"
+        style={{ background: BLUE_GRAD }}
       >
         Cerrar
       </motion.button>
@@ -592,7 +756,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col mx-4 relative overflow-hidden"
+            className={`rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col mx-4 relative ${success ? 'overflow-visible' : 'overflow-hidden'}`}
             style={{
               background: '#FFFFFF',
               border: '1px solid rgba(0,0,0,0.04)',
@@ -633,11 +797,12 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                         <X size={15} />
                       </motion.button>
                     </div>
-                    <span className="text-xl font-medium text-center block" style={{
+                    <span className="text-lg font-black tracking-wider uppercase text-center block" style={{
                       background: MESH_ACTIVE,
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
+                      textShadow: '0 2px 20px rgba(244,56,67,0.15)',
                       marginTop: 8,
                       marginBottom: 32,
                     }}>
@@ -681,7 +846,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                         </motion.button>
                       </div>
 
-                      <div className="flex-1 flex justify-center">
+                      <div className="flex-1 flex justify-center gap-3">
                         {step === 4 && (
                           <motion.button
                             type="button"
@@ -695,6 +860,19 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             Limpiar firma
                           </motion.button>
                         )}
+                        {step === 5 && fingerprintStatus === 'idle' && (
+                          <motion.button
+                            type="button"
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={handleCaptureFingerprint}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                            style={{ background: BLUE_GRAD }}
+                          >
+                            <ScanLine size={16} />
+                            Capturar huella
+                          </motion.button>
+                        )}
                       </div>
 
                       <div className="flex-1 flex justify-end">
@@ -702,25 +880,29 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                           type="button"
                           variants={{
                             rest: { scale: 1, boxShadow: '0 4px 15px rgba(18,112,183,0)' },
-                            hover: {
+                            hover: step === 5 && fingerprintStatus !== 'captured' ? {} : {
                               scale: 1.06,
                               boxShadow: step === 5
                                 ? '0 8px 30px rgba(0,251,100,0.35), 0 0 60px rgba(0,155,149,0.15)'
                                 : '0 8px 30px rgba(18,112,183,0.35), 0 0 60px rgba(18,112,183,0.1)',
                               transition: { type: 'spring', stiffness: 400, damping: 12 },
                             },
-                            tap: {
+                            tap: step === 5 && fingerprintStatus !== 'captured' ? {} : {
                               scale: 0.92,
                               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                               transition: { type: 'spring', stiffness: 500, damping: 10 },
                             },
                           }}
                           initial="rest"
-                          whileHover="hover"
-                          whileTap="tap"
+                          whileHover={step === 5 && fingerprintStatus !== 'captured' ? undefined : "hover"}
+                          whileTap={step === 5 && fingerprintStatus !== 'captured' ? undefined : "tap"}
                           onClick={handleNext}
+                          disabled={step === 5 && fingerprintStatus !== 'captured'}
                           className="relative flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white overflow-hidden cursor-pointer"
-                          style={{ background: step === 5 ? GREEN_GRAD : BLUE }}
+                          style={{
+                            background: step === 5 && fingerprintStatus !== 'captured' ? 'rgba(0,0,0,0.15)' : step === 5 ? GREEN_GRAD : BLUE_GRAD,
+                            cursor: step === 5 && fingerprintStatus !== 'captured' ? 'not-allowed' : 'pointer',
+                          }}
                         >
                           <motion.span
                             variants={{
