@@ -190,7 +190,6 @@ export function TrainerDashboard() {
   const [agendaSearch, setAgendaSearch] = useState('')
   const [dayModalDate, setDayModalDate] = useState<string | null>(null)
   const [showTimeFilter, setShowTimeFilter] = useState(false)
-  const [dayModalPos, setDayModalPos] = useState<{ top: number; left: number } | null>(null)
 
   const [weeklyTemplate, setWeeklyTemplate] = useState<Record<string, { active: boolean; open: string; close: string }>>({
     LUN: { active: true, open: '06:00', close: '22:00' },
@@ -522,29 +521,31 @@ export function TrainerDashboard() {
         <div className="sticky top-0 z-30">
           <div className="relative px-7 pt-5 pb-3 flex items-center gap-3">
           {!selectedStudent && section === 'students' && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0, scaleX: searchFocused ? 1.04 : 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="flex items-center gap-3 px-4 py-2 rounded-2xl flex-1 max-w-md"
-              style={{
-                background: searchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
-                backdropFilter: 'blur(24px) saturate(1.6)',
-                border: searchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
-                boxShadow: searchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
-                transformOrigin: 'center',
-              }}
-            >
-              <Search size={16} style={{ color: searchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                placeholder="Buscar por nombre o documento..."
-                className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
-              />
-            </motion.div>
+            <div className="flex-1 flex justify-center">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0, scaleX: searchFocused ? 1.04 : 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                className="flex items-center gap-3 px-4 py-2 rounded-2xl max-w-md w-full"
+                style={{
+                  background: searchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(24px) saturate(1.6)',
+                  border: searchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                  boxShadow: searchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
+                  transformOrigin: 'center',
+                }}
+              >
+                <Search size={16} style={{ color: searchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  placeholder="Buscar por nombre o documento..."
+                  className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
+                />
+              </motion.div>
+            </div>
           )}
 
           {section === 'schedule' && (
@@ -869,6 +870,7 @@ export function TrainerDashboard() {
     const visible = appts.slice(0, mini ? 2 : 4)
     const hidden = appts.slice(mini ? 2 : 4)
     const typeColors: Record<string, string> = { class: BLUE, assessment: '#30D158', event: '#FF9F0A' }
+    const hasNoAppts = !mini && appts.length === 0
     return (
       <div
         key={idx}
@@ -877,7 +879,6 @@ export function TrainerDashboard() {
             setSelectedDate(ds)
           } else {
             setDayModalDate(ds)
-            setDayModalPos({ top: e.clientY - 20, left: e.clientX + 16 })
           }
         }}
         className={`day-cell-hover relative ${mini ? 'min-h-[60px] p-1' : 'min-h-[100px] p-2'} cursor-pointer`}
@@ -887,6 +888,11 @@ export function TrainerDashboard() {
           borderBottom: !lastRow ? '1px solid rgba(0,0,0,0.03)' : 'none',
         }}
       >
+        {hasNoAppts && (
+          <div className="add-icon-overlay">
+            <Plus size={18} style={{ color: BLUE }} />
+          </div>
+        )}
         <div className="flex items-center justify-between mb-0.5">
           <span className={mini ? 'text-[9px] font-bold' : 'text-xs font-bold'} style={{
             color: isT ? '#fff' : st.active ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.15)',
@@ -950,45 +956,66 @@ export function TrainerDashboard() {
 
     return (
       <div className="p-8 max-w-[1440px] mx-auto relative">
-        {/* ── TITLE BAR ── */}
+        {/* ── Banner Card (como UniFitters) ── */}
         <motion.div
-          initial={{ opacity: 0, y: -8 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="flex items-center justify-between mb-5"
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="relative rounded-3xl mb-8"
+          style={{
+            background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.03)',
+          }}
         >
-          <div className="flex items-center gap-2">
-            <button onClick={handlePrevView}
-              className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/[0.04] transition-colors"
-            ><ChevronLeft size={18} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
-            <h2 className="text-lg font-extrabold min-w-[180px] text-center" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>
-              {viewTitle}
-            </h2>
-            <button onClick={handleNextView}
-              className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/[0.04] transition-colors"
-            ><ChevronRight size={18} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+          <div className="absolute inset-0 pointer-events-none rounded-3xl overflow-hidden" style={{
+            maskImage: 'linear-gradient(to right, black 60%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, black 60%, transparent 100%)'
+          }}>
+            <div className="absolute inset-0 opacity-30" style={{
+              background: 'radial-gradient(ellipse at 80% 10%, rgba(0,122,255,0.03) 0%, transparent 40%), radial-gradient(ellipse at 10% 80%, rgba(245,166,35,0.02) 0%, transparent 40%), radial-gradient(ellipse at 50% 50%, rgba(230,57,70,0.02) 0%, transparent 50%)',
+              backgroundSize: '200% 200%',
+              animation: 'mesh-shift 15s ease-in-out infinite',
+            }} />
           </div>
-          <div className="flex items-center gap-2">
-            {viewMode === 'week' && (
-              <button onClick={() => setShowTimeFilter(p => !p)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all"
-                style={{ background: showTimeFilter ? `${BLUE}12` : 'rgba(0,0,0,0.04)', color: showTimeFilter ? BLUE : 'rgba(0,0,0,0.35)' }}
-              ><Clock size={12} /> Horario</button>
-            )}
-            <button onClick={() => setShowWeekModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all"
-              style={{ background: 'rgba(0,0,0,0.04)', color: BLUE }}
-            ><Settings size={12} /> Config</button>
-            <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all"
-              style={{ background: BLUE_GRAD }}
-            ><span className="text-xs">⬆</span> Publicar</button>
+
+          {/* Placeholder para la imagen que me pasarás */}
+          <div className="absolute left-8 top-1/2 -translate-y-1/2 w-44 h-44 rounded-2xl flex items-center justify-center pointer-events-none z-10"
+            style={{ background: 'rgba(18,112,183,0.04)', border: '1px dashed rgba(18,112,183,0.12)' }}>
+            <Calendar size={48} style={{ color: 'rgba(18,112,183,0.15)' }} />
+          </div>
+
+          <div className="relative z-10 p-8 flex items-center justify-between">
+            <div className="flex items-center gap-6 ml-56">
+              <div className="w-1 h-12 rounded-full" style={{ background: BLUE_GRAD }} />
+              <div>
+                <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Agenda</h1>
+                <p className="text-xs text-black/40">Organiza tus clases, valoraciones y eventos.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 pr-4">
+              {viewMode === 'week' && (
+                <button onClick={() => setShowTimeFilter(p => !p)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                  style={{ background: showTimeFilter ? `${BLUE}12` : 'rgba(0,0,0,0.04)', color: showTimeFilter ? BLUE : 'rgba(0,0,0,0.35)', border: '1px solid rgba(0,0,0,0.05)' }}
+                ><Clock size={14} /> Horario</button>
+              )}
+              <button onClick={() => setShowWeekModal(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                style={{ background: 'rgba(0,0,0,0.04)', color: BLUE, border: '1px solid rgba(0,0,0,0.05)' }}
+              ><Settings size={14} /> Configurar Semana</button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all"
+                style={{ background: BLUE_GRAD }}
+              ><span className="text-sm">⬆</span> Publicar</motion.button>
+            </div>
           </div>
         </motion.div>
 
+        {/* ── Calendar + Side Panel ── */}
         <div className="flex gap-5">
-          {/* ── CALENDAR ── */}
           <div className="flex-1 min-w-0 space-y-4">
-
             {viewMode === 'year' ? (
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
@@ -996,6 +1023,15 @@ export function TrainerDashboard() {
                 transition={{ delay: 0.06 }}
                 className="rounded-2xl premium-card"
               >
+                <div className="flex items-center justify-center gap-3 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  <button onClick={handlePrevView}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
+                  ><ChevronLeft size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+                  <h2 className="text-sm font-extrabold" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>{viewTitle}</h2>
+                  <button onClick={handleNextView}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
+                  ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+                </div>
                 <div className="grid grid-cols-4 gap-3 p-4">
                   {Array.from({ length: 12 }, (_, mi) => {
                     const mDays = new Date(year, mi + 1, 0).getDate()
@@ -1047,6 +1083,15 @@ export function TrainerDashboard() {
                 transition={{ delay: 0.06 }}
                 className="rounded-2xl premium-card"
               >
+                <div className="flex items-center justify-center gap-3 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  <button onClick={handlePrevView}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
+                  ><ChevronLeft size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+                  <h2 className="text-sm font-extrabold" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>{viewTitle}</h2>
+                  <button onClick={handleNextView}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
+                  ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+                </div>
                 <div className="grid grid-cols-8" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                   <div className="w-14" />
                   {weekDates.map((dt, i) => {
@@ -1055,22 +1100,18 @@ export function TrainerDashboard() {
                     return (
                       <div key={i} className="text-center py-2">
                         <div className="text-[10px] font-bold" style={{ color: isT ? BLUE : 'rgba(0,0,0,0.3)' }}>{dayLabels[i]}</div>
-                        <div className={`text-sm font-extrabold`} style={{ color: '#1A1A1E' }}>{dt.getDate()}</div>
+                        <div className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>{dt.getDate()}</div>
                       </div>
                     )
                   })}
                 </div>
                 <div style={{ maxHeight: showTimeFilter ? '42vh' : '52vh', overflowY: 'auto' }}>
-                  {TIME_SLOTS_WEEK.map((t, ti) => (
+                  {TIME_SLOTS_WEEK.map(t => (
                     <div key={t} className="grid grid-cols-8" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                       <div className="w-14 text-[9px] font-bold leading-none text-right pr-2 py-1.5" style={{ color: 'rgba(0,0,0,0.2)' }}>{t}</div>
                       {weekDates.map((dt, di) => {
                         const ds = fmtDate(dt)
-                        const appts = getApptsForDate(ds).filter(a => {
-                          const aStart = a.startTime
-                          const aEnd = a.endTime
-                          return aStart <= t && aEnd > t
-                        })
+                        const appts = getApptsForDate(ds).filter(a => a.startTime <= t && a.endTime > t)
                         return (
                           <div key={di} className="px-0.5" style={{ minHeight: 30 }}>
                             {appts.map(a => (
@@ -1088,13 +1129,22 @@ export function TrainerDashboard() {
               </motion.div>
 
             ) : (
-              /* Month Grid */
+              /* Month Grid — título centrado dentro del calendario */
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.06 }}
                 className="rounded-2xl premium-card"
               >
+                <div className="flex items-center justify-center gap-3 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  <button onClick={handlePrevView}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
+                  ><ChevronLeft size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+                  <h2 className="text-sm font-extrabold" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>{viewTitle}</h2>
+                  <button onClick={handleNextView}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
+                  ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+                </div>
                 <div className="grid grid-cols-7" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                   {dayLabels.map(d => (
                     <div key={d} className="text-center py-2.5 text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>{d}</div>
@@ -1192,73 +1242,69 @@ export function TrainerDashboard() {
           </div>
         </div>
 
-        {/* Day Detail Modal - positioned near clicked day */}
+        {/* Day Detail Modal — full-screen con blur */}
         <AnimatePresence>
-          {dayModalDate && dayModalPos && (
+          {dayModalDate && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50"
-              onClick={() => { setDayModalDate(null); setDayModalPos(null) }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+              onClick={() => setDayModalDate(null)}
             >
               <motion.div
-                initial={{ scale: 0.93, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.93, opacity: 0 }}
+                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 10 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="absolute rounded-2xl w-72 overflow-hidden"
-                style={{
-                  background: '#fff',
-                  boxShadow: '0 12px 48px rgba(0,0,0,0.15)',
-                  top: Math.min(dayModalPos.top, window.innerHeight - 360),
-                  left: Math.min(dayModalPos.left, window.innerWidth - 300),
-                  zIndex: 60,
-                }}
+                className="rounded-2xl w-full max-w-sm overflow-hidden"
+                style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
                 onClick={e => e.stopPropagation()}
               >
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-1 h-7 rounded-full" style={{ background: BLUE_GRAD }} />
-                      <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>
+                      <div className="w-1 h-8 rounded-full" style={{ background: BLUE_GRAD }} />
+                      <p className="text-base font-extrabold" style={{ color: '#1A1A1E' }}>
                         {dayLabelsGetDay[new Date(dayModalDate + 'T12:00:00').getDay()]} {new Date(dayModalDate + 'T12:00:00').getDate()}
                       </p>
                     </div>
-                    <button onClick={() => { setDayModalDate(null); setDayModalPos(null) }} className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors">
-                      <X size={13} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                    <button onClick={() => setDayModalDate(null)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors">
+                      <X size={14} style={{ color: 'rgba(0,0,0,0.3)' }} />
                     </button>
                   </div>
                   {(() => {
                     const st = getDayStatus(dayModalDate)
                     return st.active ? (
-                      <p className="text-[10px] font-medium mb-3" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                      <p className="text-[11px] font-medium mb-4" style={{ color: 'rgba(0,0,0,0.35)' }}>
                         {st.open} – {st.close}
                       </p>
                     ) : (
-                      <p className="text-[10px] font-medium mb-3" style={{ color: RED }}>Cerrado</p>
+                      <p className="text-[11px] font-medium mb-4" style={{ color: RED }}>Cerrado</p>
                     )
                   })()}
-                  <div className="space-y-1 max-h-[200px] overflow-y-auto mb-3">
+                  <div className="space-y-1.5 mb-4 max-h-[260px] overflow-y-auto">
                     {getApptsForDate(dayModalDate).length === 0 ? (
-                      <p className="text-xs py-3 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>Sin citas este día</p>
+                      <p className="text-xs py-4 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>Sin citas este día</p>
                     ) : (
                       getApptsForDate(dayModalDate).sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
-                        <div key={a.id} className="flex items-center gap-2 px-2.5 py-2 rounded-xl" style={{ background: `${typeColors[a.type]}08`, borderLeft: `2.5px solid ${typeColors[a.type]}` }}>
-                          <div className="text-[10px] font-bold min-w-[38px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{a.startTime}</div>
+                        <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: `${typeColors[a.type]}08`, borderLeft: `3px solid ${typeColors[a.type]}` }}>
+                          <div className="text-[11px] font-bold min-w-[42px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{a.startTime}</div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-[11px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</div>
-                            {a.studentName && <div className="text-[10px] font-medium truncate" style={{ color: 'rgba(0,0,0,0.35)' }}>{a.studentName}</div>}
+                            <div className="text-[13px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</div>
+                            {a.studentName && <div className="text-[11px] font-medium truncate" style={{ color: 'rgba(0,0,0,0.35)' }}>{a.studentName}</div>}
+                            {a.trainer && <div className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.25)' }}>Con {a.trainer}</div>}
                           </div>
-                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type] }}>{typeLabels[a.type]}</span>
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type] }}>{typeLabels[a.type]}</span>
                         </div>
                       ))
                     )}
                   </div>
-                  <button onClick={() => { setDayModalDate(null); setDayModalPos(null); setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
-                    className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold text-white transition-all"
+                  <button onClick={() => { setDayModalDate(null); setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
                     style={{ background: BLUE_GRAD }}
-                  ><Plus size={11} /> Agregar Cita</button>
+                  ><Plus size={13} /> Agregar Cita</button>
                 </div>
               </motion.div>
             </motion.div>
