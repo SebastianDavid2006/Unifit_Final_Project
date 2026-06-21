@@ -187,8 +187,10 @@ export function TrainerDashboard() {
   const [showWeekModal, setShowWeekModal] = useState(false)
   const [showApptModal, setShowApptModal] = useState(false)
   const [viewMode, setViewMode] = useState<'week' | 'month' | 'year'>('month')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [agendaSearch, setAgendaSearch] = useState('')
   const [dayModalDate, setDayModalDate] = useState<string | null>(null)
+  const [showTimeFilter, setShowTimeFilter] = useState(false)
+  const [dayModalPos, setDayModalPos] = useState<{ top: number; left: number } | null>(null)
 
   const [weeklyTemplate, setWeeklyTemplate] = useState<Record<string, { active: boolean; open: string; close: string }>>({
     LUN: { active: true, open: '06:00', close: '22:00' },
@@ -220,6 +222,9 @@ export function TrainerDashboard() {
     { id: '9', date: '2026-06-26', startTime: '17:00', endTime: '18:00', type: 'class', title: 'Zumba', trainer: 'María' },
     { id: '10', date: '2026-06-27', startTime: '09:00', endTime: '10:00', type: 'class', title: 'Yoga al Aire Libre', trainer: 'Ana' },
     { id: '11', date: '2026-06-28', startTime: '10:00', endTime: '11:00', type: 'assessment', title: 'Valoración Seguimiento', studentName: 'Carlos Ruiz' },
+    { id: '12', date: '2026-06-21', startTime: '09:00', endTime: '10:00', type: 'class', title: 'Yoga Restaurativo', trainer: 'Ana', studentName: 'María Fernández' },
+    { id: '13', date: '2026-06-21', startTime: '11:00', endTime: '12:00', type: 'assessment', title: 'Valoración Inicial', studentName: 'Pedro Sánchez' },
+    { id: '14', date: '2026-06-21', startTime: '15:00', endTime: '16:00', type: 'class', title: 'Funcional', trainer: 'Luis', studentName: 'Laura Vega' },
   ])
 
   const [newApptType, setNewApptType] = useState<'class' | 'assessment' | 'event'>('class')
@@ -515,36 +520,56 @@ export function TrainerDashboard() {
 
         <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable' }}>
         <div className="sticky top-0 z-30">
-          <div className="relative px-7 pt-5 pb-3 flex items-center">
-          {!selectedStudent && (
-            <div className="absolute left-1/2 -translate-x-1/2 w-full max-w-md">
-              {section === 'students' && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0, scaleX: searchFocused ? 1.04 : 1 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="flex items-center gap-3 px-4 py-2 rounded-2xl"
-                  style={{
-                    background: searchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
-                    backdropFilter: 'blur(24px) saturate(1.6)',
-                    WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
-                    border: searchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
-                    boxShadow: searchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
-                    transformOrigin: 'center',
-                  }}
-                >
-                  <Search size={16} style={{ color: searchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
-                  <input 
-                    value={search} 
-                    onChange={e => setSearch(e.target.value)} 
-                    onFocus={() => setSearchFocused(true)}
-                    onBlur={() => setSearchFocused(false)}
-                    placeholder="Buscar por nombre o documento..." 
-                    className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
-                  />
-                </motion.div>
-              )}
-            </div>
+          <div className="relative px-7 pt-5 pb-3 flex items-center gap-3">
+          {!selectedStudent && section === 'students' && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0, scaleX: searchFocused ? 1.04 : 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="flex items-center gap-3 px-4 py-2 rounded-2xl flex-1 max-w-md"
+              style={{
+                background: searchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(24px) saturate(1.6)',
+                border: searchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                boxShadow: searchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
+                transformOrigin: 'center',
+              }}
+            >
+              <Search size={16} style={{ color: searchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                placeholder="Buscar por nombre o documento..."
+                className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
+              />
+            </motion.div>
+          )}
+
+          {section === 'schedule' && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center justify-center gap-4 flex-1"
+            >
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl max-w-[220px]"
+                style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(24px) saturate(1.6)', border: '1px solid rgba(255,255,255,0.25)' }}
+              >
+                <Search size={14} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                <input value={agendaSearch} onChange={e => setAgendaSearch(e.target.value)} placeholder="Buscar en agenda..."
+                  className="flex-1 bg-transparent text-[11px] font-medium outline-none" style={{ color: '#1A1A1E' }} />
+              </div>
+              <div className="flex items-center gap-1 p-0.5 rounded-xl" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                {(['month', 'week', 'year'] as const).map(mode => (
+                  <button key={mode} onClick={() => setViewMode(mode)}
+                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                    style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
+                  >{mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Año'}</button>
+                ))}
+              </div>
+            </motion.div>
           )}
 
           {selectedStudent && (
@@ -559,7 +584,6 @@ export function TrainerDashboard() {
             <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
               background: 'rgba(255,255,255,0.12)',
               backdropFilter: 'blur(24px) saturate(1.6)',
-              WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
               border: '1px solid rgba(255,255,255,0.25)',
               boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
             }}>
@@ -589,7 +613,6 @@ export function TrainerDashboard() {
               style={{
                 background: 'rgba(255,255,255,0.12)',
                 backdropFilter: 'blur(24px) saturate(1.6)',
-                WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
                 border: '1px solid rgba(255,255,255,0.25)',
                 boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
               }}
@@ -606,7 +629,6 @@ export function TrainerDashboard() {
                 height: 38,
                 background: 'rgba(255,255,255,0.12)',
                 backdropFilter: 'blur(24px) saturate(1.6)',
-                WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
                 border: '1px solid rgba(255,255,255,0.25)',
                 boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
               }}
@@ -837,49 +859,11 @@ export function TrainerDashboard() {
 
   const TIME_SLOTS_WEEK = ['6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
 
-  function renderYearGrid() {
-    const year = currentMonth.getFullYear()
-    const today = fmtDate(new Date())
-    return (
-      <div className="grid grid-cols-4 gap-3 p-4">
-        {Array.from({ length: 12 }, (_, mi) => {
-          const monthDays = new Date(year, mi + 1, 0).getDate()
-          const firstDow = new Date(year, mi, 1).getDay()
-          const pad = firstDow === 0 ? 6 : firstDow - 1
-          return (
-            <div key={mi} className="rounded-xl p-3 premium-card">
-              <div className="text-[11px] font-extrabold mb-2" style={{ color: '#1A1A1E' }}>{monthNames[mi]}</div>
-              <div className="grid grid-cols-7 gap-0">
-                {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((ld, ldi) => (
-                  <div key={ldi} className="text-[7px] font-bold text-center py-0.5" style={{ color: 'rgba(0,0,0,0.2)' }}>{ld}</div>
-                ))}
-                {Array.from({ length: pad }, (_, pi) => <div key={`p-${pi}`} />)}
-                {Array.from({ length: monthDays }, (_, di) => {
-                  const d = di + 1
-                  const ds = `${year}-${String(mi + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-                  const isT = ds === today
-                  return (
-                    <div key={di} onClick={() => { setDayModalDate(ds); setSelectedDate(ds) }}
-                      className="text-center text-[9px] font-bold py-0.5 rounded-sm cursor-pointer hover:bg-black/[0.03] transition-colors"
-                      style={{
-                        color: isT ? '#fff' : 'rgba(0,0,0,0.5)',
-                        background: isT ? BLUE_GRAD : 'transparent',
-                      }}
-                    >{d}</div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-
   function renderDayCell(dt: Date | null, idx: number, lastRow?: boolean, mini?: boolean) {
     if (!dt) return <div key={idx} className={mini ? 'min-h-[60px]' : 'min-h-[100px]'} />
     const ds = fmtDate(dt)
-    const isT = ds === fmtDate(new Date())
+    const today = fmtDate(new Date())
+    const isT = ds === today
     const st = getDayStatus(ds)
     const appts = getApptsForDate(ds).sort((a, b) => a.startTime.localeCompare(b.startTime))
     const visible = appts.slice(0, mini ? 2 : 4)
@@ -888,15 +872,15 @@ export function TrainerDashboard() {
     return (
       <div
         key={idx}
-        onClick={() => {
-          if (ds === fmtDate(new Date())) {
+        onClick={(e) => {
+          if (ds === today) {
             setSelectedDate(ds)
           } else {
             setDayModalDate(ds)
-            setSelectedDate(ds)
+            setDayModalPos({ top: e.clientY - 20, left: e.clientX + 16 })
           }
         }}
-        className={`relative ${mini ? 'min-h-[60px] p-1' : 'min-h-[100px] p-2'} cursor-pointer transition-all hover:bg-black/[0.02]`}
+        className={`day-cell-hover relative ${mini ? 'min-h-[60px] p-1' : 'min-h-[100px] p-2'} cursor-pointer`}
         style={{
           background: isT ? 'rgba(18,112,183,0.04)' : 'transparent',
           borderRight: idx < 6 ? '1px solid rgba(0,0,0,0.03)' : 'none',
@@ -935,150 +919,181 @@ export function TrainerDashboard() {
   function renderSchedule() {
     const year = currentMonth.getFullYear()
     const month = currentMonth.getMonth()
-    const today = fmtDate(new Date())
+    const todayStr = fmtDate(new Date())
+    const weekDates = getWeekDates(currentMonth)
 
     const typeColors: Record<string, string> = { class: BLUE, assessment: '#30D158', event: '#FF9F0A' }
     const typeLabels: Record<string, string> = { class: 'Clase', assessment: 'Valoración', event: 'Evento' }
 
-    const calendarTitle = viewMode === 'year'
+    const handlePrevView = () => {
+      if (viewMode === 'year') setCurrentMonth(prev => new Date(prev.getFullYear() - 1, prev.getMonth(), 1))
+      else if (viewMode === 'week') {
+        const d = new Date(weekDates[0])
+        d.setDate(d.getDate() - 3)
+        setCurrentMonth(d)
+      } else setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
+    }
+    const handleNextView = () => {
+      if (viewMode === 'year') setCurrentMonth(prev => new Date(prev.getFullYear() + 1, prev.getMonth(), 1))
+      else if (viewMode === 'week') {
+        const d = new Date(weekDates[6])
+        d.setDate(d.getDate() + 4)
+        setCurrentMonth(d)
+      } else setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
+    }
+
+    const viewTitle = viewMode === 'year'
       ? `Año ${year}`
-      : viewMode === 'month'
-        ? `${monthNames[month]} ${year}`
-        : `Semana del ${fmtDate(getWeekDates(currentMonth)[0])}`
+      : viewMode === 'week'
+      ? `Semana del ${fmtDate(weekDates[0])}`
+      : `${monthNames[month]} ${year}`
 
     return (
       <div className="p-8 max-w-[1440px] mx-auto relative">
-        <div className="flex gap-5">
+        {/* ── TITLE BAR ── */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="flex items-center justify-between mb-5"
+        >
+          <div className="flex items-center gap-2">
+            <button onClick={handlePrevView}
+              className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/[0.04] transition-colors"
+            ><ChevronLeft size={18} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+            <h2 className="text-lg font-extrabold min-w-[180px] text-center" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>
+              {viewTitle}
+            </h2>
+            <button onClick={handleNextView}
+              className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/[0.04] transition-colors"
+            ><ChevronRight size={18} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+          </div>
+          <div className="flex items-center gap-2">
+            {viewMode === 'week' && (
+              <button onClick={() => setShowTimeFilter(p => !p)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all"
+                style={{ background: showTimeFilter ? `${BLUE}12` : 'rgba(0,0,0,0.04)', color: showTimeFilter ? BLUE : 'rgba(0,0,0,0.35)' }}
+              ><Clock size={12} /> Horario</button>
+            )}
+            <button onClick={() => setShowWeekModal(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all"
+              style={{ background: 'rgba(0,0,0,0.04)', color: BLUE }}
+            ><Settings size={12} /> Config</button>
+            <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all"
+              style={{ background: BLUE_GRAD }}
+            ><span className="text-xs">⬆</span> Publicar</button>
+          </div>
+        </motion.div>
 
+        <div className="flex gap-5">
           {/* ── CALENDAR ── */}
           <div className="flex-1 min-w-0 space-y-4">
-            {/* Header */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-              <div className="flex items-center gap-3 flex-wrap">
-                {/* Search */}
-                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl flex-1 min-w-[200px] max-w-[320px]"
-                  style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(12px)', border: '1px solid rgba(0,0,0,0.04)' }}
-                >
-                  <Search size={15} style={{ color: 'rgba(0,0,0,0.2)' }} />
-                  <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Buscar en agenda..."
-                    className="flex-1 bg-transparent text-xs font-medium outline-none" style={{ color: '#1A1A1E' }} />
-                </div>
 
-                {/* View Mode Pills */}
-                <div className="flex items-center gap-1 p-0.5 rounded-xl" style={{ background: 'rgba(0,0,0,0.03)' }}>
-                  {(['month', 'week', 'year'] as const).map(mode => (
-                    <button key={mode} onClick={() => { setViewMode(mode); setSelectedDate(null) }}
-                      className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all"
-                      style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
-                    >{mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Año'}</button>
-                  ))}
-                </div>
-
-                {/* Navigation */}
-                <div className="flex items-center gap-1">
-                  <button onClick={handlePrev} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
-                    <ChevronLeft size={18} style={{ color: 'rgba(0,0,0,0.3)' }} />
-                  </button>
-                  <h1 className="text-[1.2rem] font-extrabold min-w-[160px] text-center" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>
-                    {calendarTitle}
-                  </h1>
-                  <button onClick={handleNext} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
-                    <ChevronRight size={18} style={{ color: 'rgba(0,0,0,0.3)' }} />
-                  </button>
-                </div>
-
-                {/* Action Buttons */}
-                <button onClick={() => setShowWeekModal(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all"
-                  style={{ background: 'rgba(18,112,183,0.08)', color: BLUE }}
-                ><Settings size={13} /> Config</button>
-                <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold text-white transition-all"
-                  style={{ background: BLUE_GRAD }}
-                ><span className="text-xs">⬆</span> Publicar</button>
-              </div>
-            </motion.div>
-
-            {/* Grid */}
             {viewMode === 'year' ? (
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.06 }}
-                className="rounded-2xl premium-card overflow-hidden"
+                className="rounded-2xl premium-card"
               >
-                {renderYearGrid()}
+                <div className="grid grid-cols-4 gap-3 p-4">
+                  {Array.from({ length: 12 }, (_, mi) => {
+                    const mDays = new Date(year, mi + 1, 0).getDate()
+                    const firstDow = new Date(year, mi, 1).getDay()
+                    const pad = firstDow === 0 ? 6 : firstDow - 1
+                    const hasEvents = appointments.some(a => a.date.startsWith(`${year}-${String(mi + 1).padStart(2, '0')}`))
+                    return (
+                      <div key={mi} onClick={() => { setViewMode('month'); setCurrentMonth(new Date(year, mi, 1)) }}
+                        className="rounded-xl p-3 premium-card cursor-pointer transition-all hover:shadow-md"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] font-extrabold" style={{ color: '#1A1A1E' }}>{monthNames[mi]}</span>
+                          {hasEvents && <span className="w-1.5 h-1.5 rounded-full" style={{ background: BLUE }} />}
+                        </div>
+                        <div className="grid grid-cols-7 gap-0">
+                          {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((ld, ldi) => (
+                            <div key={ldi} className="text-[7px] font-bold text-center py-0.5" style={{ color: 'rgba(0,0,0,0.2)' }}>{ld}</div>
+                          ))}
+                          {Array.from({ length: pad }, (_, pi) => <div key={`p-${pi}`} />)}
+                          {Array.from({ length: mDays }, (_, di) => {
+                            const d = di + 1
+                            const ds = `${year}-${String(mi + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+                            const isT = ds === todayStr
+                            const dayHasEvents = appointments.some(a => a.date === ds)
+                            return (
+                              <div key={di} onClick={(e) => { e.stopPropagation(); setViewMode('month'); setCurrentMonth(new Date(year, mi, 1)) }}
+                                className="relative text-center text-[9px] font-bold py-0.5 rounded-sm cursor-pointer hover:bg-black/[0.03] transition-colors"
+                                style={{
+                                  color: isT ? '#fff' : 'rgba(0,0,0,0.5)',
+                                  background: isT ? BLUE_GRAD : 'transparent',
+                                }}
+                              >
+                                {d}
+                                {dayHasEvents && !isT && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-0.5 rounded-full" style={{ background: BLUE }} />}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </motion.div>
+
             ) : viewMode === 'week' ? (
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.06 }}
-                className="rounded-2xl premium-card overflow-hidden"
+                className="rounded-2xl premium-card"
               >
-                <div className="flex">
-                  {/* Time column */}
-                  <div className="flex-shrink-0 w-14 pt-[38px]" style={{ borderRight: '1px solid rgba(0,0,0,0.04)' }}>
-                    {TIME_SLOTS_WEEK.map(t => (
-                      <div key={t} className="h-[48px] flex items-start justify-end pr-2 pt-0.5 text-[9px] font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>{t}</div>
-                    ))}
-                  </div>
-                  {/* Day columns */}
-                  <div className="flex-1 grid grid-cols-7">
-                    {getWeekDates(currentMonth).map((dt, i) => {
-                      const ds = fmtDate(dt)
-                      const isT = ds === today
-                      const appts = getApptsForDate(ds).sort((a, b) => a.startTime.localeCompare(b.startTime))
-                      return (
-                        <div key={i} className="relative" style={{ borderRight: i < 6 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
-                          {/* Day header */}
-                          <div className={`text-center py-2 ${isT ? 'sticky top-0 z-10' : ''}`} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', background: isT ? 'rgba(18,112,183,0.04)' : 'rgba(255,255,255,0.6)' }}>
-                            <div className="text-[10px] font-bold" style={{ color: isT ? BLUE : 'rgba(0,0,0,0.3)' }}>{dayLabels[i]}</div>
-                            <div onClick={() => { isT ? setSelectedDate(ds) : setDayModalDate(ds); setSelectedDate(ds) }}
-                              className={`inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer text-sm font-extrabold transition-colors hover:bg-black/[0.03]`}
-                              style={{ color: isT ? '#fff' : '#1A1A1E', background: isT ? BLUE_GRAD : 'transparent' }}
-                            >{dt.getDate()}</div>
-                          </div>
-                          {/* Time slots */}
-                          <div className="relative">
-                            {TIME_SLOTS_WEEK.map(t => (
-                              <div key={t} className="h-[48px]" style={{ borderBottom: '1px solid rgba(0,0,0,0.02)' }} />
+                <div className="grid grid-cols-8" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <div className="w-14" />
+                  {weekDates.map((dt, i) => {
+                    const ds = fmtDate(dt)
+                    const isT = ds === todayStr
+                    return (
+                      <div key={i} className="text-center py-2">
+                        <div className="text-[10px] font-bold" style={{ color: isT ? BLUE : 'rgba(0,0,0,0.3)' }}>{dayLabels[i]}</div>
+                        <div className={`text-sm font-extrabold`} style={{ color: '#1A1A1E' }}>{dt.getDate()}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ maxHeight: showTimeFilter ? '42vh' : '52vh', overflowY: 'auto' }}>
+                  {TIME_SLOTS_WEEK.map((t, ti) => (
+                    <div key={t} className="grid grid-cols-8" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                      <div className="w-14 text-[9px] font-bold leading-none text-right pr-2 py-1.5" style={{ color: 'rgba(0,0,0,0.2)' }}>{t}</div>
+                      {weekDates.map((dt, di) => {
+                        const ds = fmtDate(dt)
+                        const appts = getApptsForDate(ds).filter(a => {
+                          const aStart = a.startTime
+                          const aEnd = a.endTime
+                          return aStart <= t && aEnd > t
+                        })
+                        return (
+                          <div key={di} className="px-0.5" style={{ minHeight: 30 }}>
+                            {appts.map(a => (
+                              <div key={a.id} className="rounded px-1 py-0.5 text-[8px] font-bold truncate leading-tight"
+                                style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `2px solid ${typeColors[a.type]}` }}
+                                title={`${a.startTime} ${a.title}`}
+                              >{a.startTime} {a.title}</div>
                             ))}
-                            {/* Appointment blocks */}
-                            {appts.map(a => {
-                              const startH = parseInt(a.startTime.split(':')[0])
-                              const startM = parseInt(a.startTime.split(':')[1])
-                              const endH = parseInt(a.endTime.split(':')[0]) || startH + 1
-                              const top = (startH - 6) * 48 + (startM / 60) * 48
-                              const h = (endH - startH) * 48
-                              return (
-                                <div key={a.id} className="absolute left-0.5 right-0.5 rounded-md px-1.5 py-1 text-[9px] font-bold leading-tight overflow-hidden cursor-pointer transition-all hover:brightness-110"
-                                  style={{
-                                    top, height: h,
-                                    background: `${typeColors[a.type]}18`,
-                                    color: typeColors[a.type],
-                                    borderLeft: `2px solid ${typeColors[a.type]}`,
-                                    zIndex: 5,
-                                  }}
-                                  title={`${a.startTime} ${a.title}`}
-                                >
-                                  <div className="truncate">{a.startTime}</div>
-                                  <div className="truncate">{a.title}</div>
-                                </div>
-                              )
-                            })}
                           </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                        )
+                      })}
+                    </div>
+                  ))}
                 </div>
               </motion.div>
+
             ) : (
+              /* Month Grid */
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.06 }}
-                className="rounded-2xl premium-card overflow-hidden"
+                className="rounded-2xl premium-card"
               >
                 <div className="grid grid-cols-7" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                   {dayLabels.map(d => (
@@ -1094,25 +1109,25 @@ export function TrainerDashboard() {
             )}
           </div>
 
-          {/* ── SIDE PANEL (siempre día actual) ── */}
-          <div className="w-72 flex-shrink-0 space-y-4">
+          {/* ── SIDE PANEL ── */}
+          <div className="w-72 flex-shrink-0 flex flex-col gap-4" style={{ alignSelf: 'start' }}>
             <motion.div
               initial={{ opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-2xl premium-card overflow-hidden"
+              className="rounded-2xl premium-card"
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>
-                    {dayLabelsGetDay[new Date(today + 'T12:00:00').getDay()]} {new Date(today + 'T12:00:00').getDate()}
+                    {dayLabelsGetDay[new Date(todayStr + 'T12:00:00').getDay()]} {new Date(todayStr + 'T12:00:00').getDate()}
                   </p>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${BLUE}12`, color: BLUE }}>
                     Hoy
                   </span>
                 </div>
                 {(() => {
-                  const st = getDayStatus(today)
+                  const st = getDayStatus(todayStr)
                   return st.active ? (
                     <p className="text-[11px] font-medium mb-3" style={{ color: 'rgba(0,0,0,0.35)' }}>
                       {st.open} – {st.close}
@@ -1122,10 +1137,10 @@ export function TrainerDashboard() {
                   )
                 })()}
                 <div className="space-y-1.5 mb-3 max-h-[240px] overflow-y-auto">
-                  {getApptsForDate(today).length === 0 ? (
+                  {getApptsForDate(todayStr).length === 0 ? (
                     <p className="text-xs py-3 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>Sin citas hoy</p>
                   ) : (
-                    getApptsForDate(today).sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
+                    getApptsForDate(todayStr).sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
                       <div key={a.id} className="flex items-center gap-2 px-2.5 py-2 rounded-xl" style={{ background: `${typeColors[a.type]}08`, borderLeft: `2.5px solid ${typeColors[a.type]}` }}>
                         <div className="text-[10px] font-bold min-w-[40px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{a.startTime}</div>
                         <div className="flex-1 min-w-0">
@@ -1143,12 +1158,11 @@ export function TrainerDashboard() {
               </div>
             </motion.div>
 
-            {/* Valoraciones próximas */}
             <motion.div
               initial={{ opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.08, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-2xl premium-card overflow-hidden"
+              className="rounded-2xl premium-card"
             >
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-3">
@@ -1156,7 +1170,7 @@ export function TrainerDashboard() {
                   <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>VALORACIONES PRÓXIMAS</span>
                 </div>
                 <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                  {appointments.filter(a => a.type === 'assessment' && a.date >= today).sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)).slice(0, 5).map(a => (
+                  {appointments.filter(a => a.type === 'assessment' && a.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)).slice(0, 5).map(a => (
                     <div key={a.id} className="flex items-center gap-2 px-2.5 py-2 rounded-xl" style={{ background: 'rgba(48,209,88,0.06)' }}>
                       <div className="flex-1 min-w-0">
                         <div className="text-[11px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.studentName || a.title}</div>
@@ -1165,11 +1179,11 @@ export function TrainerDashboard() {
                         </div>
                       </div>
                       <div className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: 'rgba(48,209,88,0.12)', color: '#30D158' }}>
-                        {a.date === today ? 'Hoy' : ''}
+                        {a.date === todayStr ? 'Hoy' : ''}
                       </div>
                     </div>
                   ))}
-                  {appointments.filter(a => a.type === 'assessment' && a.date >= today).length === 0 && (
+                  {appointments.filter(a => a.type === 'assessment' && a.date >= todayStr).length === 0 && (
                     <p className="text-xs py-3 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>No hay valoraciones próximas</p>
                   )}
                 </div>
@@ -1178,69 +1192,73 @@ export function TrainerDashboard() {
           </div>
         </div>
 
-        {/* Day Detail Modal */}
+        {/* Day Detail Modal - positioned near clicked day */}
         <AnimatePresence>
-          {dayModalDate && (
+          {dayModalDate && dayModalPos && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
-              onClick={() => setDayModalDate(null)}
+              className="fixed inset-0 z-50"
+              onClick={() => { setDayModalDate(null); setDayModalPos(null) }}
             >
               <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 10 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                initial={{ scale: 0.93, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.93, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="rounded-2xl w-full max-w-sm overflow-hidden"
-                style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
+                className="absolute rounded-2xl w-72 overflow-hidden"
+                style={{
+                  background: '#fff',
+                  boxShadow: '0 12px 48px rgba(0,0,0,0.15)',
+                  top: Math.min(dayModalPos.top, window.innerHeight - 360),
+                  left: Math.min(dayModalPos.left, window.innerWidth - 300),
+                  zIndex: 60,
+                }}
                 onClick={e => e.stopPropagation()}
               >
-                <div className="p-5">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-1 h-8 rounded-full" style={{ background: BLUE_GRAD }} />
-                      <p className="text-base font-extrabold" style={{ color: '#1A1A1E' }}>
+                      <div className="w-1 h-7 rounded-full" style={{ background: BLUE_GRAD }} />
+                      <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>
                         {dayLabelsGetDay[new Date(dayModalDate + 'T12:00:00').getDay()]} {new Date(dayModalDate + 'T12:00:00').getDate()}
                       </p>
                     </div>
-                    <button onClick={() => setDayModalDate(null)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors">
-                      <X size={14} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                    <button onClick={() => { setDayModalDate(null); setDayModalPos(null) }} className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors">
+                      <X size={13} style={{ color: 'rgba(0,0,0,0.3)' }} />
                     </button>
                   </div>
                   {(() => {
                     const st = getDayStatus(dayModalDate)
                     return st.active ? (
-                      <p className="text-[11px] font-medium mb-4" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                      <p className="text-[10px] font-medium mb-3" style={{ color: 'rgba(0,0,0,0.35)' }}>
                         {st.open} – {st.close}
                       </p>
                     ) : (
-                      <p className="text-[11px] font-medium mb-4" style={{ color: RED }}>Cerrado</p>
+                      <p className="text-[10px] font-medium mb-3" style={{ color: RED }}>Cerrado</p>
                     )
                   })()}
-                  <div className="space-y-1.5 mb-4 max-h-[260px] overflow-y-auto">
+                  <div className="space-y-1 max-h-[200px] overflow-y-auto mb-3">
                     {getApptsForDate(dayModalDate).length === 0 ? (
-                      <p className="text-xs py-4 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>Sin citas este día</p>
+                      <p className="text-xs py-3 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>Sin citas este día</p>
                     ) : (
                       getApptsForDate(dayModalDate).sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
-                        <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: `${typeColors[a.type]}08`, borderLeft: `3px solid ${typeColors[a.type]}` }}>
-                          <div className="text-[11px] font-bold min-w-[42px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{a.startTime}</div>
+                        <div key={a.id} className="flex items-center gap-2 px-2.5 py-2 rounded-xl" style={{ background: `${typeColors[a.type]}08`, borderLeft: `2.5px solid ${typeColors[a.type]}` }}>
+                          <div className="text-[10px] font-bold min-w-[38px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{a.startTime}</div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-[13px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</div>
-                            {a.studentName && <div className="text-[11px] font-medium truncate" style={{ color: 'rgba(0,0,0,0.35)' }}>{a.studentName}</div>}
-                            {a.trainer && <div className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.25)' }}>Con {a.trainer}</div>}
+                            <div className="text-[11px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</div>
+                            {a.studentName && <div className="text-[10px] font-medium truncate" style={{ color: 'rgba(0,0,0,0.35)' }}>{a.studentName}</div>}
                           </div>
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type] }}>{typeLabels[a.type]}</span>
+                          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type] }}>{typeLabels[a.type]}</span>
                         </div>
                       ))
                     )}
                   </div>
-                  <button onClick={() => { setDayModalDate(null); setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
-                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
+                  <button onClick={() => { setDayModalDate(null); setDayModalPos(null); setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
+                    className="w-full flex items-center justify-center gap-1 py-2 rounded-xl text-[10px] font-bold text-white transition-all"
                     style={{ background: BLUE_GRAD }}
-                  ><Plus size={13} /> Agregar Cita</button>
+                  ><Plus size={11} /> Agregar Cita</button>
                 </div>
               </motion.div>
             </motion.div>
