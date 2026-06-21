@@ -979,22 +979,10 @@ export function TrainerDashboard() {
             }} />
           </div>
 
-          {/* Imagen de calendario — dentro del recuadro, solo sobresale arriba */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.15, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: -30,
-              width: 260,
-              height: 'auto',
-              zIndex: 1,
-            }}
-          >
-            <img src={calendarImg} alt="Calendario" className="w-full h-auto" />
-          </motion.div>
+          {/* Imagen de calendario — dentro del recuadro sin sobresalir */}
+          <div className="absolute left-6 top-6 bottom-6 w-48 flex items-center justify-center z-20 pointer-events-none">
+            <img src={calendarImg} alt="Calendario" className="w-full h-full object-contain drop-shadow-xl" />
+          </div>
 
           <div className="relative z-10 p-8 flex items-center justify-between">
             <div className="flex items-center gap-6 ml-56">
