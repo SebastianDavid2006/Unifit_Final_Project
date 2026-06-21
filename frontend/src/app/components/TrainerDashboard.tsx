@@ -13,6 +13,7 @@ import {
 import { StudentProfile, TABS } from './StudentProfile'
 import StudentsModule from './StudentsModule'
 import coachImg from '../../assets/illustrations/characters/coach.png'
+import calendarImg from '../../assets/illustrations/objects/calendar.png'
 
 // ── Colors ──
 
@@ -189,7 +190,7 @@ export function TrainerDashboard() {
   const [viewMode, setViewMode] = useState<'week' | 'month' | 'year'>('month')
   const [agendaSearch, setAgendaSearch] = useState('')
   const [dayModalDate, setDayModalDate] = useState<string | null>(null)
-  const [showTimeFilter, setShowTimeFilter] = useState(false)
+
 
   const [weeklyTemplate, setWeeklyTemplate] = useState<Record<string, { active: boolean; open: string; close: string }>>({
     LUN: { active: true, open: '06:00', close: '22:00' },
@@ -858,8 +859,6 @@ export function TrainerDashboard() {
 
   // ── Agenda Helpers ──
 
-  const TIME_SLOTS_WEEK = ['6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
-
   function renderDayCell(dt: Date | null, idx: number, lastRow?: boolean, mini?: boolean) {
     if (!dt) return <div key={idx} className={mini ? 'min-h-[60px]' : 'min-h-[100px]'} />
     const ds = fmtDate(dt)
@@ -923,6 +922,8 @@ export function TrainerDashboard() {
   }
 
   function renderSchedule() {
+    const TIME_SLOTS_WEEK = ['6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
+    const MESH_GRAD = 'radial-gradient(ellipse at 20% 30%, rgba(241,200,39,0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(230,57,70,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(18,112,183,0.35) 0%, transparent 50%), rgba(18,112,183,0.88)'
     const year = currentMonth.getFullYear()
     const month = currentMonth.getMonth()
     const todayStr = fmtDate(new Date())
@@ -951,7 +952,7 @@ export function TrainerDashboard() {
     const viewTitle = viewMode === 'year'
       ? `Año ${year}`
       : viewMode === 'week'
-      ? `Semana del ${fmtDate(weekDates[0])}`
+      ? `Semana del ${dayLabelsGetDay[weekDates[0].getDay()]} ${weekDates[0].getDate()} ${monthNames[weekDates[0].getMonth()]}`
       : `${monthNames[month]} ${year}`
 
     return (
@@ -978,11 +979,22 @@ export function TrainerDashboard() {
             }} />
           </div>
 
-          {/* Placeholder para la imagen que me pasarás */}
-          <div className="absolute left-8 top-1/2 -translate-y-1/2 w-44 h-44 rounded-2xl flex items-center justify-center pointer-events-none z-10"
-            style={{ background: 'rgba(18,112,183,0.04)', border: '1px dashed rgba(18,112,183,0.12)' }}>
-            <Calendar size={48} style={{ color: 'rgba(18,112,183,0.15)' }} />
-          </div>
+          {/* Imagen de calendario — dentro del recuadro, solo sobresale arriba */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.15, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: -30,
+              width: 260,
+              height: 'auto',
+              zIndex: 1,
+            }}
+          >
+            <img src={calendarImg} alt="Calendario" className="w-full h-auto" />
+          </motion.div>
 
           <div className="relative z-10 p-8 flex items-center justify-between">
             <div className="flex items-center gap-6 ml-56">
@@ -993,12 +1005,6 @@ export function TrainerDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-3 pr-4">
-              {viewMode === 'week' && (
-                <button onClick={() => setShowTimeFilter(p => !p)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all"
-                  style={{ background: showTimeFilter ? `${BLUE}12` : 'rgba(0,0,0,0.04)', color: showTimeFilter ? BLUE : 'rgba(0,0,0,0.35)', border: '1px solid rgba(0,0,0,0.05)' }}
-                ><Clock size={14} /> Horario</button>
-              )}
               <button onClick={() => setShowWeekModal(true)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all"
                 style={{ background: 'rgba(0,0,0,0.04)', color: BLUE, border: '1px solid rgba(0,0,0,0.05)' }}
@@ -1006,8 +1012,9 @@ export function TrainerDashboard() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => alert('Horario publicado con éxito')}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all"
-                style={{ background: BLUE_GRAD }}
+                style={{ background: MESH_GRAD }}
               ><span className="text-sm">⬆</span> Publicar</motion.button>
             </div>
           </div>
@@ -1105,7 +1112,7 @@ export function TrainerDashboard() {
                     )
                   })}
                 </div>
-                <div style={{ maxHeight: showTimeFilter ? '42vh' : '52vh', overflowY: 'auto' }}>
+                <div style={{ maxHeight: '52vh', overflowY: 'auto' }}>
                   {TIME_SLOTS_WEEK.map(t => (
                     <div key={t} className="grid grid-cols-8" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                       <div className="w-14 text-[9px] font-bold leading-none text-right pr-2 py-1.5" style={{ color: 'rgba(0,0,0,0.2)' }}>{t}</div>
@@ -1203,7 +1210,7 @@ export function TrainerDashboard() {
                 </div>
                 <button onClick={() => { setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
                   className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold text-white transition-all"
-                  style={{ background: BLUE_GRAD }}
+                  style={{ background: MESH_GRAD }}
                 ><Plus size={12} /> Nueva Cita</button>
               </div>
             </motion.div>
@@ -1303,7 +1310,7 @@ export function TrainerDashboard() {
                   </div>
                   <button onClick={() => { setDayModalDate(null); setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
                     className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
-                    style={{ background: BLUE_GRAD }}
+                    style={{ background: MESH_GRAD }}
                   ><Plus size={13} /> Agregar Cita</button>
                 </div>
               </motion.div>
@@ -1342,7 +1349,7 @@ export function TrainerDashboard() {
                       <div key={dk} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(0,0,0,0.02)' }}>
                         <div onClick={() => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], active: !prev[dk].active } }))}
                           className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold cursor-pointer transition-all flex-shrink-0"
-                          style={{ background: t.active ? BLUE_GRAD : 'rgba(0,0,0,0.04)', color: t.active ? '#fff' : 'rgba(0,0,0,0.25)' }}
+                          style={{ background: t.active ? MESH_GRAD : 'rgba(0,0,0,0.04)', color: t.active ? '#fff' : 'rgba(0,0,0,0.25)' }}
                         >{dayLabels[i].charAt(0)}</div>
                         <div className="flex-1 font-semibold text-sm" style={{ color: '#1A1A1E' }}>{dayLabels[i]}</div>
                         <input type="time" value={t.open} onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], open: e.target.value } }))} disabled={!t.active}
@@ -1357,7 +1364,7 @@ export function TrainerDashboard() {
                   })}
                 </div>
                 <div className="px-6 pb-6 pt-0">
-                  <button onClick={() => setShowWeekModal(false)} className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all" style={{ background: BLUE_GRAD }}>Guardar Semana Base</button>
+                  <button onClick={() => setShowWeekModal(false)} className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all" style={{ background: MESH_GRAD }}>Guardar Semana Base</button>
                 </div>
               </motion.div>
             </motion.div>
@@ -1437,7 +1444,7 @@ export function TrainerDashboard() {
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     onClick={handleAddAppointment} disabled={!newApptTitle}
                     className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                    style={{ background: newApptTitle ? BLUE_GRAD : 'rgba(0,0,0,0.1)' }}
+                    style={{ background: newApptTitle ? MESH_GRAD : 'rgba(0,0,0,0.1)' }}
                   >Agendar Cita</motion.button>
                 </div>
               </motion.div>
