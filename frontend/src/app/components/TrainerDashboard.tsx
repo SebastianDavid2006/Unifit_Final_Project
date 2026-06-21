@@ -196,6 +196,7 @@ export function TrainerDashboard() {
   const [selectedStudent, setSelectedStudent] = useState<typeof students[0] | null>(null)
   const [studentTab, setStudentTab] = useState('overview')
   const [search, setSearch] = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
   const [riskFilter, setRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleStart, setScheduleStart] = useState('')
@@ -464,13 +465,24 @@ export function TrainerDashboard() {
               {section === 'students' && (
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  animate={{ opacity: 1, y: 0, scaleX: searchFocused ? 1.04 : 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                   className="flex items-center gap-3 px-4 py-2 rounded-2xl"
+                  style={{
+                    background: searchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(24px) saturate(1.6)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+                    border: searchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                    boxShadow: searchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
+                    transformOrigin: 'center',
+                  }}
                 >
-                  <Search size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                  <Search size={16} style={{ color: searchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
                   <input 
                     value={search} 
                     onChange={e => setSearch(e.target.value)} 
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
                     placeholder="Buscar por nombre o documento..." 
                     className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
                   />
@@ -515,9 +527,16 @@ export function TrainerDashboard() {
 
           <div className="flex items-center gap-3 ml-auto">
             <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ background: 'rgba(255,255,255,0.28)' }}
               whileTap={{ scale: 0.95 }}
-              className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              className="relative w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(24px) saturate(1.6)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+              }}
             >
               <Bell size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
               <div className="dot-alert absolute -top-1 -right-1" style={{ width: 8, height: 8 }} />
@@ -526,28 +545,37 @@ export function TrainerDashboard() {
             <motion.div
               initial="initial"
               whileHover="hover"
-              className="flex items-center rounded-xl cursor-pointer transition-all overflow-hidden"
-              style={{ height: 38 }}
+              className="flex items-center rounded-xl cursor-pointer overflow-hidden"
+              style={{
+                height: 38,
+                background: 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(24px) saturate(1.6)',
+                WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+              }}
             >
+              <motion.div
+                variants={{
+                  initial: { width: 0, opacity: 0, paddingRight: 0, paddingLeft: 0 },
+                  hover: { width: 175, opacity: 1, paddingRight: 10, paddingLeft: 12 },
+                }}
+                transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+                className="overflow-hidden whitespace-nowrap flex items-center"
+              >
+                <div className="flex items-center gap-2">
+                  <div>
+                    <p className="text-[#1A1A1E] text-xs font-bold leading-none">Sebastián Morales</p>
+                    <p style={{ color: 'rgba(0,0,0,0.3)', fontSize: 9 }} className="mt-0.5">Plataforma de Entrenadores</p>
+                  </div>
+                </div>
+              </motion.div>
               <div
                 className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
                 style={{ background: RED_GRAD }}
               >
                 SM
               </div>
-              <motion.div
-                variants={{
-                  hover: { width: 'auto', opacity: 1, paddingRight: 12, paddingLeft: 10 },
-                  initial: { width: 0, opacity: 0, paddingRight: 0, paddingLeft: 0 }
-                }}
-                className="flex items-center gap-2 overflow-hidden whitespace-nowrap"
-              >
-                <div>
-                  <p className="text-[#1A1A1E] text-xs font-bold leading-none">Sebastián Morales</p>
-                  <p style={{ color: 'rgba(0,0,0,0.3)', fontSize: 9 }} className="mt-0.5">Plataforma de Entrenadores</p>
-                </div>
-                <ChevronDown size={12} style={{ color: 'rgba(0,0,0,0.2)' }} />
-              </motion.div>
             </motion.div>
           </div>
           </div>

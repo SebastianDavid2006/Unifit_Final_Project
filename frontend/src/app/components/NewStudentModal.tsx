@@ -2,13 +2,13 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   X, Upload, Check, Pen, FileText, User,
-  ChevronLeft, ChevronRight, CheckCircle, RefreshCw, ScanLine
+  ChevronLeft, ChevronRight, RefreshCw, ScanLine
 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import confetti from 'canvas-confetti'
-import huellaImg from '../../assets/illustrations/objects/huella.png'
 import lectorHuellaImg from '../../assets/illustrations/objects/lector_huella.png'
 import coachCongratsImg from '../../assets/illustrations/characters/coach_congratulations.png'
+import checkSuccessImg from '../../assets/objects/ui/check_success.png'
 
 const BLUE = '#1270B7'
 const RED = '#F43843'
@@ -159,9 +159,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   // ── Helpers ──────────────────────────────────────────────────
 
+  const meshInputBg = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'
+  const meshInputHover = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'
   const field = (label: string, key: string, opts?: { type?: string; required?: boolean; placeholder?: string }) => (
     <div className="flex flex-col gap-1 group">
-      <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.4)' }}>
+      <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.6)' }}>
         {label}{opts?.required && <span className="ml-0.5" style={{ color: RED }}>*</span>}
       </label>
       <input
@@ -171,14 +173,14 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         placeholder={opts?.placeholder}
         className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
         style={{
-          background: 'rgba(0,0,0,0.03)',
+          background: meshInputBg,
           color: '#1A1A1E',
           border: '1px solid transparent',
         }}
-        onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = 'rgba(0,0,0,0.05)'; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-        onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = 'rgba(0,0,0,0.03)'; e.target.style.borderColor = 'transparent' } }}
-        onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-        onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+        onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+        onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
+        onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+        onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
         required={opts?.required}
       />
     </div>
@@ -186,7 +188,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const select = (label: string, key: string, options: string[], opts?: { required?: boolean }) => (
     <div className="flex flex-col gap-1 relative group">
-      <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.4)' }}>
+      <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.6)' }}>
         {label}{opts?.required && <span className="ml-0.5" style={{ color: RED }}>*</span>}
       </label>
       <div className="relative">
@@ -195,15 +197,15 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
           onChange={e => set(key, e.target.value)}
           className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full appearance-none transition-all duration-200 cursor-pointer"
           style={{
-            background: 'rgba(0,0,0,0.03)',
+            background: meshInputBg,
             color: '#1A1A1E',
             border: '1px solid transparent',
             paddingRight: 32,
           }}
-          onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = 'rgba(0,0,0,0.05)'; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-          onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = 'rgba(0,0,0,0.03)'; e.target.style.borderColor = 'transparent' } }}
-          onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-          onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+          onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+          onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
+          onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+          onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
           required={opts?.required}
         >
           {options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -217,86 +219,12 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     </div>
   )
 
-  // ── Step indicator ───────────────────────────────────────────
-
-  const stepIndicator = (
-    <div className="flex flex-col items-center px-6 pb-10">
-      <div className="flex items-start justify-center w-full max-w-xs">
-        {STEPS.map((s, i) => (
-          <div key={s.num} className="flex items-center" style={{ flex: 1 }}>
-            <div className="flex items-center justify-center flex-shrink-0" style={{ width: 38 }}>
-              <div className="relative flex items-center justify-center">
-                {s.num === step && (
-                  <motion.span
-                    animate={{
-                      scale: [1, 1.25, 1],
-                      opacity: [0.6, 0.1, 0.6],
-                    }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: 'easeInOut',
-                    }}
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    style={{
-                      boxShadow: '0 0 25px rgba(244,56,67,0.6), 0 0 50px rgba(245,166,35,0.3), 0 0 75px rgba(18,112,183,0.2)',
-                    }}
-                  />
-                )}
-                <motion.div
-                  layout
-                  animate={{
-                    scale: s.num === step ? [1.05, 1.25, 1.1, 1.15] : s.num > step ? [1, 0.75, 0.9, 0.85] : 0.85,
-                    color: s.num <= step ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
-                    opacity: s.num < step ? Math.max(0.06, 1.2 - (step - s.num) * 0.3) : 1,
-                  }}
-                  transition={{
-                    layout: { type: 'spring', stiffness: 300, damping: 22, mass: 1.2 },
-                    scale: { type: 'spring', stiffness: 350, damping: 16, mass: 1.5, velocity: 2 },
-                    color: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
-                  }}
-                  className="rounded-full flex items-center justify-center text-xs font-bold relative flex-shrink-0 z-10"
-                  style={{
-                    width: s.num === step ? 38 : 32,
-                    height: s.num === step ? 38 : 32,
-                    background: s.num === step ? MESH_ACTIVE : s.num < step ? GREEN_GRAD : 'rgba(0,0,0,0.06)',
-                  }}
-                >
-                {s.num < step ? (
-                  <motion.span initial={{ scale: 0 }} animate={{ scale: [0, 1.3, 0.9, 1] }} transition={{ type: 'spring', stiffness: 500, damping: 18, mass: 0.8 }}>
-                    <Check size={14} />
-                  </motion.span>
-                ) : (
-                  <motion.span key={s.num === step ? 'active' : 'inert'} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}>
-                    {s.num}
-                  </motion.span>
-                )}
-              </motion.div>
-            </div>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div className="flex-1 h-0.5 mx-1 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
-                <motion.div
-                  initial={{ width: '0%' }}
-                  animate={{ width: s.num < step ? '100%' : '0%' }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="h-full rounded-full"
-                  style={{ background: GREEN }}
-                />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-
   // ── Step renders ─────────────────────────────────────────────
 
   const sectionTitle = (title: string) => (
     <div className="flex items-center gap-2 pt-2 pb-1">
-      <div className="w-0.5 h-4 rounded-full" style={{ background: MESH_ACTIVE }} />
-      <span className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{title}</span>
+      <div className="w-0.5 h-5 rounded-full" style={{ background: BLUE_GRAD }} />
+      <span className="text-sm font-semibold" style={{ color: '#1A1A1E' }}>{title}</span>
     </div>
   )
 
@@ -332,7 +260,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         {select('Grupo sanguíneo', 'grupoSanguineo', GRUPOS_SANGRE)}
       </div>
       <div className="flex flex-col gap-1">
-        <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>Certificado EPS</label>
+        <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Certificado EPS</label>
         <button type="button" onClick={() => fileRef.current?.click()}
           className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-medium cursor-pointer"
           style={{ background: 'rgba(18,112,183,0.06)', color: BLUE, border: '1px dashed rgba(18,112,183,0.2)' }}
@@ -369,7 +297,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const renderStep2 = () => (
     <div className="space-y-5">
-      <div className="rounded-2xl p-5 text-xs leading-relaxed" style={{ background: 'rgba(0,0,0,0.02)', color: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,0,0,0.04)' }}>
+      <div className="rounded-2xl p-5 text-xs leading-relaxed max-h-[280px] overflow-y-auto" style={{ background: 'rgba(0,0,0,0.02)', color: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,0,0,0.04)' }}>
         <p className="font-bold text-sm mb-3" style={{ color: '#1A1A1E' }}>Autorización para el tratamiento de datos personales</p>
         <p className="mb-3">
           En cumplimiento de la Ley 1581 de 2012 y sus decretos reglamentarios, UniFit S.A.S. en calidad de responsable del tratamiento de datos personales, solicita su autorización para recolectar, almacenar, usar, circular y suprimir los datos personales suministrados en el presente formulario, con la finalidad de gestionar su registro como estudiante, llevar a cabo el seguimiento académico, realizar comunicaciones institucionales, enviar información sobre programas y servicios, y cumplir con obligaciones legales y contractuales.
@@ -386,8 +314,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
           onClick={() => setAceptaDatos(!aceptaDatos)}
           className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
           style={{
-            background: aceptaDatos ? BLUE_GRAD : 'rgba(0,0,0,0.04)',
-            border: `1.5px solid ${aceptaDatos ? BLUE : 'rgba(0,0,0,0.1)'}`,
+            background: aceptaDatos ? BLUE_GRAD : 'transparent',
+            border: `1.5px solid ${aceptaDatos ? BLUE : 'rgba(0,0,0,0.06)'}`,
           }}
         >
           {aceptaDatos && (
@@ -396,7 +324,15 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
             </motion.span>
           )}
         </div>
-        <span className="text-xs font-medium leading-relaxed" style={{ color: 'rgba(0,0,0,0.55)' }}>
+        <span style={{
+          fontSize: 12,
+          fontWeight: 500,
+          lineHeight: 1.6,
+          color: aceptaDatos ? 'transparent' : 'rgba(0,0,0,0.55)',
+          background: aceptaDatos ? BLUE_GRAD : 'none',
+          backgroundClip: aceptaDatos ? 'text' : 'none',
+          WebkitBackgroundClip: aceptaDatos ? 'text' : 'none',
+        }}>
           Autorizo el tratamiento de mis datos personales de acuerdo con la política de privacidad de UniFit.
         </span>
       </label>
@@ -405,7 +341,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const renderStep3 = () => (
     <div className="space-y-5">
-      <div className="rounded-2xl p-5 text-xs leading-relaxed" style={{ background: 'rgba(0,0,0,0.02)', color: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,0,0,0.04)' }}>
+      <div className="rounded-2xl p-5 text-xs leading-relaxed max-h-[280px] overflow-y-auto" style={{ background: 'rgba(0,0,0,0.02)', color: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,0,0,0.04)' }}>
         <p className="font-bold text-sm mb-3" style={{ color: '#1A1A1E' }}>Contrato de prestación de servicios estudiantiles</p>
         <p className="mb-3">
           El presente contrato regula la relación entre UniFit S.A.S., en adelante "LA INSTITUCIÓN", y el estudiante que se registra a través del presente formulario, en adelante "EL ESTUDIANTE".
@@ -434,8 +370,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
           onClick={() => setAceptaContrato(!aceptaContrato)}
           className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
           style={{
-            background: aceptaContrato ? BLUE_GRAD : 'rgba(0,0,0,0.04)',
-            border: `1.5px solid ${aceptaContrato ? BLUE : 'rgba(0,0,0,0.1)'}`,
+            background: aceptaContrato ? BLUE_GRAD : 'transparent',
+            border: `1.5px solid ${aceptaContrato ? BLUE : 'rgba(0,0,0,0.06)'}`,
           }}
         >
           {aceptaContrato && (
@@ -444,7 +380,15 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
             </motion.span>
           )}
         </div>
-        <span className="text-xs font-medium leading-relaxed" style={{ color: 'rgba(0,0,0,0.55)' }}>
+        <span style={{
+          fontSize: 12,
+          fontWeight: 500,
+          lineHeight: 1.6,
+          color: aceptaContrato ? 'transparent' : 'rgba(0,0,0,0.55)',
+          background: aceptaContrato ? BLUE_GRAD : 'none',
+          backgroundClip: aceptaContrato ? 'text' : 'none',
+          WebkitBackgroundClip: aceptaContrato ? 'text' : 'none',
+        }}>
           Acepto los términos y condiciones del contrato de prestación de servicios estudiantiles de UniFit.
         </span>
       </label>
@@ -457,18 +401,29 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         Dibuja tu firma en el recuadro utilizando el mouse o tu dedo (si usas pantalla táctil).
       </p>
       <div
-        className="relative rounded-2xl p-4"
+        className="relative rounded-2xl p-4 overflow-hidden"
         style={{
-          background: 'linear-gradient(135deg, rgba(18,112,183,0.04), rgba(126,200,227,0.02))',
-          border: '1px solid rgba(18,112,183,0.1)',
-          boxShadow: 'inset 0 0 30px rgba(18,112,183,0.03)',
+          background: '#FFFFFF',
+          border: '1px solid rgba(0,0,0,0.04)',
         }}
       >
+        <motion.div
+          className="absolute top-0 left-0 right-0 h-0.5 pointer-events-none z-10"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
+          animate={{ x: ['-100%', '100%'] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-0 right-0 h-0.5 pointer-events-none z-10"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
+          animate={{ x: ['100%', '-100%'] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+        />
         <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 rounded-tl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
         <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 rounded-tr pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
         <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
         <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
           <SignatureCanvas
             ref={sigRef}
             penColor="#1A1A1E"
@@ -476,7 +431,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
             maxWidth={2.5}
             canvasProps={{
               className: 'w-full',
-              style: { height: 200, background: 'rgba(0,0,0,0.02)', borderRadius: '12px', width: '100%' },
+              style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },
             }}
           />
         </div>
@@ -485,11 +440,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   )
 
   const renderStep5 = () => (
-    <div className="space-y-6 flex flex-col items-center py-4">
-      <p className="text-xs font-medium text-center" style={{ color: 'rgba(0,0,0,0.4)' }}>
-        Coloca tu dedo sobre el sensor para capturar tu huella digital.
-      </p>
-
+    <div className="flex flex-col items-center pt-8 gap-3">
       <div className="relative flex items-center justify-center">
         <motion.div
           className="absolute rounded-full pointer-events-none"
@@ -553,43 +504,101 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         })}
 
         {fingerprintStatus === 'captured' ? (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 15 }}>
-            <CheckCircle size={80} color={GREEN} />
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            className="relative flex items-center justify-center my-8"
+          >
+            <div className="absolute w-48 h-48 rounded-full" style={{
+              background: 'radial-gradient(circle, rgba(34,197,94,0.25) 0%, transparent 70%)',
+            }} />
+            {[...Array(12)].map((_, i) => {
+              const angle = (i / 12) * 360
+              const rad = (angle * Math.PI) / 180
+              const dist = 80 + (i % 3) * 20
+              return (
+                <motion.span
+                  key={i}
+                  className="absolute pointer-events-none text-lg select-none"
+                  style={{ color: '#22C55E' }}
+                  animate={{
+                    x: [0, Math.cos(rad) * dist],
+                    y: [0, Math.sin(rad) * dist],
+                    opacity: [0, 1, 0],
+                    scale: [0, 1.2, 0],
+                  }}
+                  transition={{
+                    duration: 2 + (i % 4) * 0.3,
+                    repeat: Infinity,
+                    delay: i * 0.1,
+                    ease: 'easeOut',
+                  }}
+                >
+                  ✦
+                </motion.span>
+              )
+            })}
+            <motion.img
+              src={checkSuccessImg}
+              alt="check"
+              className="w-28 h-auto object-contain relative z-10"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            />
           </motion.div>
         ) : (
-          <div className="relative w-64 h-64">
-            <motion.img
-              src={huellaImg}
-              alt="huella"
-              className="absolute inset-0 w-full h-full object-contain"
-              animate={{
-                scale: fingerprintStatus === 'scanning' ? [1, 1.06, 1] : [1, 1.03, 1],
-                opacity: fingerprintStatus === 'scanning' ? 0 : 0.6,
-              }}
-              transition={{
-                scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
-                opacity: { duration: 0.5, ease: 'easeInOut' },
-              }}
-            />
-            <motion.img
-              src={lectorHuellaImg}
-              alt="lector huella"
-              className="absolute inset-0 w-full h-full object-contain"
-              animate={{
-                scale: fingerprintStatus === 'scanning' ? [1, 1.06, 1] : [1, 1.03, 1],
-                opacity: fingerprintStatus === 'scanning' ? 1 : 0,
-                filter: fingerprintStatus === 'scanning'
-                  ? 'brightness(1.2) drop-shadow(0 0 20px rgba(34,197,94,0.6))'
-                  : 'none',
-              }}
-              transition={{
-                scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
-                opacity: { duration: 0.5, ease: 'easeInOut' },
-              }}
-            />
+          <div className="relative flex items-center justify-center my-8">
+            <div className="relative w-64 h-64">
+              <motion.img
+                src={lectorHuellaImg}
+                alt="lector huella"
+                className="w-full h-full object-contain"
+                animate={{
+                  scale: [1, 1.02, 1],
+                  opacity: fingerprintStatus === 'scanning' ? 0.3 : 0.4,
+                }}
+                transition={{
+                  scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
+                  opacity: { duration: 0.3 },
+                }}
+              />
+
+            {fingerprintStatus === 'scanning' && (
+              <>
+                <motion.div
+                  className="absolute inset-0 pointer-events-none z-10 overflow-hidden"
+                  style={{
+                    filter: 'brightness(1.3) drop-shadow(0 0 15px rgba(34,197,94,0.5))',
+                  }}
+                  animate={{
+                    clipPath: [
+                      'inset(90% 0 10% 0)',
+                      'inset(10% 0 80% 0)',
+                      'inset(90% 0 10% 0)',
+                    ],
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <img src={lectorHuellaImg} alt="" className="w-full h-full object-contain" />
+                </motion.div>
+              </>
+            )}
+          </div>
           </div>
         )}
       </div>
+
+      {fingerprintStatus === 'idle' && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-xs font-medium text-center"
+          style={{ color: 'rgba(0,0,0,0.4)' }}
+        >
+          Coloca tu dedo sobre el sensor para capturar tu huella digital.
+        </motion.p>
+      )}
 
       {fingerprintStatus === 'scanning' && (
         <motion.div
@@ -605,14 +614,14 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       )}
 
       {fingerprintStatus === 'captured' && (
-        <motion.div
+        <motion.p
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2"
+          className="text-xs font-medium text-center"
+          style={{ color: GREEN }}
         >
-          <Check size={16} color={GREEN} />
-          <span className="text-xs font-medium" style={{ color: GREEN }}>Huella capturada exitosamente</span>
-        </motion.div>
+          Huella capturada exitosamente
+        </motion.p>
       )}
     </div>
   )
@@ -624,90 +633,51 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="flex flex-col items-center pt-8 px-6"
     >
-      <div className="relative flex items-center justify-center -mt-28 mb-2">
-        <motion.div
-          className="absolute pointer-events-none"
-          style={{
-            width: 360,
-            height: 360,
-            background: `
-              radial-gradient(ellipse at 30% 40%, rgba(34,197,94,0.5) 0%, transparent 50%),
-              radial-gradient(ellipse at 70% 30%, rgba(0,155,149,0.3) 0%, transparent 40%),
-              radial-gradient(ellipse at 50% 70%, rgba(34,197,94,0.2) 0%, transparent 45%),
-              radial-gradient(ellipse at 20% 60%, rgba(74,222,128,0.25) 0%, transparent 35%)
-            `,
-          }}
-          animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.9, 0.5] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute pointer-events-none"
-          style={{
-            width: 260,
-            height: 260,
-            background: `
-              radial-gradient(ellipse at 60% 50%, rgba(34,197,94,0.35) 0%, transparent 45%),
-              radial-gradient(ellipse at 30% 30%, rgba(0,251,100,0.2) 0%, transparent 40%)
-            `,
-          }}
-          animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.5, 0.2] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-        />
-        {[...Array(20)].map((_, i) => (
-          <motion.span
-            key={i}
-            className="absolute pointer-events-none text-lg select-none"
-            style={{ color: '#4ADE80' }}
-            animate={{
-              x: [0, Math.cos((i / 20) * Math.PI * 2) * (100 + (i % 5) * 25)],
-              y: [0, Math.sin((i / 20) * Math.PI * 2) * (100 + (i % 5) * 25)],
-              opacity: [0, 1, 0],
-              scale: [0, 1.4, 0],
-            }}
-            transition={{
-              duration: 2.5 + (i % 4) * 0.3,
-              repeat: Infinity,
-              delay: i * 0.08,
-              ease: 'easeOut',
-            }}
-          >
-            ✦
-          </motion.span>
-        ))}
-        <div className="relative w-64">
-          <div
-            className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-72 h-14 rounded-full pointer-events-none"
-            style={{
-              background: 'linear-gradient(135deg, rgba(34,197,94,0.3), rgba(0,155,149,0.2))',
-              filter: 'blur(24px)',
-            }}
+      <div className="relative flex items-center justify-center -mt-28 mb-6">
+        {[...Array(24)].map((_, i) => {
+          const angle = (i / 24) * 360
+          const rad = (angle * Math.PI) / 180
+          return (
+            <motion.span
+              key={i}
+              className="absolute pointer-events-none text-lg select-none"
+              style={{ color: '#4ADE80' }}
+              animate={{
+                x: [0, Math.cos(rad) * (110 + (i % 6) * 20)],
+                y: [0, Math.sin(rad) * (110 + (i % 6) * 20)],
+                opacity: [0, 1, 0],
+                scale: [0, 1.4, 0],
+              }}
+              transition={{
+                duration: 2.5 + (i % 4) * 0.3,
+                repeat: Infinity,
+                delay: i * 0.07,
+                ease: 'easeOut',
+              }}
+            >
+              ✦
+            </motion.span>
+          )
+        })}
+        <div className="relative flex items-center justify-center">
+          <motion.img
+            src={coachCongratsImg}
+            alt="felicitaciones"
+            className="w-72 h-auto object-contain relative z-10"
+            style={{ filter: 'drop-shadow(0 0 30px rgba(34,197,94,0.15))' }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
           />
-          <div
-            className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-60 h-10 rounded-full pointer-events-none"
-            style={{
-              background: 'rgba(0,0,0,0.12)',
-              filter: 'blur(20px)',
-            }}
-          />
-          <motion.div
-            className="rounded-2xl p-6"
-            style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(0,155,149,0.05))' }}
-          >
-            <motion.img
-              src={coachCongratsImg}
-              alt="felicitaciones"
-              className="w-full h-auto object-contain relative z-10"
-              initial={{ scale: 0, y: 40 }}
-              animate={{ scale: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 14, delay: 0.1 }}
-            />
-          </motion.div>
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-24 pointer-events-none z-20" style={{
+            background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, transparent 60%)',
+          }} />
         </div>
       </div>
       <motion.p
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
         className="text-lg font-bold text-center"
         style={{ color: '#1A1A1E' }}
       >
@@ -716,7 +686,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       <motion.p
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35 }}
+        transition={{ delay: 0.45, duration: 0.4 }}
         className="text-xs font-medium mt-1 text-center"
         style={{ color: 'rgba(0,0,0,0.35)' }}
       >
@@ -725,9 +695,9 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       <motion.button
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
+        transition={{ delay: 0.5, duration: 0.3 }}
+        whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(18,112,183,0.35)', transition: { duration: 0.15 } }}
+        whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(18,112,183,0.2)', transition: { duration: 0.1 } }}
         onClick={onClose}
         className="mt-8 mb-10 px-8 py-3 rounded-xl text-xs font-bold text-white cursor-pointer"
         style={{ background: BLUE_GRAD }}
@@ -752,11 +722,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
           onClick={handleCloseClick}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className={`rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col mx-4 relative ${success ? 'overflow-visible' : 'overflow-hidden'}`}
+            exit={{ opacity: 0, scale: 0.97, y: 8 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className={`rounded-3xl w-full max-w-2xl flex flex-col mx-4 relative ${success ? 'overflow-visible' : 'overflow-hidden'} ${success ? '' : step === 1 ? 'h-[90vh] max-h-[700px]' : step === 5 ? 'min-h-[520px] max-h-[660px] h-auto' : 'min-h-[480px] max-h-[600px] h-auto'}`}
             style={{
               background: '#FFFFFF',
               border: '1px solid rgba(0,0,0,0.04)',
@@ -773,7 +743,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                   initial={{ opacity: 0, filter: 'blur(6px)' }}
                   animate={{ opacity: 1, filter: 'blur(0px)' }}
                   exit={{ opacity: 0, filter: 'blur(6px)' }}
-                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   className="flex flex-col flex-1 min-h-0"
                 >
                   {/* ── Header ──────────────────────────────── */}
@@ -797,22 +767,30 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                         <X size={15} />
                       </motion.button>
                     </div>
-                    <span className="text-lg font-black tracking-wider uppercase text-center block" style={{
-                      background: MESH_ACTIVE,
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      textShadow: '0 2px 20px rgba(244,56,67,0.15)',
-                      marginTop: 8,
-                      marginBottom: 32,
+                    <div className="flex items-center justify-center gap-1.5" style={{ marginTop: 12, marginBottom: 16 }}>
+                      {STEPS.map((s) => (
+                        <motion.div
+                          key={s.num}
+                          animate={{
+                            width: s.num === step ? 16 : 6,
+                            background: s.num === step ? BLUE_GRAD : 'rgba(0,0,0,0.12)',
+                          }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+                          className="rounded-full"
+                          style={{ height: 6 }}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-lg font-bold tracking-wide text-center block" style={{
+                      color: '#1A1A1E',
+                      marginBottom: 10,
                     }}>
                       {STEPS.find(s => s.num === step)!.label}
                     </span>
-                    {stepIndicator}
                   </div>
 
                   {/* ── Body (scrollable) ─────────────────── */}
-                  <div className="flex-1 overflow-y-auto px-6 pb-6 pt-2">
+                  <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
                     <motion.div
                       animate={shake ? { x: [0, -4, 4, -4, 4, 0] } : {}}
                       transition={{ duration: 0.4 }}
