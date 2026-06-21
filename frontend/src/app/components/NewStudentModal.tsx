@@ -440,7 +440,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   )
 
   const renderStep5 = () => (
-    <div className="flex flex-col items-center pt-8 gap-3">
+    <div className="flex flex-col items-center pt-8 gap-3 min-h-[400px]">
       <div className="relative flex items-center justify-center">
         <motion.div
           className="absolute rounded-full pointer-events-none"
@@ -508,9 +508,9 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-            className="relative flex items-center justify-center my-8"
+            className="relative flex items-center justify-center"
           >
-            <div className="absolute w-48 h-48 rounded-full" style={{
+            <div className="absolute w-64 h-64 rounded-full" style={{
               background: 'radial-gradient(circle, rgba(34,197,94,0.25) 0%, transparent 70%)',
             }} />
             {[...Array(12)].map((_, i) => {
@@ -539,16 +539,18 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                 </motion.span>
               )
             })}
-            <motion.img
-              src={checkSuccessImg}
-              alt="check"
-              className="w-28 h-auto object-contain relative z-10"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-            />
+            <div className="relative w-64 h-64 flex items-center justify-center">
+              <motion.img
+                src={checkSuccessImg}
+                alt="check"
+                className="w-32 h-auto object-contain relative z-10"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            </div>
           </motion.div>
         ) : (
-          <div className="relative flex items-center justify-center my-8">
+          <div className="relative flex items-center justify-center">
             <div className="relative w-64 h-64">
               <motion.img
                 src={lectorHuellaImg}
