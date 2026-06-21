@@ -73,10 +73,10 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
 
   return (
     <>
-      <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
+      <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
 
       {/* Banner card */}
-      <motion.div className="relative rounded-3xl mb-6" style={{ background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)', boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
+      <motion.div className="relative rounded-3xl mb-8" style={{ background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)', boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
         <div className="absolute inset-0 pointer-events-none rounded-3xl overflow-hidden" style={{
           maskImage: 'linear-gradient(to right, black 60%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to right, black 60%, transparent 100%)'

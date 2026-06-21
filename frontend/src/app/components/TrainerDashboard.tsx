@@ -5,10 +5,10 @@ import {
   Tooltip as ReTooltip, ResponsiveContainer, Cell,
 } from 'recharts'
 import {
-  LayoutDashboard, Users, ClipboardList, BarChart2, Dumbbell, Calendar,
+  LayoutDashboard, Users, ClipboardList, Dumbbell, Calendar,
   TrendingUp, AlertTriangle, Clock, Activity, Target, Award,
   ChevronRight, Search, Plus, ArrowUp, ArrowDown, Sparkles,
-  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu,
+  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu, X,
 } from 'lucide-react'
 import { StudentProfile, TABS } from './StudentProfile'
 import StudentsModule from './StudentsModule'
@@ -164,31 +164,17 @@ function RiskBadge({ risk }: { risk: 'high' | 'medium' | 'low' }) {
   )
 }
 
-type Section = 'dashboard' | 'students' | 'routines' | 'assessments' | 'equipment' | 'schedule' | 'stats' | 'configuration'
+type Section = 'dashboard' | 'students' | 'routines' | 'equipment' | 'schedule' | 'stats' | 'configuration'
 
 const sidebarItems: { id: Section; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'students', label: 'Estudiantes', icon: Users },
   { id: 'routines', label: 'Rutinas', icon: ClipboardList },
-  { id: 'assessments', label: 'Valoraciones', icon: BarChart2 },
   { id: 'equipment', label: 'Máquinas', icon: Dumbbell },
   { id: 'schedule', label: 'Agenda', icon: Calendar },
   { id: 'stats', label: 'Estadísticas', icon: BarChart3 },
   { id: 'configuration', label: 'Configuración', icon: Settings },
 ]
-
-interface Assessment {
-  id: number
-  studentId: number
-  studentName: string
-  studentAvatar: string
-  date: string
-  weight: number
-  height: number
-  imc: number
-  notes: string
-  status: 'pending' | 'completed'
-}
 
 export function TrainerDashboard() {
   const [section, setSection] = useState<Section>('dashboard')
@@ -198,17 +184,7 @@ export function TrainerDashboard() {
   const [search, setSearch] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [riskFilter, setRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
-  const [showScheduleModal, setShowScheduleModal] = useState(false)
-  const [scheduleStart, setScheduleStart] = useState('')
-  const [scheduleEnd, setScheduleEnd] = useState('')
-  const [selectedSlots, setSelectedSlots] = useState<string[]>([])
-  const [showAssessmentModal, setShowAssessmentModal] = useState(false)
-  const [assessmentStudent, setAssessmentStudent] = useState('')
-  const [assessmentDate, setAssessmentDate] = useState(new Date().toISOString().split('T')[0])
-  const [assessmentWeight, setAssessmentWeight] = useState('')
-  const [assessmentHeight, setAssessmentHeight] = useState('')
-  const [assessmentNotes, setAssessmentNotes] = useState('')
-  const [assessments, setAssessments] = useState<Assessment[]>([])
+
 
   // ── Gym Configuration ──
   const [gymName, setGymName] = useState('Gimnasio Universitario UNIFIT')
@@ -240,6 +216,107 @@ export function TrainerDashboard() {
   const [allowGuestAccess, setAllowGuestAccess] = useState(false)
   const [maxBookingDays, setMaxBookingDays] = useState('7')
   const [minAge, setMinAge] = useState('15')
+
+  // ── Agenda ──
+  const dayKey = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB']
+  const dayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [showWeekModal, setShowWeekModal] = useState(false)
+  const [showApptModal, setShowApptModal] = useState(false)
+
+  const [weeklyTemplate, setWeeklyTemplate] = useState<Record<string, { active: boolean; open: string; close: string }>>({
+    LUN: { active: true, open: '06:00', close: '22:00' },
+    MAR: { active: true, open: '06:00', close: '22:00' },
+    MIÉ: { active: true, open: '06:00', close: '22:00' },
+    JUE: { active: true, open: '06:00', close: '22:00' },
+    VIE: { active: true, open: '06:00', close: '22:00' },
+    SÁB: { active: true, open: '08:00', close: '18:00' },
+    DOM: { active: false, open: '08:00', close: '14:00' },
+  })
+
+  const [dayExceptions, setDayExceptions] = useState<Record<string, { active: boolean; open?: string; close?: string; reason?: string }>>({})
+
+  interface Appointment {
+    id: string; date: string; startTime: string; endTime: string
+    type: 'class' | 'assessment' | 'event'
+    title: string; studentName?: string; trainer?: string; notes?: string
+  }
+
+  const [appointments, setAppointments] = useState<Appointment[]>([
+    { id: '1', date: '2026-06-22', startTime: '07:00', endTime: '08:00', type: 'class', title: 'Spinning', trainer: 'Carlos' },
+    { id: '2', date: '2026-06-22', startTime: '10:00', endTime: '11:00', type: 'assessment', title: 'Valoración Inicial', studentName: 'Ana Pérez' },
+    { id: '3', date: '2026-06-23', startTime: '08:00', endTime: '09:00', type: 'class', title: 'CrossFit', trainer: 'Luis' },
+    { id: '4', date: '2026-06-23', startTime: '14:00', endTime: '15:00', type: 'class', title: 'Funcional', trainer: 'María' },
+    { id: '5', date: '2026-06-24', startTime: '07:00', endTime: '08:00', type: 'class', title: 'Spinning', trainer: 'Carlos' },
+    { id: '6', date: '2026-06-24', startTime: '16:00', endTime: '17:00', type: 'class', title: 'Boxeo', trainer: 'Pedro' },
+    { id: '7', date: '2026-06-25', startTime: '09:00', endTime: '10:00', type: 'class', title: 'Pilates', trainer: 'Ana' },
+    { id: '8', date: '2026-06-25', startTime: '15:00', endTime: '16:00', type: 'event', title: 'Mantenimiento General' },
+    { id: '9', date: '2026-06-26', startTime: '17:00', endTime: '18:00', type: 'class', title: 'Zumba', trainer: 'María' },
+    { id: '10', date: '2026-06-27', startTime: '09:00', endTime: '10:00', type: 'class', title: 'Yoga al Aire Libre', trainer: 'Ana' },
+    { id: '11', date: '2026-06-28', startTime: '10:00', endTime: '11:00', type: 'assessment', title: 'Valoración Seguimiento', studentName: 'Carlos Ruiz' },
+  ])
+
+  const [newApptType, setNewApptType] = useState<'class' | 'assessment' | 'event'>('class')
+  const [newApptTitle, setNewApptTitle] = useState('')
+  const [newApptStart, setNewApptStart] = useState('08:00')
+  const [newApptEnd, setNewApptEnd] = useState('09:00')
+  const [newApptTrainer, setNewApptTrainer] = useState('')
+  const [newApptStudent, setNewApptStudent] = useState('')
+
+  function fmtDate(d: Date) {
+    const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${dd}`
+  }
+
+  function getMonthGrid(year: number, month: number): (Date | null)[][] {
+    const first = new Date(year, month, 1)
+    const last = new Date(year, month + 1, 0)
+    const pad = first.getDay() === 0 ? 6 : first.getDay() - 1
+    const weeks: (Date | null)[][] = []
+    let wk: (Date | null)[] = []
+    for (let i = 0; i < pad; i++) wk.push(null)
+    for (let d = 1; d <= last.getDate(); d++) {
+      const dt = new Date(year, month, d)
+      wk.push(dt)
+      if (wk.length === 7) { weeks.push(wk); wk = [] }
+    }
+    while (wk.length < 7) wk.push(null)
+    if (wk.some(x => x)) weeks.push(wk)
+    return weeks
+  }
+
+  function getDayStatus(dateStr: string) {
+    const dt = new Date(dateStr + 'T12:00:00')
+    const dk = dayKey[dt.getDay()]
+    const base = weeklyTemplate[dk] || { active: false, open: '08:00', close: '18:00' }
+    if (dayExceptions[dateStr]) {
+      const ex = dayExceptions[dateStr]
+      return { active: ex.active, open: ex.open || base.open, close: ex.close || base.close }
+    }
+    return base
+  }
+
+  function getApptsForDate(dateStr: string) {
+    return appointments.filter(a => a.date === dateStr)
+  }
+
+  function handlePrevMonth() { setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)); setSelectedDate(null) }
+  function handleNextMonth() { setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)); setSelectedDate(null) }
+
+  function handleAddAppointment() {
+    if (!selectedDate || !newApptTitle) return
+    const newId = String(Date.now())
+    setAppointments(prev => [...prev, {
+      id: newId, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
+      type: newApptType, title: newApptTitle, trainer: newApptTrainer || undefined,
+      studentName: newApptStudent || undefined,
+    }])
+    setShowApptModal(false)
+    setNewApptTitle(''); setNewApptStudent(''); setNewApptTrainer('')
+  }
 
   // ── RENDERERS ──
 
@@ -299,7 +376,7 @@ export function TrainerDashboard() {
           {/* Gooey layer */}
           <div className="absolute inset-0 flex flex-col items-center pointer-events-none" style={{ filter: 'url(#goo)' }}>
             {sidebarItems.filter(i => i.id !== 'configuration').flatMap((item, i, arr) => {
-              const groups = [[arr[0]], [arr[1], arr[3]], [arr[2], arr[4]], [arr[5], arr[6]]]
+              const groups = [[arr[0]], [arr[1], arr[2]], [arr[3], arr[4]], [arr[5]]]
               const groupIdx = groups.findIndex(g => g.includes(item))
               const isFirstInGroup = groups[groupIdx]?.[0] === item
               return [
@@ -333,7 +410,7 @@ export function TrainerDashboard() {
           </div>
           {/* Buttons layer */}
           {sidebarItems.filter(i => i.id !== 'configuration').flatMap((item, i, arr) => {
-            const groups = [[arr[0]], [arr[1], arr[3]], [arr[2], arr[4]], [arr[5], arr[6]]]
+            const groups = [[arr[0]], [arr[1], arr[2]], [arr[3], arr[4]], [arr[5]]]
             const groupIdx = groups.findIndex(g => g.includes(item))
             const isFirstInGroup = groups[groupIdx]?.[0] === item
             return [
@@ -399,36 +476,12 @@ export function TrainerDashboard() {
               transition: 'padding 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            {/* Gooey layer */}
-            <div className="absolute inset-0 flex flex-col items-center pointer-events-none" style={{ filter: 'url(#goo)' }}>
-              {sidebarItems.filter(i => i.id === 'configuration').map(item => (
-                <div key={item.id} className="overflow-hidden flex-shrink-0" style={{
-                  height: 44,
-                  width: expanded ? 184 : 68,
-                  borderRadius: expanded ? 10 : 0,
-                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease',
-                }}>
-                  {section === item.id && (
-                    <motion.div
-                      layoutId="goo-indicator"
-                      className="size-full"
-                      style={{
-                      background: 'linear-gradient(135deg, #e42332, #2b2c8a, #efbb29)',
-                      boxShadow: 'inset 0 0 60px rgba(228,35,50,0.35), inset 0 0 120px rgba(43,44,138,0.3), 0 0 30px rgba(228,35,50,0.12), 0 0 60px rgba(43,44,138,0.06)',
-                      }}
-                      transition={{ type: 'spring', stiffness: 260, damping: 22, mass: 0.6 }}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-            {/* Buttons layer */}
             {sidebarItems.filter(i => i.id === 'configuration').map(item => (
               <button
                 key={item.id}
                 onClick={() => setSection(item.id)}
                 title={item.label}
-                className="relative flex items-center overflow-hidden flex-shrink-0"
+                className="relative flex items-center flex-shrink-0"
                 style={{
                   height: 44,
                   width: expanded ? 184 : 68,
@@ -439,6 +492,15 @@ export function TrainerDashboard() {
                   transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), padding-left 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease, color 0.3s ease',
                 }}
               >
+                {/* Resplandor izquierdo vibrante */}
+                {section === item.id && (
+                  <div className="absolute top-0 bottom-0 pointer-events-none" style={{
+                    left: -16,
+                    width: expanded ? 'calc(100% + 200px)' : 'calc(100% + 140px)',
+                    background: 'linear-gradient(90deg, rgba(228,35,50,0.35) 0%, rgba(43,44,138,0.18) 22%, rgba(239,187,41,0.06) 42%, transparent 58%)',
+                    filter: 'blur(8px)',
+                  }} />
+                )}
                 <div className="flex items-center justify-center w-11 h-11 flex-shrink-0">
                   <item.icon size={19} />
                 </div>
@@ -602,7 +664,6 @@ export function TrainerDashboard() {
                 />
               )}
               {section === 'routines' && renderRoutines()}
-              {section === 'assessments' && renderAssessments()}
               {section === 'equipment' && renderEquipment()}
               {section === 'schedule' && renderSchedule()}
               {section === 'stats' && renderStats()}
@@ -618,7 +679,7 @@ export function TrainerDashboard() {
 
   function renderDashboard() {
     return (
-      <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
+      <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -655,7 +716,7 @@ export function TrainerDashboard() {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4 mt-6">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -776,9 +837,667 @@ export function TrainerDashboard() {
     )
   }
 
-  function renderAssessments() { return <div className="p-8">Valoraciones</div> }
   function renderEquipment() { return <div className="p-8">Equipos</div> }
-  function renderSchedule() { return <div className="p-8">Agenda</div> }
-  function renderStats() { return <div className="p-8">Estadísticas</div> }
-  function renderConfiguration() { return <div className="p-8">Configuración</div> }
+  function renderSchedule() {
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth()
+    const grid = getMonthGrid(year, month)
+    const today = fmtDate(new Date())
+
+    const typeColors: Record<string, string> = { class: BLUE, assessment: '#30D158', event: '#FF9F0A' }
+    const typeLabels: Record<string, string> = { class: 'Clase', assessment: 'Valoración', event: 'Evento' }
+    const MAX_VISIBLE = 4
+
+    return (
+      <div className="p-8 space-y-5 max-w-[1440px] mx-auto relative">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+          <div className="flex items-center gap-4">
+            <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
+            <div className="flex items-center gap-4">
+              <button onClick={handlePrevMonth} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
+                <ChevronLeft size={18} style={{ color: 'rgba(0,0,0,0.3)' }} />
+              </button>
+              <h1 className="text-[1.6rem] font-extrabold min-w-[200px]" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>
+                {monthNames[month]} {year}
+              </h1>
+              <button onClick={handleNextMonth} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
+                <ChevronRight size={18} style={{ color: 'rgba(0,0,0,0.3)' }} />
+              </button>
+            </div>
+            <button
+              onClick={() => setShowWeekModal(true)}
+              className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+              style={{ background: 'rgba(18,112,183,0.08)', color: BLUE }}
+            >
+              <Settings size={14} /> Semana Base
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Calendar Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06 }}
+          className="rounded-2xl premium-card overflow-hidden"
+        >
+          {/* Day labels */}
+          <div className="grid grid-cols-7" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+            {dayLabels.map(d => (
+              <div key={d} className="text-center py-2.5 text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>
+                {d}
+              </div>
+            ))}
+          </div>
+          {/* Weeks */}
+          {grid.map((week, wi) => (
+            <div key={wi} className="grid grid-cols-7" style={{ borderBottom: wi < grid.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
+              {week.map((dt, di) => {
+                if (!dt) return <div key={di} className="min-h-[100px]" />
+                const ds = fmtDate(dt)
+                const isToday = ds === today
+                const isSelected = ds === selectedDate
+                const status = getDayStatus(ds)
+                const appts = getApptsForDate(ds).sort((a, b) => a.startTime.localeCompare(b.startTime))
+                const visible = appts.slice(0, MAX_VISIBLE)
+                const hidden = appts.slice(MAX_VISIBLE)
+                return (
+                  <div
+                    key={di}
+                    onClick={() => setSelectedDate(isSelected ? null : ds)}
+                    className="relative min-h-[100px] p-1.5 cursor-pointer transition-all hover:bg-black/[0.02]"
+                    style={{
+                      background: isSelected ? 'rgba(18,112,183,0.06)' : 'transparent',
+                      borderRight: di < 6 ? '1px solid rgba(0,0,0,0.03)' : 'none',
+                      borderBottom: wi < grid.length - 1 ? '1px solid rgba(0,0,0,0.03)' : 'none',
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold" style={{
+                        color: isToday ? '#fff' : status.active ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.15)',
+                        width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        borderRadius: 6, background: isToday ? BLUE_GRAD : 'transparent',
+                      }}>
+                        {dt.getDate()}
+                      </span>
+                      {!status.active && appts.length === 0 && (
+                        <span className="text-[8px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(0,0,0,0.03)', color: 'rgba(0,0,0,0.2)' }}>cerrado</span>
+                      )}
+                    </div>
+                    <div className="space-y-0.5">
+                      {visible.map(a => (
+                        <div
+                          key={a.id}
+                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight truncate"
+                          style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type], borderLeft: `2px solid ${typeColors[a.type]}` }}
+                          title={`${a.startTime} ${a.title}${a.studentName ? ' - ' + a.studentName : ''}`}
+                        >
+                          <span className="opacity-70">{a.startTime}</span> {a.title}
+                        </div>
+                      ))}
+                      {hidden.length > 0 && (
+                        <div className="text-[9px] font-bold text-center mt-0.5 py-0.5 rounded-md cursor-pointer hover:bg-black/[0.03]" style={{ color: BLUE }}>
+                          +{hidden.length} más
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Day Detail Panel */}
+        <AnimatePresence>
+          {selectedDate && (
+            <motion.div
+              key={selectedDate}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="rounded-2xl premium-card overflow-hidden"
+            >
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>
+                      {dayLabels[new Date(selectedDate + 'T12:00:00').getDay()]}, {new Date(selectedDate + 'T12:00:00').getDate()} de {monthNames[month]}
+                    </p>
+                    {(() => {
+                      const st = getDayStatus(selectedDate)
+                      return st.active ? (
+                        <p className="text-xs font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                          Abierto · {st.open} – {st.close}
+                        </p>
+                      ) : (
+                        <p className="text-xs font-medium mt-0.5" style={{ color: RED }}>Cerrado</p>
+                      )
+                    })()}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00')
+                      setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true)
+                    }}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white transition-all"
+                    style={{ background: BLUE_GRAD }}
+                  >
+                    <Plus size={13} /> Nueva Cita
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {getApptsForDate(selectedDate).length === 0 ? (
+                    <p className="text-xs py-4 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>No hay citas agendadas para este día</p>
+                  ) : (
+                    getApptsForDate(selectedDate).sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
+                      <div key={a.id} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl" style={{ background: `${typeColors[a.type]}08`, borderLeft: `3px solid ${typeColors[a.type]}` }}>
+                        <div className="text-[11px] font-bold min-w-[52px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{a.startTime}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</span>
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: `${typeColors[a.type]}15`, color: typeColors[a.type] }}>{typeLabels[a.type]}</span>
+                          </div>
+                          {(a.trainer || a.studentName) && (
+                            <p className="text-[11px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                              {a.studentName && `Estudiante: ${a.studentName}`}{a.studentName && a.trainer && ' · '}{a.trainer && `Entrenador: ${a.trainer}`}
+                            </p>
+                          )}
+                        </div>
+                        <button className="text-[10px] font-bold px-2 py-1 rounded-lg hover:bg-black/5 transition-colors" style={{ color: 'rgba(0,0,0,0.25)' }}>
+                          ✕
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Week Template Modal */}
+        <AnimatePresence>
+          {showWeekModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+              onClick={() => setShowWeekModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="rounded-2xl w-full max-w-lg overflow-hidden"
+                style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-6 pt-6 pb-3">
+                  <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Horario Semanal Base</h2>
+                  <button onClick={() => setShowWeekModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
+                    <X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                  </button>
+                </div>
+                <div className="px-6 pb-6 space-y-3">
+                  {(['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'] as const).map((dk, i) => {
+                    const t = weeklyTemplate[dk]
+                    return (
+                      <div key={dk} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                        <div
+                          onClick={() => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], active: !prev[dk].active } }))}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold cursor-pointer transition-all flex-shrink-0"
+                          style={{
+                            background: t.active ? BLUE_GRAD : 'rgba(0,0,0,0.04)',
+                            color: t.active ? '#fff' : 'rgba(0,0,0,0.25)',
+                          }}
+                        >
+                          {dayLabels[i].charAt(0)}
+                        </div>
+                        <div className="flex-1 font-semibold text-sm" style={{ color: '#1A1A1E' }}>{dayLabels[i]}</div>
+                        <input
+                          type="time"
+                          value={t.open}
+                          onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], open: e.target.value } }))}
+                          disabled={!t.active}
+                          className="px-2 py-1.5 rounded-lg text-xs font-medium border-none outline-none"
+                          style={{ background: t.active ? '#F0F7FF' : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60 }}
+                        />
+                        <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>–</span>
+                        <input
+                          type="time"
+                          value={t.close}
+                          onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], close: e.target.value } }))}
+                          disabled={!t.active}
+                          className="px-2 py-1.5 rounded-lg text-xs font-medium border-none outline-none"
+                          style={{ background: t.active ? '#F0F7FF' : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60 }}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="px-6 pb-6 pt-0">
+                  <button
+                    onClick={() => setShowWeekModal(false)}
+                    className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                    style={{ background: BLUE_GRAD }}
+                  >
+                    Guardar Semana Base
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* New Appointment Modal */}
+        <AnimatePresence>
+          {showApptModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+              onClick={() => setShowApptModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="rounded-2xl w-full max-w-md overflow-hidden"
+                style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-6 pt-6 pb-3">
+                  <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Nueva Cita</h2>
+                  <button onClick={() => setShowApptModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
+                    <X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                  </button>
+                </div>
+                <div className="px-6 pb-6 space-y-4">
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Tipo</label>
+                    <div className="flex gap-2 mt-1.5">
+                      {(['class', 'assessment', 'event'] as const).map(t => (
+                        <button
+                          key={t}
+                          onClick={() => setNewApptType(t)}
+                          className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+                          style={{
+                            background: newApptType === t ? `${typeColors[t]}15` : 'rgba(0,0,0,0.03)',
+                            color: newApptType === t ? typeColors[t] : 'rgba(0,0,0,0.3)',
+                            border: `1px solid ${newApptType === t ? typeColors[t] : 'transparent'}`,
+                          }}
+                        >
+                          {typeLabels[t]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Título</label>
+                    <input value={newApptTitle} onChange={e => setNewApptTitle(e.target.value)} placeholder="Nombre de la clase o evento" className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Inicio</label>
+                      <input type="time" value={newApptStart} onChange={e => setNewApptStart(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Fin</label>
+                      <input type="time" value={newApptEnd} onChange={e => setNewApptEnd(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Entrenador</label>
+                    <input value={newApptTrainer} onChange={e => setNewApptTrainer(e.target.value)} placeholder="Nombre del entrenador" className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                  </div>
+                  {newApptType === 'assessment' && (
+                    <div>
+                      <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Estudiante</label>
+                      <input value={newApptStudent} onChange={e => setNewApptStudent(e.target.value)} placeholder="Nombre del estudiante" className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                    </div>
+                  )}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleAddAppointment}
+                    disabled={!newApptTitle}
+                    className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                    style={{ background: newApptTitle ? BLUE_GRAD : 'rgba(0,0,0,0.1)' }}
+                  >
+                    Agendar Cita
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  }
+  function renderStats() {
+    return (
+      <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
+            <div>
+              <h1 className="text-[1.8rem] font-extrabold" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>Estadísticas</h1>
+              <p className="text-sm font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Métricas de rendimiento y crecimiento</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: 'Estudiantes Activos', value: '847', change: '+12%', color: BLUE },
+            { label: 'Asistencia Promedio', value: '94%', change: '+3%', color: '#30D158' },
+            { label: 'Retención Mensual', value: '91%', change: '+5%', color: '#BF5AF2' },
+          ].map((kpi, i) => (
+            <motion.div
+              key={kpi.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.06 }}
+              className="rounded-2xl p-5 premium-card"
+            >
+              <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.4)' }}>{kpi.label}</p>
+              <p className="text-3xl font-extrabold mt-1" style={{ color: '#1A1A1E' }}>{kpi.value}</p>
+              <div className="flex items-center gap-1 mt-1">
+                <ArrowUp size={12} style={{ color: kpi.color }} />
+                <span className="text-xs font-bold" style={{ color: kpi.color }}>{kpi.change}</span>
+                <span className="text-xs" style={{ color: 'rgba(0,0,0,0.25)' }}>vs. mes anterior</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="rounded-2xl p-6 premium-card"
+          >
+            <p className="text-xs font-bold mb-4" style={{ color: 'rgba(0,0,0,0.3)' }}>ASISTENCIA SEMANAL</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={weeklyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
+                <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
+                <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
+                <Bar dataKey="asistentes" radius={[6, 6, 0, 0]}>
+                  {weeklyData.map((_, i) => (
+                    <Cell key={i} fill={i === 2 || i === 4 ? BLUE : 'rgba(18,112,183,0.15)'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-2xl p-6 premium-card"
+          >
+            <p className="text-xs font-bold mb-4" style={{ color: 'rgba(0,0,0,0.3)' }}>TENDENCIA DE CRECIMIENTO</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={[
+                { mes: 'Ene', estudiantes: 520 }, { mes: 'Feb', estudiantes: 580 },
+                { mes: 'Mar', estudiantes: 610 }, { mes: 'Abr', estudiantes: 680 },
+                { mes: 'May', estudiantes: 740 }, { mes: 'Jun', estudiantes: 847 },
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
+                <XAxis dataKey="mes" tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
+                <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
+                <Area type="monotone" dataKey="estudiantes" stroke={BLUE} fill="url(#areaGrad)" strokeWidth={2.5} />
+                <defs>
+                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={BLUE} stopOpacity={0.25} />
+                    <stop offset="100%" stopColor={BLUE} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+              </AreaChart>
+            </ResponsiveContainer>
+          </motion.div>
+        </div>
+
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            { label: 'H/M', value: '58% / 42%', color: BLUE },
+            { label: 'Edad Promedio', value: '22 años', color: '#30D158' },
+            { label: 'Top Facultad', value: 'Ingeniería', color: '#FF9F0A' },
+            { label: 'Nuevos Este Mes', value: '67', color: '#BF5AF2' },
+          ].map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 + i * 0.04 }}
+              className="rounded-xl p-4 premium-card text-center"
+            >
+              <p className="text-[10px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>{s.label}</p>
+              <p className="text-base font-extrabold mt-1" style={{ color: s.color }}>{s.value}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  function renderConfiguration() {
+    return (
+      <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
+            <div>
+              <h1 className="text-[1.8rem] font-extrabold" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>Configuración</h1>
+              <p className="text-sm font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Administra la información del gimnasio</p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                setShowSavedToast(true)
+                setTimeout(() => setShowSavedToast(false), 2500)
+              }}
+              className="ml-auto flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+              style={{ background: BLUE_GRAD }}
+            >
+              <CheckCircle size={15} /> Guardar Cambios
+            </motion.button>
+          </div>
+        </motion.div>
+
+        {showSavedToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="absolute top-4 right-8 z-50 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold"
+            style={{ background: '#30D158', color: '#fff', boxShadow: '0 4px 16px rgba(48,209,88,0.25)' }}
+          >
+            <CheckCircle size={14} /> Cambios guardados exitosamente
+          </motion.div>
+        )}
+
+        <div className="grid grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="rounded-2xl p-6 premium-card space-y-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Settings size={15} style={{ color: BLUE }} />
+              <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>INFORMACIÓN GENERAL</span>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre del Gimnasio</label>
+              <input value={gymName} onChange={e => setGymName(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Dirección</label>
+              <input value={gymAddress} onChange={e => setGymAddress(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Teléfono</label>
+                <input value={gymPhone} onChange={e => setGymPhone(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Email</label>
+                <input value={gymEmail} onChange={e => setGymEmail(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Apertura</label>
+                <input value={openTime} onChange={e => setOpenTime(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Cierre</label>
+                <input value={closeTime} onChange={e => setCloseTime(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+            className="rounded-2xl p-6 premium-card space-y-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Award size={15} style={{ color: BLUE }} />
+              <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>CAPACIDAD Y PERSONAL</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Capacidad Máxima</label>
+                <input value={maxCapacity} onChange={e => setMaxCapacity(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Máquinas</label>
+                <input value={machinesCount} onChange={e => setMachinesCount(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+              </div>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Entrenadores</label>
+              <input value={trainersCount} onChange={e => setTrainersCount(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+            </div>
+            <div className="flex items-center gap-3 mt-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <div
+                  onClick={() => setOpenWeekends(!openWeekends)}
+                  className="w-4 h-4 rounded flex items-center justify-center transition-all"
+                  style={{
+                    background: openWeekends ? BLUE_GRAD : 'transparent',
+                    border: `1.5px solid ${openWeekends ? BLUE : 'rgba(0,0,0,0.1)'}`,
+                  }}
+                >
+                  {openWeekends && <CheckCircle size={10} color="white" />}
+                </div>
+                <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>Abrir fines de semana</span>
+              </label>
+            </div>
+          </motion.div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.16 }}
+            className="rounded-2xl p-6 premium-card space-y-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Award size={15} style={{ color: BLUE }} />
+              <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>REDES SOCIALES</span>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Instagram</label>
+              <input value={instagram} onChange={e => setInstagram(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Facebook</label>
+              <input value={facebook} onChange={e => setFacebook(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Sitio Web</label>
+              <input value={website} onChange={e => setWebsite(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-2xl p-6 premium-card space-y-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Target size={15} style={{ color: BLUE }} />
+              <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>PLANES DE MEMBRESÍA</span>
+            </div>
+            <div>
+              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Plan Básico</label>
+              <input value={planBasic} onChange={e => setPlanBasic(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Plan Premium</label>
+              <input value={planPremium} onChange={e => setPlanPremium(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Plan VIP</label>
+              <input value={planVip} onChange={e => setPlanVip(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+            </div>
+          </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.24 }}
+          className="rounded-2xl p-6 premium-card space-y-4"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Activity size={15} style={{ color: BLUE }} />
+            <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>SERVICIOS Y POLÍTICAS</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { label: 'Servicio de Toallas', checked: towelService, setter: setTowelService },
+              { label: 'Casilleros', checked: lockerService, setter: setLockerService },
+              { label: 'Check-in Obligatorio', checked: checkInRequired, setter: setCheckInRequired },
+              { label: 'Acceso Invitados', checked: allowGuestAccess, setter: setAllowGuestAccess },
+            ].map(s => (
+              <label key={s.label} className="flex items-center gap-2 cursor-pointer">
+                <div
+                  onClick={() => s.setter(!s.checked)}
+                  className="w-4 h-4 rounded flex items-center justify-center transition-all"
+                  style={{
+                    background: s.checked ? BLUE_GRAD : 'transparent',
+                    border: `1.5px solid ${s.checked ? BLUE : 'rgba(0,0,0,0.1)'}`,
+                  }}
+                >
+                  {s.checked && <CheckCircle size={10} color="white" />}
+                </div>
+                <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.label}</span>
+              </label>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
 }
