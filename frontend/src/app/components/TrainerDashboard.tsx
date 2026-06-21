@@ -82,48 +82,7 @@ const equipment = [
   { id: 6, name: 'Cable Crossover', zone: 'Máquinas', status: 'alert', usage: 45, maintenance: 'Revisión pendiente' },
 ]
 
-const TIME_SLOTS = ['6:00 AM', '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM']
-const WEEK_DAYS = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB']
 
-const weekSchedule: Record<string, { day: string; slots: { time: string; student: string; avatar: string }[] }> = {
-  'LUN': {
-    day: 'LUN', slots: [
-      { time: '8:00 AM', student: 'Ana García', avatar: 'AG' },
-      { time: '10:00 AM', student: 'Carlos Ruiz', avatar: 'CR' },
-      { time: '10:00 AM', student: 'María López', avatar: 'ML' },
-    ]
-  },
-  'MAR': {
-    day: 'MAR', slots: [
-      { time: '7:00 AM', student: 'Pedro Sánchez', avatar: 'PS' },
-      { time: '9:00 AM', student: 'Laura Vega', avatar: 'LV' },
-    ]
-  },
-  'MIÉ': {
-    day: 'MIÉ', slots: [
-      { time: '8:00 AM', student: 'Sofía Torres', avatar: 'ST' },
-      { time: '11:00 AM', student: 'Diego Ramírez', avatar: 'DR' },
-      { time: '4:00 PM', student: 'Valentina Paz', avatar: 'VP' },
-    ]
-  },
-  'JUE': {
-    day: 'JUE', slots: [
-      { time: '6:00 AM', student: 'Andrés Nava', avatar: 'AN' },
-      { time: '8:00 AM', student: 'Camila Rojas', avatar: 'CR' },
-    ]
-  },
-  'VIE': {
-    day: 'VIE', slots: [
-      { time: '10:00 AM', student: 'Fernando Gil', avatar: 'FG' },
-      { time: '2:00 PM', student: 'Gabriela Paz', avatar: 'GP' },
-    ]
-  },
-  'SÁB': {
-    day: 'SÁB', slots: [
-      { time: '9:00 AM', student: 'Ricardo Méndez', avatar: 'RM' },
-    ]
-  },
-}
 
 // ── Shared Components ──
 
@@ -220,12 +179,16 @@ export function TrainerDashboard() {
   // ── Agenda ──
   const dayKey = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB']
   const dayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+  const dayLabelsGetDay = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [showWeekModal, setShowWeekModal] = useState(false)
   const [showApptModal, setShowApptModal] = useState(false)
+  const [viewMode, setViewMode] = useState<'week' | 'month' | 'year'>('month')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dayModalDate, setDayModalDate] = useState<string | null>(null)
 
   const [weeklyTemplate, setWeeklyTemplate] = useState<Record<string, { active: boolean; open: string; close: string }>>({
     LUN: { active: true, open: '06:00', close: '22:00' },
@@ -271,6 +234,19 @@ export function TrainerDashboard() {
     return `${y}-${m}-${dd}`
   }
 
+  function getWeekDates(ref: Date): Date[] {
+    const d = new Date(ref)
+    const day = d.getDay()
+    const diff = day === 0 ? -6 : 1 - day
+    d.setDate(d.getDate() + diff)
+    const week: Date[] = []
+    for (let i = 0; i < 7; i++) {
+      week.push(new Date(d))
+      d.setDate(d.getDate() + 1)
+    }
+    return week
+  }
+
   function getMonthGrid(year: number, month: number): (Date | null)[][] {
     const first = new Date(year, month, 1)
     const last = new Date(year, month + 1, 0)
@@ -303,8 +279,26 @@ export function TrainerDashboard() {
     return appointments.filter(a => a.date === dateStr)
   }
 
-  function handlePrevMonth() { setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)); setSelectedDate(null) }
-  function handleNextMonth() { setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)); setSelectedDate(null) }
+  function handlePrev() {
+    if (viewMode === 'year') {
+      setCurrentMonth(new Date(currentMonth.getFullYear() - 1, currentMonth.getMonth(), 1))
+    } else if (viewMode === 'month') {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
+    } else {
+      const d = new Date(currentMonth); d.setDate(d.getDate() - 7); setCurrentMonth(d)
+    }
+    setSelectedDate(null)
+  }
+  function handleNext() {
+    if (viewMode === 'year') {
+      setCurrentMonth(new Date(currentMonth.getFullYear() + 1, currentMonth.getMonth(), 1))
+    } else if (viewMode === 'month') {
+      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
+    } else {
+      const d = new Date(currentMonth); d.setDate(d.getDate() + 7); setCurrentMonth(d)
+    }
+    setSelectedDate(null)
+  }
 
   function handleAddAppointment() {
     if (!selectedDate || !newApptTitle) return
@@ -838,182 +832,417 @@ export function TrainerDashboard() {
   }
 
   function renderEquipment() { return <div className="p-8">Equipos</div> }
+
+  // ── Agenda Helpers ──
+
+  const TIME_SLOTS_WEEK = ['6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
+
+  function renderYearGrid() {
+    const year = currentMonth.getFullYear()
+    const today = fmtDate(new Date())
+    return (
+      <div className="grid grid-cols-4 gap-3 p-4">
+        {Array.from({ length: 12 }, (_, mi) => {
+          const monthDays = new Date(year, mi + 1, 0).getDate()
+          const firstDow = new Date(year, mi, 1).getDay()
+          const pad = firstDow === 0 ? 6 : firstDow - 1
+          return (
+            <div key={mi} className="rounded-xl p-3 premium-card">
+              <div className="text-[11px] font-extrabold mb-2" style={{ color: '#1A1A1E' }}>{monthNames[mi]}</div>
+              <div className="grid grid-cols-7 gap-0">
+                {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((ld, ldi) => (
+                  <div key={ldi} className="text-[7px] font-bold text-center py-0.5" style={{ color: 'rgba(0,0,0,0.2)' }}>{ld}</div>
+                ))}
+                {Array.from({ length: pad }, (_, pi) => <div key={`p-${pi}`} />)}
+                {Array.from({ length: monthDays }, (_, di) => {
+                  const d = di + 1
+                  const ds = `${year}-${String(mi + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+                  const isT = ds === today
+                  return (
+                    <div key={di} onClick={() => { setDayModalDate(ds); setSelectedDate(ds) }}
+                      className="text-center text-[9px] font-bold py-0.5 rounded-sm cursor-pointer hover:bg-black/[0.03] transition-colors"
+                      style={{
+                        color: isT ? '#fff' : 'rgba(0,0,0,0.5)',
+                        background: isT ? BLUE_GRAD : 'transparent',
+                      }}
+                    >{d}</div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  function renderDayCell(dt: Date | null, idx: number, lastRow?: boolean, mini?: boolean) {
+    if (!dt) return <div key={idx} className={mini ? 'min-h-[60px]' : 'min-h-[100px]'} />
+    const ds = fmtDate(dt)
+    const isT = ds === fmtDate(new Date())
+    const st = getDayStatus(ds)
+    const appts = getApptsForDate(ds).sort((a, b) => a.startTime.localeCompare(b.startTime))
+    const visible = appts.slice(0, mini ? 2 : 4)
+    const hidden = appts.slice(mini ? 2 : 4)
+    const typeColors: Record<string, string> = { class: BLUE, assessment: '#30D158', event: '#FF9F0A' }
+    return (
+      <div
+        key={idx}
+        onClick={() => {
+          if (ds === fmtDate(new Date())) {
+            setSelectedDate(ds)
+          } else {
+            setDayModalDate(ds)
+            setSelectedDate(ds)
+          }
+        }}
+        className={`relative ${mini ? 'min-h-[60px] p-1' : 'min-h-[100px] p-2'} cursor-pointer transition-all hover:bg-black/[0.02]`}
+        style={{
+          background: isT ? 'rgba(18,112,183,0.04)' : 'transparent',
+          borderRight: idx < 6 ? '1px solid rgba(0,0,0,0.03)' : 'none',
+          borderBottom: !lastRow ? '1px solid rgba(0,0,0,0.03)' : 'none',
+        }}
+      >
+        <div className="flex items-center justify-between mb-0.5">
+          <span className={mini ? 'text-[9px] font-bold' : 'text-xs font-bold'} style={{
+            color: isT ? '#fff' : st.active ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.15)',
+            width: mini ? 18 : 22, height: mini ? 18 : 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 6, background: isT ? BLUE_GRAD : 'transparent',
+          }}>
+            {dt.getDate()}
+          </span>
+        </div>
+        {!mini && (
+          <div className="space-y-0.5">
+            {visible.map(a => (
+              <div key={a.id} className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight truncate" style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type], borderLeft: `2px solid ${typeColors[a.type]}` }}
+                title={`${a.startTime} ${a.title}${a.studentName ? ' - ' + a.studentName : ''}`}
+              >
+                <span className="opacity-70">{a.startTime}</span> {a.title}
+              </div>
+            ))}
+            {hidden.length > 0 && (
+              <div className="text-[9px] font-bold text-center mt-0.5 py-0.5 rounded-md cursor-pointer hover:bg-black/[0.03]" style={{ color: BLUE }}>
+                +{hidden.length} más
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   function renderSchedule() {
     const year = currentMonth.getFullYear()
     const month = currentMonth.getMonth()
-    const grid = getMonthGrid(year, month)
     const today = fmtDate(new Date())
 
     const typeColors: Record<string, string> = { class: BLUE, assessment: '#30D158', event: '#FF9F0A' }
     const typeLabels: Record<string, string> = { class: 'Clase', assessment: 'Valoración', event: 'Evento' }
-    const MAX_VISIBLE = 4
+
+    const calendarTitle = viewMode === 'year'
+      ? `Año ${year}`
+      : viewMode === 'month'
+        ? `${monthNames[month]} ${year}`
+        : `Semana del ${fmtDate(getWeekDates(currentMonth)[0])}`
 
     return (
-      <div className="p-8 space-y-5 max-w-[1440px] mx-auto relative">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-          <div className="flex items-center gap-4">
-            <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
-            <div className="flex items-center gap-4">
-              <button onClick={handlePrevMonth} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
-                <ChevronLeft size={18} style={{ color: 'rgba(0,0,0,0.3)' }} />
-              </button>
-              <h1 className="text-[1.6rem] font-extrabold min-w-[200px]" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>
-                {monthNames[month]} {year}
-              </h1>
-              <button onClick={handleNextMonth} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
-                <ChevronRight size={18} style={{ color: 'rgba(0,0,0,0.3)' }} />
-              </button>
-            </div>
-            <button
-              onClick={() => setShowWeekModal(true)}
-              className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-              style={{ background: 'rgba(18,112,183,0.08)', color: BLUE }}
-            >
-              <Settings size={14} /> Semana Base
-            </button>
-          </div>
-        </motion.div>
+      <div className="p-8 max-w-[1440px] mx-auto relative">
+        <div className="flex gap-5">
 
-        {/* Calendar Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.06 }}
-          className="rounded-2xl premium-card overflow-hidden"
-        >
-          {/* Day labels */}
-          <div className="grid grid-cols-7" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-            {dayLabels.map(d => (
-              <div key={d} className="text-center py-2.5 text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>
-                {d}
-              </div>
-            ))}
-          </div>
-          {/* Weeks */}
-          {grid.map((week, wi) => (
-            <div key={wi} className="grid grid-cols-7" style={{ borderBottom: wi < grid.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
-              {week.map((dt, di) => {
-                if (!dt) return <div key={di} className="min-h-[100px]" />
-                const ds = fmtDate(dt)
-                const isToday = ds === today
-                const isSelected = ds === selectedDate
-                const status = getDayStatus(ds)
-                const appts = getApptsForDate(ds).sort((a, b) => a.startTime.localeCompare(b.startTime))
-                const visible = appts.slice(0, MAX_VISIBLE)
-                const hidden = appts.slice(MAX_VISIBLE)
-                return (
-                  <div
-                    key={di}
-                    onClick={() => setSelectedDate(isSelected ? null : ds)}
-                    className="relative min-h-[100px] p-1.5 cursor-pointer transition-all hover:bg-black/[0.02]"
-                    style={{
-                      background: isSelected ? 'rgba(18,112,183,0.06)' : 'transparent',
-                      borderRight: di < 6 ? '1px solid rgba(0,0,0,0.03)' : 'none',
-                      borderBottom: wi < grid.length - 1 ? '1px solid rgba(0,0,0,0.03)' : 'none',
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold" style={{
-                        color: isToday ? '#fff' : status.active ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.15)',
-                        width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        borderRadius: 6, background: isToday ? BLUE_GRAD : 'transparent',
-                      }}>
-                        {dt.getDate()}
-                      </span>
-                      {!status.active && appts.length === 0 && (
-                        <span className="text-[8px] font-medium px-1 py-0.5 rounded" style={{ background: 'rgba(0,0,0,0.03)', color: 'rgba(0,0,0,0.2)' }}>cerrado</span>
-                      )}
-                    </div>
-                    <div className="space-y-0.5">
-                      {visible.map(a => (
-                        <div
-                          key={a.id}
-                          className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight truncate"
-                          style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type], borderLeft: `2px solid ${typeColors[a.type]}` }}
-                          title={`${a.startTime} ${a.title}${a.studentName ? ' - ' + a.studentName : ''}`}
-                        >
-                          <span className="opacity-70">{a.startTime}</span> {a.title}
-                        </div>
-                      ))}
-                      {hidden.length > 0 && (
-                        <div className="text-[9px] font-bold text-center mt-0.5 py-0.5 rounded-md cursor-pointer hover:bg-black/[0.03]" style={{ color: BLUE }}>
-                          +{hidden.length} más
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ))}
-        </motion.div>
+          {/* ── CALENDAR ── */}
+          <div className="flex-1 min-w-0 space-y-4">
+            {/* Header */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Search */}
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl flex-1 min-w-[200px] max-w-[320px]"
+                  style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(12px)', border: '1px solid rgba(0,0,0,0.04)' }}
+                >
+                  <Search size={15} style={{ color: 'rgba(0,0,0,0.2)' }} />
+                  <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Buscar en agenda..."
+                    className="flex-1 bg-transparent text-xs font-medium outline-none" style={{ color: '#1A1A1E' }} />
+                </div>
 
-        {/* Day Detail Panel */}
-        <AnimatePresence>
-          {selectedDate && (
-            <motion.div
-              key={selectedDate}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-2xl premium-card overflow-hidden"
-            >
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>
-                      {dayLabels[new Date(selectedDate + 'T12:00:00').getDay()]}, {new Date(selectedDate + 'T12:00:00').getDate()} de {monthNames[month]}
-                    </p>
-                    {(() => {
-                      const st = getDayStatus(selectedDate)
-                      return st.active ? (
-                        <p className="text-xs font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>
-                          Abierto · {st.open} – {st.close}
-                        </p>
-                      ) : (
-                        <p className="text-xs font-medium mt-0.5" style={{ color: RED }}>Cerrado</p>
-                      )
-                    })()}
-                  </div>
-                  <button
-                    onClick={() => {
-                      setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00')
-                      setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true)
-                    }}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white transition-all"
-                    style={{ background: BLUE_GRAD }}
-                  >
-                    <Plus size={13} /> Nueva Cita
+                {/* View Mode Pills */}
+                <div className="flex items-center gap-1 p-0.5 rounded-xl" style={{ background: 'rgba(0,0,0,0.03)' }}>
+                  {(['month', 'week', 'year'] as const).map(mode => (
+                    <button key={mode} onClick={() => { setViewMode(mode); setSelectedDate(null) }}
+                      className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all"
+                      style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
+                    >{mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Año'}</button>
+                  ))}
+                </div>
+
+                {/* Navigation */}
+                <div className="flex items-center gap-1">
+                  <button onClick={handlePrev} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
+                    <ChevronLeft size={18} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                  </button>
+                  <h1 className="text-[1.2rem] font-extrabold min-w-[160px] text-center" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>
+                    {calendarTitle}
+                  </h1>
+                  <button onClick={handleNext} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
+                    <ChevronRight size={18} style={{ color: 'rgba(0,0,0,0.3)' }} />
                   </button>
                 </div>
-                <div className="space-y-1.5">
-                  {getApptsForDate(selectedDate).length === 0 ? (
-                    <p className="text-xs py-4 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>No hay citas agendadas para este día</p>
-                  ) : (
-                    getApptsForDate(selectedDate).sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
-                      <div key={a.id} className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl" style={{ background: `${typeColors[a.type]}08`, borderLeft: `3px solid ${typeColors[a.type]}` }}>
-                        <div className="text-[11px] font-bold min-w-[52px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{a.startTime}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</span>
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: `${typeColors[a.type]}15`, color: typeColors[a.type] }}>{typeLabels[a.type]}</span>
+
+                {/* Action Buttons */}
+                <button onClick={() => setShowWeekModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold transition-all"
+                  style={{ background: 'rgba(18,112,183,0.08)', color: BLUE }}
+                ><Settings size={13} /> Config</button>
+                <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold text-white transition-all"
+                  style={{ background: BLUE_GRAD }}
+                ><span className="text-xs">⬆</span> Publicar</button>
+              </div>
+            </motion.div>
+
+            {/* Grid */}
+            {viewMode === 'year' ? (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 }}
+                className="rounded-2xl premium-card overflow-hidden"
+              >
+                {renderYearGrid()}
+              </motion.div>
+            ) : viewMode === 'week' ? (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 }}
+                className="rounded-2xl premium-card overflow-hidden"
+              >
+                <div className="flex">
+                  {/* Time column */}
+                  <div className="flex-shrink-0 w-14 pt-[38px]" style={{ borderRight: '1px solid rgba(0,0,0,0.04)' }}>
+                    {TIME_SLOTS_WEEK.map(t => (
+                      <div key={t} className="h-[48px] flex items-start justify-end pr-2 pt-0.5 text-[9px] font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>{t}</div>
+                    ))}
+                  </div>
+                  {/* Day columns */}
+                  <div className="flex-1 grid grid-cols-7">
+                    {getWeekDates(currentMonth).map((dt, i) => {
+                      const ds = fmtDate(dt)
+                      const isT = ds === today
+                      const appts = getApptsForDate(ds).sort((a, b) => a.startTime.localeCompare(b.startTime))
+                      return (
+                        <div key={i} className="relative" style={{ borderRight: i < 6 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}>
+                          {/* Day header */}
+                          <div className={`text-center py-2 ${isT ? 'sticky top-0 z-10' : ''}`} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', background: isT ? 'rgba(18,112,183,0.04)' : 'rgba(255,255,255,0.6)' }}>
+                            <div className="text-[10px] font-bold" style={{ color: isT ? BLUE : 'rgba(0,0,0,0.3)' }}>{dayLabels[i]}</div>
+                            <div onClick={() => { isT ? setSelectedDate(ds) : setDayModalDate(ds); setSelectedDate(ds) }}
+                              className={`inline-flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer text-sm font-extrabold transition-colors hover:bg-black/[0.03]`}
+                              style={{ color: isT ? '#fff' : '#1A1A1E', background: isT ? BLUE_GRAD : 'transparent' }}
+                            >{dt.getDate()}</div>
                           </div>
-                          {(a.trainer || a.studentName) && (
-                            <p className="text-[11px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>
-                              {a.studentName && `Estudiante: ${a.studentName}`}{a.studentName && a.trainer && ' · '}{a.trainer && `Entrenador: ${a.trainer}`}
-                            </p>
-                          )}
+                          {/* Time slots */}
+                          <div className="relative">
+                            {TIME_SLOTS_WEEK.map(t => (
+                              <div key={t} className="h-[48px]" style={{ borderBottom: '1px solid rgba(0,0,0,0.02)' }} />
+                            ))}
+                            {/* Appointment blocks */}
+                            {appts.map(a => {
+                              const startH = parseInt(a.startTime.split(':')[0])
+                              const startM = parseInt(a.startTime.split(':')[1])
+                              const endH = parseInt(a.endTime.split(':')[0]) || startH + 1
+                              const top = (startH - 6) * 48 + (startM / 60) * 48
+                              const h = (endH - startH) * 48
+                              return (
+                                <div key={a.id} className="absolute left-0.5 right-0.5 rounded-md px-1.5 py-1 text-[9px] font-bold leading-tight overflow-hidden cursor-pointer transition-all hover:brightness-110"
+                                  style={{
+                                    top, height: h,
+                                    background: `${typeColors[a.type]}18`,
+                                    color: typeColors[a.type],
+                                    borderLeft: `2px solid ${typeColors[a.type]}`,
+                                    zIndex: 5,
+                                  }}
+                                  title={`${a.startTime} ${a.title}`}
+                                >
+                                  <div className="truncate">{a.startTime}</div>
+                                  <div className="truncate">{a.title}</div>
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
-                        <button className="text-[10px] font-bold px-2 py-1 rounded-lg hover:bg-black/5 transition-colors" style={{ color: 'rgba(0,0,0,0.25)' }}>
-                          ✕
-                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.06 }}
+                className="rounded-2xl premium-card overflow-hidden"
+              >
+                <div className="grid grid-cols-7" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  {dayLabels.map(d => (
+                    <div key={d} className="text-center py-2.5 text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>{d}</div>
+                  ))}
+                </div>
+                {getMonthGrid(year, month).map((week, wi) => (
+                  <div key={wi} className="grid grid-cols-7">
+                    {week.map((dt, di) => renderDayCell(dt, di, wi === getMonthGrid(year, month).length - 1, false))}
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+
+          {/* ── SIDE PANEL (siempre día actual) ── */}
+          <div className="w-72 flex-shrink-0 space-y-4">
+            <motion.div
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="rounded-2xl premium-card overflow-hidden"
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>
+                    {dayLabelsGetDay[new Date(today + 'T12:00:00').getDay()]} {new Date(today + 'T12:00:00').getDate()}
+                  </p>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${BLUE}12`, color: BLUE }}>
+                    Hoy
+                  </span>
+                </div>
+                {(() => {
+                  const st = getDayStatus(today)
+                  return st.active ? (
+                    <p className="text-[11px] font-medium mb-3" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                      {st.open} – {st.close}
+                    </p>
+                  ) : (
+                    <p className="text-[11px] font-medium mb-3" style={{ color: RED }}>Cerrado</p>
+                  )
+                })()}
+                <div className="space-y-1.5 mb-3 max-h-[240px] overflow-y-auto">
+                  {getApptsForDate(today).length === 0 ? (
+                    <p className="text-xs py-3 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>Sin citas hoy</p>
+                  ) : (
+                    getApptsForDate(today).sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
+                      <div key={a.id} className="flex items-center gap-2 px-2.5 py-2 rounded-xl" style={{ background: `${typeColors[a.type]}08`, borderLeft: `2.5px solid ${typeColors[a.type]}` }}>
+                        <div className="text-[10px] font-bold min-w-[40px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{a.startTime}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</div>
+                          {a.studentName && <div className="text-[10px] font-medium truncate" style={{ color: 'rgba(0,0,0,0.35)' }}>{a.studentName}</div>}
+                        </div>
                       </div>
                     ))
                   )}
                 </div>
+                <button onClick={() => { setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold text-white transition-all"
+                  style={{ background: BLUE_GRAD }}
+                ><Plus size={12} /> Nueva Cita</button>
               </div>
+            </motion.div>
+
+            {/* Valoraciones próximas */}
+            <motion.div
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.08, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="rounded-2xl premium-card overflow-hidden"
+            >
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Activity size={13} style={{ color: '#30D158' }} />
+                  <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>VALORACIONES PRÓXIMAS</span>
+                </div>
+                <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                  {appointments.filter(a => a.type === 'assessment' && a.date >= today).sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime)).slice(0, 5).map(a => (
+                    <div key={a.id} className="flex items-center gap-2 px-2.5 py-2 rounded-xl" style={{ background: 'rgba(48,209,88,0.06)' }}>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.studentName || a.title}</div>
+                        <div className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                          {dayLabelsGetDay[new Date(a.date + 'T12:00:00').getDay()]} {new Date(a.date + 'T12:00:00').getDate()} · {a.startTime}
+                        </div>
+                      </div>
+                      <div className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: 'rgba(48,209,88,0.12)', color: '#30D158' }}>
+                        {a.date === today ? 'Hoy' : ''}
+                      </div>
+                    </div>
+                  ))}
+                  {appointments.filter(a => a.type === 'assessment' && a.date >= today).length === 0 && (
+                    <p className="text-xs py-3 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>No hay valoraciones próximas</p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Day Detail Modal */}
+        <AnimatePresence>
+          {dayModalDate && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+              style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+              onClick={() => setDayModalDate(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 10 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="rounded-2xl w-full max-w-sm overflow-hidden"
+                style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-8 rounded-full" style={{ background: BLUE_GRAD }} />
+                      <p className="text-base font-extrabold" style={{ color: '#1A1A1E' }}>
+                        {dayLabelsGetDay[new Date(dayModalDate + 'T12:00:00').getDay()]} {new Date(dayModalDate + 'T12:00:00').getDate()}
+                      </p>
+                    </div>
+                    <button onClick={() => setDayModalDate(null)} className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors">
+                      <X size={14} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                    </button>
+                  </div>
+                  {(() => {
+                    const st = getDayStatus(dayModalDate)
+                    return st.active ? (
+                      <p className="text-[11px] font-medium mb-4" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                        {st.open} – {st.close}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] font-medium mb-4" style={{ color: RED }}>Cerrado</p>
+                    )
+                  })()}
+                  <div className="space-y-1.5 mb-4 max-h-[260px] overflow-y-auto">
+                    {getApptsForDate(dayModalDate).length === 0 ? (
+                      <p className="text-xs py-4 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>Sin citas este día</p>
+                    ) : (
+                      getApptsForDate(dayModalDate).sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
+                        <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: `${typeColors[a.type]}08`, borderLeft: `3px solid ${typeColors[a.type]}` }}>
+                          <div className="text-[11px] font-bold min-w-[42px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{a.startTime}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[13px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</div>
+                            {a.studentName && <div className="text-[11px] font-medium truncate" style={{ color: 'rgba(0,0,0,0.35)' }}>{a.studentName}</div>}
+                            {a.trainer && <div className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.25)' }}>Con {a.trainer}</div>}
+                          </div>
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type] }}>{typeLabels[a.type]}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <button onClick={() => { setDayModalDate(null); setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
+                    style={{ background: BLUE_GRAD }}
+                  ><Plus size={13} /> Agregar Cita</button>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1040,55 +1269,31 @@ export function TrainerDashboard() {
               >
                 <div className="flex items-center justify-between px-6 pt-6 pb-3">
                   <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Horario Semanal Base</h2>
-                  <button onClick={() => setShowWeekModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
-                    <X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
-                  </button>
+                  <button onClick={() => setShowWeekModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors"><X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
                 </div>
                 <div className="px-6 pb-6 space-y-3">
                   {(['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'] as const).map((dk, i) => {
                     const t = weeklyTemplate[dk]
                     return (
                       <div key={dk} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                        <div
-                          onClick={() => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], active: !prev[dk].active } }))}
+                        <div onClick={() => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], active: !prev[dk].active } }))}
                           className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold cursor-pointer transition-all flex-shrink-0"
-                          style={{
-                            background: t.active ? BLUE_GRAD : 'rgba(0,0,0,0.04)',
-                            color: t.active ? '#fff' : 'rgba(0,0,0,0.25)',
-                          }}
-                        >
-                          {dayLabels[i].charAt(0)}
-                        </div>
+                          style={{ background: t.active ? BLUE_GRAD : 'rgba(0,0,0,0.04)', color: t.active ? '#fff' : 'rgba(0,0,0,0.25)' }}
+                        >{dayLabels[i].charAt(0)}</div>
                         <div className="flex-1 font-semibold text-sm" style={{ color: '#1A1A1E' }}>{dayLabels[i]}</div>
-                        <input
-                          type="time"
-                          value={t.open}
-                          onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], open: e.target.value } }))}
-                          disabled={!t.active}
+                        <input type="time" value={t.open} onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], open: e.target.value } }))} disabled={!t.active}
                           className="px-2 py-1.5 rounded-lg text-xs font-medium border-none outline-none"
-                          style={{ background: t.active ? '#F0F7FF' : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60 }}
-                        />
+                          style={{ background: t.active ? '#F0F7FF' : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60 }} />
                         <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>–</span>
-                        <input
-                          type="time"
-                          value={t.close}
-                          onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], close: e.target.value } }))}
-                          disabled={!t.active}
+                        <input type="time" value={t.close} onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], close: e.target.value } }))} disabled={!t.active}
                           className="px-2 py-1.5 rounded-lg text-xs font-medium border-none outline-none"
-                          style={{ background: t.active ? '#F0F7FF' : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60 }}
-                        />
+                          style={{ background: t.active ? '#F0F7FF' : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60 }} />
                       </div>
                     )
                   })}
                 </div>
                 <div className="px-6 pb-6 pt-0">
-                  <button
-                    onClick={() => setShowWeekModal(false)}
-                    className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                    style={{ background: BLUE_GRAD }}
-                  >
-                    Guardar Semana Base
-                  </button>
+                  <button onClick={() => setShowWeekModal(false)} className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all" style={{ background: BLUE_GRAD }}>Guardar Semana Base</button>
                 </div>
               </motion.div>
             </motion.div>
@@ -1117,64 +1322,59 @@ export function TrainerDashboard() {
               >
                 <div className="flex items-center justify-between px-6 pt-6 pb-3">
                   <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Nueva Cita</h2>
-                  <button onClick={() => setShowApptModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors">
-                    <X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
-                  </button>
+                  <button onClick={() => setShowApptModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors"><X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
                 </div>
                 <div className="px-6 pb-6 space-y-4">
                   <div>
                     <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Tipo</label>
                     <div className="flex gap-2 mt-1.5">
                       {(['class', 'assessment', 'event'] as const).map(t => (
-                        <button
-                          key={t}
-                          onClick={() => setNewApptType(t)}
+                        <button key={t} onClick={() => setNewApptType(t)}
                           className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
-                          style={{
-                            background: newApptType === t ? `${typeColors[t]}15` : 'rgba(0,0,0,0.03)',
-                            color: newApptType === t ? typeColors[t] : 'rgba(0,0,0,0.3)',
-                            border: `1px solid ${newApptType === t ? typeColors[t] : 'transparent'}`,
-                          }}
-                        >
-                          {typeLabels[t]}
-                        </button>
+                          style={{ background: newApptType === t ? `${typeColors[t]}15` : 'rgba(0,0,0,0.03)', color: newApptType === t ? typeColors[t] : 'rgba(0,0,0,0.3)', border: `1px solid ${newApptType === t ? typeColors[t] : 'transparent'}` }}
+                        >{typeLabels[t]}</button>
                       ))}
                     </div>
                   </div>
                   <div>
                     <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Título</label>
-                    <input value={newApptTitle} onChange={e => setNewApptTitle(e.target.value)} placeholder="Nombre de la clase o evento" className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                    <input value={newApptTitle} onChange={e => setNewApptTitle(e.target.value)} placeholder="Nombre de la clase o evento"
+                      className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                      style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Inicio</label>
-                      <input type="time" value={newApptStart} onChange={e => setNewApptStart(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                      <input type="time" value={newApptStart} onChange={e => setNewApptStart(e.target.value)}
+                        className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                        style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Fin</label>
-                      <input type="time" value={newApptEnd} onChange={e => setNewApptEnd(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                      <input type="time" value={newApptEnd} onChange={e => setNewApptEnd(e.target.value)}
+                        className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                        style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
                     </div>
                   </div>
                   <div>
                     <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Entrenador</label>
-                    <input value={newApptTrainer} onChange={e => setNewApptTrainer(e.target.value)} placeholder="Nombre del entrenador" className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                    <input value={newApptTrainer} onChange={e => setNewApptTrainer(e.target.value)} placeholder="Nombre del entrenador"
+                      className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                      style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
                   </div>
                   {newApptType === 'assessment' && (
                     <div>
                       <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Estudiante</label>
-                      <input value={newApptStudent} onChange={e => setNewApptStudent(e.target.value)} placeholder="Nombre del estudiante" className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                      <input value={newApptStudent} onChange={e => setNewApptStudent(e.target.value)} placeholder="Nombre del estudiante"
+                        className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                        style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
                     </div>
                   )}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleAddAppointment}
-                    disabled={!newApptTitle}
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={handleAddAppointment} disabled={!newApptTitle}
                     className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
                     style={{ background: newApptTitle ? BLUE_GRAD : 'rgba(0,0,0,0.1)' }}
-                  >
-                    Agendar Cita
-                  </motion.button>
+                  >Agendar Cita</motion.button>
                 </div>
               </motion.div>
             </motion.div>
