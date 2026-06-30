@@ -140,14 +140,14 @@
 
 .premium-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(30px) saturate(1.4);
   -webkit-backdrop-filter: blur(30px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.02),
-    0 4px 12px rgba(0, 0, 0, 0.03),
-    0 12px 32px rgba(0, 0, 0, 0.02);
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    0 12px 40px rgba(0, 0, 0, 0.04);
   border-radius: 20px;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   animation: blur-fade 0.5s ease-out both;
@@ -156,10 +156,10 @@
 .premium-card:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.03),
-    0 8px 24px rgba(0, 0, 0, 0.05),
-    0 12px 40px rgba(18, 112, 183, 0.04);
-  border-color: rgba(18, 112, 183, 0.08);
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 16px 48px rgba(18, 112, 183, 0.06);
+  border-color: rgba(18, 112, 183, 0.12);
 }
 
 /* Card variants */
