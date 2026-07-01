@@ -165,21 +165,11 @@ export default function AgendaModule() {
     const typeColors: Record<string, string> = { class: BLUE, initial_assessment: '#FF6B35', physical_assessment: '#30D158', registration: '#AF52DE', event: '#FF9F0A' }
     const hasNoAppts = !mini && appts.length === 0
     const isPublished = publishedDates.has(ds)
-    const isColHovered = hoveredCol === idx && !isT && !mini && hoveredRow !== null
-    const isHoveredCell = isColHovered && rowIdx === hoveredRow
+    const isHoveredCell = hoveredCol === idx && hoveredRow === rowIdx && !mini
     const isPressed = pressedCell?.col === idx && pressedCell?.row === rowIdx
     let colBg = 'transparent'
-    if (isColHovered) {
-      if (hasNoAppts) {
-        colBg = '#ffffff'
-      } else if (rowIdx < hoveredRow) {
-        const total = hoveredRow
-        const topA = Math.max(0, 0.25 * (1 - rowIdx / total))
-        const botA = Math.max(0, 0.25 * (1 - (rowIdx + 1) / total))
-        if (topA > 0) {
-          colBg = `linear-gradient(180deg, rgba(18,112,183,${topA.toFixed(3)}) 0%, rgba(18,112,183,${botA.toFixed(3)}) 100%)`
-        }
-      }
+    if (isHoveredCell) {
+      colBg = 'rgba(18,112,183,0.06)'
     } else if (isT) {
       colBg = 'rgba(18,112,183,0.04)'
     }
@@ -225,6 +215,7 @@ export default function AgendaModule() {
             color: isT ? '#fff' : st.active ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.2)',
             width: mini ? 18 : 22, height: mini ? 18 : 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
             borderRadius: 6, background: isT ? BLUE_GRAD : 'transparent',
+            ...(isHoveredCell && !isT ? { background: BLUE_GRAD, backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' } : {}),
           }}>
             {dt.getDate()}
           </span>
@@ -233,10 +224,19 @@ export default function AgendaModule() {
           <div className="space-y-0.5">
               {visible.map(a => (
                   <div key={a.id} className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight truncate" style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `2.5px solid ${typeColors[a.type]}` }}
-                    title={`${a.startTime} ${a.title}${a.studentName ? ' - ' + a.studentName : ''}`}
+                    title={`${a.startTime} – ${a.endTime} ${a.title}${a.studentName ? ' - ' + a.studentName : ''}`}
                   >
-                    <span style={{ opacity: 0.85 }}>{a.startTime}</span> {a.title}
-                    {a.studentName && <div className="text-[8px] font-medium truncate" style={{ opacity: 0.65 }}>{a.studentName}</div>}
+                    {a.studentName ? (
+                      <>
+                        <div className="text-[10px] font-extrabold truncate">{a.studentName}</div>
+                        <div className="flex items-center gap-1 text-[8px] font-medium truncate" style={{ opacity: 0.75 }}>
+                          <span className="truncate">{a.title}</span>
+                          <span className="flex-shrink-0">{a.startTime} – {a.endTime}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <><span style={{ opacity: 0.75 }}>{a.startTime} – {a.endTime}</span> <span className="font-extrabold">{a.title}</span></>
+                    )}
                   </div>
                 ))}
               {hidden.length > 0 && (
@@ -333,17 +333,17 @@ export default function AgendaModule() {
           </div>
           <div className="flex items-center gap-3 pr-4">
             <button onClick={() => setShowWeekModal(true)}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all"
+              className="w-11 h-11 rounded-2xl flex items-center justify-center transition-all hover:bg-black/[0.06]"
               style={{ background: 'rgba(0,0,0,0.04)', color: BLUE, border: '1px solid rgba(0,0,0,0.05)' }}
               title="Configurar Semana"
-            ><Settings size={16} /></button>
+            ><Settings size={20} /></button>
             <motion.button
               initial="initial"
               whileHover="hover"
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowPublishModal(true)}
-              className="flex items-center rounded-xl overflow-hidden text-white"
-              style={{ height: 36, padding: '0 10px', background: MESH_GRAD }}
+              className="flex items-center rounded-2xl overflow-hidden text-white"
+              style={{ height: 44, padding: '0 12px', background: MESH_GRAD }}
             >
               <motion.div
                 variants={{
@@ -355,7 +355,7 @@ export default function AgendaModule() {
                 <span className="text-xs font-bold">Nueva Agenda</span>
               </motion.div>
               <div className="flex items-center justify-center flex-shrink-0">
-                <Plus size={16} strokeWidth={3} />
+                <Plus size={18} strokeWidth={3} />
               </div>
             </motion.button>
           </div>
@@ -494,8 +494,8 @@ export default function AgendaModule() {
                           {appts.map(a => (
                             <div key={a.id} className="rounded px-1 py-0.5 text-[8px] font-bold truncate leading-tight"
                               style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `2px solid ${typeColors[a.type]}` }}
-                              title={`${a.startTime} ${a.title}`}
-                            >{a.startTime} {a.title}</div>
+                              title={`${a.startTime} – ${a.endTime} ${a.title}`}
+                            >{a.startTime} – {a.endTime} {a.title}</div>
                           ))}
                         </div>
                       )
@@ -546,8 +546,8 @@ export default function AgendaModule() {
                           <div key={a.id} className="rounded-md px-2 py-1 text-[10px] font-bold truncate"
                             style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `3px solid ${typeColors[a.type]}` }}
                           >
-                            <span>{a.startTime}</span> {a.title}
-                            {a.studentName && <span className="ml-1 font-medium" style={{ opacity: 0.7 }}>— {a.studentName}</span>}
+                          <span>{a.startTime} – {a.endTime}</span> {a.title}
+                          {a.studentName && <span className="ml-1 font-medium" style={{ opacity: 0.7 }}>— {a.studentName}</span>}
                           </div>
                         ))}
                         {appts.length === 0 && (
@@ -652,7 +652,7 @@ export default function AgendaModule() {
                   ) : (
                     getApptsForDate(dayModalDate).sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
                       <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: `${typeColors[a.type]}12`, borderLeft: `3.5px solid ${typeColors[a.type]}` }}>
-                        <div className="text-[11px] font-bold min-w-[42px]" style={{ color: 'rgba(0,0,0,0.55)' }}>{a.startTime}</div>
+                        <div className="text-[11px] font-bold min-w-[65px]" style={{ color: 'rgba(0,0,0,0.55)' }}>{a.startTime} – {a.endTime}</div>
                         <div className="flex-1 min-w-0">
                           <div className="text-[13px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</div>
                           {a.studentName && <div className="text-[11px] font-medium truncate" style={{ color: 'rgba(0,0,0,0.5)' }}>{a.studentName}</div>}
@@ -1057,8 +1057,8 @@ export default function AgendaModule() {
                                   {appts.map(a => (
                                     <div key={a.id} className="rounded px-1 py-0.5 text-[8px] font-bold truncate leading-tight"
                                       style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `2px solid ${typeColors[a.type]}` }}
-                                      title={`${a.startTime} ${a.title}`}
-                                    >{a.startTime} {a.title}</div>
+                                      title={`${a.startTime} – ${a.endTime} ${a.title}`}
+                                    >{a.startTime} – {a.endTime} {a.title}</div>
                                   ))}
                                 </div>
                               )
@@ -1104,7 +1104,7 @@ export default function AgendaModule() {
                                 <div key={a.id} className="rounded-md px-2 py-1 text-[11px] font-bold truncate"
                                   style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `3px solid ${typeColors[a.type]}` }}
                                 >
-                                  <span>{a.startTime}</span> {a.title}
+                                  <span>{a.startTime} – {a.endTime}</span> {a.title}
                                   {a.studentName && <span className="ml-1 font-medium" style={{ opacity: 0.7 }}>— {a.studentName}</span>}
                                 </div>
                               ))}
