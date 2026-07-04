@@ -1,8 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import Cropper from 'react-easy-crop'
+import confetti from 'canvas-confetti'
 import {
-  Search, Plus, Dumbbell, Pencil, Trash2, X, List,
-  Activity, Wrench, PowerOff, ChevronDown, ChevronRight, Check,
+  Search, Plus, Dumbbell, Pencil, Trash2, X, List, Upload,
+  Activity, Wrench, PowerOff, ChevronDown, ChevronRight, ChevronLeft, Check,
 } from 'lucide-react'
 import machineImg from '../../assets/illustrations/objects/machine.png'
 
@@ -25,6 +27,11 @@ interface Machine {
   name: string
   zone: string
   status: Status
+  imageDataUrl?: string
+  description: string
+  muscleGroups: string[]
+  recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
+  observations: string
   exerciseIds: number[]
 }
 
@@ -50,12 +57,12 @@ const initialExercises: Exercise[] = [
 ]
 
 const initialMachines: Machine[] = [
-  { id: 1, name: 'Cinta de Correr A1', zone: 'Cardio', status: 'active', exerciseIds: [1, 2, 3] },
-  { id: 2, name: 'Rack Multipower', zone: 'Pesas Libres', status: 'active', exerciseIds: [6, 7] },
-  { id: 3, name: 'Bicicleta Spinning B3', zone: 'Cardio', status: 'maintenance', exerciseIds: [4] },
-  { id: 4, name: 'Press de Banca', zone: 'Pesas Libres', status: 'active', exerciseIds: [8, 9, 10] },
-  { id: 5, name: 'Elíptica C2', zone: 'Cardio', status: 'active', exerciseIds: [5] },
-  { id: 6, name: 'Cable Crossover', zone: 'Máquinas', status: 'inactive', exerciseIds: [11, 12] },
+  { id: 1, name: 'Cinta de Correr A1', zone: 'Cardio', status: 'active', description: '', muscleGroups: ['Cardio'], recommendedLevel: 'principiante', observations: '', exerciseIds: [1, 2, 3] },
+  { id: 2, name: 'Rack Multipower', zone: 'Pesas Libres', status: 'active', description: '', muscleGroups: ['Piernas', 'Pecho'], recommendedLevel: 'intermedio', observations: '', exerciseIds: [6, 7] },
+  { id: 3, name: 'Bicicleta Spinning B3', zone: 'Cardio', status: 'maintenance', description: '', muscleGroups: ['Cardio'], recommendedLevel: 'intermedio', observations: '', exerciseIds: [4] },
+  { id: 4, name: 'Press de Banca', zone: 'Pesas Libres', status: 'active', description: '', muscleGroups: ['Pecho'], recommendedLevel: 'principiante', observations: '', exerciseIds: [8, 9, 10] },
+  { id: 5, name: 'Elíptica C2', zone: 'Cardio', status: 'active', description: '', muscleGroups: ['Cardio'], recommendedLevel: 'principiante', observations: '', exerciseIds: [5] },
+  { id: 6, name: 'Cable Crossover', zone: 'Máquinas', status: 'inactive', description: '', muscleGroups: ['Brazos', 'Hombros'], recommendedLevel: 'intermedio', observations: '', exerciseIds: [11, 12] },
 ]
 
 function StatusBadge({ status }: { status: Status }) {
@@ -85,12 +92,36 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   const [globalExercises, setGlobalExercises] = useState<Exercise[]>(initialExercises)
   const [showMachineModal, setShowMachineModal] = useState(false)
   const [editingMachine, setEditingMachine] = useState<Machine | null>(null)
-  const [machineForm, setMachineForm] = useState({ name: '', zone: '', status: 'active' as Status, selectedIds: [] as number[] })
+  const [machineStep, setMachineStep] = useState(0)
+  const [machineForm, setMachineForm] = useState({
+    name: '', zone: '', status: 'active' as Status,
+    imageDataUrl: '', description: '', muscleGroups: [] as string[],
+    recommendedLevel: 'principiante' as 'principiante' | 'intermedio' | 'avanzado',
+    observations: '', selectedIds: [] as number[]
+  })
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [showExerciseManager, setShowExerciseManager] = useState(false)
+  const [machineSuccess, setMachineSuccess] = useState(false)
   const [exForm, setExForm] = useState({ name: '', zone: '' })
   const [exEditing, setExEditing] = useState<Exercise | null>(null)
   const [exFilterZone, setExFilterZone] = useState('')
+
+  const [showImageEditor, setShowImageEditor] = useState(false)
+  const [imageToEdit, setImageToEdit] = useState('')
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
+  const [cinematicIntensity, setCinematicIntensity] = useState(0)
+
+  function getCinematicFilter(intensity: number): string {
+    const t = intensity / 100
+    const contrast = 1 + t * 0.35
+    const brightness = 1 - t * 0.1
+    const saturate = 1 - t * 0.25
+    const sepia = t * 0.12
+    const hueRotate = t * 10
+    return `contrast(${contrast}) brightness(${brightness}) saturate(${saturate}) sepia(${sepia}) hue-rotate(${hueRotate}deg)`
+  }
 
   const zones = useMemo(() => [...new Set(globalExercises.map(e => e.zone))], [globalExercises])
 
@@ -122,28 +153,52 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
 
   function openAddMachine() {
     setEditingMachine(null)
-    setMachineForm({ name: '', zone: '', status: 'active', selectedIds: [] })
+    setMachineStep(0)
+    setMachineForm({
+      name: '', zone: '', status: 'active',
+      imageDataUrl: '', description: '', muscleGroups: [],
+      recommendedLevel: 'principiante', observations: '', selectedIds: []
+    })
     setShowMachineModal(true)
   }
 
   function openEditMachine(m: Machine) {
     setEditingMachine(m)
-    setMachineForm({ name: m.name, zone: m.zone, status: m.status, selectedIds: [...m.exerciseIds] })
+    setMachineStep(0)
+    setMachineForm({
+      name: m.name, zone: m.zone, status: m.status,
+      imageDataUrl: m.imageDataUrl || '', description: m.description,
+      muscleGroups: [...m.muscleGroups], recommendedLevel: m.recommendedLevel,
+      observations: m.observations, selectedIds: [...m.exerciseIds]
+    })
     setShowMachineModal(true)
   }
 
   function saveMachine() {
     if (!machineForm.name.trim() || !machineForm.zone.trim()) return
+    const data = {
+      name: machineForm.name.trim(),
+      zone: machineForm.zone.trim(),
+      status: machineForm.status,
+      imageDataUrl: machineForm.imageDataUrl || undefined,
+      description: machineForm.description.trim(),
+      muscleGroups: machineForm.muscleGroups,
+      recommendedLevel: machineForm.recommendedLevel,
+      observations: machineForm.observations.trim(),
+      exerciseIds: machineForm.selectedIds,
+    }
     if (editingMachine) {
       setMachines(prev => prev.map(m =>
-        m.id === editingMachine.id
-          ? { ...m, name: machineForm.name.trim(), zone: machineForm.zone.trim(), status: machineForm.status, exerciseIds: machineForm.selectedIds }
-          : m
+        m.id === editingMachine.id ? { ...m, ...data } : m
       ))
     } else {
-      setMachines(prev => [...prev, { id: nextMachineId, name: machineForm.name.trim(), zone: machineForm.zone.trim(), status: machineForm.status, exerciseIds: machineForm.selectedIds }])
+      setMachines(prev => [...prev, { id: nextMachineId, ...data }])
     }
-    setShowMachineModal(false)
+    if (editingMachine) {
+      setShowMachineModal(false)
+    } else {
+      setMachineSuccess(true)
+    }
   }
 
   function toggleExerciseSelection(id: number) {
@@ -153,6 +208,45 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
         ? f.selectedIds.filter(x => x !== id)
         : [...f.selectedIds, id]
     }))
+  }
+
+  function createImage(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => resolve(img)
+      img.onerror = reject
+      img.src = url
+    })
+  }
+
+  async function applyCropAndFilter() {
+    if (!imageToEdit || !croppedAreaPixels) return
+    try {
+      const image = await createImage(imageToEdit)
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+      canvas.width = croppedAreaPixels.width
+      canvas.height = croppedAreaPixels.height
+      ctx.filter = getCinematicFilter(cinematicIntensity)
+      ctx.drawImage(
+        image,
+        croppedAreaPixels.x, croppedAreaPixels.y,
+        croppedAreaPixels.width, croppedAreaPixels.height,
+        0, 0,
+        croppedAreaPixels.width, croppedAreaPixels.height
+      )
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
+      setMachineForm(f => ({ ...f, imageDataUrl: dataUrl }))
+      setShowImageEditor(false)
+      setImageToEdit('')
+      setCinematicIntensity(0)
+      setZoom(1)
+      setCrop({ x: 0, y: 0 })
+      setCroppedAreaPixels(null)
+    } catch (e) {
+      console.error('Error applying crop/filter', e)
+    }
   }
 
   function deleteMachine(id: number) {
@@ -416,182 +510,586 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
         )}
       </div>
 
-      {/* ── Machine Modal ── */}
+      {/* ── Machine Modal (3-step) ── */}
       <AnimatePresence>
         {showMachineModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
             onClick={() => setShowMachineModal(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.97, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ ease: [0.16, 1, 0.3, 1] }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className="w-full max-w-lg rounded-2xl p-6"
+              className="rounded-3xl w-full max-w-xl flex flex-col mx-4 overflow-hidden"
               style={{
                 background: '#FFFFFF',
-                border: '1px solid rgba(0,0,0,0.06)',
-                boxShadow: '0 40px 80px rgba(0,0,0,0.12)',
+                border: '1px solid rgba(0,0,0,0.04)',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
+                maxHeight: '90vh',
               }}
             >
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>
-                  {editingMachine ? 'Editar Máquina' : 'Nueva Máquina'}
-                </h2>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowMachineModal(false)}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ color: 'rgba(0,0,0,0.3)' }}
-                >
-                  <X size={16} />
-                </motion.button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: 'rgba(0,0,0,0.35)' }}>Nombre</label>
-                  <input
-                    value={machineForm.name}
-                    onChange={e => setMachineForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="Ej: Press de Banca"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none"
-                    style={{
-                      background: 'rgba(0,0,0,0.03)',
-                      border: '1px solid rgba(0,0,0,0.06)',
-                      color: '#1A1A1E',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: 'rgba(0,0,0,0.35)' }}>Zona</label>
-                  <input
-                    value={machineForm.zone}
-                    onChange={e => setMachineForm(f => ({ ...f, zone: e.target.value }))}
-                    placeholder="Ej: Cardio, Pesas Libres, Máquinas"
-                    className="w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none"
-                    style={{
-                      background: 'rgba(0,0,0,0.03)',
-                      border: '1px solid rgba(0,0,0,0.06)',
-                      color: '#1A1A1E',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: 'rgba(0,0,0,0.35)' }}>Estado</label>
-                  <div className="flex gap-2">
-                    {(['active', 'maintenance', 'inactive'] as const).map(s => (
-                      <motion.button
-                        key={s}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setMachineForm(f => ({ ...f, status: s }))}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-bold"
-                        style={{
-                          background: machineForm.status === s ? `${statusConfig[s].color}15` : 'rgba(0,0,0,0.03)',
-                          color: machineForm.status === s ? statusConfig[s].color : 'rgba(0,0,0,0.25)',
-                          border: `1px solid ${machineForm.status === s ? `${statusConfig[s].color}30` : 'rgba(0,0,0,0.06)'}`,
-                        }}
-                      >
-                        {statusConfig[s].label}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Exercise Selector */}
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: 'rgba(0,0,0,0.35)' }}>
-                    Ejercicios ({machineForm.selectedIds.length} seleccionados)
-                  </label>
-                  <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                    Selecciona los ejercicios que componen esta máquina:
-                  </p>
-                  <div
-                    className="max-h-48 overflow-y-auto rounded-xl p-2"
-                    style={{
-                      background: 'rgba(0,0,0,0.02)',
-                      border: '1px solid rgba(0,0,0,0.06)',
-                    }}
+              {machineSuccess ? (
+                <div className="flex flex-col items-center justify-center py-16 px-8">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                    className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+                    style={{ background: `${GREEN}15` }}
                   >
-                    {globalExercises.length === 0 ? (
-                      <p className="text-xs py-3 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                        No hay ejercicios registrados. Ve a "Ejercicios" para crear algunos.
-                      </p>
-                    ) : (
-                      <div className="space-y-1">
-                        {zones.map(zone => {
-                          const zoneExercises = globalExercises.filter(e => e.zone === zone)
-                          return (
-                            <div key={zone}>
-                              <p className="text-[10px] font-bold uppercase tracking-wider px-2 py-1" style={{ color: 'rgba(0,0,0,0.2)' }}>{zone}</p>
-                              {zoneExercises.map(ex => {
-                                const selected = machineForm.selectedIds.includes(ex.id)
-                                return (
-                                  <motion.button
-                                    key={ex.id}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => toggleExerciseSelection(ex.id)}
-                                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-                                    style={{
-                                      background: selected ? `${BLUE}10` : 'transparent',
-                                      color: selected ? BLUE : 'rgba(0,0,0,0.5)',
-                                    }}
-                                  >
+                    <Check size={36} style={{ color: GREEN }} />
+                  </motion.div>
+                  <motion.h3
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-xl font-bold text-center mb-2"
+                  >
+                    Máquina registrada
+                  </motion.h3>
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-sm text-center mb-8"
+                    style={{ color: 'rgba(0,0,0,0.4)' }}
+                  >
+                    La máquina se ha añadido correctamente al sistema.
+                  </motion.p>
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => { setShowMachineModal(false); setMachineSuccess(false) }}
+                    className="px-8 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                    style={{ background: BLUE_GRAD }}
+                  >
+                    Cerrar
+                  </motion.button>
+                </div>
+              ) : (
+                <><AnimatePresence mode="wait">
+                <motion.div
+                  key={machineStep}
+                  initial={{ opacity: 0, filter: 'blur(6px)' }}
+                  animate={{ opacity: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, filter: 'blur(6px)' }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col flex-1 min-h-0"
+                >
+                  {/* ── Header ── */}
+                  <div className="sticky top-0 z-10 flex-shrink-0" style={{
+                    background: 'rgba(255,255,255,0.9)',
+                    borderBottom: '1px solid rgba(0,0,0,0.04)',
+                  }}>
+                    <div className="flex items-center justify-end p-4 pb-0">
+                      <motion.button
+                        whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)', color: RED }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => setShowMachineModal(false)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors"
+                        style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}
+                      >
+                        <X size={15} />
+                      </motion.button>
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5" style={{ marginTop: 12, marginBottom: 16 }}>
+                      {[1, 2, 3].map(s => (
+                        <motion.div
+                          key={s}
+                          animate={{
+                            width: s === machineStep + 1 ? 16 : 6,
+                            background: s === machineStep + 1 ? BLUE_GRAD : 'rgba(0,0,0,0.12)',
+                          }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+                          className="rounded-full"
+                          style={{ height: 6 }}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-lg font-bold tracking-wide text-center block" style={{
+                      color: '#1A1A1E',
+                      marginBottom: 10,
+                    }}>
+                      {machineStep === 0 ? 'Datos básicos' : machineStep === 1 ? 'Descripción' : 'Ejercicios'}
+                    </span>
+                  </div>
+
+                  {/* ── Body ── */}
+                  <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
+                    {/* Step 1 — Image, Name, Type, Status */}
+                    {machineStep === 0 && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Imagen de la máquina</label>
+                          <motion.div
+                            className="w-full h-40 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative"
+                            style={{ border: machineForm.imageDataUrl ? `1px solid ${GREEN}30` : '1px dashed rgba(0,0,0,0.12)' }}
+                            whileHover={{ borderColor: machineForm.imageDataUrl ? GREEN : BLUE, background: machineForm.imageDataUrl ? `${GREEN}05` : 'rgba(18,112,183,0.03)', scale: 1.005 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => document.getElementById('machine-image-input')?.click()}
+                          >
+                            {machineForm.imageDataUrl ? (
+                              <div className="flex flex-col items-center gap-2">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `${GREEN}15` }}>
+                                  <Check size={24} style={{ color: GREEN }} />
+                                </div>
+                                <span className="text-xs font-medium" style={{ color: GREEN }}>Imagen subida</span>
+                                <span className="text-[9px]" style={{ color: 'rgba(0,0,0,0.2)' }}>Haz clic para cambiar</span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col items-center gap-2">
+                                <Upload size={24} style={{ color: 'rgba(0,0,0,0.2)' }} />
+                                <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>Haz clic para subir imagen</span>
+                              </div>
+                            )}
+                          </motion.div>
+                          <input
+                            id="machine-image-input"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={e => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                const reader = new FileReader()
+                                reader.onload = () => {
+                                  setImageToEdit(reader.result as string)
+                                  setCrop({ x: 0, y: 0 })
+                                  setZoom(1)
+                                  setCroppedAreaPixels(null)
+                                  setShowImageEditor(true)
+                                }
+                                reader.readAsDataURL(file)
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Nombre <span style={{ color: RED }}>*</span></label>
+                            <input
+                              value={machineForm.name}
+                              onChange={e => setMachineForm(f => ({ ...f, name: e.target.value }))}
+                              placeholder="Ej: Press de Banca"
+                              className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
+                              style={{
+                                background: 'rgba(0,0,0,0.03)',
+                                color: '#1A1A1E',
+                                border: '1px solid transparent',
+                              }}
+                              onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                              onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Tipo de Máquina <span style={{ color: RED }}>*</span></label>
+                            <input
+                              value={machineForm.zone}
+                              onChange={e => setMachineForm(f => ({ ...f, zone: e.target.value }))}
+                              placeholder="Ej: Cardio, Pesas Libres"
+                              className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
+                              style={{
+                                background: 'rgba(0,0,0,0.03)',
+                                color: '#1A1A1E',
+                                border: '1px solid transparent',
+                              }}
+                              onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                              onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Estado</label>
+                          <div className="flex gap-2">
+                            {(['active', 'maintenance', 'inactive'] as const).map(s => (
+                              <motion.button
+                                key={s}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => setMachineForm(f => ({ ...f, status: s }))}
+                                className="flex-1 py-2.5 rounded-xl text-xs font-bold"
+                                style={{
+                                  background: machineForm.status === s ? `${statusConfig[s].color}15` : 'rgba(0,0,0,0.03)',
+                                  color: machineForm.status === s ? statusConfig[s].color : 'rgba(0,0,0,0.25)',
+                                  border: `1px solid ${machineForm.status === s ? `${statusConfig[s].color}30` : 'rgba(0,0,0,0.06)'}`,
+                                }}
+                              >
+                                {statusConfig[s].label}
+                              </motion.button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 2 — Description, Muscle Groups, Level, Observations */}
+                    {machineStep === 1 && (
+                      <div className="space-y-5">
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Descripción</label>
+                          <textarea
+                            value={machineForm.description}
+                            onChange={e => setMachineForm(f => ({ ...f, description: e.target.value }))}
+                            placeholder="Describe brevemente la máquina..."
+                            rows={3}
+                            className="w-full px-3 py-2 rounded-xl text-xs font-medium outline-none resize-none transition-all duration-200"
+                            style={{ background: 'rgba(0,0,0,0.03)', color: '#1A1A1E', border: '1px solid transparent' }}
+                            onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Grupo Muscular Principal</label>
+                          <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>¿A qué grupo muscular se dedica principalmente esta máquina?</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {['Piernas', 'Pecho', 'Espalda', 'Hombros', 'Brazos', 'Cardio', 'Glúteos', 'Abdominales'].map(group => (
+                              <motion.button
+                                key={group}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => {
+                                  setMachineForm(f => ({
+                                    ...f,
+                                    muscleGroups: f.muscleGroups.includes(group)
+                                      ? f.muscleGroups.filter(g => g !== group)
+                                      : [...f.muscleGroups, group]
+                                  }))
+                                }}
+                                className="px-3 py-3 rounded-xl text-xs font-bold text-center"
+                                style={{
+                                  background: machineForm.muscleGroups.includes(group) ? `${BLUE}12` : 'rgba(0,0,0,0.03)',
+                                  color: machineForm.muscleGroups.includes(group) ? BLUE : 'rgba(0,0,0,0.35)',
+                                  border: `1px solid ${machineForm.muscleGroups.includes(group) ? `${BLUE}25` : 'rgba(0,0,0,0.06)'}`,
+                                }}
+                              >
+                                {group}
+                              </motion.button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Nivel Recomendado</label>
+                          <div className="flex gap-2">
+                            {(['principiante', 'intermedio', 'avanzado'] as const).map(level => {
+                              const lvlColor = level === 'principiante' ? BLUE : level === 'intermedio' ? '#F1C827' : '#F43843'
+                              return (
+                                <motion.button
+                                  key={level}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  onClick={() => setMachineForm(f => ({ ...f, recommendedLevel: level }))}
+                                  className="flex-1 py-2.5 rounded-xl text-xs font-bold capitalize"
+                                  style={{
+                                    background: machineForm.recommendedLevel === level ? `${lvlColor}15` : 'rgba(0,0,0,0.03)',
+                                    color: machineForm.recommendedLevel === level ? lvlColor : 'rgba(0,0,0,0.25)',
+                                    border: `1px solid ${machineForm.recommendedLevel === level ? `${lvlColor}30` : 'rgba(0,0,0,0.06)'}`,
+                                  }}
+                                >
+                                  {level}
+                                </motion.button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Observaciones <span style={{ color: 'rgba(0,0,0,0.2)' }}>(Opcional)</span></label>
+                          <textarea
+                            value={machineForm.observations}
+                            onChange={e => setMachineForm(f => ({ ...f, observations: e.target.value }))}
+                            placeholder="Notas adicionales sobre la máquina..."
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-xl text-xs font-medium outline-none resize-none transition-all duration-200"
+                            style={{ background: 'rgba(0,0,0,0.03)', color: '#1A1A1E', border: '1px solid transparent' }}
+                            onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 3 — Exercises */}
+                    {machineStep === 2 && (
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Ejercicios Disponibles</label>
+                            <motion.button
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={() => { openAddExercise(); setShowExerciseManager(true) }}
+                              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold"
+                              style={{
+                                background: `${BLUE}10`,
+                                color: BLUE,
+                                border: `1px solid ${BLUE}25`,
+                              }}
+                            >
+                              <Plus size={11} /> Crear nuevo ejercicio
+                            </motion.button>
+                          </div>
+                          <div
+                            className="max-h-40 overflow-y-auto rounded-xl p-2"
+                            style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}
+                          >
+                            {globalExercises.length === 0 ? (
+                              <p className="text-xs py-3 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>
+                                No hay ejercicios registrados. Crea uno nuevo arriba.
+                              </p>
+                            ) : (
+                              <div className="space-y-1">
+                                {zones.map(zone => {
+                                  const zoneExercises = globalExercises.filter(e => e.zone === zone)
+                                  return (
+                                    <div key={zone}>
+                                      <p className="text-[10px] font-bold uppercase tracking-wider px-2 py-1" style={{ color: 'rgba(0,0,0,0.2)' }}>{zone}</p>
+                                      {zoneExercises.map(ex => {
+                                        const selected = machineForm.selectedIds.includes(ex.id)
+                                        return (
+                                          <motion.button
+                                            key={ex.id}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => toggleExerciseSelection(ex.id)}
+                                            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                            style={{
+                                              background: selected ? `${BLUE}10` : 'transparent',
+                                              color: selected ? BLUE : 'rgba(0,0,0,0.5)',
+                                            }}
+                                          >
+                                            <div
+                                              className="w-4 h-4 rounded-md flex items-center justify-center"
+                                              style={{
+                                                background: selected ? BLUE : 'rgba(0,0,0,0.06)',
+                                                border: `1px solid ${selected ? BLUE : 'rgba(0,0,0,0.1)'}`,
+                                              }}
+                                            >
+                                              {selected && <Check size={10} className="text-white" />}
+                                            </div>
+                                            {ex.name}
+                                          </motion.button>
+                                        )
+                                      })}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold mb-2 block" style={{ color: 'rgba(0,0,0,0.6)' }}>
+                            Ejercicios Seleccionados ({machineForm.selectedIds.length})
+                          </label>
+                          <div
+                            className="min-h-[70px] rounded-xl p-3"
+                            style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}
+                          >
+                            {machineForm.selectedIds.length === 0 ? (
+                              <p className="text-xs py-1 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>
+                                Aún no has seleccionado ejercicios
+                              </p>
+                            ) : (
+                              <div className="flex flex-wrap gap-1.5">
+                                {machineForm.selectedIds.map(id => {
+                                  const ex = globalExercises.find(e => e.id === id)
+                                  return ex ? (
                                     <div
-                                      className="w-4 h-4 rounded-md flex items-center justify-center"
+                                      key={id}
+                                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium"
                                       style={{
-                                        background: selected ? BLUE : 'rgba(0,0,0,0.06)',
-                                        border: `1px solid ${selected ? BLUE : 'rgba(0,0,0,0.1)'}`,
+                                        background: `${BLUE}08`,
+                                        border: `1px solid ${BLUE}20`,
+                                        color: BLUE,
                                       }}
                                     >
-                                      {selected && <Check size={10} className="text-white" />}
+                                      <span>{ex.name}</span>
+                                      <motion.button
+                                        whileHover={{ scale: 1.2 }}
+                                        whileTap={{ scale: 0.8 }}
+                                        onClick={() => toggleExerciseSelection(id)}
+                                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center"
+                                        style={{ color: BLUE }}
+                                      >
+                                        <X size={10} />
+                                      </motion.button>
                                     </div>
-                                    {ex.name}
-                                  </motion.button>
-                                )
-                              })}
-                            </div>
-                          )
-                        })}
+                                  ) : null
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
+
+                  {/* ── Footer ── */}
+                  <div className="flex-shrink-0 p-6 pt-4" style={{
+                    borderTop: '1px solid rgba(0,0,0,0.04)',
+                    background: 'rgba(255,255,255,0.8)',
+                  }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 flex justify-start">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setMachineStep(s => s - 1)}
+                          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+                          style={{ background: 'rgba(0,0,0,0.04)', color: machineStep > 0 ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)' }}
+                        >
+                          <ChevronLeft size={14} />
+                          Atrás
+                        </motion.button>
+                      </div>
+                      <div className="flex-1 flex justify-end">
+                        <motion.button
+                          whileHover={machineStep < 2 || (machineStep === 2 && true) ? { scale: 1.06, boxShadow: '0 8px 30px rgba(18,112,183,0.35), 0 0 60px rgba(18,112,183,0.1)' } : {}}
+                          whileTap={{ scale: 0.92 }}
+                          onClick={() => { if (machineStep < 2) setMachineStep(s => s + 1); else saveMachine() }}
+                          className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                          style={{
+                            background: machineStep === 0 && (!machineForm.name.trim() || !machineForm.zone.trim()) ? 'rgba(0,0,0,0.15)' : BLUE_GRAD,
+                            cursor: machineStep === 0 && (!machineForm.name.trim() || !machineForm.zone.trim()) ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          {machineStep < 2 ? (
+                            <>
+                              Siguiente <ChevronRight size={14} />
+                            </>
+                          ) : (
+                            editingMachine ? 'Guardar Cambios' : 'Registrar Máquina'
+                          )}
+                        </motion.button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence></>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Image Editor Modal ── */}
+      <AnimatePresence>
+        {showImageEditor && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setShowImageEditor(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              className="rounded-3xl w-full max-w-xl flex flex-col mx-4 overflow-hidden"
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid rgba(0,0,0,0.04)',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
+                maxHeight: '90vh',
+              }}
+            >
+              <div className="flex items-center justify-between p-4 pb-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                <h2 className="text-base font-bold" style={{ color: '#1A1A1E' }}>Editar imagen</h2>
+                <motion.button
+                  whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)', color: RED }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowImageEditor(false)}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}
+                >
+                  <X size={15} />
+                </motion.button>
+              </div>
+
+              <div className="relative" style={{ height: 380, background: '#f5f5f5' }}>
+                <Cropper
+                  image={imageToEdit}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={4 / 3}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={(_: unknown, pixels) => setCroppedAreaPixels(pixels)}
+                  style={{ containerStyle: { borderRadius: 0 } }}
+                  imgStyle={{ filter: getCinematicFilter(cinematicIntensity) }}
+                />
+              </div>
+
+              {/* Cinematic intensity */}
+              <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>ESTILO CINEMATOGRÁFICO</span>
+                  <span className="text-[10px] font-bold" style={{ color: cinematicIntensity > 50 ? '#F43843' : BLUE }}>{cinematicIntensity}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={cinematicIntensity}
+                  onChange={e => setCinematicIntensity(Number(e.target.value))}
+                  className="w-full"
+                  style={{ accentColor: cinematicIntensity > 50 ? '#F43843' : BLUE }}
+                />
+                <div className="flex justify-between text-[9px] mt-1" style={{ color: 'rgba(0,0,0,0.2)' }}>
+                  <span>Original</span>
+                  <span>Cinematográfico</span>
                 </div>
               </div>
-              <div className="flex gap-3 mt-6">
+
+              {/* Zoom */}
+              <div className="flex items-center gap-3 px-4 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                <span className="text-[10px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>ZOOM</span>
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={zoom}
+                  onChange={e => setZoom(Number(e.target.value))}
+                  className="w-full"
+                  style={{ accentColor: BLUE }}
+                />
+                <span className="text-[10px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.4)' }}>{zoom.toFixed(1)}x</span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 p-4">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowMachineModal(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold"
-                  style={{
-                    background: 'rgba(0,0,0,0.03)',
-                    color: 'rgba(0,0,0,0.35)',
-                    border: '1px solid rgba(0,0,0,0.06)',
-                  }}
+                  onClick={() => setShowImageEditor(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-medium"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
                 >
                   Cancelar
                 </motion.button>
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={saveMachine}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white"
-                  style={{
-                    background: BLUE_GRAD,
-                    boxShadow: '0 4px 16px rgba(18,112,183,0.25)',
-                    opacity: machineForm.name.trim() && machineForm.zone.trim() ? 1 : 0.5,
-                  }}
-                  disabled={!machineForm.name.trim() || !machineForm.zone.trim()}
+                  whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(18,112,183,0.35)' }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={applyCropAndFilter}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white"
+                  style={{ background: BLUE_GRAD }}
                 >
-                  {editingMachine ? 'Guardar Cambios' : 'Registrar Máquina'}
+                  Aplicar
                 </motion.button>
               </div>
             </motion.div>
