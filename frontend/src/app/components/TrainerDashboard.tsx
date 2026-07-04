@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ClipboardList, Dumbbell, Calendar,
   TrendingUp, AlertTriangle, Clock, Activity, Target, Award,
   ChevronRight, Search, Plus, ArrowUp, ArrowDown, Sparkles,
-  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu, X,
+  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu, X, Filter,
 } from 'lucide-react'
 import { StudentProfile, TABS } from './StudentProfile'
 import StudentsModule from './StudentsModule'
@@ -150,6 +150,7 @@ export function TrainerDashboard() {
   const [equipSearch, setEquipSearch] = useState('')
   const [equipSearchFocused, setEquipSearchFocused] = useState(false)
   const [equipStatusFilter, setEquipStatusFilter] = useState<'active' | 'maintenance' | 'inactive' | 'all'>('all')
+  const [showEquipFilters, setShowEquipFilters] = useState(false)
 
 
   // ── Gym Configuration ──
@@ -444,18 +445,19 @@ export function TrainerDashboard() {
             </div>
           )}
           {!selectedStudent && section === 'equipment' && (
-            <div className="flex-1 flex items-center justify-center gap-3">
+            <div className="flex-1 flex items-center justify-center gap-3 relative">
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0, scaleX: equipSearchFocused ? 1.04 : 1 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="flex items-center gap-3 px-4 py-2 rounded-2xl max-w-xs w-full"
+                className="flex items-center gap-3 px-4 py-2 rounded-2xl w-full"
                 style={{
+                  width: equipSearchFocused ? 460 : 340,
                   background: equipSearchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
                   backdropFilter: 'blur(24px) saturate(1.6)',
                   border: equipSearchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
                   boxShadow: equipSearchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
-                  transformOrigin: 'center',
+                  transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
                 <Search size={16} style={{ color: equipSearchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
@@ -468,28 +470,60 @@ export function TrainerDashboard() {
                   className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
                 />
               </motion.div>
-              <div className="flex gap-1.5">
-                {(['all', 'active', 'maintenance', 'inactive'] as const).map(s => {
-                  const label = s === 'all' ? 'Todas' : s === 'active' ? 'Activo' : s === 'maintenance' ? 'Mantenimiento' : 'Inactiva'
-                  const color = s === 'all' ? '#1270B7' : s === 'active' ? '#30D158' : s === 'maintenance' ? '#F1C827' : '#F43843'
-                  return (
-                    <motion.button
-                      key={s}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => setEquipStatusFilter(s)}
-                      className="px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide transition-all"
-                      style={{
-                        background: equipStatusFilter === s ? `${color}15` : 'rgba(255,255,255,0.06)',
-                        color: equipStatusFilter === s ? color : 'rgba(0,0,0,0.3)',
-                        border: `1px solid ${equipStatusFilter === s ? `${color}30` : 'rgba(255,255,255,0.15)'}`,
-                      }}
-                    >
-                      {label}
-                    </motion.button>
-                  )
-                })}
+              <div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowEquipFilters(!showEquipFilters)}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: showEquipFilters ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(24px) saturate(1.6)',
+                    border: showEquipFilters ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                    color: showEquipFilters ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.35)',
+                  }}
+                >
+                  <Filter size={16} />
+                </motion.button>
               </div>
+              <AnimatePresence>
+                {showEquipFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 flex gap-1.5 p-2 rounded-xl"
+                    style={{
+                      background: 'rgba(255,255,255,0.9)',
+                      backdropFilter: 'blur(24px) saturate(1.6)',
+                      border: '1px solid rgba(255,255,255,0.5)',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    {(['all', 'active', 'maintenance', 'inactive'] as const).map(s => {
+                      const label = s === 'all' ? 'Todas' : s === 'active' ? 'Activo' : s === 'maintenance' ? 'Mantenimiento' : 'Inactiva'
+                      const color = s === 'all' ? '#1270B7' : s === 'active' ? '#30D158' : s === 'maintenance' ? '#F1C827' : '#F43843'
+                      return (
+                          <motion.button
+                            key={s}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => setEquipStatusFilter(s)}
+                            className="px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide whitespace-nowrap transition-all"
+                            style={{
+                              background: equipStatusFilter === s ? `${color}15` : 'transparent',
+                              color: equipStatusFilter === s ? color : 'rgba(0,0,0,0.3)',
+                              border: `1px solid ${equipStatusFilter === s ? `${color}30` : 'transparent'}`,
+                            }}
+                          >
+                            {label}
+                          </motion.button>
+                        )
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
             </div>
           )}
 
@@ -779,6 +813,7 @@ export function TrainerDashboard() {
       search={equipSearch}
       searchFocused={equipSearchFocused}
       statusFilter={equipStatusFilter}
+      showBlur={showEquipFilters}
       onSearchChange={setEquipSearch}
       onSearchFocus={setEquipSearchFocused}
       onStatusFilterChange={setEquipStatusFilter}
