@@ -147,6 +147,9 @@ export function TrainerDashboard() {
   const [agendaSearch, setAgendaSearch] = useState('')
   const [agendaSearchFocused, setAgendaSearchFocused] = useState(false)
   const [riskFilter, setRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
+  const [equipSearch, setEquipSearch] = useState('')
+  const [equipSearchFocused, setEquipSearchFocused] = useState(false)
+  const [equipStatusFilter, setEquipStatusFilter] = useState<'active' | 'maintenance' | 'inactive' | 'all'>('all')
 
 
   // ── Gym Configuration ──
@@ -440,6 +443,55 @@ export function TrainerDashboard() {
               </motion.div>
             </div>
           )}
+          {!selectedStudent && section === 'equipment' && (
+            <div className="flex-1 flex items-center justify-center gap-3">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0, scaleX: equipSearchFocused ? 1.04 : 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                className="flex items-center gap-3 px-4 py-2 rounded-2xl max-w-xs w-full"
+                style={{
+                  background: equipSearchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(24px) saturate(1.6)',
+                  border: equipSearchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                  boxShadow: equipSearchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
+                  transformOrigin: 'center',
+                }}
+              >
+                <Search size={16} style={{ color: equipSearchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
+                <input
+                  value={equipSearch}
+                  onChange={e => setEquipSearch(e.target.value)}
+                  onFocus={() => setEquipSearchFocused(true)}
+                  onBlur={() => setEquipSearchFocused(false)}
+                  placeholder="Buscar máquina, zona o ejercicio..."
+                  className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
+                />
+              </motion.div>
+              <div className="flex gap-1.5">
+                {(['all', 'active', 'maintenance', 'inactive'] as const).map(s => {
+                  const label = s === 'all' ? 'Todas' : s === 'active' ? 'Activo' : s === 'maintenance' ? 'Mantenimiento' : 'Inactiva'
+                  const color = s === 'all' ? '#1270B7' : s === 'active' ? '#30D158' : s === 'maintenance' ? '#F1C827' : '#F43843'
+                  return (
+                    <motion.button
+                      key={s}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setEquipStatusFilter(s)}
+                      className="px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide transition-all"
+                      style={{
+                        background: equipStatusFilter === s ? `${color}15` : 'rgba(255,255,255,0.06)',
+                        color: equipStatusFilter === s ? color : 'rgba(0,0,0,0.3)',
+                        border: `1px solid ${equipStatusFilter === s ? `${color}30` : 'rgba(255,255,255,0.15)'}`,
+                      }}
+                    >
+                      {label}
+                    </motion.button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {selectedStudent && (
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setSelectedStudent(null)}
@@ -722,7 +774,16 @@ export function TrainerDashboard() {
     )
   }
 
-  function renderEquipment() { return <EquipmentModule /> }
+  function renderEquipment() { return (
+    <EquipmentModule
+      search={equipSearch}
+      searchFocused={equipSearchFocused}
+      statusFilter={equipStatusFilter}
+      onSearchChange={setEquipSearch}
+      onSearchFocus={setEquipSearchFocused}
+      onStatusFilterChange={setEquipStatusFilter}
+    />
+  ) }
 
   function renderStats() {
     return (

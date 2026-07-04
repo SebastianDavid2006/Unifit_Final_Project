@@ -54,11 +54,17 @@ function StatusBadge({ status }: { status: Status }) {
   )
 }
 
-export default function EquipmentModule() {
+interface Props {
+  search: string
+  searchFocused: boolean
+  statusFilter: Status | 'all'
+  onSearchChange: (v: string) => void
+  onSearchFocus: (v: boolean) => void
+  onStatusFilterChange: (v: Status | 'all') => void
+}
+
+export default function EquipmentModule({ search, searchFocused, statusFilter, onSearchChange, onSearchFocus, onStatusFilterChange }: Props) {
   const [machines, setMachines] = useState<Machine[]>(initialMachines)
-  const [search, setSearch] = useState('')
-  const [searchFocused, setSearchFocused] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all')
   const [showMachineModal, setShowMachineModal] = useState(false)
   const [editingMachine, setEditingMachine] = useState<Machine | null>(null)
   const [machineForm, setMachineForm] = useState({ name: '', zone: '', status: 'active' as Status })
@@ -186,9 +192,9 @@ export default function EquipmentModule() {
         </div>
 
         {/* Machine image */}
-        <div style={{ position: 'absolute', left: 10, bottom: 0, height: 180, width: 280, zIndex: 20, pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', left: 20, bottom: 0, height: 160, width: 230, zIndex: 20, pointerEvents: 'none' }}>
           <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', width: '90%', height: '50%', background: 'rgba(18,112,183,0.1)', filter: 'blur(30px)', borderRadius: '50%' }} />
-          <img src={machineImg} alt="Máquinas" className="w-full h-full object-contain drop-shadow-xl relative" />
+          <img src={machineImg} alt="Máquinas" className="w-full h-full object-scale-down drop-shadow-xl relative" style={{ objectPosition: 'bottom center' }} />
         </div>
 
         <div className="relative z-10 p-8 flex items-center justify-between">
@@ -196,7 +202,7 @@ export default function EquipmentModule() {
             <div className="w-1 h-12 rounded-full" style={{ background: BLUE_GRAD }} />
             <div>
               <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Máquinas y Equipos</h1>
-              <p className="text-xs text-black/40">{machines.length} máquinas registradas · {machines.reduce((s, m) => s + m.exercises.length, 0)} ejercicios</p>
+              <p className="text-xs text-black/40">Registra máquinas, asigna ejercicios y controla su estado operativo.</p>
             </div>
           </div>
           <div className="flex items-center gap-3 pr-4">
@@ -212,59 +218,8 @@ export default function EquipmentModule() {
         </div>
       </motion.div>
 
-      {/* Search & Filters */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-        className="flex items-center gap-4 mb-6"
-      >
-        <div
-          className="flex items-center gap-3 px-4 py-2 rounded-2xl flex-1 max-w-md"
-          style={{
-            background: searchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
-            backdropFilter: 'blur(24px) saturate(1.6)',
-            border: searchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
-            boxShadow: searchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
-          }}
-        >
-          <Search size={16} style={{ color: searchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
-            placeholder="Buscar máquina, zona o ejercicio..."
-            className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
-          />
-        </div>
-
-        <div className="flex gap-1.5">
-          {(['all', 'active', 'maintenance', 'inactive'] as const).map(s => {
-            const label = s === 'all' ? 'Todas' : statusConfig[s].label
-            const color = s === 'all' ? BLUE : statusConfig[s].color
-            return (
-              <motion.button
-                key={s}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setStatusFilter(s)}
-                className="px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide transition-all"
-                style={{
-                  background: statusFilter === s ? `${color}15` : 'rgba(255,255,255,0.06)',
-                  color: statusFilter === s ? color : 'rgba(0,0,0,0.3)',
-                  border: `1px solid ${statusFilter === s ? `${color}30` : 'rgba(255,255,255,0.15)'}`,
-                }}
-              >
-                {label}
-              </motion.button>
-            )
-          })}
-        </div>
-      </motion.div>
-
       {/* Machines Grid */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         {filtered.map((machine, i) => (
           <motion.div
             key={machine.id}
