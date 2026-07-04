@@ -13,6 +13,7 @@ import {
 import { StudentProfile, TABS } from './StudentProfile'
 import StudentsModule from './StudentsModule'
 import AgendaModule from './AgendaModule'
+import EquipmentModule from './EquipmentModule'
 import coachImg from '../../assets/illustrations/characters/coach.png'
 
 // ── Colors ──
@@ -721,7 +722,7 @@ export function TrainerDashboard() {
     )
   }
 
-  function renderEquipment() { return <div className="p-8">Equipos</div> }
+  function renderEquipment() { return <EquipmentModule /> }
 
   function renderStats() {
     return (
