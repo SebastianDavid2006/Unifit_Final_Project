@@ -698,11 +698,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.3 }}
-        whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(18,112,183,0.35)', transition: { duration: 0.15 } }}
-        whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(18,112,183,0.2)', transition: { duration: 0.1 } }}
+        whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }}
+        whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }}
         onClick={onClose}
-        className="mt-8 mb-10 px-8 py-3 rounded-xl text-xs font-bold text-white cursor-pointer"
-        style={{ background: BLUE_GRAD }}
+        className="mt-8 mb-10 px-8 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
+        style={{ background: GREEN_GRAD }}
       >
         Cerrar
       </motion.button>

@@ -476,10 +476,10 @@ export function TrainerDashboard() {
               <AnimatePresence>
                 {showEquipFilters && (
                   <motion.div
-                    initial={{ opacity: 0, y: -4, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -4, scale: 0.95 }}
-                    transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                    initial={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
+                    animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                     className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 flex gap-1.5 p-2 rounded-xl"
                     style={{
                       background: 'rgba(255,255,255,0.9)',
