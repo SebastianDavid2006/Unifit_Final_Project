@@ -112,6 +112,15 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
   const [cinematicIntensity, setCinematicIntensity] = useState(0)
+  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    if (imageToEdit) {
+      const img = new Image()
+      img.onload = () => setNaturalSize({ width: img.width, height: img.height })
+      img.src = imageToEdit
+    }
+  }, [imageToEdit])
 
   function getCinematicFilter(intensity: number): string {
     const t = intensity / 100
@@ -1020,18 +1029,81 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                 </motion.button>
               </div>
 
-              <div className="relative" style={{ height: 380, background: '#f5f5f5' }}>
-                <Cropper
-                  image={imageToEdit}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={4 / 3}
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={(_: unknown, pixels) => setCroppedAreaPixels(pixels)}
-                  style={{ containerStyle: { borderRadius: 0 } }}
-                  imgStyle={{ filter: getCinematicFilter(cinematicIntensity) }}
-                />
+              <div className="flex" style={{ height: 380, background: '#f5f5f5' }}>
+                <div className="flex-1 relative">
+                  <Cropper
+                    image={imageToEdit}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={4 / 3}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={(_: unknown, pixels) => setCroppedAreaPixels(pixels)}
+                    style={{ containerStyle: { borderRadius: 0 } }}
+                    imgStyle={{ filter: getCinematicFilter(cinematicIntensity) }}
+                  />
+                </div>
+
+                {/* Live previews */}
+                <div className="flex-shrink-0 w-[200px] p-3 flex flex-col gap-4 overflow-y-auto">
+                  {/* Card preview */}
+                  <div>
+                    <span className="text-[9px] font-bold block mb-1.5" style={{ color: 'rgba(0,0,0,0.3)' }}>VISTA EN TARJETAS</span>
+                    <div className="rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                      <div style={{ width: 176, height: 132 }}>
+                        <div className="w-full h-full overflow-hidden relative">
+                          {croppedAreaPixels && naturalSize.width > 0 ? (
+                            <img
+                              src={imageToEdit}
+                              alt=""
+                              className="absolute"
+                              style={{
+                                width: naturalSize.width * (176 / croppedAreaPixels.width),
+                                height: naturalSize.height * (176 / croppedAreaPixels.width),
+                                transform: `translate(${-croppedAreaPixels.x * (176 / croppedAreaPixels.width)}px, ${-croppedAreaPixels.y * (176 / croppedAreaPixels.width)}px)`,
+                                filter: getCinematicFilter(cinematicIntensity),
+                                maxWidth: 'none',
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-[9px]" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Phone screen preview */}
+                  <div>
+                    <span className="text-[9px] font-bold block mb-1.5" style={{ color: 'rgba(0,0,0,0.3)' }}>VISTA EN APP MÓVIL</span>
+                    <div className="mx-auto rounded-[18px] overflow-hidden" style={{ border: '2px solid rgba(0,0,0,0.12)', background: '#fff' }}>
+                      <div style={{ width: 120, height: 213 }}>
+                        <div className="w-full h-full overflow-hidden relative">
+                          {croppedAreaPixels && naturalSize.width > 0 ? (
+                            <img
+                              src={imageToEdit}
+                              alt=""
+                              className="absolute"
+                              style={{
+                                width: naturalSize.width * (120 / croppedAreaPixels.width),
+                                height: naturalSize.height * (120 / croppedAreaPixels.width),
+                                transform: `translate(${-croppedAreaPixels.x * (120 / croppedAreaPixels.width)}px, ${-croppedAreaPixels.y * (120 / croppedAreaPixels.width)}px)`,
+                                filter: getCinematicFilter(cinematicIntensity),
+                                maxWidth: 'none',
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-[9px]" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Cinematic intensity */}
