@@ -1611,7 +1611,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                   style={{ overflow: 'visible', minHeight: 420 }}
                 >
                   {/* Background layer: image + sparkles */}
-                  <div className="absolute left-0 right-0 z-0 flex flex-col items-center" style={{ top: '-60px', overflow: 'visible' }}>
+                  <div className="absolute left-0 right-0 z-0 flex flex-col items-center" style={{ top: '-80px', overflow: 'visible' }}>
                     {[...Array(24)].map((_, i) => {
                       const angle = (i / 24) * 360
                       const rad = (angle * Math.PI) / 180
