@@ -10,6 +10,7 @@ import machineImg from '../../assets/illustrations/objects/machine.png'
 import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
 import modalExercisesImg from '../../assets/illustrations/characters/modal_exercises.png'
 import coachCongratsImg from '../../assets/illustrations/characters/coach_congratulations.png'
+import coachExerciseSuccessImg from '../../assets/illustrations/characters/coach_exercise_success.png'
 import machineTreadmillImg from '../../assets/illustrations/objects/machine-treadmill.png'
 import chestIcon from '../../assets/icons/muscles/chest.webp'
 import backIcon from '../../assets/icons/muscles/back.webp'
@@ -44,6 +45,12 @@ interface Exercise {
   id: number
   name: string
   zone: string
+  description: string
+  status: Status
+  muscleGroups: string[]
+  recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
+  imageUrl: string
+  videoUrl: string
 }
 
 interface Machine {
@@ -65,19 +72,24 @@ const statusConfig: Record<Status, { label: string; color: string; bg: string; b
   inactive: { label: 'Inactiva', color: RED, bg: 'rgba(244,56,67,0.08)', border: 'rgba(244,56,67,0.15)' },
 }
 
+const defaultExFields = {
+  description: '', status: 'active' as Status,
+  muscleGroups: [] as string[], recommendedLevel: 'principiante' as 'principiante' | 'intermedio' | 'avanzado',
+  imageUrl: '', videoUrl: '',
+}
 const initialExercises: Exercise[] = [
-  { id: 1, name: 'Caminata', zone: 'Cardio' },
-  { id: 2, name: 'Trote', zone: 'Cardio' },
-  { id: 3, name: 'Intervalos', zone: 'Cardio' },
-  { id: 4, name: 'Ciclismo', zone: 'Cardio' },
-  { id: 5, name: 'Caminata Elíptica', zone: 'Cardio' },
-  { id: 6, name: 'Sentadilla', zone: 'Pesas Libres' },
-  { id: 7, name: 'Press Hombros', zone: 'Pesas Libres' },
-  { id: 8, name: 'Press Plano', zone: 'Pesas Libres' },
-  { id: 9, name: 'Press Inclinado', zone: 'Pesas Libres' },
-  { id: 10, name: 'Press Declinado', zone: 'Pesas Libres' },
-  { id: 11, name: 'Cruce de Cables', zone: 'Máquinas' },
-  { id: 12, name: 'Polea Alta', zone: 'Máquinas' },
+  { id: 1, name: 'Caminata', zone: 'Cardio', ...defaultExFields },
+  { id: 2, name: 'Trote', zone: 'Cardio', ...defaultExFields },
+  { id: 3, name: 'Intervalos', zone: 'Cardio', ...defaultExFields },
+  { id: 4, name: 'Ciclismo', zone: 'Cardio', ...defaultExFields },
+  { id: 5, name: 'Caminata Elíptica', zone: 'Cardio', ...defaultExFields },
+  { id: 6, name: 'Sentadilla', zone: 'Pesas Libres', ...defaultExFields },
+  { id: 7, name: 'Press Hombros', zone: 'Pesas Libres', ...defaultExFields },
+  { id: 8, name: 'Press Plano', zone: 'Pesas Libres', ...defaultExFields },
+  { id: 9, name: 'Press Inclinado', zone: 'Pesas Libres', ...defaultExFields },
+  { id: 10, name: 'Press Declinado', zone: 'Pesas Libres', ...defaultExFields },
+  { id: 11, name: 'Cruce de Cables', zone: 'Máquinas', ...defaultExFields },
+  { id: 12, name: 'Polea Alta', zone: 'Máquinas', ...defaultExFields },
 ]
 
 const initialMachines: Machine[] = [
@@ -129,7 +141,13 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [showExerciseManager, setShowExerciseManager] = useState(false)
   const [machineSuccess, setMachineSuccess] = useState(false)
-  const [exForm, setExForm] = useState({ name: '', zone: '' })
+  const [exStep, setExStep] = useState(0)
+  const [exSuccess, setExSuccess] = useState(false)
+  const [exForm, setExForm] = useState({
+    name: '', zone: '', description: '', status: 'active' as Status,
+    muscleGroups: [] as string[], recommendedLevel: 'principiante' as 'principiante' | 'intermedio' | 'avanzado',
+    imageUrl: '', videoUrl: '',
+  })
   const [exEditing, setExEditing] = useState<Exercise | null>(null)
   const [exFilterZone, setExFilterZone] = useState('')
   const [activeMuscleFilter, setActiveMuscleFilter] = useState<string | null>(null)
@@ -333,25 +351,46 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
 
   function openAddExercise() {
     setExEditing(null)
-    setExForm({ name: '', zone: zones[0] || '' })
+    setExStep(0)
+    setExSuccess(false)
+    setExForm({
+      name: '', zone: '', description: '', status: 'active',
+      muscleGroups: [], recommendedLevel: 'principiante',
+      imageUrl: '', videoUrl: '',
+    })
   }
 
   function openEditExercise(e: Exercise) {
     setExEditing(e)
-    setExForm({ name: e.name, zone: e.zone })
+    setExStep(0)
+    setExSuccess(false)
+    setExForm({
+      name: e.name, zone: e.zone, description: e.description, status: e.status,
+      muscleGroups: [...e.muscleGroups], recommendedLevel: e.recommendedLevel,
+      imageUrl: e.imageUrl, videoUrl: e.videoUrl,
+    })
   }
 
   function saveExercise() {
-    if (!exForm.name.trim() || !exForm.zone) return
+    if (!exForm.name.trim()) return
+    const zoneFromGroups = exForm.muscleGroups.length > 0
+      ? (exForm.muscleGroups.includes('General') ? [...new Set(['Cardio', 'Pesas Libres'])] : exForm.muscleGroups.flatMap(g => muscleToZones[g] || []))
+      : []
+    const zone = zoneFromGroups.length > 0 ? zoneFromGroups[0] : (exForm.zone || 'Cardio')
+    const data = {
+      name: exForm.name.trim(), zone,
+      description: exForm.description, status: exForm.status,
+      muscleGroups: exForm.muscleGroups, recommendedLevel: exForm.recommendedLevel,
+      imageUrl: exForm.imageUrl, videoUrl: exForm.videoUrl,
+    }
     if (exEditing) {
       setGlobalExercises(prev => prev.map(e =>
-        e.id === exEditing.id ? { ...e, name: exForm.name.trim(), zone: exForm.zone } : e
+        e.id === exEditing.id ? { ...e, ...data } : e
       ))
     } else {
-      setGlobalExercises(prev => [...prev, { id: nextExerciseId, name: exForm.name.trim(), zone: exForm.zone }])
+      setGlobalExercises(prev => [...prev, { id: nextExerciseId, ...data }])
     }
-    setExForm({ name: '', zone: zones[0] || '' })
-    setExEditing(null)
+    setExSuccess(true)
   }
 
   function deleteExercise(id: number) {
@@ -1529,7 +1568,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
         )}
       </AnimatePresence>
 
-      {/* ── Exercise Manager Modal ── */}
+      {/* ── Exercise Manager Modal (3-step) ── */}
       <AnimatePresence>
         {showExerciseManager && (
           <motion.div
@@ -1537,175 +1576,483 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
             onClick={() => setShowExerciseManager(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.97, y: 8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ ease: [0.16, 1, 0.3, 1] }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className="w-full max-w-2xl rounded-2xl p-6"
-              style={{
-                 background: '#FFFFFF',
-                 border: '1px solid rgba(0,0,0,0.06)',
-                 boxShadow: '0 40px 80px rgba(0,0,0,0.12)',
-               }}
-             >
-               <div className="flex items-center justify-between mb-5">
-                 <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Gestión de Ejercicios</h2>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowExerciseManager(false)}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ color: 'rgba(0,0,0,0.3)' }}
+              className="rounded-3xl w-full flex flex-col mx-4"
+              style={exSuccess ? {
+                background: '#FFFFFF',
+                border: '1px solid rgba(0,0,0,0.04)',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
+                maxWidth: 672,
+                overflow: 'visible',
+              } : {
+                background: '#FFFFFF',
+                border: '1px solid rgba(0,0,0,0.04)',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
+                maxHeight: '90vh',
+                maxWidth: 576,
+                overflow: showMuscleDropdown ? 'visible' : 'hidden',
+                clipPath: showMuscleDropdown ? 'inset(0 round 24px)' : 'none',
+              }}
+            >
+              {exSuccess ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col items-center px-6 pb-12 relative"
+                  style={{ overflow: 'visible', minHeight: 420 }}
                 >
-                  <X size={16} />
-                </motion.button>
-              </div>
-
-              <p className="text-xs mb-4" style={{ color: 'rgba(0,0,0,0.35)' }}>
-                Estos ejercicios estarán disponibles para asignar a cualquier máquina. La IA los usará para crear rutinas personalizadas sin inventar ejercicios.
-              </p>
-
-              {/* Add/Edit Form */}
-              <div className="flex items-end gap-3 mb-5 p-3 rounded-xl" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)' }}>
-                <div className="flex-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'rgba(0,0,0,0.3)' }}>Nombre</label>
-                  <input
-                    value={exForm.name}
-                    onChange={e => setExForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="Ej: Flexiones"
-                    className="w-full px-3 py-2 rounded-xl text-xs font-medium outline-none"
-                    style={{
-                      background: 'rgba(255,255,255,0.5)',
-                      border: '1px solid rgba(0,0,0,0.06)',
-                      color: '#1A1A1E',
-                    }}
-                    onKeyDown={e => { if (e.key === 'Enter') saveExercise() }}
-                  />
-                </div>
-                <div className="w-40">
-                  <label className="text-[10px] font-bold uppercase tracking-wider mb-1 block" style={{ color: 'rgba(0,0,0,0.3)' }}>Zona</label>
-                  <div className="flex gap-1">
-                    {zones.map(z => (
-                      <motion.button
-                        key={z}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => setExForm(f => ({ ...f, zone: z }))}
-                        className="flex-1 py-2 rounded-lg text-[10px] font-bold"
-                        style={{
-                          background: exForm.zone === z ? `${BLUE}15` : 'rgba(255,255,255,0.5)',
-                          color: exForm.zone === z ? BLUE : 'rgba(0,0,0,0.3)',
-                          border: `1px solid ${exForm.zone === z ? `${BLUE}30` : 'rgba(0,0,0,0.06)'}`,
-                        }}
-                      >
-                        {z}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => { if (exForm.name.trim() && exForm.zone) saveExercise() }}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white"
-                  style={{
-                    background: BLUE_GRAD,
-                    boxShadow: '0 2px 8px rgba(18,112,183,0.2)',
-                    opacity: exForm.name.trim() && exForm.zone ? 1 : 0.5,
-                  }}
-                  disabled={!exForm.name.trim() || !exForm.zone}
-                >
-                  {exEditing ? 'Actualizar' : 'Agregar'}
-                </motion.button>
-                {exEditing && (
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => { setExEditing(null); setExForm({ name: '', zone: zones[0] || '' }) }}
-                    className="px-3 py-2 rounded-xl text-xs font-bold"
-                    style={{ color: 'rgba(0,0,0,0.3)' }}
-                  >
-                    Cancelar
-                  </motion.button>
-                )}
-              </div>
-
-              {/* Zone Filter */}
-              <div className="flex gap-1.5 mb-4">
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setExFilterZone('')}
-                  className="px-3 py-1 rounded-lg text-[10px] font-bold"
-                  style={{
-                    background: !exFilterZone ? `${BLUE}15` : 'rgba(0,0,0,0.03)',
-                    color: !exFilterZone ? BLUE : 'rgba(0,0,0,0.3)',
-                  }}
-                >
-                  Todas
-                </motion.button>
-                {zones.map(z => (
-                  <motion.button
-                    key={z}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setExFilterZone(exFilterZone === z ? '' : z)}
-                    className="px-3 py-1 rounded-lg text-[10px] font-bold"
-                    style={{
-                      background: exFilterZone === z ? `${BLUE}15` : 'rgba(0,0,0,0.03)',
-                      color: exFilterZone === z ? BLUE : 'rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    {z}
-                  </motion.button>
-                ))}
-              </div>
-
-              {/* Exercises List */}
-              <div className="max-h-64 overflow-y-auto space-y-1">
-                {filteredExercises.length === 0 ? (
-                  <p className="text-xs py-6 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                    No hay ejercicios en esta zona. Agrega el primero arriba.
-                  </p>
-                ) : (
-                  filteredExercises.map(ex => (
-                    <div
-                      key={ex.id}
-                      className="flex items-center gap-3 px-3 py-2 rounded-xl group"
-                      style={{ border: '1px solid rgba(0,0,0,0.04)' }}
-                    >
-                      <Dumbbell size={13} style={{ color: 'rgba(0,0,0,0.2)' }} />
-                      <span className="flex-1 text-xs font-medium" style={{ color: '#1A1A1E' }}>{ex.name}</span>
-                      <span
-                        className="px-2 py-0.5 rounded-md text-[9px] font-bold"
-                        style={{ background: `${BLUE}08`, color: BLUE }}
-                      >
-                        {ex.zone}
-                      </span>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => openEditExercise(ex)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg flex items-center justify-center"
-                        style={{ color: 'rgba(0,0,0,0.25)' }}
-                      >
-                        <Pencil size={12} />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.1, color: RED }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => deleteExercise(ex.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-lg flex items-center justify-center"
-                        style={{ color: 'rgba(0,0,0,0.2)' }}
-                      >
-                        <X size={12} />
-                      </motion.button>
+                  {/* Background layer: image + sparkles */}
+                  <div className="absolute left-0 right-0 z-0 flex flex-col items-center" style={{ top: '-60px', overflow: 'visible' }}>
+                    {[...Array(24)].map((_, i) => {
+                      const angle = (i / 24) * 360
+                      const rad = (angle * Math.PI) / 180
+                      return (
+                        <motion.span
+                          key={i}
+                          className="absolute pointer-events-none text-lg select-none"
+                          style={{ color: '#4ADE80' }}
+                          animate={{
+                            x: [0, Math.cos(rad) * (110 + (i % 6) * 20)],
+                            y: [0, Math.sin(rad) * (110 + (i % 6) * 20)],
+                            opacity: [0, 1, 0],
+                            scale: [0, 1.4, 0],
+                          }}
+                          transition={{
+                            duration: 2.5 + (i % 4) * 0.3,
+                            repeat: Infinity,
+                            delay: i * 0.07,
+                            ease: 'easeOut',
+                          }}
+                        >
+                          ✦
+                        </motion.span>
+                      )
+                    })}
+                    <div className="relative flex flex-col items-center justify-center">
+                      <motion.img
+                        src={coachExerciseSuccessImg}
+                        alt="felicitaciones"
+                        className="w-80 h-auto object-contain"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+                      />
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-48 pointer-events-none" style={{
+                        background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 15%, rgba(255,255,255,0) 55%)',
+                      }} />
                     </div>
-                  ))
-                )}
-              </div>
+                  </div>
+                  {/* Foreground layer: text + button */}
+                  <div className="relative z-10 flex flex-col items-center mt-auto pt-48">
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, duration: 0.4 }}
+                      className="text-3xl font-bold text-center"
+                      style={{ color: '#1A1A1E' }}
+                    >
+                      ¡{exEditing ? 'Ejercicio actualizado' : 'Registro Exitoso'}!
+                    </motion.p>
+                    <motion.p
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4, duration: 0.4 }}
+                      className="text-sm text-center mt-1.5 mb-8"
+                      style={{ color: 'rgba(0,0,0,0.7)' }}
+                    >
+                      <span style={{ background: 'linear-gradient(135deg, #30D158, #0A84FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 700 }}>{exForm.name}</span> ahora está disponible<br />
+                      <span className="text-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>para asignar a las rutinas y máquinas del gimnasio.</span>
+                    </motion.p>
+                    <motion.button
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0, transition: { delay: 0.5, duration: 0.4 } }}
+                      whileHover={{ scale: 1.06, boxShadow: '0 8px 30px rgba(48,209,88,0.35), 0 0 60px rgba(48,209,88,0.1)' }}
+                      whileTap={{ scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      onClick={() => { setShowExerciseManager(false); setExSuccess(false) }}
+                      className="px-8 py-2.5 rounded-2xl text-xs font-bold text-white cursor-pointer"
+                      style={{ background: GREEN_GRAD, boxShadow: '0 4px 20px rgba(48,209,88,0.25)' }}
+                    >
+                      Cerrar
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ) : (
+                <>
+                  {/* ── Header ── */}
+                  <div className="flex items-center justify-between px-6 pt-6 pb-2">
+                    <motion.button
+                      whileHover={{ scale: 1.1, color: '#1A1A1E' }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => {
+                        if (exStep > 0) { setExStep(s => s - 1) }
+                        else { setShowExerciseManager(false) }
+                      }}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
+                      style={{ color: 'rgba(0,0,0,0.25)' }}
+                    >
+                      <X size={16} />
+                    </motion.button>
+                    <div className="flex items-center gap-1.5">
+                      {[1, 2, 3].map(s => (
+                        <motion.div
+                          key={s}
+                          animate={{
+                            width: s === exStep + 1 ? 16 : 6,
+                            background: s === exStep + 1 ? BLUE_GRAD : 'rgba(0,0,0,0.12)',
+                          }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+                          className="rounded-full"
+                          style={{ height: 6 }}
+                        />
+                      ))}
+                    </div>
+                    <div className="w-8" />
+                  </div>
+
+                  <span className="text-lg font-bold tracking-wide text-center block px-6" style={{ color: '#1A1A1E', marginBottom: 10 }}>
+                    {exStep === 0 ? 'Datos básicos' : exStep === 1 ? 'Categoría y dificultad' : 'Contenido visual'}
+                  </span>
+
+                  {/* ── Body ── */}
+                  <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
+                    {/* Step 0 — Name, Description, Status */}
+                    {exStep === 0 && (
+                      <div className="space-y-4">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Nombre <span style={{ color: RED }}>*</span></label>
+                          <input
+                            value={exForm.name}
+                            onChange={e => setExForm(f => ({ ...f, name: e.target.value }))}
+                            placeholder="Ej: Press de Banca"
+                            className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
+                            style={{
+                              background: meshInputBg,
+                              color: '#1A1A1E',
+                              border: '1px solid transparent',
+                            }}
+                            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
+                            onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Descripción</label>
+                          <textarea
+                            value={exForm.description}
+                            onChange={e => setExForm(f => ({ ...f, description: e.target.value }))}
+                            placeholder="Describe brevemente el ejercicio..."
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-xl text-xs font-medium outline-none resize-none transition-all duration-200"
+                            style={{ background: meshInputBg, color: '#1A1A1E', border: '1px solid transparent' }}
+                            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
+                            onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Estado</label>
+                          <div className="flex gap-2">
+                            {(['active', 'maintenance', 'inactive'] as const).map(s => {
+                              const sel = exForm.status === s
+                              const c = statusConfig[s].color
+                              const grad = `linear-gradient(135deg, ${c}, ${c}cc)`
+                              return (
+                                <motion.button
+                                  key={s}
+                                  whileHover={{ scale: 1.06 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setExForm(f => ({ ...f, status: s }))}
+                                  onMouseEnter={e => { if (!sel) { e.currentTarget.style.background = `${c}18`; e.currentTarget.style.color = c } }}
+                                  onMouseLeave={e => { if (!sel) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.25)' } }}
+                                  className="flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200"
+                                  style={{
+                                    background: sel ? grad : 'rgba(0,0,0,0.03)',
+                                    color: sel ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
+                                    border: '1px solid transparent',
+                                    boxShadow: sel ? `0 4px 16px ${c}40` : 'none',
+                                  }}
+                                >
+                                  {statusConfig[s].label}
+                                </motion.button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 1 — Muscle Groups + Level */}
+                    {exStep === 1 && (
+                      <div className="space-y-5">
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Grupos musculares</label>
+                          <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más grupos musculares que trabaja este ejercicio.</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {[
+                              'Pecho', 'Espalda', 'Hombros', 'Brazos',
+                              'Piernas', 'Abdomen/Core', 'Cardio', 'General',
+                            ].map(label => {
+                              const selected = exForm.muscleGroups.includes(label)
+                              const isGeneral = label === 'General'
+                              const GOLD_GRAD = 'linear-gradient(135deg, #F1C827, #FFE066)'
+                              const defaultBg = 'rgba(0,0,0,0.03)'
+                              const generalSelected = exForm.muscleGroups.includes('General')
+                              const disabled = generalSelected && !isGeneral
+                              const hoverBg = isGeneral ? 'rgba(241,200,39,0.12)' : `${BLUE}12`
+                              const selectedBg = isGeneral ? GOLD_GRAD : BLUE_GRAD
+                              const textColor = selected ? '#FFFFFF' : disabled ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.35)'
+                              const shadow = isGeneral
+                                ? '0 4px 20px rgba(241,200,39,0.25)'
+                                : `0 4px 20px ${BLUE}40`
+                              return (
+                                <motion.button
+                                  key={label}
+                                  whileHover={!disabled ? { scale: 1.06 } : {}}
+                                  whileTap={!disabled ? { scale: 0.95 } : {}}
+                                  onClick={() => {
+                                    if (disabled) return
+                                    if (isGeneral) {
+                                      setExForm(f => ({
+                                        ...f,
+                                        muscleGroups: selected ? [] : ['General']
+                                      }))
+                                    } else if (generalSelected) {
+                                      setExForm(f => ({
+                                        ...f,
+                                        muscleGroups: f.muscleGroups.includes(label)
+                                          ? f.muscleGroups.filter(g => g !== 'General')
+                                          : [...f.muscleGroups.filter(g => g !== 'General'), label]
+                                      }))
+                                    } else {
+                                      setExForm(f => ({
+                                        ...f,
+                                        muscleGroups: f.muscleGroups.includes(label)
+                                          ? f.muscleGroups.filter(g => g !== label)
+                                          : [...f.muscleGroups, label]
+                                      }))
+                                    }
+                                  }}
+                                  onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = isGeneral ? '#B8860B' : BLUE } }}
+                                  onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                  style={{
+                                    background: selected ? selectedBg : defaultBg,
+                                    color: textColor,
+                                    border: '1px solid transparent',
+                                    boxShadow: selected ? shadow : 'none',
+                                    opacity: disabled ? 0.4 : 1,
+                                    filter: disabled ? 'blur(0.6px)' : 'none',
+                                    pointerEvents: disabled ? 'none' : 'auto',
+                                    cursor: disabled ? 'not-allowed' : 'pointer',
+                                  }}
+                                >
+                                  <motion.img
+                                    src={muscleIcons[label]}
+                                    alt=""
+                                    className="mb-0.5"
+                                    animate={{
+                                      width: selected ? 48 : 24,
+                                      height: selected ? 48 : 24,
+                                      marginTop: selected ? -24 : 0,
+                                      filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : disabled ? 'grayscale(0.6) blur(0px)' : 'blur(0px)',
+                                      opacity: disabled ? 0.3 : 1,
+                                    }}
+                                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                  />
+                                  <span>{label}</span>
+                                </motion.button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Nivel Recomendado</label>
+                          <div className="flex gap-2">
+                            {(['principiante', 'intermedio', 'avanzado'] as const).map(level => {
+                              const lvlHex = level === 'principiante' ? '#1270B7' : level === 'intermedio' ? '#F1C827' : '#F43843'
+                              const selected = exForm.recommendedLevel === level
+                              const selectedBg = `linear-gradient(135deg, ${lvlHex}, ${lvlHex}cc)`
+                              const defaultBg = 'rgba(0,0,0,0.03)'
+                              const hoverBg = `${lvlHex}1a`
+                              return (
+                                <motion.button
+                                  key={level}
+                                  whileHover={{ scale: 1.06 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setExForm(f => ({ ...f, recommendedLevel: level }))}
+                                  onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = lvlHex } }}
+                                  onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.25)' } }}
+                                  className="flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200"
+                                  style={{
+                                    background: selected ? selectedBg : defaultBg,
+                                    color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
+                                    border: '1px solid transparent',
+                                    boxShadow: selected ? `0 4px 16px ${lvlHex}4d` : 'none',
+                                  }}
+                                >
+                                  {level}
+                                </motion.button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 2 — Visual Content */}
+                    {exStep === 2 && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Imagen <span style={{ color: 'rgba(0,0,0,0.2)' }}>(Opcional)</span></label>
+                          <div
+                            className="w-full h-32 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative transition-all duration-200"
+                            style={{
+                              background: exForm.imageUrl ? 'transparent' : meshInputBg,
+                              border: `1px solid ${exForm.imageUrl ? `${BLUE}30` : 'transparent'}`,
+                            }}
+                            onClick={() => {
+                              const input = document.createElement('input')
+                              input.type = 'file'
+                              input.accept = 'image/*'
+                              input.onchange = e => {
+                                const file = (e.target as HTMLInputElement).files?.[0]
+                                if (file) {
+                                  const reader = new FileReader()
+                                  reader.onload = ev => setExForm(f => ({ ...f, imageUrl: ev.target?.result as string }))
+                                  reader.readAsDataURL(file)
+                                }
+                              }
+                              input.click()
+                            }}
+                            onMouseEnter={e => { if (!exForm.imageUrl) { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { if (!exForm.imageUrl) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
+                          >
+                            {exForm.imageUrl ? (
+                              <>
+                                <img src={exForm.imageUrl} alt="" className="w-full h-full object-cover rounded-xl" />
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={e => { e.stopPropagation(); setExForm(f => ({ ...f, imageUrl: '' })) }}
+                                  className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
+                                  style={{ background: 'rgba(0,0,0,0.5)', color: '#FFF' }}
+                                >
+                                  <X size={14} />
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={e => { e.stopPropagation(); const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = e => { const file = (e.target as HTMLInputElement).files?.[0]; if (file) { const reader = new FileReader(); reader.onload = ev => setExForm(f => ({ ...f, imageUrl: ev.target?.result as string })); reader.readAsDataURL(file) } }; input.click() }}
+                                  className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg text-[10px] font-bold"
+                                  style={{ background: 'rgba(0,0,0,0.5)', color: '#FFF' }}
+                                >
+                                  Cambiar
+                                </motion.button>
+                              </>
+                            ) : (
+                              <div className="flex flex-col items-center gap-1.5">
+                                <Upload size={18} style={{ color: 'rgba(0,0,0,0.2)' }} />
+                                <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir imagen</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Video <span style={{ color: 'rgba(0,0,0,0.2)' }}>(Opcional)</span></label>
+                          <div
+                            className="w-full h-20 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200"
+                            style={{
+                              background: exForm.videoUrl ? 'transparent' : meshInputBg,
+                              border: `1px solid ${exForm.videoUrl ? `${BLUE}30` : 'transparent'}`,
+                            }}
+                            onClick={() => {
+                              const input = document.createElement('input')
+                              input.type = 'file'
+                              input.accept = 'video/*'
+                              input.onchange = e => {
+                                const file = (e.target as HTMLInputElement).files?.[0]
+                                if (file) {
+                                  const url = URL.createObjectURL(file)
+                                  setExForm(f => ({ ...f, videoUrl: url }))
+                                }
+                              }
+                              input.click()
+                            }}
+                            onMouseEnter={e => { if (!exForm.videoUrl) { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { if (!exForm.videoUrl) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
+                          >
+                            {exForm.videoUrl ? (
+                              <>
+                                <video src={exForm.videoUrl} className="w-full h-full object-cover rounded-xl" />
+                                <motion.button
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={e => { e.stopPropagation(); setExForm(f => ({ ...f, videoUrl: '' })) }}
+                                  className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
+                                  style={{ background: 'rgba(0,0,0,0.5)', color: '#FFF' }}
+                                >
+                                  <X size={14} />
+                                </motion.button>
+                              </>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Upload size={16} style={{ color: 'rgba(0,0,0,0.2)' }} />
+                                <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir video</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ── Footer ── */}
+                  <div className="flex items-center justify-between px-6 pb-6 pt-2">
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => {
+                        if (exStep > 0) setExStep(s => s - 1)
+                        else setShowExerciseManager(false)
+                      }}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold"
+                      style={{ color: 'rgba(0,0,0,0.3)' }}
+                    >
+                      <ChevronLeft size={14} />
+                      {exStep === 0 ? 'Cancelar' : 'Anterior'}
+                    </motion.button>
+                    <motion.button
+                      whileHover={exStep < 2 || !exForm.name.trim() ? { scale: 1 } : { scale: 1.06, boxShadow: '0 8px 30px rgba(18,112,183,0.35), 0 0 60px rgba(18,112,183,0.1)' }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => {
+                        if (exStep < 2) { setExStep(s => s + 1) }
+                        else { saveExercise() }
+                      }}
+                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all duration-200"
+                      style={{
+                        background: exStep < 2 ? BLUE_GRAD : GREEN_GRAD,
+                        boxShadow: exStep < 2 ? '0 4px 20px rgba(18,112,183,0.3)' : '0 4px 20px rgba(48,209,88,0.3)',
+                        opacity: exStep === 0 && !exForm.name.trim() ? 0.5 : 1,
+                      }}
+                      disabled={exStep === 0 && !exForm.name.trim()}
+                    >
+                      {exStep < 2 ? 'Siguiente' : 'Guardar Ejercicio'}
+                    </motion.button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
