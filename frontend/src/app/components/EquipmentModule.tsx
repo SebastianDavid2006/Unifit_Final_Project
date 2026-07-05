@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import Cropper from 'react-easy-crop'
 import confetti from 'canvas-confetti'
@@ -133,6 +133,8 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   const [exEditing, setExEditing] = useState<Exercise | null>(null)
   const [exFilterZone, setExFilterZone] = useState('')
   const [activeMuscleFilter, setActiveMuscleFilter] = useState<string | null>(null)
+  const [showMuscleDropdown, setShowMuscleDropdown] = useState(false)
+  const muscleDropdownRef = useRef<HTMLButtonElement>(null)
 
   const [showImageEditor, setShowImageEditor] = useState(false)
   const [imageToEdit, setImageToEdit] = useState('')
@@ -681,18 +683,21 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className={`rounded-3xl w-full flex flex-col mx-4 ${machineSuccess ? 'overflow-visible' : 'overflow-hidden'}`}
+              className={`rounded-3xl w-full flex flex-col mx-4`}
               style={machineSuccess ? {
                 background: '#FFFFFF',
                 border: '1px solid rgba(0,0,0,0.04)',
                 boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
                 maxWidth: 672,
+                overflow: 'visible',
               } : {
                 background: '#FFFFFF',
                 border: '1px solid rgba(0,0,0,0.04)',
                 boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
                 maxHeight: '90vh',
                 maxWidth: 576,
+                overflow: showMuscleDropdown ? 'visible' : 'hidden',
+                clipPath: showMuscleDropdown ? 'inset(0 round 24px)' : 'none',
               }}
             >
               {machineSuccess ? (
@@ -752,7 +757,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.4 }}
-                    className="text-xl font-bold text-center z-10"
+                    className="text-3xl font-bold text-center z-10"
                     style={{ color: '#1A1A1E' }}
                   >
                     ¡Registro Exitoso!
@@ -761,19 +766,11 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4, duration: 0.4 }}
-                    className="text-sm text-center mt-1 z-10"
+                    className="text-sm text-center mt-1.5 mb-8 z-10"
                     style={{ color: 'rgba(0,0,0,0.7)' }}
                   >
-                    <span style={{ background: 'linear-gradient(135deg, #30D158, #0A84FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 700 }}>La máquina</span> se registró exitosamente.
-                  </motion.p>
-                  <motion.p
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, duration: 0.4 }}
-                    className="text-xs text-center mb-8 z-10"
-                    style={{ color: 'rgba(0,0,0,0.4)' }}
-                  >
-                    Ahora está disponible para ser utilizada en las rutinas del gimnasio.
+                    <span style={{ background: 'linear-gradient(135deg, #30D158, #0A84FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 700 }}>La máquina</span> se registró exitosamente.<br />
+                    <span className="text-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>Ahora está disponible para ser utilizada<br />en las rutinas del gimnasio.</span>
                   </motion.p>
                   <motion.button
                     initial={{ opacity: 0, y: 10 }}
@@ -905,6 +902,21 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                           />
                         </div>
                         <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Descripción</label>
+                          <textarea
+                            value={machineForm.description}
+                            onChange={e => setMachineForm(f => ({ ...f, description: e.target.value }))}
+                            placeholder="Describe brevemente la máquina..."
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-xl text-xs font-medium outline-none resize-none transition-all duration-200"
+                            style={{ background: meshInputBg, color: '#1A1A1E', border: '1px solid transparent' }}
+                            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
+                            onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
+                          />
+                        </div>
+                        <div>
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Estado</label>
                           <div className="flex gap-2">
                             {(['active', 'maintenance', 'inactive'] as const).map(s => {
@@ -939,21 +951,6 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                     {/* Step 2 — Description, Muscle Groups, Level, Observations */}
                     {machineStep === 1 && (
                       <div className="space-y-5">
-                        <div>
-                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Descripción</label>
-                          <textarea
-                            value={machineForm.description}
-                            onChange={e => setMachineForm(f => ({ ...f, description: e.target.value }))}
-                            placeholder="Describe brevemente la máquina..."
-                            rows={3}
-                            className="w-full px-3 py-2 rounded-xl text-xs font-medium outline-none resize-none transition-all duration-200"
-                            style={{ background: meshInputBg, color: '#1A1A1E', border: '1px solid transparent' }}
-                            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
-                            onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
-                          />
-                        </div>
                         <div>
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Grupos musculares</label>
                           <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más grupos musculares que trabaja esta máquina.</p>
@@ -1066,21 +1063,6 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                             })}
                           </div>
                         </div>
-                        <div>
-                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Observaciones <span style={{ color: 'rgba(0,0,0,0.2)' }}>(Opcional)</span></label>
-                          <textarea
-                            value={machineForm.observations}
-                            onChange={e => setMachineForm(f => ({ ...f, observations: e.target.value }))}
-                            placeholder="Notas adicionales sobre la máquina..."
-                            rows={2}
-                            className="w-full px-3 py-2 rounded-xl text-xs font-medium outline-none resize-none transition-all duration-200"
-                            style={{ background: meshInputBg, color: '#1A1A1E', border: '1px solid transparent' }}
-                            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
-                            onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
-                          />
-                        </div>
                       </div>
                     )}
 
@@ -1091,34 +1073,120 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                           <label className="text-[11px] font-bold block mb-3" style={{ color: 'rgba(0,0,0,0.6)' }}>Ejercicios</label>
                           {/* Muscle group dropdown */}
                           <div className="relative mb-3">
-                            <select
-                              value={activeMuscleFilter || ''}
-                              onChange={e => setActiveMuscleFilter(e.target.value || null)}
-                              className="w-full px-3 py-2.5 rounded-xl text-xs font-medium outline-none appearance-none cursor-pointer transition-all duration-200"
+                            <motion.button
+                              ref={muscleDropdownRef}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => setShowMuscleDropdown(f => !f)}
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium outline-none cursor-pointer transition-all duration-200"
                               style={{
-                                background: meshInputBg,
-                                color: activeMuscleFilter ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
+                                background: activeMuscleFilter ? meshInputBg : meshInputBg,
+                                color: activeMuscleFilter && activeMuscleFilter !== 'Todos' ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
                                 border: '1px solid transparent',
                               }}
-                              onMouseEnter={e => { if (e.target !== document.activeElement) { (e.target as HTMLElement).style.background = meshInputHover; (e.target as HTMLElement).style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                              onMouseLeave={e => { if (e.target !== document.activeElement) { (e.target as HTMLElement).style.background = meshInputBg; (e.target as HTMLElement).style.borderColor = 'transparent' } }}
-                              onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-                              onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' }}
+                              onMouseLeave={e => { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' }}
                             >
-                              <option value="">Selecciona un grupo muscular</option>
-                              {[
-                                'Pecho', 'Espalda', 'Hombros', 'Brazos',
-                                'Piernas', 'Abdomen/Core', 'Cardio', 'General',
-                              ].filter(g => machineForm.muscleGroups.includes(g)).map(label => (
-                                <option key={label} value={label}>{label}</option>
-                              ))}
-                              {machineForm.muscleGroups.length > 0 && (
-                                <option value="Todos">Mostrar todos</option>
+                              {activeMuscleFilter && activeMuscleFilter !== 'Todos' ? (
+                                <img src={muscleIcons[activeMuscleFilter]} alt="" className="w-5 h-5" />
+                              ) : activeMuscleFilter === 'Todos' ? (
+                                <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: `${BLUE}15` }}>
+                                  <List size={12} style={{ color: BLUE }} />
+                                </div>
+                              ) : null}
+                              {activeMuscleFilter
+                                ? activeMuscleFilter === 'Todos' ? 'Mostrar todos' : activeMuscleFilter
+                                : 'Selecciona un grupo muscular'}
+                              <div className="flex-1" />
+                              <motion.div
+                                animate={{ rotate: showMuscleDropdown ? 180 : 0 }}
+                                transition={{ duration: 0.2 }}
+                                style={{ color: 'rgba(0,0,0,0.2)' }}
+                              >
+                                <ChevronDown size={14} />
+                              </motion.div>
+                            </motion.button>
+                            <AnimatePresence initial={false}>
+                              {showMuscleDropdown && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: -4 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: -4 }}
+                                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                                  className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl max-h-48 overflow-y-auto"
+                                  style={{
+                                    background: '#FFFFFF',
+                                    border: '1px solid rgba(0,0,0,0.06)',
+                                    boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)',
+                                  }}
+                                >
+                                  {[
+                                    'Pecho', 'Espalda', 'Hombros', 'Brazos',
+                                    'Piernas', 'Abdomen/Core', 'Cardio', 'General',
+                                  ].filter(g => machineForm.muscleGroups.includes(g)).map(label => {
+                                    const isActive = activeMuscleFilter === label
+                                    return (
+                                      <motion.button
+                                        key={label}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.97 }}
+                                        onClick={() => { setActiveMuscleFilter(label); setShowMuscleDropdown(false) }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-3 text-xs font-medium transition-colors relative"
+                                        style={{
+                                          color: isActive ? '#FFFFFF' : 'rgba(0,0,0,0.6)',
+                                          background: isActive ? BLUE_GRAD : 'transparent',
+                                          borderBottom: '1px solid rgba(0,0,0,0.03)',
+                                        }}
+                                        onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = BLUE } }}
+                                        onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(0,0,0,0.6)' } }}
+                                      >
+                                        <img src={muscleIcons[label]} alt="" className="w-5 h-5" style={{ filter: isActive ? 'brightness(10)' : 'none' }} />
+                                        <span className={isActive ? 'font-bold' : ''}>{label}</span>
+                                        {isActive && (
+                                          <motion.div
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            className="ml-auto"
+                                          >
+                                            <Check size={12} className="text-white" />
+                                          </motion.div>
+                                        )}
+                                      </motion.button>
+                                    )
+                                  })}
+                                  {machineForm.muscleGroups.length > 0 && (
+                                    <>
+                                      <div className="mx-3" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }} />
+                                      <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.97 }}
+                                        onClick={() => { setActiveMuscleFilter('Todos'); setShowMuscleDropdown(false) }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-3 text-xs font-medium transition-colors"
+                                        style={{
+                                          color: activeMuscleFilter === 'Todos' ? '#FFFFFF' : 'rgba(0,0,0,0.6)',
+                                          background: activeMuscleFilter === 'Todos' ? BLUE_GRAD : 'transparent',
+                                        }}
+                                        onMouseEnter={e => { if (activeMuscleFilter !== 'Todos') { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = BLUE } }}
+                                        onMouseLeave={e => { if (activeMuscleFilter !== 'Todos') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(0,0,0,0.6)' } }}
+                                      >
+                                        <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: activeMuscleFilter === 'Todos' ? 'rgba(255,255,255,0.2)' : `${BLUE}15` }}>
+                                          <List size={12} style={{ color: activeMuscleFilter === 'Todos' ? '#FFFFFF' : BLUE }} />
+                                        </div>
+                                        Mostrar todos
+                                        {activeMuscleFilter === 'Todos' && (
+                                          <motion.div
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            className="ml-auto"
+                                          >
+                                            <Check size={12} className="text-white" />
+                                          </motion.div>
+                                        )}
+                                      </motion.button>
+                                    </>
+                                  )}
+                                </motion.div>
                               )}
-                            </select>
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                              <ChevronDown size={14} />
-                            </div>
+                            </AnimatePresence>
                           </div>
                           {/* Exercises for selected muscle group */}
                           {activeMuscleFilter ? (
@@ -1134,22 +1202,35 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                     return (
                                       <motion.button
                                         key={ex.id}
-                                        whileTap={{ scale: 0.98 }}
+                                        layout
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.97 }}
                                         onClick={() => toggleExerciseSelection(ex.id)}
-                                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200"
                                         style={{
-                                          background: selected ? `${BLUE}10` : 'transparent',
+                                          background: selected ? `${BLUE}08` : 'transparent',
                                           color: selected ? BLUE : 'rgba(0,0,0,0.5)',
+                                          border: `1px solid ${selected ? `${BLUE}25` : 'transparent'}`,
                                         }}
+                                        onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = BLUE } }}
+                                        onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(0,0,0,0.5)' } }}
                                       >
                                         <div
-                                          className="w-4 h-4 rounded-md flex items-center justify-center"
+                                          className="w-5 h-5 rounded-lg flex items-center justify-center transition-all duration-200"
                                           style={{
-                                            background: selected ? BLUE : 'rgba(0,0,0,0.06)',
-                                            border: `1px solid ${selected ? BLUE : 'rgba(0,0,0,0.1)'}`,
+                                            background: selected ? BLUE_GRAD : 'rgba(0,0,0,0.05)',
+                                            boxShadow: selected ? `0 2px 8px ${BLUE}50` : 'none',
                                           }}
                                         >
-                                          {selected && <Check size={10} className="text-white" />}
+                                          {selected && (
+                                            <motion.div
+                                              initial={{ scale: 0 }}
+                                              animate={{ scale: 1 }}
+                                              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                            >
+                                              <Check size={11} className="text-white" />
+                                            </motion.div>
+                                          )}
                                         </div>
                                         {ex.name}
                                       </motion.button>
@@ -1171,38 +1252,46 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                             Ejercicios Seleccionados ({machineForm.selectedIds.length})
                           </label>
                           <div
-                            className="min-h-[70px] rounded-xl p-3"
-                            style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}
+                            className="min-h-[70px] rounded-xl p-3 transition-all duration-200"
+                            style={{
+                              background: machineForm.selectedIds.length > 0 ? `${BLUE}06` : 'rgba(0,0,0,0.02)',
+                              border: `1px solid ${machineForm.selectedIds.length > 0 ? `${BLUE}20` : 'rgba(0,0,0,0.06)'}`,
+                            }}
                           >
                             {machineForm.selectedIds.length === 0 ? (
                               <p className="text-xs py-1 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>
                                 Aún no has seleccionado ejercicios
                               </p>
                             ) : (
-                              <div className="flex flex-wrap gap-1.5">
+                              <div className="flex flex-wrap gap-2">
                                 {machineForm.selectedIds.map(id => {
                                   const ex = globalExercises.find(e => e.id === id)
                                   return ex ? (
-                                    <div
+                                    <motion.div
                                       key={id}
-                                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium"
+                                      layout
+                                      initial={{ scale: 0.8, opacity: 0 }}
+                                      animate={{ scale: 1, opacity: 1 }}
+                                      exit={{ scale: 0.8, opacity: 0 }}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold"
                                       style={{
-                                        background: `${BLUE}08`,
-                                        border: `1px solid ${BLUE}20`,
-                                        color: BLUE,
+                                        background: BLUE_GRAD,
+                                        color: '#FFFFFF',
+                                        boxShadow: `0 2px 8px ${BLUE}40`,
                                       }}
                                     >
+                                      <Check size={10} className="text-white" />
                                       <span>{ex.name}</span>
                                       <motion.button
-                                        whileHover={{ scale: 1.2 }}
+                                        whileHover={{ scale: 1.3, background: 'rgba(255,255,255,0.2)' }}
                                         whileTap={{ scale: 0.8 }}
                                         onClick={() => toggleExerciseSelection(id)}
-                                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center"
-                                        style={{ color: BLUE }}
+                                        className="w-4 h-4 rounded-full flex items-center justify-center"
+                                        style={{ background: 'rgba(255,255,255,0.15)' }}
                                       >
-                                        <X size={10} />
+                                        <X size={9} className="text-white" />
                                       </motion.button>
-                                    </div>
+                                    </motion.div>
                                   ) : null
                                 })}
                               </div>
