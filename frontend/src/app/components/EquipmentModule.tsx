@@ -352,19 +352,24 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowCreateOptions(true)}
-              className="relative flex items-center justify-start gap-2 h-11 rounded-full font-bold premium-btn overflow-hidden cursor-pointer group"
+              className="relative flex items-center justify-start gap-2 h-11 overflow-hidden cursor-pointer group rounded-full"
               style={{
                 width: 44,
                 transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                background: 'radial-gradient(ellipse at 20% 30%, rgba(230,57,70,0.9) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.4) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(241,200,39,0.25) 0%, transparent 50%), #CC0033',
+                boxShadow: '0 4px 16px rgba(230,57,70,0.25)',
+                color: '#FFFFFF',
+                border: 'none',
               }}
               onMouseEnter={e => { e.currentTarget.style.width = '110px'; const t = e.currentTarget.querySelector('span'); if (t) t.style.opacity = '1' }}
               onMouseLeave={e => { e.currentTarget.style.width = '44px'; const t = e.currentTarget.querySelector('span'); if (t) t.style.opacity = '0' }}
             >
-              <div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44 }}>
+              <div className="flex items-center justify-center flex-shrink-0 relative z-10" style={{ width: 44, height: 44 }}>
                 <Plus size={18} />
               </div>
-              <span className="text-sm whitespace-nowrap" style={{
+              <span className="text-sm whitespace-nowrap relative z-10" style={{
                 opacity: 0,
+                fontWeight: 600,
                 transition: 'opacity 0.2s ease 0.08s',
               }}>Crear</span>
             </motion.button>
@@ -397,7 +402,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                   whileHover={{ scale: 1.04, y: -6 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => { setShowCreateOptions(false); openAddMachine() }}
-                  className="relative w-64 h-80 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden"
+                  className="relative w-80 h-96 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden"
                   style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
                 >
                   <img src={exercisesImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -405,7 +410,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                     background: 'linear-gradient(to top, rgba(18,112,183,0.85) 0%, rgba(18,112,183,0.4) 50%, rgba(0,0,0,0.3) 100%)',
                   }} />
                   <div className="relative z-10 flex flex-col items-center">
-                    <span className="text-lg font-extrabold text-white tracking-tight">¡Registrar Máquina!</span>
+                    <span className="text-xl font-extrabold text-white tracking-tight">¡Registrar Máquina!</span>
                     <span className="text-[11px] text-white/60 mt-1">Agrega una nueva máquina</span>
                   </div>
                 </motion.button>
