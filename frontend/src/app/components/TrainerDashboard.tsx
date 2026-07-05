@@ -8,11 +8,12 @@ import {
   LayoutDashboard, Users, ClipboardList, Dumbbell, Calendar,
   TrendingUp, AlertTriangle, Clock, Activity, Target, Award,
   ChevronRight, Search, Plus, ArrowUp, ArrowDown, Sparkles,
-  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu, X, Filter,
+  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu, X, Filter, Shield,
 } from 'lucide-react'
 import { StudentProfile, TABS } from './StudentProfile'
 import StudentsModule from './StudentsModule'
 import AgendaModule from './AgendaModule'
+import AdminModule from './AdminModule'
 import EquipmentModule from './EquipmentModule'
 import coachImg from '../../assets/illustrations/characters/coach.png'
 
@@ -125,7 +126,7 @@ function RiskBadge({ risk }: { risk: 'high' | 'medium' | 'low' }) {
   )
 }
 
-type Section = 'dashboard' | 'students' | 'routines' | 'equipment' | 'schedule' | 'stats' | 'configuration'
+type Section = 'dashboard' | 'students' | 'routines' | 'equipment' | 'schedule' | 'stats' | 'configuration' | 'admin'
 
 const sidebarItems: { id: Section; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -134,6 +135,7 @@ const sidebarItems: { id: Section; label: string; icon: typeof LayoutDashboard }
   { id: 'equipment', label: 'Máquinas', icon: Dumbbell },
   { id: 'schedule', label: 'Agenda', icon: Calendar },
   { id: 'stats', label: 'Estadísticas', icon: BarChart3 },
+  { id: 'admin', label: 'Admin', icon: Shield },
   { id: 'configuration', label: 'Configuración', icon: Settings },
 ]
 
@@ -232,19 +234,11 @@ export function TrainerDashboard() {
           </button>
         </div>
 
-        <div
-          className="flex flex-col w-full relative"
-          style={{
-            alignItems: 'center',
-            paddingLeft: expanded ? 12 : 0,
-            paddingRight: expanded ? 12 : 0,
-            transition: 'padding 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
+        <div className="flex flex-col w-full relative">
           {/* Gooey layer */}
-          <div className="absolute inset-0 flex flex-col items-center pointer-events-none" style={{ filter: 'url(#goo)' }}>
+          <div className="absolute inset-0 flex flex-col pointer-events-none" style={{ filter: 'url(#goo)' }}>
             {sidebarItems.filter(i => i.id !== 'configuration').flatMap((item, i, arr) => {
-              const groups = [[arr[0]], [arr[1], arr[2]], [arr[3], arr[4]], [arr[5]]]
+              const groups = [[arr[0]], [arr[1], arr[2]], [arr[3], arr[4]], [arr[5]], [arr[6]]]
               const groupIdx = groups.findIndex(g => g.includes(item))
               const isFirstInGroup = groups[groupIdx]?.[0] === item
               return [
@@ -257,7 +251,7 @@ export function TrainerDashboard() {
               ) : (
                 <div key={entry.id} className="overflow-hidden flex-shrink-0" style={{
                   height: 44,
-                  width: expanded ? 184 : 68,
+                  width: expanded ? '100%' : 68,
                   borderRadius: expanded ? 10 : 0,
                   transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease',
                 }}>
@@ -278,7 +272,7 @@ export function TrainerDashboard() {
           </div>
           {/* Buttons layer */}
           {sidebarItems.filter(i => i.id !== 'configuration').flatMap((item, i, arr) => {
-            const groups = [[arr[0]], [arr[1], arr[2]], [arr[3], arr[4]], [arr[5]]]
+            const groups = [[arr[0]], [arr[1], arr[2]], [arr[3], arr[4]], [arr[5]], [arr[6]]]
             const groupIdx = groups.findIndex(g => g.includes(item))
             const isFirstInGroup = groups[groupIdx]?.[0] === item
             return [
@@ -289,6 +283,7 @@ export function TrainerDashboard() {
             entry.type === 'divider' ? (
               <div key={`div-${idx}`} className="h-px rounded-full my-0.5 flex-shrink-0" style={{
                 width: expanded ? 160 : 20,
+                marginLeft: expanded ? 24 : 24,
                 background: 'linear-gradient(90deg, rgba(18,112,183,0.12), rgba(244,56,67,0.08), rgba(241,200,39,0.06), transparent)',
                 transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
               }} />
@@ -297,15 +292,15 @@ export function TrainerDashboard() {
                 key={entry.item.id}
                 onClick={() => setSection(entry.item.id)}
                 title={entry.item.label}
-                className="relative flex items-center flex-shrink-0"
+                className="relative flex items-center flex-shrink-0 overflow-hidden"
                 style={{
                   height: 44,
-                  width: expanded ? 184 : 68,
-                  paddingLeft: expanded ? 0 : 12,
+                  width: expanded ? '100%' : 68,
+                  paddingLeft: 0,
                   borderRadius: expanded ? 10 : 0,
                   background: 'transparent',
                   color: section === entry.item.id ? '#fff' : 'rgba(255,255,255,0.2)',
-                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), padding-left 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease, color 0.3s ease',
+                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease, color 0.3s ease',
                 }}
               >
                 {/* Resplandor izquierdo vibrante */}
@@ -317,7 +312,7 @@ export function TrainerDashboard() {
                     filter: 'blur(8px)',
                   }} />
                 )}
-                <div className="flex items-center justify-center w-11 h-11 flex-shrink-0">
+                <div className="flex items-center justify-center flex-shrink-0" style={{ width: 68, height: 44 }}>
                   <entry.item.icon size={19} />
                 </div>
                 <span style={{
@@ -335,29 +330,21 @@ export function TrainerDashboard() {
         </div>
 
         <div className="w-full mt-auto pt-3 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
-          <div
-            className="flex flex-col relative"
-            style={{
-              alignItems: 'center',
-              paddingLeft: expanded ? 12 : 0,
-              paddingRight: expanded ? 12 : 0,
-              transition: 'padding 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
+          <div className="flex flex-col relative">
             {sidebarItems.filter(i => i.id === 'configuration').map(item => (
               <button
                 key={item.id}
                 onClick={() => setSection(item.id)}
                 title={item.label}
-                className="relative flex items-center flex-shrink-0"
+                className="relative flex items-center flex-shrink-0 overflow-hidden"
                 style={{
                   height: 44,
-                  width: expanded ? 184 : 68,
-                  paddingLeft: expanded ? 0 : 12,
+                  width: expanded ? '100%' : 68,
+                  paddingLeft: 0,
                   borderRadius: expanded ? 10 : 0,
                   background: 'transparent',
                   color: section === item.id ? '#fff' : 'rgba(255,255,255,0.2)',
-                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), padding-left 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease, color 0.3s ease',
+                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease, color 0.3s ease',
                 }}
               >
                 {/* Resplandor izquierdo vibrante */}
@@ -369,7 +356,7 @@ export function TrainerDashboard() {
                     filter: 'blur(8px)',
                   }} />
                 )}
-                <div className="flex items-center justify-center w-11 h-11 flex-shrink-0">
+                <div className="flex items-center justify-center flex-shrink-0" style={{ width: 68, height: 44 }}>
                   <item.icon size={19} />
                 </div>
                 <span style={{
@@ -637,6 +624,7 @@ export function TrainerDashboard() {
               {section === 'routines' && renderRoutines()}
               {section === 'equipment' && renderEquipment()}
               {section === 'schedule' && <AgendaModule />}
+              {section === 'admin' && <AdminModule />}
               {section === 'stats' && renderStats()}
               {section === 'configuration' && renderConfiguration()}
             </motion.div>

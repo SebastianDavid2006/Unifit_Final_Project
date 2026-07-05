@@ -339,7 +339,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
           <div className="flex items-center gap-6 ml-64">
             <div className="w-1 h-12 rounded-full" style={{ background: BLUE_GRAD }} />
             <div>
-              <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Máquinas y Equipos</h1>
+              <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Máquinas y Ejercicios</h1>
               <p className="text-xs text-black/40">Registra máquinas, asigna ejercicios y controla su estado operativo.</p>
             </div>
           </div>
@@ -386,7 +386,26 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                 border: '1px solid rgba(255,255,255,0.4)',
               }}
             >
-              <div className="px-5 pt-5 pb-3">
+              {/* Machine image */}
+              <div className="w-full overflow-hidden relative" style={{ height: 96, background: `${statusConfig[machine.status].color}08` }}>
+                <img
+                  src={machine.imageDataUrl || machineImg}
+                  alt={machine.name}
+                  className="w-full h-full"
+                  style={{
+                    objectFit: machine.imageDataUrl ? 'cover' : 'contain',
+                    objectPosition: machine.imageDataUrl ? 'center' : 'bottom center',
+                    filter: machine.imageDataUrl ? 'none' : `grayscale(${0.1 + (machine.id * 0.05) % 0.5}) contrast(${0.8 + (machine.id * 0.03) % 0.4})`,
+                    padding: machine.imageDataUrl ? 0 : '8px',
+                  }}
+                />
+                <div className="absolute inset-0" style={{
+                  background: `linear-gradient(180deg, transparent 40%, ${statusConfig[machine.status].color}15 100%)`,
+                  pointerEvents: 'none',
+                }} />
+              </div>
+
+              <div className="px-5 pt-4 pb-3">
                 <div className="flex items-start justify-between mb-3">
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
