@@ -7,7 +7,9 @@ import {
   Activity, Wrench, PowerOff, ChevronDown, ChevronRight, ChevronLeft, Check,
 } from 'lucide-react'
 import machineImg from '../../assets/illustrations/objects/machine.png'
-import exercisesImg from '../../assets/illustrations/objects/exercises.png'
+import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
+import modalExercisesImg from '../../assets/illustrations/characters/modal_exercises.png'
+import coachCongratsImg from '../../assets/illustrations/characters/coach_congratulations.png'
 
 const BLUE = '#1270B7'
 const GREEN = '#30D158'
@@ -402,12 +404,12 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                   whileHover={{ scale: 1.04, y: -6 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => { setShowCreateOptions(false); openAddMachine() }}
-                  className="relative w-80 h-96 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden"
+                  className="relative w-80 h-96 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
                   style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
                 >
-                  <img src={exercisesImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  <div className="absolute inset-0" style={{
-                    background: 'linear-gradient(to top, rgba(18,112,183,0.85) 0%, rgba(18,112,183,0.4) 50%, rgba(0,0,0,0.3) 100%)',
+                  <img src={machineExercisesImg} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-125 translate-y-6" />
+                  <div className="absolute inset-0 pointer-events-none" style={{
+                    background: 'linear-gradient(to top, rgba(18,112,183,0.95) 0%, rgba(18,112,183,0.6) 50%, rgba(0,0,0,0.5) 100%)',
                   }} />
                   <div className="relative z-10 flex flex-col items-center">
                     <span className="text-xl font-extrabold text-white tracking-tight">¡Registrar Máquina!</span>
@@ -420,12 +422,12 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                   whileHover={{ scale: 1.04, y: -6 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => { setShowCreateOptions(false); openAddExercise(); setShowExerciseManager(true) }}
-                  className="relative w-64 h-80 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden"
+                  className="relative w-80 h-96 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
                   style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
                 >
-                  <img src={exercisesImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                  <div className="absolute inset-0" style={{
-                    background: 'linear-gradient(to top, rgba(48,209,88,0.85) 0%, rgba(48,209,88,0.4) 50%, rgba(0,0,0,0.3) 100%)',
+                  <img src={modalExercisesImg} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-150 -translate-y-2 translate-x-20" />
+                  <div className="absolute inset-0 pointer-events-none" style={{
+                    background: 'linear-gradient(to top, rgba(48,209,88,0.95) 0%, rgba(48,209,88,0.6) 50%, rgba(0,0,0,0.5) 100%)',
                   }} />
                   <div className="relative z-10 flex flex-col items-center">
                     <span className="text-lg font-extrabold text-white tracking-tight">¡Registrar Ejercicio!</span>
@@ -632,8 +634,6 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                 border: '1px solid rgba(0,0,0,0.04)',
                 boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
                 maxWidth: 672,
-                minHeight: 520,
-                maxHeight: 660,
               } : {
                 background: '#FFFFFF',
                 border: '1px solid rgba(0,0,0,0.04)',
@@ -647,9 +647,13 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex flex-col items-center pt-14 px-6"
+                  className="flex flex-col items-center pt-14 px-6 pb-8 relative overflow-hidden"
                 >
-                  <div className="relative flex items-center justify-center -mt-28 mb-6">
+                  {/* Blurred background image */}
+                  <div className="absolute inset-0 flex items-center justify-center opacity-20 scale-150 pointer-events-none">
+                    <img src={machineExercisesImg} alt="" className="w-full h-full object-cover" style={{ filter: 'blur(40px)' }} />
+                  </div>
+                  <div className="relative flex items-center justify-center -mt-28 mb-6 z-10">
                     {[...Array(24)].map((_, i) => {
                       const angle = (i / 24) * 360
                       const rad = (angle * Math.PI) / 180
@@ -677,8 +681,8 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                     })}
                     <div className="relative flex items-center justify-center">
                       <motion.img
-                        src={machineImg}
-                        alt="máquina"
+                        src={coachCongratsImg}
+                        alt="felicitaciones"
                         className="w-72 h-auto object-contain relative z-10"
                         style={{ filter: 'drop-shadow(0 0 30px rgba(34,197,94,0.15))' }}
                         initial={{ opacity: 0, y: 20 }}
@@ -694,7 +698,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.4 }}
-                    className="text-lg font-bold text-center"
+                    className="text-lg font-bold text-center z-10"
                     style={{ color: '#1A1A1E' }}
                   >
                     ¡Máquina registrada exitosamente!
@@ -703,7 +707,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4, duration: 0.4 }}
-                    className="text-sm text-center mt-1 mb-8"
+                    className="text-sm text-center mt-1 mb-8 z-10"
                     style={{ color: 'rgba(0,0,0,0.4)' }}
                   >
                     La máquina se ha añadido correctamente al sistema.
