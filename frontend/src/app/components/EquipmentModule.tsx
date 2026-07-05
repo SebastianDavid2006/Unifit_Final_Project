@@ -898,22 +898,30 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                         <div>
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Estado</label>
                           <div className="flex gap-2">
-                            {(['active', 'maintenance', 'inactive'] as const).map(s => (
-                              <motion.button
-                                key={s}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setMachineForm(f => ({ ...f, status: s }))}
-                                className="flex-1 py-2.5 rounded-xl text-xs font-bold"
-                                style={{
-                                  background: machineForm.status === s ? `${statusConfig[s].color}15` : 'rgba(0,0,0,0.03)',
-                                  color: machineForm.status === s ? statusConfig[s].color : 'rgba(0,0,0,0.25)',
-                                  border: `1px solid ${machineForm.status === s ? `${statusConfig[s].color}30` : 'rgba(0,0,0,0.06)'}`,
-                                }}
-                              >
-                                {statusConfig[s].label}
-                              </motion.button>
-                            ))}
+                            {(['active', 'maintenance', 'inactive'] as const).map(s => {
+                              const sel = machineForm.status === s
+                              const c = statusConfig[s].color
+                              const grad = `linear-gradient(135deg, ${c}, ${c}cc)`
+                              return (
+                                <motion.button
+                                  key={s}
+                                  whileHover={{ scale: 1.06 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setMachineForm(f => ({ ...f, status: s }))}
+                                  onMouseEnter={e => { if (!sel) { e.currentTarget.style.background = `${c}18`; e.currentTarget.style.color = c } }}
+                                  onMouseLeave={e => { if (!sel) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.25)' } }}
+                                  className="flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200"
+                                  style={{
+                                    background: sel ? grad : 'rgba(0,0,0,0.03)',
+                                    color: sel ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
+                                    border: '1px solid transparent',
+                                    boxShadow: sel ? `0 4px 16px ${c}40` : 'none',
+                                  }}
+                                >
+                                  {statusConfig[s].label}
+                                </motion.button>
+                              )
+                            })}
                           </div>
                         </div>
                       </div>
@@ -947,19 +955,16 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                             ].map(label => {
                               const selected = machineForm.muscleGroups.includes(label)
                               const isGeneral = label === 'General'
+                              const GOLD_GRAD = 'linear-gradient(135deg, #F1C827, #FFE066)'
                               const defaultBg = 'rgba(0,0,0,0.03)'
-                              const hoverBg = isGeneral ? 'rgba(241,200,39,0.12)' : 'rgba(18,112,183,0.08)'
-                              const borderHover = isGeneral ? 'rgba(241,200,39,0.25)' : 'rgba(18,112,183,0.15)'
-                              const selectedBg = isGeneral
-                                ? 'radial-gradient(ellipse at 25% 20%, rgba(241,200,39,0.45) 0%, transparent 55%), radial-gradient(ellipse at 75% 85%, rgba(255,215,0,0.35) 0%, transparent 55%), rgba(241,200,39,0.15)'
-                                : BLUE_GRAD
-                              const borderSelected = isGeneral ? 'rgba(241,200,39,0.3)' : BLUE
-                              const textColor = isGeneral ? '#B8860B' : '#FFFFFF'
-                              const shadow = isGeneral
-                                ? '0 4px 20px rgba(241,200,39,0.2), 0 0 40px rgba(255,215,0,0.1)'
-                                : `0 4px 20px ${BLUE}40`
                               const generalSelected = machineForm.muscleGroups.includes('General')
                               const disabled = generalSelected && !isGeneral
+                              const hoverBg = isGeneral ? 'rgba(241,200,39,0.12)' : `${BLUE}12`
+                              const selectedBg = isGeneral ? GOLD_GRAD : BLUE_GRAD
+                              const textColor = selected ? '#FFFFFF' : disabled ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.35)'
+                              const shadow = isGeneral
+                                ? '0 4px 20px rgba(241,200,39,0.25)'
+                                : `0 4px 20px ${BLUE}40`
                               return (
                                 <motion.button
                                   key={label}
@@ -988,13 +993,13 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                       }))
                                     }
                                   }}
-                                  onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.borderColor = borderHover } }}
-                                  onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                                  onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = isGeneral ? '#B8860B' : BLUE } }}
+                                  onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
                                   className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
                                   style={{
                                     background: selected ? selectedBg : defaultBg,
-                                    color: selected ? textColor : disabled ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.35)',
-                                    border: `1px solid ${selected ? borderSelected : 'rgba(0,0,0,0.06)'}`,
+                                    color: textColor,
+                                    border: '1px solid transparent',
                                     boxShadow: selected ? shadow : 'none',
                                     opacity: disabled ? 0.4 : 1,
                                     filter: disabled ? 'blur(0.6px)' : 'none',
@@ -1015,7 +1020,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                             {(['principiante', 'intermedio', 'avanzado'] as const).map(level => {
                               const lvlHex = level === 'principiante' ? '#1270B7' : level === 'intermedio' ? '#F1C827' : '#F43843'
                               const selected = machineForm.recommendedLevel === level
-                              const selectedBg = `radial-gradient(ellipse at 30% 20%, ${lvlHex}8c 0%, transparent 55%), radial-gradient(ellipse at 70% 80%, ${lvlHex}4d 0%, transparent 50%), ${lvlHex}33`
+                              const selectedBg = `linear-gradient(135deg, ${lvlHex}, ${lvlHex}cc)`
                               const defaultBg = 'rgba(0,0,0,0.03)'
                               const hoverBg = `${lvlHex}1a`
                               return (
@@ -1024,13 +1029,13 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                   whileHover={{ scale: 1.06 }}
                                   whileTap={{ scale: 0.95 }}
                                   onClick={() => setMachineForm(f => ({ ...f, recommendedLevel: level }))}
-                                  onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.borderColor = `${lvlHex}40` } }}
-                                  onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                                  onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = lvlHex } }}
+                                  onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.25)' } }}
                                   className="flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200"
                                   style={{
                                     background: selected ? selectedBg : defaultBg,
                                     color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
-                                    border: `1px solid ${selected ? lvlHex : 'rgba(0,0,0,0.06)'}`,
+                                    border: '1px solid transparent',
                                     boxShadow: selected ? `0 4px 16px ${lvlHex}4d` : 'none',
                                   }}
                                 >
