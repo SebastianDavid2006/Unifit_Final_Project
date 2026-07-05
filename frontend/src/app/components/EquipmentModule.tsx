@@ -752,19 +752,28 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3, duration: 0.4 }}
-                    className="text-lg font-bold text-center z-10"
+                    className="text-xl font-bold text-center z-10"
                     style={{ color: '#1A1A1E' }}
                   >
-                    ¡Máquina registrada exitosamente!
+                    ¡Registro Exitoso!
                   </motion.p>
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4, duration: 0.4 }}
-                    className="text-sm text-center mt-1 mb-8 z-10"
+                    className="text-sm text-center mt-1 z-10"
+                    style={{ color: 'rgba(0,0,0,0.7)' }}
+                  >
+                    <span style={{ background: 'linear-gradient(135deg, #30D158, #0A84FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 700 }}>La máquina</span> se registró exitosamente.
+                  </motion.p>
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.4 }}
+                    className="text-xs text-center mb-8 z-10"
                     style={{ color: 'rgba(0,0,0,0.4)' }}
                   >
-                    La máquina se ha añadido correctamente al sistema.
+                    Ahora está disponible para ser utilizada en las rutinas del gimnasio.
                   </motion.p>
                   <motion.button
                     initial={{ opacity: 0, y: 10 }}
@@ -1007,7 +1016,19 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                     cursor: disabled ? 'not-allowed' : 'pointer',
                                   }}
                                 >
-                                  <img src={muscleIcons[label]} alt="" className="w-6 h-6" style={{ opacity: disabled ? 0.3 : 1 }} />
+                                  <motion.img
+                                    src={muscleIcons[label]}
+                                    alt=""
+                                    className="mb-0.5"
+                                    animate={{
+                                      width: selected ? 48 : 24,
+                                      height: selected ? 48 : 24,
+                                      marginTop: selected ? -24 : 0,
+                                      filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : disabled ? 'grayscale(0.6) blur(0px)' : 'blur(0px)',
+                                      opacity: disabled ? 0.3 : 1,
+                                    }}
+                                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                  />
                                   <span>{label}</span>
                                 </motion.button>
                               )
