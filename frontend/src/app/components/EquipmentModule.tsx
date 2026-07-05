@@ -11,6 +11,25 @@ import machineExercisesImg from '../../assets/illustrations/objects/machine_exer
 import modalExercisesImg from '../../assets/illustrations/characters/modal_exercises.png'
 import coachCongratsImg from '../../assets/illustrations/characters/coach_congratulations.png'
 import machineTreadmillImg from '../../assets/illustrations/objects/machine-treadmill.png'
+import chestIcon from '../../assets/icons/muscles/chest.webp'
+import backIcon from '../../assets/icons/muscles/back.webp'
+import shouldersIcon from '../../assets/icons/muscles/shoulders.webp'
+import armIcon from '../../assets/icons/muscles/arm.webp'
+import legIcon from '../../assets/icons/muscles/leg.webp'
+import absIcon from '../../assets/icons/muscles/abs.webp'
+import cardioIcon from '../../assets/icons/muscles/cardio.webp'
+import fullBodyIcon from '../../assets/icons/muscles/full-body.webp'
+
+const muscleIcons: Record<string, string> = {
+  Pecho: chestIcon,
+  Espalda: backIcon,
+  Hombros: shouldersIcon,
+  Brazos: armIcon,
+  Piernas: legIcon,
+  'Abdomen/Core': absIcon,
+  Cardio: cardioIcon,
+  'General': fullBodyIcon,
+}
 
 const BLUE = '#1270B7'
 const GREEN = '#30D158'
@@ -155,7 +174,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
     Brazos: ['Pesas Libres', 'Máquinas'],
     Piernas: ['Pesas Libres', 'Máquinas'],
     'Abdomen/Core': ['Pesas Libres'],
-    'Cuerpo Completo': zones.filter(z => z !== 'Máquinas'),
+    'General': zones.filter(z => z !== 'Máquinas'),
   }
 
   const filteredZones = useMemo(() => {
@@ -923,56 +942,96 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                           <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más grupos musculares que trabaja esta máquina.</p>
                           <div className="grid grid-cols-4 gap-2">
                             {[
-                              { label: 'Pecho', icon: '🏋️' },
-                              { label: 'Espalda', icon: '💪' },
-                              { label: 'Hombros', icon: '🔥' },
-                              { label: 'Brazos', icon: '💪' },
-                              { label: 'Piernas', icon: '🦵' },
-                              { label: 'Abdomen/Core', icon: '🤸' },
-                              { label: 'Cardio', icon: '❤️' },
-                              { label: 'Cuerpo Completo', icon: '💯' },
-                            ].map(group => (
-                              <motion.button
-                                key={group.label}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => {
-                                  setMachineForm(f => ({
-                                    ...f,
-                                    muscleGroups: f.muscleGroups.includes(group.label)
-                                      ? f.muscleGroups.filter(g => g !== group.label)
-                                      : [...f.muscleGroups, group.label]
-                                  }))
-                                }}
-                                className="px-3 py-3 rounded-xl text-xs font-bold text-center flex flex-col items-center gap-1"
-                                style={{
-                                  background: machineForm.muscleGroups.includes(group.label) ? `${BLUE}12` : 'rgba(0,0,0,0.03)',
-                                  color: machineForm.muscleGroups.includes(group.label) ? BLUE : 'rgba(0,0,0,0.35)',
-                                  border: `1px solid ${machineForm.muscleGroups.includes(group.label) ? `${BLUE}25` : 'rgba(0,0,0,0.06)'}`,
-                                }}
-                              >
-                                <span className="text-base">{group.icon}</span>
-                                <span>{group.label}</span>
-                              </motion.button>
-                            ))}
+                              'Pecho', 'Espalda', 'Hombros', 'Brazos',
+                              'Piernas', 'Abdomen/Core', 'Cardio', 'General',
+                            ].map(label => {
+                              const selected = machineForm.muscleGroups.includes(label)
+                              const isGeneral = label === 'General'
+                              const defaultBg = 'rgba(0,0,0,0.03)'
+                              const hoverBg = isGeneral ? 'rgba(241,200,39,0.12)' : 'rgba(18,112,183,0.08)'
+                              const borderHover = isGeneral ? 'rgba(241,200,39,0.25)' : 'rgba(18,112,183,0.15)'
+                              const selectedBg = isGeneral
+                                ? 'radial-gradient(ellipse at 25% 20%, rgba(241,200,39,0.45) 0%, transparent 55%), radial-gradient(ellipse at 75% 85%, rgba(255,215,0,0.35) 0%, transparent 55%), rgba(241,200,39,0.15)'
+                                : BLUE_GRAD
+                              const borderSelected = isGeneral ? 'rgba(241,200,39,0.3)' : BLUE
+                              const textColor = isGeneral ? '#B8860B' : '#FFFFFF'
+                              const shadow = isGeneral
+                                ? '0 4px 20px rgba(241,200,39,0.2), 0 0 40px rgba(255,215,0,0.1)'
+                                : `0 4px 20px ${BLUE}40`
+                              const generalSelected = machineForm.muscleGroups.includes('General')
+                              const disabled = generalSelected && !isGeneral
+                              return (
+                                <motion.button
+                                  key={label}
+                                  whileHover={!disabled ? { scale: 1.06 } : {}}
+                                  whileTap={!disabled ? { scale: 0.95 } : {}}
+                                  onClick={() => {
+                                    if (disabled) return
+                                    if (isGeneral) {
+                                      setMachineForm(f => ({
+                                        ...f,
+                                        muscleGroups: selected ? [] : ['General']
+                                      }))
+                                    } else if (generalSelected) {
+                                      setMachineForm(f => ({
+                                        ...f,
+                                        muscleGroups: f.muscleGroups.includes(label)
+                                          ? f.muscleGroups.filter(g => g !== 'General')
+                                          : [...f.muscleGroups.filter(g => g !== 'General'), label]
+                                      }))
+                                    } else {
+                                      setMachineForm(f => ({
+                                        ...f,
+                                        muscleGroups: f.muscleGroups.includes(label)
+                                          ? f.muscleGroups.filter(g => g !== label)
+                                          : [...f.muscleGroups, label]
+                                      }))
+                                    }
+                                  }}
+                                  onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.borderColor = borderHover } }}
+                                  onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                  style={{
+                                    background: selected ? selectedBg : defaultBg,
+                                    color: selected ? textColor : disabled ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.35)',
+                                    border: `1px solid ${selected ? borderSelected : 'rgba(0,0,0,0.06)'}`,
+                                    boxShadow: selected ? shadow : 'none',
+                                    opacity: disabled ? 0.4 : 1,
+                                    filter: disabled ? 'blur(0.6px)' : 'none',
+                                    pointerEvents: disabled ? 'none' : 'auto',
+                                    cursor: disabled ? 'not-allowed' : 'pointer',
+                                  }}
+                                >
+                                  <img src={muscleIcons[label]} alt="" className="w-6 h-6" style={{ opacity: disabled ? 0.3 : 1 }} />
+                                  <span>{label}</span>
+                                </motion.button>
+                              )
+                            })}
                           </div>
                         </div>
                         <div>
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Nivel Recomendado</label>
                           <div className="flex gap-2">
                             {(['principiante', 'intermedio', 'avanzado'] as const).map(level => {
-                              const lvlColor = level === 'principiante' ? BLUE : level === 'intermedio' ? '#F1C827' : '#F43843'
+                              const lvlHex = level === 'principiante' ? '#1270B7' : level === 'intermedio' ? '#F1C827' : '#F43843'
+                              const selected = machineForm.recommendedLevel === level
+                              const selectedBg = `radial-gradient(ellipse at 30% 20%, ${lvlHex}8c 0%, transparent 55%), radial-gradient(ellipse at 70% 80%, ${lvlHex}4d 0%, transparent 50%), ${lvlHex}33`
+                              const defaultBg = 'rgba(0,0,0,0.03)'
+                              const hoverBg = `${lvlHex}1a`
                               return (
                                 <motion.button
                                   key={level}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
+                                  whileHover={{ scale: 1.06 }}
+                                  whileTap={{ scale: 0.95 }}
                                   onClick={() => setMachineForm(f => ({ ...f, recommendedLevel: level }))}
-                                  className="flex-1 py-2.5 rounded-xl text-xs font-bold capitalize"
+                                  onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.borderColor = `${lvlHex}40` } }}
+                                  onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                                  className="flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200"
                                   style={{
-                                    background: machineForm.recommendedLevel === level ? `${lvlColor}15` : 'rgba(0,0,0,0.03)',
-                                    color: machineForm.recommendedLevel === level ? lvlColor : 'rgba(0,0,0,0.25)',
-                                    border: `1px solid ${machineForm.recommendedLevel === level ? `${lvlColor}30` : 'rgba(0,0,0,0.06)'}`,
+                                    background: selected ? selectedBg : defaultBg,
+                                    color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
+                                    border: `1px solid ${selected ? lvlHex : 'rgba(0,0,0,0.06)'}`,
+                                    boxShadow: selected ? `0 4px 16px ${lvlHex}4d` : 'none',
                                   }}
                                 >
                                   {level}
@@ -1022,18 +1081,10 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                             >
                               <option value="">Selecciona un grupo muscular</option>
                               {[
-                                { label: 'Pecho', icon: '🏋️' },
-                                { label: 'Espalda', icon: '💪' },
-                                { label: 'Hombros', icon: '🔥' },
-                                { label: 'Brazos', icon: '💪' },
-                                { label: 'Piernas', icon: '🦵' },
-                                { label: 'Abdomen/Core', icon: '🤸' },
-                                { label: 'Cardio', icon: '❤️' },
-                                { label: 'Cuerpo Completo', icon: '💯' },
-                              ].filter(g => machineForm.muscleGroups.includes(g.label)).map(group => (
-                                <option key={group.label} value={group.label}>
-                                  {group.icon} {group.label}
-                                </option>
+                                'Pecho', 'Espalda', 'Hombros', 'Brazos',
+                                'Piernas', 'Abdomen/Core', 'Cardio', 'General',
+                              ].filter(g => machineForm.muscleGroups.includes(g)).map(label => (
+                                <option key={label} value={label}>{label}</option>
                               ))}
                               {machineForm.muscleGroups.length > 0 && (
                                 <option value="Todos">Mostrar todos</option>
