@@ -7,6 +7,7 @@ import {
   Activity, Wrench, PowerOff, ChevronDown, ChevronRight, ChevronLeft, Check,
 } from 'lucide-react'
 import machineImg from '../../assets/illustrations/objects/machine.png'
+import exercisesImg from '../../assets/illustrations/objects/exercises.png'
 
 const BLUE = '#1270B7'
 const GREEN = '#30D158'
@@ -349,63 +350,82 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
           </div>
           <div className="flex items-center gap-3 pr-4">
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowCreateOptions(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold premium-btn"
+              className="relative flex items-center justify-start gap-2 h-11 rounded-full font-bold premium-btn overflow-hidden cursor-pointer group"
+              style={{
+                width: 44,
+                transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.width = '110px'; const t = e.currentTarget.querySelector('span'); if (t) t.style.opacity = '1' }}
+              onMouseLeave={e => { e.currentTarget.style.width = '44px'; const t = e.currentTarget.querySelector('span'); if (t) t.style.opacity = '0' }}
             >
-              <Plus size={15} /> Crear
+              <div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44 }}>
+                <Plus size={18} />
+              </div>
+              <span className="text-sm whitespace-nowrap" style={{
+                opacity: 0,
+                transition: 'opacity 0.2s ease 0.08s',
+              }}>Crear</span>
             </motion.button>
           </div>
         </div>
       </motion.div>
 
-      {/* ── Create Options Overlay ── */}
+      {/* ── Premium Create Options ── */}
       <AnimatePresence>
         {showCreateOptions && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setShowCreateOptions(false)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className="rounded-2xl p-6 flex flex-col gap-4"
-              style={{
-                background: '#FFFFFF',
-                boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
-                border: '1px solid rgba(0,0,0,0.04)',
-              }}
             >
-              <h3 className="text-sm font-bold text-center" style={{ color: '#1A1A1E' }}>¿Qué deseas crear?</h3>
-              <div className="flex gap-3">
+              <div className="flex gap-6">
+                {/* Card: Máquina */}
                 <motion.button
-                  whileHover={{ scale: 1.03 }}
+                  whileHover={{ scale: 1.04, y: -6 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => { setShowCreateOptions(false); openAddMachine() }}
-                  className="flex flex-col items-center gap-3 p-6 rounded-xl w-40"
-                  style={{ background: 'rgba(18,112,183,0.06)', border: '1px solid rgba(18,112,183,0.12)' }}
+                  className="relative w-64 h-80 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden"
+                  style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
                 >
-                  <Dumbbell size={28} style={{ color: BLUE }} />
-                  <span className="text-xs font-bold" style={{ color: BLUE }}>Máquina</span>
+                  <img src={exercisesImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0" style={{
+                    background: 'linear-gradient(to top, rgba(18,112,183,0.85) 0%, rgba(18,112,183,0.4) 50%, rgba(0,0,0,0.3) 100%)',
+                  }} />
+                  <div className="relative z-10 flex flex-col items-center">
+                    <span className="text-lg font-extrabold text-white tracking-tight">¡Registrar Máquina!</span>
+                    <span className="text-[11px] text-white/60 mt-1">Agrega una nueva máquina</span>
+                  </div>
                 </motion.button>
+
+                {/* Card: Ejercicio */}
                 <motion.button
-                  whileHover={{ scale: 1.03 }}
+                  whileHover={{ scale: 1.04, y: -6 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => { setShowCreateOptions(false); openAddExercise(); setShowExerciseManager(true) }}
-                  className="flex flex-col items-center gap-3 p-6 rounded-xl w-40"
-                  style={{ background: 'rgba(48,209,88,0.06)', border: '1px solid rgba(48,209,88,0.12)' }}
+                  className="relative w-64 h-80 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden"
+                  style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
                 >
-                  <List size={28} style={{ color: GREEN }} />
-                  <span className="text-xs font-bold" style={{ color: GREEN }}>Ejercicio</span>
+                  <img src={exercisesImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0" style={{
+                    background: 'linear-gradient(to top, rgba(48,209,88,0.85) 0%, rgba(48,209,88,0.4) 50%, rgba(0,0,0,0.3) 100%)',
+                  }} />
+                  <div className="relative z-10 flex flex-col items-center">
+                    <span className="text-lg font-extrabold text-white tracking-tight">¡Registrar Ejercicio!</span>
+                    <span className="text-[11px] text-white/60 mt-1">Añade un nuevo ejercicio</span>
+                  </div>
                 </motion.button>
               </div>
             </motion.div>
