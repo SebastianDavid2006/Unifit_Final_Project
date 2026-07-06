@@ -13,7 +13,7 @@ import {
 import { StudentProfile, TABS } from './StudentProfile'
 import StudentsModule from './StudentsModule'
 import AgendaModule from './AgendaModule'
-import EquipmentModule from './EquipmentModule'
+import EquipmentModule from '../pages/equipment/EquipmentModule'
 import AdminModule from './AdminModule'
 import coachImg from '../../assets/illustrations/characters/coach.png'
 import trophyImg from '../../assets/images/trophy.png'
