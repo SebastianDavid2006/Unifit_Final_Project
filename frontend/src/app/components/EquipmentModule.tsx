@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'motion/react'
 import Cropper from 'react-easy-crop'
 import confetti from 'canvas-confetti'
 import {
-  Search, Plus, Dumbbell, Pencil, Trash2, X, List, Upload,
-  Activity, Wrench, PowerOff, ChevronDown, ChevronRight, ChevronLeft, Check,
+  Search, Plus, Dumbbell, X, List, Upload, Pencil, Trash2,
+  ChevronDown, ChevronRight, ChevronLeft, Check, Camera,
 } from 'lucide-react'
 import machineImg from '../../assets/illustrations/objects/machine.png'
 import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
@@ -20,6 +20,7 @@ import legIcon from '../../assets/icons/muscles/leg.webp'
 import absIcon from '../../assets/icons/muscles/abs.webp'
 import cardioIcon from '../../assets/icons/muscles/cardio.webp'
 import fullBodyIcon from '../../assets/icons/muscles/full-body.webp'
+import checkSuccessImg from '../../assets/objects/ui/check_success.png'
 
 const muscleIcons: Record<string, string> = {
   Pecho: chestIcon,
@@ -36,8 +37,10 @@ const BLUE = '#1270B7'
 const GREEN = '#30D158'
 const YELLOW = '#F1C827'
 const RED = '#F43843'
+const ORANGE = '#FF9500'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN_GRAD = 'linear-gradient(135deg, #00fb64, #009b95)'
+const ORANGE_GRAD = 'linear-gradient(135deg, #FF9500, #FF6B00)'
 
 type Status = 'active' | 'maintenance' | 'inactive'
 
@@ -78,18 +81,18 @@ const defaultExFields = {
   imageUrl: '', videoUrl: '',
 }
 const initialExercises: Exercise[] = [
-  { id: 1, name: 'Caminata', zone: 'Cardio', ...defaultExFields },
-  { id: 2, name: 'Trote', zone: 'Cardio', ...defaultExFields },
-  { id: 3, name: 'Intervalos', zone: 'Cardio', ...defaultExFields },
-  { id: 4, name: 'Ciclismo', zone: 'Cardio', ...defaultExFields },
-  { id: 5, name: 'Caminata Elíptica', zone: 'Cardio', ...defaultExFields },
-  { id: 6, name: 'Sentadilla', zone: 'Pesas Libres', ...defaultExFields },
-  { id: 7, name: 'Press Hombros', zone: 'Pesas Libres', ...defaultExFields },
-  { id: 8, name: 'Press Plano', zone: 'Pesas Libres', ...defaultExFields },
-  { id: 9, name: 'Press Inclinado', zone: 'Pesas Libres', ...defaultExFields },
-  { id: 10, name: 'Press Declinado', zone: 'Pesas Libres', ...defaultExFields },
-  { id: 11, name: 'Cruce de Cables', zone: 'Máquinas', ...defaultExFields },
-  { id: 12, name: 'Polea Alta', zone: 'Máquinas', ...defaultExFields },
+  { id: 1, name: 'Caminata', zone: 'Cardio', ...defaultExFields, muscleGroups: ['Cardio', 'Piernas'] },
+  { id: 2, name: 'Trote', zone: 'Cardio', ...defaultExFields, muscleGroups: ['Cardio', 'Piernas'] },
+  { id: 3, name: 'Intervalos', zone: 'Cardio', ...defaultExFields, muscleGroups: ['Cardio'] },
+  { id: 4, name: 'Ciclismo', zone: 'Cardio', ...defaultExFields, muscleGroups: ['Cardio', 'Piernas'] },
+  { id: 5, name: 'Caminata Elíptica', zone: 'Cardio', ...defaultExFields, muscleGroups: ['Cardio'] },
+  { id: 6, name: 'Sentadilla', zone: 'Pesas Libres', ...defaultExFields, muscleGroups: ['Piernas'] },
+  { id: 7, name: 'Press Hombros', zone: 'Pesas Libres', ...defaultExFields, muscleGroups: ['Hombros'] },
+  { id: 8, name: 'Press Plano', zone: 'Pesas Libres', ...defaultExFields, muscleGroups: ['Pecho'] },
+  { id: 9, name: 'Press Inclinado', zone: 'Pesas Libres', ...defaultExFields, muscleGroups: ['Pecho'] },
+  { id: 10, name: 'Press Declinado', zone: 'Pesas Libres', ...defaultExFields, muscleGroups: ['Pecho'] },
+  { id: 11, name: 'Cruce de Cables', zone: 'Máquinas', ...defaultExFields, muscleGroups: ['Pecho', 'Brazos'] },
+  { id: 12, name: 'Polea Alta', zone: 'Máquinas', ...defaultExFields, muscleGroups: ['Espalda', 'Brazos'] },
 ]
 
 const initialMachines: Machine[] = [
@@ -118,12 +121,14 @@ interface Props {
   searchFocused: boolean
   statusFilter: Status | 'all'
   showBlur: boolean
+  viewMode: 'machines' | 'exercises'
+  onViewModeChange: (v: 'machines' | 'exercises') => void
   onSearchChange: (v: string) => void
   onSearchFocus: (v: boolean) => void
   onStatusFilterChange: (v: Status | 'all') => void
 }
 
-export default function EquipmentModule({ search, searchFocused, statusFilter, showBlur, onSearchChange, onSearchFocus, onStatusFilterChange }: Props) {
+export default function EquipmentModule({ search, searchFocused, statusFilter, showBlur, viewMode, onViewModeChange, onSearchChange, onSearchFocus, onStatusFilterChange }: Props) {
   const [machines, setMachines] = useState<Machine[]>(initialMachines)
   const [globalExercises, setGlobalExercises] = useState<Exercise[]>(initialExercises)
   const [showMachineModal, setShowMachineModal] = useState(false)
@@ -139,10 +144,18 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
     observations: '', selectedIds: [] as number[]
   })
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [previewMachine, setPreviewMachine] = useState<Machine | null>(null)
+  const [previewMuscleFilter, setPreviewMuscleFilter] = useState<string>('all')
+  const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'machine' | 'exercise'; id: number } | null>(null)
   const [showExerciseManager, setShowExerciseManager] = useState(false)
   const [machineSuccess, setMachineSuccess] = useState(false)
+  const [machConfirmClose, setMachConfirmClose] = useState(false)
   const [exStep, setExStep] = useState(0)
   const [exSuccess, setExSuccess] = useState(false)
+  const [exConfirmClose, setExConfirmClose] = useState(false)
+  const [exAskCreateAnother, setExAskCreateAnother] = useState(false)
+  const [exCreatedCount, setExCreatedCount] = useState(0)
   const [exForm, setExForm] = useState({
     name: '', zone: '', description: '', status: 'active' as Status,
     muscleGroups: [] as string[], recommendedLevel: 'principiante' as 'principiante' | 'intermedio' | 'avanzado',
@@ -150,7 +163,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   })
   const [exEditing, setExEditing] = useState<Exercise | null>(null)
   const [exFilterZone, setExFilterZone] = useState('')
-  const [activeMuscleFilter, setActiveMuscleFilter] = useState<string | null>(null)
+  const [activeMuscleFilter, setActiveMuscleFilter] = useState('Todos')
   const [showMuscleDropdown, setShowMuscleDropdown] = useState(false)
   const muscleDropdownRef = useRef<HTMLButtonElement>(null)
 
@@ -171,7 +184,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   }, [imageToEdit])
 
   useEffect(() => {
-    setActiveMuscleFilter(null)
+    setActiveMuscleFilter('Todos')
   }, [machineStep])
 
   function getCinematicFilter(intensity: number): string {
@@ -208,7 +221,6 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   }, [machineForm.muscleGroups, zones])
 
   const muscleExercises = useMemo(() => {
-    if (!activeMuscleFilter) return []
     if (activeMuscleFilter === 'Todos') return globalExercises.filter(e => e.zone !== 'Máquinas')
     const zonesForMuscle = (muscleToZones[activeMuscleFilter] || []).filter(z => z !== 'Máquinas')
     return globalExercises.filter(e => zonesForMuscle.includes(e.zone))
@@ -364,6 +376,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
     setExEditing(e)
     setExStep(0)
     setExSuccess(false)
+    setShowExerciseManager(true)
     setExForm({
       name: e.name, zone: e.zone, description: e.description, status: e.status,
       muscleGroups: [...e.muscleGroups], recommendedLevel: e.recommendedLevel,
@@ -383,14 +396,18 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
       muscleGroups: exForm.muscleGroups, recommendedLevel: exForm.recommendedLevel,
       imageUrl: exForm.imageUrl, videoUrl: exForm.videoUrl,
     }
-    if (exEditing) {
+    if (!exEditing) {
+      setGlobalExercises(prev => [...prev, { id: nextExerciseId, ...data }])
+      setExCreatedCount(c => c + 1)
+      setExAskCreateAnother(true)
+    } else {
       setGlobalExercises(prev => prev.map(e =>
         e.id === exEditing.id ? { ...e, ...data } : e
       ))
-    } else {
-      setGlobalExercises(prev => [...prev, { id: nextExerciseId, ...data }])
+      setShowExerciseManager(false)
+      setExSuccess(false)
+      setExEditing(null)
     }
-    setExSuccess(true)
   }
 
   function deleteExercise(id: number) {
@@ -534,175 +551,159 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
         )}
       </AnimatePresence>
 
-      {/* Machines Grid */}
-      <div className="grid grid-cols-3 gap-4">
-        {filtered.map((machine, i) => {
-          const machineExercises = getMachineExercises(machine)
-          return (
-            <motion.div
-              key={machine.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.04 * i, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-2xl overflow-hidden premium-card"
-              style={{
-                background: 'rgba(255,255,255,0.85)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.6)',
-                boxShadow: '0 2px 20px rgba(0,0,0,0.04)',
-              }}
-            >
-              {/* Machine image */}
-              <div className="w-full overflow-hidden relative" style={{ height: 96, background: `${statusConfig[machine.status].color}08` }}>
-                <img
-                  src={machine.imageDataUrl || machineImg}
-                  alt={machine.name}
-                  className="w-full h-full"
-                  style={{
-                    objectFit: machine.imageDataUrl ? 'cover' : 'contain',
-                    objectPosition: machine.imageDataUrl ? 'center' : 'bottom center',
-                    filter: machine.imageDataUrl ? 'none' : `grayscale(${0.1 + (machine.id * 0.05) % 0.5}) contrast(${0.8 + (machine.id * 0.03) % 0.4})`,
-                    padding: machine.imageDataUrl ? 0 : '8px',
-                  }}
-                />
-                <div className="absolute inset-0" style={{
-                  background: `linear-gradient(180deg, transparent 40%, ${statusConfig[machine.status].color}15 100%)`,
-                  pointerEvents: 'none',
-                }} />
-              </div>
-
-              <div className="px-5 pt-4 pb-3">
-                <div className="flex items-start justify-between mb-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: `${statusConfig[machine.status].color}12` }}
-                  >
-                    <Dumbbell size={18} style={{ color: statusConfig[machine.status].color }} />
-                  </div>
-                  <StatusBadge status={machine.status} />
-                </div>
-                <h3 className="font-bold text-[#1A1A1E] text-base leading-tight">{machine.name}</h3>
-                <p className="text-xs mt-1" style={{ color: 'rgba(0,0,0,0.35)' }}>{machine.zone}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.25)' }}>
-                  {machineExercises.length} ejercicio{machineExercises.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-
-              <div className="px-5 pb-2 flex items-center gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider mr-2" style={{ color: 'rgba(0,0,0,0.2)' }}>Estado:</span>
-                {(['active', 'maintenance', 'inactive'] as const).map(s => (
-                  <motion.button
-                    key={s}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => changeStatus(machine.id, s)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+      {viewMode === 'machines' ? (
+        /* ── Machines Grid ── */
+        <div className="grid grid-cols-3 gap-4">
+          {filtered.map((machine, i) => {
+            const machineExercises = getMachineExercises(machine)
+            return (
+              <motion.div
+                key={machine.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.04 * i, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ scale: 1.04, boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => { setPreviewMachine(machine); setPreviewMuscleFilter('all') }}
+                className="rounded-2xl premium-card cursor-pointer"
+                style={{
+                  background: 'rgba(255,255,255,0.85)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.6)',
+                  boxShadow: '0 2px 20px rgba(0,0,0,0.04)',
+                }}
+              >
+                {/* Machine image */}
+                <div className="w-full overflow-hidden relative" style={{ height: 96, background: `${statusConfig[machine.status].color}08` }}>
+                  <img
+                    src={machine.imageDataUrl || machineImg}
+                    alt={machine.name}
+                    className="w-full h-full"
                     style={{
-                      background: machine.status === s ? `${statusConfig[s].color}18` : 'transparent',
-                      color: machine.status === s ? statusConfig[s].color : 'rgba(0,0,0,0.12)',
+                      objectFit: machine.imageDataUrl ? 'cover' : 'contain',
+                      objectPosition: machine.imageDataUrl ? 'center' : 'bottom center',
+                      filter: machine.imageDataUrl ? 'none' : `grayscale(${0.1 + (machine.id * 0.05) % 0.5}) contrast(${0.8 + (machine.id * 0.03) % 0.4})`,
+                      padding: machine.imageDataUrl ? 0 : '8px',
                     }}
-                    title={statusConfig[s].label}
-                  >
-                    {s === 'active' ? <Activity size={13} /> : s === 'maintenance' ? <Wrench size={13} /> : <PowerOff size={13} />}
-                  </motion.button>
-                ))}
-              </div>
+                  />
+                  <div className="absolute inset-0" style={{
+                    background: `linear-gradient(180deg, transparent 40%, ${statusConfig[machine.status].color}15 100%)`,
+                    pointerEvents: 'none',
+                  }} />
+                </div>
 
-              <div className="flex items-center gap-1 px-5 pb-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => openEditMachine(machine)}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ color: 'rgba(0,0,0,0.25)' }}
-                >
-                  <Pencil size={14} />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1, color: RED }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => deleteMachine(machine.id)}
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ color: 'rgba(0,0,0,0.25)' }}
-                >
-                  <Trash2 size={14} />
-                </motion.button>
-                <div className="flex-1" />
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setExpandedId(expandedId === machine.id ? null : machine.id)}
-                  className="flex items-center gap-1.5 text-[11px] font-bold"
-                  style={{ color: BLUE }}
-                >
-                  {expandedId === machine.id ? 'Ocultar' : `${machineExercises.length} ejercicios`}
-                  {expandedId === machine.id ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                </motion.button>
-              </div>
-
-              <AnimatePresence>
-                {expandedId === machine.id && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-5 pb-4 pt-3">
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                          Ejercicios asignados
-                        </p>
-                        <motion.button
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => openEditMachine(machine)}
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold"
-                          style={{
-                            background: `${BLUE}10`,
-                            color: BLUE,
-                            border: `1px solid ${BLUE}25`,
-                          }}
-                        >
-                          <List size={11} /> Seleccionar
-                        </motion.button>
-                      </div>
-                      {machineExercises.length === 0 ? (
-                        <p className="text-xs py-3 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                          Ningún ejercicio asignado. Selecciona desde "Ejercicios" al crear la máquina.
-                        </p>
-                      ) : (
-                        <div className="flex flex-wrap gap-1.5">
-                          {machineExercises.map(ex => (
-                            <div
-                              key={ex.id}
-                              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium"
-                              style={{
-                                background: 'rgba(0,0,0,0.03)',
-                                border: '1px solid rgba(0,0,0,0.04)',
-                                color: '#1A1A1E',
-                              }}
-                            >
-                              <span>{ex.name}</span>
-                            </div>
-                          ))}
+                <div className="px-5 pt-4 pb-3">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-bold text-[#1A1A1E] text-base leading-tight">{machine.name}</h3>
+                    <StatusBadge status={machine.status} />
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {machine.muscleGroups.map((mg, i) => (
+                      muscleIcons[mg] ? (
+                        <div key={i} className="relative group">
+                          <div className="flex items-center justify-center rounded-full" style={{ width: 38, height: 38, background: 'linear-gradient(180deg, #ffffff 0%, #DBEAFE 100%)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+                            <img src={muscleIcons[mg]} alt="" className="w-5 h-5" />
+                          </div>
+                          <div className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 px-2 py-1 rounded-lg whitespace-nowrap text-[10px] font-medium pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" style={{ background: 'rgba(0,0,0,0.7)', color: '#FFFFFF' }}>
+                            {mg}
+                          </div>
                         </div>
-                      )}
+                      ) : null
+                    ))}
+                  </div>
+                </div>
+
+                <div className="px-5 pb-3 flex justify-center" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  <span className="text-[11px] font-bold text-center" style={{ color: BLUE }}>
+                    {machineExercises.length} ejercicio{machineExercises.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+
+              </motion.div>
+            )
+          })}
+          {filtered.length === 0 && (
+            <div className="col-span-3 py-16 text-center">
+              <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>No se encontraron máquinas</p>
+              <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Prueba con otros filtros o agrega una nueva máquina</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ── Exercises Grid ── */
+        <div className="grid grid-cols-3 gap-4">
+          {filteredExercises.length === 0 ? (
+            <div className="col-span-3 py-16 text-center">
+              <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>No se encontraron ejercicios</p>
+              <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Agrega ejercicios para verlos aquí.</p>
+            </div>
+          ) : (
+            filteredExercises.map((ex, i) => (
+              <motion.div
+                key={ex.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.04 * i, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ scale: 1.04, boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setPreviewExercise(ex)}
+                className="rounded-2xl premium-card cursor-pointer"
+                style={{
+                  background: 'rgba(255,255,255,0.85)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.6)',
+                  boxShadow: '0 2px 20px rgba(0,0,0,0.04)',
+                }}
+              >
+                {/* Exercise image */}
+                <div className="w-full overflow-hidden relative" style={{ height: 96, background: 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(10,132,255,0.05) 0%, transparent 50%)' }}>
+                  {ex.imageUrl ? (
+                    <img src={ex.imageUrl} alt={ex.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Dumbbell size={24} style={{ color: 'rgba(48,209,88,0.3)' }} />
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )
-        })}
-        {filtered.length === 0 && (
-          <div className="col-span-3 py-16 text-center">
-            <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>No se encontraron máquinas</p>
-            <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Prueba con otros filtros o agrega una nueva máquina</p>
-          </div>
-        )}
-      </div>
+                  )}
+                  <div className="absolute inset-0" style={{
+                    background: 'linear-gradient(180deg, transparent 40%, rgba(48,209,88,0.08) 100%)',
+                    pointerEvents: 'none',
+                  }} />
+                </div>
+
+                <div className="px-5 pt-4 pb-3">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-bold text-[#1A1A1E] text-base leading-tight">{ex.name}</h3>
+                    <StatusBadge status={ex.status} />
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {ex.muscleGroups.map((mg, i) => (
+                      muscleIcons[mg] ? (
+                        <div key={i} className="relative group">
+                          <div className="flex items-center justify-center rounded-full" style={{ width: 38, height: 38, background: 'linear-gradient(180deg, #ffffff 0%, #DBEAFE 100%)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+                            <img src={muscleIcons[mg]} alt="" className="w-5 h-5" />
+                          </div>
+                          <div className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 px-2 py-1 rounded-lg whitespace-nowrap text-[10px] font-medium pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" style={{ background: 'rgba(0,0,0,0.7)', color: '#FFFFFF' }}>
+                            {mg}
+                          </div>
+                        </div>
+                      ) : null
+                    ))}
+                  </div>
+                </div>
+
+                <div className="px-5 pb-3 flex justify-center" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  <span className="text-[11px] font-bold text-center px-2 py-0.5 rounded-md" style={{
+                    background: ex.recommendedLevel === 'principiante' ? 'rgba(48,209,88,0.1)' : ex.recommendedLevel === 'intermedio' ? 'rgba(245,166,35,0.1)' : 'rgba(244,56,67,0.1)',
+                    color: ex.recommendedLevel === 'principiante' ? '#30D158' : ex.recommendedLevel === 'intermedio' ? '#F5A623' : '#F43843',
+                  }}>
+                    {ex.recommendedLevel === 'principiante' ? 'Principiante' : ex.recommendedLevel === 'intermedio' ? 'Intermedio' : 'Avanzado'}
+                  </span>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* ── Machine Modal (3-step) ── */}
       <AnimatePresence>
@@ -714,7 +715,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
             style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
-            onClick={() => setShowMachineModal(false)}
+            onClick={() => setMachConfirmClose(true)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -722,7 +723,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className={`rounded-3xl w-full flex flex-col mx-4`}
+              className={`rounded-3xl w-full flex flex-col mx-4 relative`}
               style={machineSuccess ? {
                 background: '#FFFFFF',
                 border: '1px solid rgba(0,0,0,0.04)',
@@ -835,28 +836,35 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                   className="flex flex-col flex-1 min-h-0"
                 >
                   {/* ── Header ── */}
-                  <div className="sticky top-0 z-10 flex-shrink-0" style={{
-                    background: 'rgba(255,255,255,0.9)',
-                    borderBottom: '1px solid rgba(0,0,0,0.04)',
-                  }}>
-                    <div className="flex items-center justify-end p-4 pb-0">
-                      <motion.button
-                        whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)', color: RED }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setShowMachineModal(false)}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors"
-                        style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}
-                      >
-                        <X size={15} />
-                      </motion.button>
-                    </div>
+                    <div className="sticky top-0 z-10 flex-shrink-0" style={{
+                      background: 'rgba(255,255,255,0.9)',
+                      borderBottom: '1px solid rgba(0,0,0,0.04)',
+                    }}>
+                      <div className="flex items-center justify-between px-4 pt-4 pb-0">
+                        <div className="flex-1" />
+                        {editingMachine ? (
+                          <div className="flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
+                            <Pencil size={12} style={{ color: 'rgba(0,0,0,0.25)' }} />
+                            <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.25)' }}>Editando...</span>
+                          </div>
+                        ) : null}
+                        <motion.button
+                          whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)', color: RED }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setMachConfirmClose(true)}
+                          className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors"
+                          style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}
+                        >
+                          <X size={15} />
+                        </motion.button>
+                      </div>
                     <div className="flex items-center justify-center gap-1.5" style={{ marginTop: 12, marginBottom: 16 }}>
                       {[1, 2, 3].map(s => (
                         <motion.div
                           key={s}
                           animate={{
                             width: s === machineStep + 1 ? 16 : 6,
-                            background: s === machineStep + 1 ? BLUE_GRAD : 'rgba(0,0,0,0.12)',
+                            background: s === machineStep + 1 ? ORANGE_GRAD : 'rgba(0,0,0,0.12)',
                           }}
                           transition={{ type: 'spring', stiffness: 300, damping: 22 }}
                           className="rounded-full"
@@ -880,24 +888,29 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                         <div>
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Imagen de la máquina</label>
                           <motion.div
-                            className="w-full h-40 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative"
-                            style={{ border: machineForm.imageDataUrl ? `1px solid ${GREEN}30` : '1px dashed rgba(0,0,0,0.12)' }}
-                            whileHover={{ borderColor: machineForm.imageDataUrl ? GREEN : BLUE, background: machineForm.imageDataUrl ? `${GREEN}05` : 'rgba(18,112,183,0.03)', scale: 1.005 }}
-                            whileTap={{ scale: 0.98 }}
+                            whileHover={{ scale: 1.03 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-full h-40 rounded-xl cursor-pointer overflow-hidden relative group"
+                            style={{
+                              background: machineForm.imageDataUrl ? 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(48,209,88,0.08) 0%, transparent 50%), rgba(255,255,255,0.6)' : meshInputBg,
+                              border: `1px solid ${machineForm.imageDataUrl ? 'rgba(48,209,88,0.2)' : 'transparent'}`,
+                            }}
                             onClick={() => document.getElementById('machine-image-input')?.click()}
+                            onMouseEnter={e => { if (!machineForm.imageDataUrl) { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { if (!machineForm.imageDataUrl) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
                           >
                             {machineForm.imageDataUrl ? (
-                              <div className="flex flex-col items-center gap-2">
-                                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `${GREEN}15` }}>
-                                  <Check size={24} style={{ color: GREEN }} />
+                              <>
+                                <img src={machineForm.imageDataUrl} alt="" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200" style={{ background: 'rgba(0,0,0,0.45)' }}>
+                                  <Camera size={24} className="text-white" />
+                                  <span className="text-xs font-semibold text-white">Cambiar imagen</span>
                                 </div>
-                                <span className="text-xs font-medium" style={{ color: GREEN }}>Imagen subida</span>
-                                <span className="text-[9px]" style={{ color: 'rgba(0,0,0,0.2)' }}>Haz clic para cambiar</span>
-                              </div>
+                              </>
                             ) : (
-                              <div className="flex flex-col items-center gap-2">
-                                <Upload size={24} style={{ color: 'rgba(0,0,0,0.2)' }} />
-                                <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>Haz clic para subir imagen</span>
+                              <div className="flex flex-col items-center gap-1.5 py-6">
+                                <Upload size={18} style={{ color: 'rgba(0,0,0,0.2)' }} />
+                                <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir imagen</span>
                               </div>
                             )}
                           </motion.div>
@@ -970,7 +983,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                   onClick={() => setMachineForm(f => ({ ...f, status: s }))}
                                   onMouseEnter={e => { if (!sel) { e.currentTarget.style.background = `${c}18`; e.currentTarget.style.color = c } }}
                                   onMouseLeave={e => { if (!sel) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.25)' } }}
-                                  className="flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200"
+                                  className="flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all duration-200"
                                   style={{
                                     background: sel ? grad : 'rgba(0,0,0,0.03)',
                                     color: sel ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
@@ -1088,7 +1101,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                   onClick={() => setMachineForm(f => ({ ...f, recommendedLevel: level }))}
                                   onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = lvlHex } }}
                                   onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.25)' } }}
-                                  className="flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200"
+                                  className="flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all duration-200"
                                   style={{
                                     background: selected ? selectedBg : defaultBg,
                                     color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
@@ -1118,23 +1131,21 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                               onClick={() => setShowMuscleDropdown(f => !f)}
                               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium outline-none cursor-pointer transition-all duration-200"
                               style={{
-                                background: activeMuscleFilter ? meshInputBg : meshInputBg,
-                                color: activeMuscleFilter && activeMuscleFilter !== 'Todos' ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
+                                background: meshInputBg,
+                                color: activeMuscleFilter === 'Todos' ? 'rgba(0,0,0,0.3)' : '#1A1A1E',
                                 border: '1px solid transparent',
                               }}
                               onMouseEnter={e => { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' }}
                               onMouseLeave={e => { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' }}
                             >
-                              {activeMuscleFilter && activeMuscleFilter !== 'Todos' ? (
+                              {activeMuscleFilter !== 'Todos' ? (
                                 <img src={muscleIcons[activeMuscleFilter]} alt="" className="w-5 h-5" />
-                              ) : activeMuscleFilter === 'Todos' ? (
+                              ) : (
                                 <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: `${BLUE}15` }}>
                                   <List size={12} style={{ color: BLUE }} />
                                 </div>
-                              ) : null}
-                              {activeMuscleFilter
-                                ? activeMuscleFilter === 'Todos' ? 'Mostrar todos' : activeMuscleFilter
-                                : 'Selecciona un grupo muscular'}
+                              )}
+                              {activeMuscleFilter === 'Todos' ? 'Mostrar todos' : activeMuscleFilter}
                               <div className="flex-1" />
                               <motion.div
                                 animate={{ rotate: showMuscleDropdown ? 180 : 0 }}
@@ -1159,9 +1170,11 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                   }}
                                 >
                                   {[
-                                    'Pecho', 'Espalda', 'Hombros', 'Brazos',
-                                    'Piernas', 'Abdomen/Core', 'Cardio', 'General',
-                                  ].filter(g => machineForm.muscleGroups.includes(g)).map(label => {
+                                    'Todos',
+                                    ...(['Pecho', 'Espalda', 'Hombros', 'Brazos',
+                                      'Piernas', 'Abdomen/Core', 'Cardio', 'General',
+                                    ] as string[]).filter(g => machineForm.muscleGroups.includes(g)),
+                                  ].map(label => {
                                     const isActive = activeMuscleFilter === label
                                     return (
                                       <motion.button
@@ -1178,8 +1191,16 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                         onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = BLUE } }}
                                         onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(0,0,0,0.6)' } }}
                                       >
-                                        <img src={muscleIcons[label]} alt="" className="w-5 h-5" style={{ filter: isActive ? 'brightness(10)' : 'none' }} />
-                                        <span className={isActive ? 'font-bold' : ''}>{label}</span>
+                                        {label === 'Todos' ? (
+                                          <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: isActive ? 'rgba(255,255,255,0.2)' : `${BLUE}15` }}>
+                                            <List size={12} style={{ color: isActive ? '#FFFFFF' : BLUE }} />
+                                          </div>
+                                        ) : (
+                                          <img src={muscleIcons[label]} alt="" className="w-5 h-5" style={{ filter: isActive ? 'brightness(10)' : 'none' }} />
+                                        )}
+                                        <span className={isActive ? 'font-bold' : ''}>
+                                          {label === 'Todos' ? 'Mostrar todos' : label}
+                                        </span>
                                         {isActive && (
                                           <motion.div
                                             initial={{ scale: 0 }}
@@ -1192,37 +1213,6 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                       </motion.button>
                                     )
                                   })}
-                                  {machineForm.muscleGroups.length > 0 && (
-                                    <>
-                                      <div className="mx-3" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }} />
-                                      <motion.button
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.97 }}
-                                        onClick={() => { setActiveMuscleFilter('Todos'); setShowMuscleDropdown(false) }}
-                                        className="w-full flex items-center gap-2.5 px-3 py-3 text-xs font-medium transition-colors"
-                                        style={{
-                                          color: activeMuscleFilter === 'Todos' ? '#FFFFFF' : 'rgba(0,0,0,0.6)',
-                                          background: activeMuscleFilter === 'Todos' ? BLUE_GRAD : 'transparent',
-                                        }}
-                                        onMouseEnter={e => { if (activeMuscleFilter !== 'Todos') { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = BLUE } }}
-                                        onMouseLeave={e => { if (activeMuscleFilter !== 'Todos') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(0,0,0,0.6)' } }}
-                                      >
-                                        <div className="w-5 h-5 rounded flex items-center justify-center" style={{ background: activeMuscleFilter === 'Todos' ? 'rgba(255,255,255,0.2)' : `${BLUE}15` }}>
-                                          <List size={12} style={{ color: activeMuscleFilter === 'Todos' ? '#FFFFFF' : BLUE }} />
-                                        </div>
-                                        Mostrar todos
-                                        {activeMuscleFilter === 'Todos' && (
-                                          <motion.div
-                                            initial={{ scale: 0 }}
-                                            animate={{ scale: 1 }}
-                                            className="ml-auto"
-                                          >
-                                            <Check size={12} className="text-white" />
-                                          </motion.div>
-                                        )}
-                                      </motion.button>
-                                    </>
-                                  )}
                                 </motion.div>
                               )}
                             </AnimatePresence>
@@ -1361,12 +1351,12 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                       </div>
                       <div className="flex-1 flex justify-end">
                         <motion.button
-                          whileHover={machineStep < 2 || (machineStep === 2 && true) ? { scale: 1.06, boxShadow: '0 8px 30px rgba(18,112,183,0.35), 0 0 60px rgba(18,112,183,0.1)' } : {}}
+                          whileHover={machineStep < 2 || (machineStep === 2 && true) ? { scale: 1.06, boxShadow: '0 8px 30px rgba(255,149,0,0.35), 0 0 60px rgba(255,149,0,0.1)' } : {}}
                           whileTap={{ scale: 0.92 }}
                           onClick={() => { if (machineStep < 2) setMachineStep(s => s + 1); else saveMachine() }}
                           className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
                           style={{
-                            background: machineStep === 0 && !machineForm.name.trim() ? 'rgba(0,0,0,0.15)' : BLUE_GRAD,
+                            background: machineStep === 0 && !machineForm.name.trim() ? 'rgba(0,0,0,0.15)' : ORANGE_GRAD,
                             cursor: machineStep === 0 && !machineForm.name.trim() ? 'not-allowed' : 'pointer',
                           }}
                         >
@@ -1384,6 +1374,61 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                 </motion.div>
               </AnimatePresence></>
               )}
+              <AnimatePresence>
+                {machConfirmClose && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 z-20 flex items-center justify-center"
+                    style={{ background: 'rgba(0,0,0,0.15)' }}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.92, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.92, y: 8 }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex flex-col items-center gap-5 p-8 rounded-2xl max-w-xs text-center"
+                      style={{
+                        background: '#FFFFFF',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                        border: '1px solid rgba(0,0,0,0.04)',
+                      }}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,149,0,0.1)' }}>
+                        <X size={18} color={ORANGE} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>{editingMachine ? '¿Deseas salirte de la edición?' : '¿Abandonar el registro?'}</p>
+                        <p className="text-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                          {editingMachine ? 'Si sales ahora, los cambios no guardados se perderán.' : 'Si cierras ahora, los datos ingresados se perderán.'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2.5 w-full">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setMachConfirmClose(false)}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+                          style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                        >
+                          Seguir aquí
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => { setMachConfirmClose(false); setShowMachineModal(false) }}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                          style={{ background: ORANGE }}
+                        >
+                          Salir
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </motion.div>
         )}
@@ -1577,7 +1622,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
             style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
-            onClick={() => setShowExerciseManager(false)}
+            onClick={() => setExConfirmClose(true)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -1585,7 +1630,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className="rounded-3xl w-full flex flex-col mx-4"
+              className="rounded-3xl w-full flex flex-col mx-4 relative"
               style={exSuccess ? {
                 background: '#FFFFFF',
                 border: '1px solid rgba(0,0,0,0.04)',
@@ -1669,18 +1714,22 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                       className="text-sm text-center mt-1.5 mb-8"
                       style={{ color: 'rgba(0,0,0,0.7)' }}
                     >
-                      <span style={{ background: 'linear-gradient(135deg, #30D158, #0A84FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 700 }}>{exForm.name}</span> ahora está disponible<br />
+                      {exEditing || exCreatedCount <= 1 ? (
+                        <><span style={{ background: 'linear-gradient(135deg, #30D158, #0A84FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 700 }}>{exForm.name}</span> ahora está disponible<br /></>
+                      ) : (
+                        <><span style={{ background: 'linear-gradient(135deg, #30D158, #0A84FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 700 }}>Los ejercicios</span> ya están disponibles<br /></>
+                      )}
                       <span className="text-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>para asignar a las rutinas y máquinas del gimnasio.</span>
                     </motion.p>
                     <motion.button
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0, transition: { delay: 0.5, duration: 0.4 } }}
-                      whileHover={{ scale: 1.06, boxShadow: '0 8px 30px rgba(48,209,88,0.35), 0 0 60px rgba(48,209,88,0.1)' }}
+                      whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      onClick={() => { setShowExerciseManager(false); setExSuccess(false) }}
+                      onClick={() => { setShowExerciseManager(false); setExSuccess(false); setExCreatedCount(0) }}
                       className="px-8 py-2.5 rounded-2xl text-xs font-bold text-white cursor-pointer"
-                      style={{ background: GREEN_GRAD, boxShadow: '0 4px 20px rgba(48,209,88,0.25)' }}
+                      style={{ background: GREEN_GRAD }}
                     >
                       Cerrar
                     </motion.button>
@@ -1689,26 +1738,35 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               ) : (
                 <>
                   {/* ── Header ── */}
-                  <div className="flex items-center justify-between px-6 pt-6 pb-2">
-                    <motion.button
-                      whileHover={{ scale: 1.1, color: '#1A1A1E' }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => {
-                        if (exStep > 0) { setExStep(s => s - 1) }
-                        else { setShowExerciseManager(false) }
-                      }}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center"
-                      style={{ color: 'rgba(0,0,0,0.25)' }}
-                    >
-                      <X size={16} />
-                    </motion.button>
-                    <div className="flex items-center gap-1.5">
+                  <div className="sticky top-0 z-10 flex-shrink-0" style={{
+                    background: 'rgba(255,255,255,0.9)',
+                    borderBottom: '1px solid rgba(0,0,0,0.04)',
+                  }}>
+                    <div className="flex items-center justify-between px-4 pt-4 pb-0">
+                      <div className="flex-1" />
+                      {exEditing ? (
+                        <div className="flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
+                          <Pencil size={12} style={{ color: 'rgba(0,0,0,0.25)' }} />
+                          <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.25)' }}>Editando...</span>
+                        </div>
+                      ) : null}
+                      <motion.button
+                        whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)', color: RED }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => setExConfirmClose(true)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors"
+                        style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}
+                      >
+                        <X size={15} />
+                      </motion.button>
+                    </div>
+                    <div className="flex items-center justify-center gap-1.5" style={{ marginTop: 12, marginBottom: 16 }}>
                       {[1, 2, 3].map(s => (
                         <motion.div
                           key={s}
                           animate={{
                             width: s === exStep + 1 ? 16 : 6,
-                            background: s === exStep + 1 ? BLUE_GRAD : 'rgba(0,0,0,0.12)',
+                            background: s === exStep + 1 ? ORANGE_GRAD : 'rgba(0,0,0,0.12)',
                           }}
                           transition={{ type: 'spring', stiffness: 300, damping: 22 }}
                           className="rounded-full"
@@ -1716,12 +1774,10 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                         />
                       ))}
                     </div>
-                    <div className="w-8" />
+                    <span className="text-lg font-bold tracking-wide text-center block pb-4" style={{ color: '#1A1A1E' }}>
+                      {exStep === 0 ? 'Datos básicos' : exStep === 1 ? 'Categoría y dificultad' : 'Contenido visual'}
+                    </span>
                   </div>
-
-                  <span className="text-lg font-bold tracking-wide text-center block px-6" style={{ color: '#1A1A1E', marginBottom: 10 }}>
-                    {exStep === 0 ? 'Datos básicos' : exStep === 1 ? 'Categoría y dificultad' : 'Contenido visual'}
-                  </span>
 
                   {/* ── Body ── */}
                   <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
@@ -1776,7 +1832,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                   onClick={() => setExForm(f => ({ ...f, status: s }))}
                                   onMouseEnter={e => { if (!sel) { e.currentTarget.style.background = `${c}18`; e.currentTarget.style.color = c } }}
                                   onMouseLeave={e => { if (!sel) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.25)' } }}
-                                  className="flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200"
+                                  className="flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all duration-200"
                                   style={{
                                     background: sel ? grad : 'rgba(0,0,0,0.03)',
                                     color: sel ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
@@ -1894,7 +1950,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                                   onClick={() => setExForm(f => ({ ...f, recommendedLevel: level }))}
                                   onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = lvlHex } }}
                                   onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.25)' } }}
-                                  className="flex-1 py-3 rounded-xl text-xs font-bold capitalize transition-all duration-200"
+                                  className="flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all duration-200"
                                   style={{
                                     background: selected ? selectedBg : defaultBg,
                                     color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
@@ -1913,106 +1969,103 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
 
                     {/* Step 2 — Visual Content */}
                     {exStep === 2 && (
-                      <div className="space-y-4">
-                        <div>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Imagen <span style={{ color: 'rgba(0,0,0,0.2)' }}>(Opcional)</span></label>
-                          <div
-                            className="w-full h-32 rounded-xl flex items-center justify-center cursor-pointer overflow-hidden relative transition-all duration-200"
+                          <motion.div
+                            whileHover={{ scale: 1.03 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-full h-full min-h-[120px] rounded-xl cursor-pointer overflow-hidden relative group"
                             style={{
-                              background: exForm.imageUrl ? 'transparent' : meshInputBg,
-                              border: `1px solid ${exForm.imageUrl ? `${BLUE}30` : 'transparent'}`,
+                              background: exForm.imageUrl ? 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(48,209,88,0.08) 0%, transparent 50%), rgba(255,255,255,0.6)' : meshInputBg,
+                              border: `1px solid ${exForm.imageUrl ? 'rgba(48,209,88,0.2)' : 'transparent'}`,
                             }}
                             onClick={() => {
-                              const input = document.createElement('input')
-                              input.type = 'file'
-                              input.accept = 'image/*'
-                              input.onchange = e => {
-                                const file = (e.target as HTMLInputElement).files?.[0]
-                                if (file) {
-                                  const reader = new FileReader()
-                                  reader.onload = ev => setExForm(f => ({ ...f, imageUrl: ev.target?.result as string }))
-                                  reader.readAsDataURL(file)
+                              if (!exForm.imageUrl) {
+                                const input = document.createElement('input')
+                                input.type = 'file'
+                                input.accept = 'image/*'
+                                input.onchange = e => {
+                                  const file = (e.target as HTMLInputElement).files?.[0]
+                                  if (file) {
+                                    const reader = new FileReader()
+                                    reader.onload = ev => setExForm(f => ({ ...f, imageUrl: ev.target?.result as string }))
+                                    reader.readAsDataURL(file)
+                                  }
                                 }
+                                input.click()
                               }
-                              input.click()
                             }}
                             onMouseEnter={e => { if (!exForm.imageUrl) { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
                             onMouseLeave={e => { if (!exForm.imageUrl) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
                           >
                             {exForm.imageUrl ? (
                               <>
-                                <img src={exForm.imageUrl} alt="" className="w-full h-full object-cover rounded-xl" />
-                                <motion.button
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={e => { e.stopPropagation(); setExForm(f => ({ ...f, imageUrl: '' })) }}
-                                  className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
-                                  style={{ background: 'rgba(0,0,0,0.5)', color: '#FFF' }}
+                                <img src={exForm.imageUrl} alt="" className="w-full h-full object-cover" />
+                                <div
+                                  onClick={e => { e.stopPropagation(); const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = ev => { const file = (ev.target as HTMLInputElement).files?.[0]; if (file) { const reader = new FileReader(); reader.onload = ev2 => setExForm(f => ({ ...f, imageUrl: ev2.target?.result as string })); reader.readAsDataURL(file) } }; input.click() }}
+                                  className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 cursor-pointer"
+                                  style={{ background: 'rgba(0,0,0,0.45)' }}
                                 >
-                                  <X size={14} />
-                                </motion.button>
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={e => { e.stopPropagation(); const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = e => { const file = (e.target as HTMLInputElement).files?.[0]; if (file) { const reader = new FileReader(); reader.onload = ev => setExForm(f => ({ ...f, imageUrl: ev.target?.result as string })); reader.readAsDataURL(file) } }; input.click() }}
-                                  className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg text-[10px] font-bold"
-                                  style={{ background: 'rgba(0,0,0,0.5)', color: '#FFF' }}
-                                >
-                                  Cambiar
-                                </motion.button>
+                                  <Camera size={24} className="text-white" />
+                                  <span className="text-xs font-semibold text-white">Cambiar imagen</span>
+                                </div>
                               </>
                             ) : (
-                              <div className="flex flex-col items-center gap-1.5">
+                              <div className="flex flex-col items-center gap-1.5 py-6">
                                 <Upload size={18} style={{ color: 'rgba(0,0,0,0.2)' }} />
                                 <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir imagen</span>
                               </div>
                             )}
-                          </div>
+                          </motion.div>
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Video <span style={{ color: 'rgba(0,0,0,0.2)' }}>(Opcional)</span></label>
-                          <div
-                            className="w-full h-20 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200"
+                          <motion.div
+                            whileHover={{ scale: 1.03 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-full h-full min-h-[120px] rounded-xl cursor-pointer overflow-hidden relative group"
                             style={{
-                              background: exForm.videoUrl ? 'transparent' : meshInputBg,
-                              border: `1px solid ${exForm.videoUrl ? `${BLUE}30` : 'transparent'}`,
+                              background: exForm.videoUrl ? 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(48,209,88,0.08) 0%, transparent 50%), rgba(255,255,255,0.6)' : meshInputBg,
+                              border: `1px solid ${exForm.videoUrl ? 'rgba(48,209,88,0.2)' : 'transparent'}`,
                             }}
                             onClick={() => {
-                              const input = document.createElement('input')
-                              input.type = 'file'
-                              input.accept = 'video/*'
-                              input.onchange = e => {
-                                const file = (e.target as HTMLInputElement).files?.[0]
-                                if (file) {
-                                  const url = URL.createObjectURL(file)
-                                  setExForm(f => ({ ...f, videoUrl: url }))
+                              if (!exForm.videoUrl) {
+                                const input = document.createElement('input')
+                                input.type = 'file'
+                                input.accept = 'video/*'
+                                input.onchange = e => {
+                                  const file = (e.target as HTMLInputElement).files?.[0]
+                                  if (file) {
+                                    const url = URL.createObjectURL(file)
+                                    setExForm(f => ({ ...f, videoUrl: url }))
+                                  }
                                 }
+                                input.click()
                               }
-                              input.click()
                             }}
                             onMouseEnter={e => { if (!exForm.videoUrl) { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
                             onMouseLeave={e => { if (!exForm.videoUrl) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
                           >
                             {exForm.videoUrl ? (
                               <>
-                                <video src={exForm.videoUrl} className="w-full h-full object-cover rounded-xl" />
-                                <motion.button
-                                  whileHover={{ scale: 1.1 }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={e => { e.stopPropagation(); setExForm(f => ({ ...f, videoUrl: '' })) }}
-                                  className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
-                                  style={{ background: 'rgba(0,0,0,0.5)', color: '#FFF' }}
+                                <video src={exForm.videoUrl} className="w-full h-full object-cover" />
+                                <div
+                                  onClick={e => { e.stopPropagation(); const input = document.createElement('input'); input.type = 'file'; input.accept = 'video/*'; input.onchange = ev => { const file = (ev.target as HTMLInputElement).files?.[0]; if (file) { setExForm(f => ({ ...f, videoUrl: URL.createObjectURL(file) })) } }; input.click() }}
+                                  className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 cursor-pointer"
+                                  style={{ background: 'rgba(0,0,0,0.45)' }}
                                 >
-                                  <X size={14} />
-                                </motion.button>
+                                  <Camera size={24} className="text-white" />
+                                  <span className="text-xs font-semibold text-white">Cambiar video</span>
+                                </div>
                               </>
                             ) : (
-                              <div className="flex items-center gap-2">
-                                <Upload size={16} style={{ color: 'rgba(0,0,0,0.2)' }} />
+                              <div className="flex flex-col items-center gap-1.5 py-6">
+                                <Upload size={18} style={{ color: 'rgba(0,0,0,0.2)' }} />
                                 <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir video</span>
                               </div>
                             )}
-                          </div>
+                          </motion.div>
                         </div>
                       </div>
                     )}
@@ -2025,7 +2078,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                       whileTap={{ scale: 0.97 }}
                       onClick={() => {
                         if (exStep > 0) setExStep(s => s - 1)
-                        else setShowExerciseManager(false)
+                        else setExConfirmClose(true)
                       }}
                       className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold"
                       style={{ color: 'rgba(0,0,0,0.3)' }}
@@ -2034,7 +2087,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                       {exStep === 0 ? 'Cancelar' : 'Anterior'}
                     </motion.button>
                     <motion.button
-                      whileHover={exStep < 2 || !exForm.name.trim() ? { scale: 1 } : { scale: 1.06, boxShadow: '0 8px 30px rgba(18,112,183,0.35), 0 0 60px rgba(18,112,183,0.1)' }}
+                      whileHover={exStep < 2 || !exForm.name.trim() ? { scale: 1 } : { scale: 1.06, boxShadow: '0 8px 30px rgba(255,149,0,0.35), 0 0 60px rgba(255,149,0,0.1)' }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => {
                         if (exStep < 2) { setExStep(s => s + 1) }
@@ -2042,8 +2095,8 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                       }}
                       className="px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all duration-200"
                       style={{
-                        background: exStep < 2 ? BLUE_GRAD : GREEN_GRAD,
-                        boxShadow: exStep < 2 ? '0 4px 20px rgba(18,112,183,0.3)' : '0 4px 20px rgba(48,209,88,0.3)',
+                        background: ORANGE_GRAD,
+                        boxShadow: '0 4px 20px rgba(255,149,0,0.3)',
                         opacity: exStep === 0 && !exForm.name.trim() ? 0.5 : 1,
                       }}
                       disabled={exStep === 0 && !exForm.name.trim()}
@@ -2053,6 +2106,458 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                   </div>
                 </>
               )}
+              <AnimatePresence>
+                {exAskCreateAnother && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer"
+                      style={{ background: 'rgba(0,0,0,0.15)' }}
+                      onClick={() => setExAskCreateAnother(false)}
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.92, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.92, y: 8 }}
+                        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex flex-col items-center gap-5 p-8 rounded-2xl max-w-xs text-center cursor-default"
+                        style={{
+                          background: '#FFFFFF',
+                          boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                          border: '1px solid rgba(0,0,0,0.04)',
+                        }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(10,132,255,0.1)' }}>
+                          <Dumbbell size={18} color="#0A84FF" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>¿Desea crear otro ejercicio?</p>
+                          <p className="text-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                            Puede seguir registrando ejercicios o finalizar.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2.5 w-full">
+                          <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            setExForm({ name: '', zone: '', description: '', status: 'active', muscleGroups: [], recommendedLevel: 'principiante', imageUrl: '', videoUrl: '' })
+                            setExStep(0)
+                            setExEditing(null)
+                            setExAskCreateAnother(false)
+                          }}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+                          style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                        >
+                          Sí, crear otro
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            setExAskCreateAnother(false)
+                            setExSuccess(true)
+                          }}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                          style={{ background: GREEN_GRAD }}
+                        >
+                          No, finalizar
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <AnimatePresence>
+                {exConfirmClose && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 z-20 flex items-center justify-center"
+                    style={{ background: 'rgba(0,0,0,0.15)' }}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.92, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.92, y: 8 }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex flex-col items-center gap-5 p-8 rounded-2xl max-w-xs text-center"
+                      style={{
+                        background: '#FFFFFF',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                        border: '1px solid rgba(0,0,0,0.04)',
+                      }}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,149,0,0.1)' }}>
+                        <X size={18} color={ORANGE} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>{exEditing ? '¿Deseas salirte de la edición?' : '¿Abandonar el registro?'}</p>
+                        <p className="text-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                          {exEditing ? 'Si sales ahora, los cambios no guardados se perderán.' : 'Si cierras ahora, los datos ingresados se perderán.'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2.5 w-full">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setExConfirmClose(false)}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+                          style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                        >
+                          Seguir aquí
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => { setExConfirmClose(false); setShowExerciseManager(false); setExCreatedCount(0) }}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                          style={{ background: ORANGE }}
+                        >
+                          Salir
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Machine Preview Modal ── */}
+      <AnimatePresence>
+        {previewMachine && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            onClick={() => setPreviewMachine(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              className="rounded-3xl w-full max-w-lg flex flex-col mx-4 overflow-hidden"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)' }}
+            >
+              {/* Image */}
+              <div className="relative" style={{ height: 160, background: `${statusConfig[previewMachine.status].color}08` }}>
+                <img
+                  src={previewMachine.imageDataUrl || machineImg}
+                  alt={previewMachine.name}
+                  className="w-full h-full"
+                  style={{
+                    objectFit: previewMachine.imageDataUrl ? 'cover' : 'contain',
+                    padding: previewMachine.imageDataUrl ? 0 : '12px',
+                  }}
+                />
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setPreviewMachine(null)}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(255,255,255,0.9)', color: 'rgba(0,0,0,0.4)' }}
+                >
+                  <X size={16} />
+                </motion.button>
+              </div>
+
+              {/* Content */}
+              <div className="px-6 pt-5 pb-6">
+                <div className="flex items-start justify-between mb-3">
+                  <h2 className="text-lg font-bold" style={{ color: '#1A1A1E' }}>{previewMachine.name}</h2>
+                  <StatusBadge status={previewMachine.status} />
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <div
+                    onClick={() => setPreviewMuscleFilter('all')}
+                    className="flex items-center justify-center rounded-full transition-transform duration-200 hover:scale-110 cursor-pointer"
+                    style={{
+                      width: 38, height: 38,
+                      background: previewMuscleFilter === 'all' ? BLUE_GRAD : 'linear-gradient(180deg, #ffffff 0%, #DBEAFE 100%)',
+                      boxShadow: previewMuscleFilter === 'all' ? '0 2px 8px rgba(18,112,183,0.3)' : '0 2px 8px rgba(0,0,0,0.07)',
+                    }}
+                    title="Todos los ejercicios"
+                  >
+                    <List size={16} color={previewMuscleFilter === 'all' ? '#FFFFFF' : '#1270B7'} />
+                  </div>
+                  {previewMachine.muscleGroups.map((mg, i) => (
+                    muscleIcons[mg] ? (
+                      <div key={i} className="relative group">
+                        <div
+                          onClick={() => setPreviewMuscleFilter(mg)}
+                          className="flex items-center justify-center rounded-full transition-transform duration-200 hover:scale-110 cursor-pointer"
+                          style={{
+                            width: 38, height: 38,
+                            background: previewMuscleFilter === mg ? BLUE_GRAD : 'linear-gradient(180deg, #ffffff 0%, #DBEAFE 100%)',
+                            boxShadow: previewMuscleFilter === mg ? '0 2px 8px rgba(18,112,183,0.3)' : '0 2px 8px rgba(0,0,0,0.07)',
+                          }}
+                        >
+                          <img src={muscleIcons[mg]} alt="" className="w-5 h-5" style={{ filter: previewMuscleFilter === mg ? 'brightness(0) invert(1)' : 'none' }} />
+                        </div>
+                        <div className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 px-2 py-1 rounded-lg whitespace-nowrap text-[10px] font-medium pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" style={{ background: 'rgba(0,0,0,0.7)', color: '#FFFFFF' }}>
+                          {mg}
+                        </div>
+                      </div>
+                    ) : null
+                  ))}
+                </div>
+
+                {(() => {
+                  const allExs = getMachineExercises(previewMachine)
+                  const exs = previewMuscleFilter === 'all'
+                    ? allExs
+                    : allExs.filter(ex => ex.muscleGroups.includes(previewMuscleFilter))
+                  return exs.length > 0 ? (
+                    <div className="mb-5">
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(0,0,0,0.2)' }}>
+                        {previewMuscleFilter === 'all' ? `Todos los ejercicios (${exs.length})` : `${previewMuscleFilter} (${exs.length})`}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {exs.map(ex => (
+                          <span key={ex.id} className="px-2.5 py-1 rounded-lg text-[11px] font-medium" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }}>
+                            {ex.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-5">
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(0,0,0,0.2)' }}>
+                        {previewMuscleFilter}
+                      </p>
+                      <p className="text-xs py-2" style={{ color: 'rgba(0,0,0,0.2)' }}>
+                        No hay ejercicios de esta categoría asignados a esta máquina.
+                      </p>
+                    </div>
+                  )
+                })()}
+
+                <div className="flex items-center gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { setPreviewMachine(null); openEditMachine(previewMachine) }}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                    style={{ background: `${BLUE}10`, color: BLUE, border: `1px solid ${BLUE}25` }}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Pencil size={13} /> Editar
+                    </div>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setDeleteConfirm({ type: 'machine', id: previewMachine.id })}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                    style={{ background: RED }}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Trash2 size={13} /> Eliminar
+                    </div>
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Exercise Preview Modal ── */}
+      <AnimatePresence>
+        {previewExercise && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            onClick={() => setPreviewExercise(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 8 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              className="rounded-3xl w-full max-w-lg flex flex-col mx-4 overflow-hidden"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)' }}
+            >
+              {/* Image */}
+              <div className="relative" style={{ height: 160, background: 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(10,132,255,0.05) 0%, transparent 50%)' }}>
+                {previewExercise.imageUrl ? (
+                  <img src={previewExercise.imageUrl} alt={previewExercise.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Dumbbell size={40} style={{ color: 'rgba(48,209,88,0.2)' }} />
+                  </div>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setPreviewExercise(null)}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(255,255,255,0.9)', color: 'rgba(0,0,0,0.4)' }}
+                >
+                  <X size={16} />
+                </motion.button>
+              </div>
+
+              {/* Content */}
+              <div className="px-6 pt-5 pb-6">
+                <div className="flex items-start justify-between mb-3">
+                  <h2 className="text-lg font-bold" style={{ color: '#1A1A1E' }}>{previewExercise.name}</h2>
+                  <StatusBadge status={previewExercise.status} />
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {previewExercise.muscleGroups.map((mg, i) => (
+                    muscleIcons[mg] ? (
+                      <div key={i} className="relative group">
+                        <div className="flex items-center justify-center rounded-full" style={{ width: 38, height: 38, background: 'linear-gradient(180deg, #ffffff 0%, #DBEAFE 100%)', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+                          <img src={muscleIcons[mg]} alt="" className="w-5 h-5" />
+                        </div>
+                        <div className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 px-2 py-1 rounded-lg whitespace-nowrap text-[10px] font-medium pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10" style={{ background: 'rgba(0,0,0,0.7)', color: '#FFFFFF' }}>
+                          {mg}
+                        </div>
+                      </div>
+                    ) : null
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md font-medium" style={{
+                    background: previewExercise.recommendedLevel === 'principiante' ? 'rgba(48,209,88,0.1)' : previewExercise.recommendedLevel === 'intermedio' ? 'rgba(245,166,35,0.1)' : 'rgba(244,56,67,0.1)',
+                    color: previewExercise.recommendedLevel === 'principiante' ? '#30D158' : previewExercise.recommendedLevel === 'intermedio' ? '#F5A623' : '#F43843',
+                  }}>
+                    {previewExercise.recommendedLevel === 'principiante' ? 'Principiante' : previewExercise.recommendedLevel === 'intermedio' ? 'Intermedio' : 'Avanzado'}
+                  </span>
+                  <span className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{previewExercise.zone}</span>
+                </div>
+
+                {previewExercise.description && (
+                  <p className="text-xs mb-4" style={{ color: 'rgba(0,0,0,0.5)' }}>{previewExercise.description}</p>
+                )}
+
+                {/* Video */}
+                {previewExercise.videoUrl && (
+                  <div className="mb-4 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
+                    <video
+                      src={previewExercise.videoUrl}
+                      controls
+                      className="w-full"
+                      style={{ maxHeight: 200 }}
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { setPreviewExercise(null); openEditExercise(previewExercise) }}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                    style={{ background: `${BLUE}10`, color: BLUE, border: `1px solid ${BLUE}25` }}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Pencil size={13} /> Editar
+                    </div>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setDeleteConfirm({ type: 'exercise', id: previewExercise.id })}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                    style={{ background: RED }}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Trash2 size={13} /> Eliminar
+                    </div>
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Delete Confirm ── */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center"
+            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            onClick={() => setDeleteConfirm(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 8 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col items-center gap-5 p-8 rounded-2xl max-w-xs text-center mx-4"
+              style={{
+                background: '#FFFFFF',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                border: '1px solid rgba(0,0,0,0.04)',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${RED}15` }}>
+                <Trash2 size={18} color={RED} />
+              </div>
+              <div>
+                <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>¿Eliminar {deleteConfirm.type === 'machine' ? 'máquina' : 'ejercicio'}?</p>
+                <p className="text-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                  Esta acción no se puede deshacer.
+                </p>
+              </div>
+              <div className="flex items-center gap-2.5 w-full">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setDeleteConfirm(null)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    if (deleteConfirm.type === 'machine') {
+                      deleteMachine(deleteConfirm.id)
+                      setPreviewMachine(null)
+                    } else {
+                      deleteExercise(deleteConfirm.id)
+                      setPreviewExercise(null)
+                    }
+                    setDeleteConfirm(null)
+                  }}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                  style={{ background: RED }}
+                >
+                  Eliminar
+                </motion.button>
+              </div>
             </motion.div>
           </motion.div>
         )}

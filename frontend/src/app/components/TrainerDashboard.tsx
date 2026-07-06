@@ -153,6 +153,8 @@ export function TrainerDashboard() {
   const [equipSearchFocused, setEquipSearchFocused] = useState(false)
   const [equipStatusFilter, setEquipStatusFilter] = useState<'active' | 'maintenance' | 'inactive' | 'all'>('all')
   const [showEquipFilters, setShowEquipFilters] = useState(false)
+  const [equipViewMode, setEquipViewMode] = useState<'machines' | 'exercises'>('machines')
+  const [equipSearchHovered, setEquipSearchHovered] = useState(false)
 
 
   // ── Gym Configuration ──
@@ -433,30 +435,98 @@ export function TrainerDashboard() {
           )}
           {!selectedStudent && section === 'equipment' && (
             <div className="flex-1 flex items-center justify-center gap-3 relative">
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="flex items-center gap-3 px-4 py-2 rounded-2xl w-full"
+              {/* ── Collapsible Search (icon fixed, input fades left) ── */}
+              <div className="relative flex-shrink-0" style={{ width: 36, height: 36 }}>
+                {/* Background pill — right-anchored, grows left */}
+                <div
+                  className="absolute top-0 h-full overflow-hidden"
+                  style={{
+                    right: 0,
+                    width: equipSearchFocused || equipSearch || equipSearchHovered ? 356 : 36,
+                    borderRadius: '9999px',
+                    background: equipSearchFocused || equipSearch ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(24px) saturate(1.6)',
+                    border: equipSearchFocused || equipSearch ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                    boxShadow: equipSearchFocused || equipSearch ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
+                    transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                  onMouseEnter={() => setEquipSearchHovered(true)}
+                  onMouseLeave={() => setEquipSearchHovered(false)}
+                >
+                  <div className="flex items-center h-full">
+                    <input
+                      value={equipSearch}
+                      onChange={e => setEquipSearch(e.target.value)}
+                      onFocus={() => setEquipSearchFocused(true)}
+                      onBlur={() => setEquipSearchFocused(false)}
+                      placeholder="Buscar máquina o ejercicio..."
+                      className="bg-transparent border-none outline-none text-sm placeholder:text-black/20 text-[#1A1A1E] font-medium"
+                      style={{
+                        flex: equipSearchFocused || equipSearch || equipSearchHovered ? '1' : '0',
+                        opacity: equipSearchFocused || equipSearch || equipSearchHovered ? 1 : 0,
+                        minWidth: 0,
+                        paddingRight: equipSearchFocused || equipSearch || equipSearchHovered ? '8px' : '0',
+                        paddingLeft: equipSearchFocused || equipSearch || equipSearchHovered ? '12px' : '0',
+                        transition: 'opacity 0.25s ease 0.1s, flex 0s 0.35s, padding 0s 0.35s',
+                      }}
+                    />
+                    <div className="flex-shrink-0" style={{ width: 36, height: 36 }} />
+                  </div>
+                </div>
+                {/* Icon — always fixed, no background */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 2 }}>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: equipSearchFocused || equipSearch ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)', display: 'block' }}>
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.35-4.35" />
+                    </svg>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* ── Máquinas / Ejercicios Toggle Pill ── */}
+              <div
+                className="flex items-center rounded-xl gap-0.5 px-1"
                 style={{
-                  width: equipSearchFocused ? 460 : 340,
-                  background: equipSearchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                  height: 36,
+                  background: 'rgba(255,255,255,0.12)',
                   backdropFilter: 'blur(24px) saturate(1.6)',
-                  border: equipSearchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
-                  boxShadow: equipSearchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
-                  transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                 }}
               >
-                <Search size={16} style={{ color: equipSearchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
-                <input
-                  value={equipSearch}
-                  onChange={e => setEquipSearch(e.target.value)}
-                  onFocus={() => setEquipSearchFocused(true)}
-                  onBlur={() => setEquipSearchFocused(false)}
-                  placeholder="Buscar máquina, zona o ejercicio..."
-                  className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
-                />
-              </motion.div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setEquipViewMode('machines')}
+                  className="px-4 py-1.5 text-[11px] font-bold cursor-pointer rounded-lg transition-all duration-200"
+                  style={{
+                    background: equipViewMode === 'machines' ? BLUE_GRAD : 'transparent',
+                    color: equipViewMode === 'machines' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                    boxShadow: equipViewMode === 'machines' ? '0 2px 8px rgba(18,112,183,0.2)' : 'none',
+                  }}
+                >
+                  Máquinas
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setEquipViewMode('exercises')}
+                  className="px-4 py-1.5 text-[11px] font-bold cursor-pointer rounded-lg transition-all duration-200"
+                  style={{
+                    background: equipViewMode === 'exercises' ? BLUE_GRAD : 'transparent',
+                    color: equipViewMode === 'exercises' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                    boxShadow: equipViewMode === 'exercises' ? '0 2px 8px rgba(18,112,183,0.2)' : 'none',
+                  }}
+                >
+                  Ejercicios
+                </motion.button>
+              </div>
+
               <div>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -802,6 +872,8 @@ export function TrainerDashboard() {
       searchFocused={equipSearchFocused}
       statusFilter={equipStatusFilter}
       showBlur={showEquipFilters}
+      viewMode={equipViewMode}
+      onViewModeChange={setEquipViewMode}
       onSearchChange={setEquipSearch}
       onSearchFocus={setEquipSearchFocused}
       onStatusFilterChange={setEquipStatusFilter}
