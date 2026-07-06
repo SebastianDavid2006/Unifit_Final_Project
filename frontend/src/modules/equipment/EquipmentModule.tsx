@@ -5,9 +5,9 @@ import {
   Search, Plus, Dumbbell, X, List, Upload, Pencil, Trash2,
   ChevronDown, ChevronRight, ChevronLeft, Check, Camera,
 } from 'lucide-react'
-import { WeightsView } from '../../assets/models/WeightsModel'
-import { TrashView } from '../../assets/models/TrashModel'
-import { PenView } from '../../assets/models/PenModel'
+import { WeightsView } from '../../assets/models/ui/equipment/weights/WeightsModel'
+import { TrashView } from '../../assets/models/ui/actions/trash/TrashModel'
+import { PenView } from '../../assets/models/ui/actions/pen/PenModel'
 import machineImg from '../../assets/illustrations/objects/machine.png'
 import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
 import modalExercisesImg from '../../assets/illustrations/characters/coach/coach_bench_press.webp'
