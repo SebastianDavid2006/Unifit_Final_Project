@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronRight, Plus, X, Activity, Settings, ChevronLeft, Sparkles, Maximize2, Minimize2 } from 'lucide-react'
-import calendarImg from '../assets/illustrations/objects/calendar.png'
+import calendarImg from '../../assets/illustrations/objects/calendar.png'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'

@@ -10,11 +10,11 @@ import {
   ChevronRight, Search, Plus, ArrowUp, ArrowDown, Sparkles,
   Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu, X, Filter, Shield,
 } from 'lucide-react'
-import { StudentProfile, TABS } from './StudentProfile'
-import StudentsModule from './StudentsModule'
-import AgendaModule from './AgendaModule'
-import EquipmentPage from '../pages/EquipmentPage'
-import AdminModule from './AdminModule'
+import { StudentProfile, TABS } from '../modules/students/StudentProfile'
+import StudentsModule from '../modules/students/StudentsModule'
+import AgendaModule from '../modules/agenda/AgendaModule'
+import EquipmentPage from './EquipmentPage'
+import AdminModule from '../modules/admin/AdminModule'
 import coachImg from '../assets/illustrations/characters/coach/coach_default.webp'
 import trophyImg from '../assets/images/trophy.png'
 

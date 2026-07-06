@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, Plus, ClipboardList, Menu, ChevronRight } from 'lucide-react'
-import studentsImg from '../assets/illustrations/characters/students/students_group.webp'
+import studentsImg from '../../assets/illustrations/characters/students/students_group.webp'
 import NewStudentModal from './NewStudentModal'
 
 const RED = '#F43843'
