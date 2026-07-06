@@ -612,7 +612,7 @@ export default function AgendaModule() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setDayModalDate(null)}
           >
             <motion.div
@@ -620,7 +620,7 @@ export default function AgendaModule() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="rounded-2xl w-full max-w-sm overflow-hidden"
+              className="rounded-3xl w-full max-w-sm overflow-hidden"
               style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
               onClick={e => e.stopPropagation()}
             >
@@ -681,7 +681,7 @@ export default function AgendaModule() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setShowWeekModal(false)}
           >
             <motion.div
@@ -689,7 +689,7 @@ export default function AgendaModule() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="rounded-2xl w-full max-w-lg overflow-hidden"
+              className="rounded-3xl w-full max-w-lg overflow-hidden"
               style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
               onClick={e => e.stopPropagation()}
             >
@@ -734,7 +734,7 @@ export default function AgendaModule() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setShowApptModal(false)}
           >
             <motion.div
@@ -742,7 +742,7 @@ export default function AgendaModule() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="rounded-2xl w-full max-w-md overflow-hidden"
+              className="rounded-3xl w-full max-w-md overflow-hidden"
               style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
               onClick={e => e.stopPropagation()}
             >
@@ -815,7 +815,7 @@ export default function AgendaModule() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setShowPublishModal(false)}
           >
             <motion.div
@@ -823,7 +823,7 @@ export default function AgendaModule() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="rounded-2xl w-full max-w-sm overflow-hidden"
+              className="rounded-3xl w-full max-w-sm overflow-hidden"
               style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
               onClick={e => e.stopPropagation()}
             >

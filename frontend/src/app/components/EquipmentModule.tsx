@@ -6,6 +6,7 @@ import {
   Search, Plus, Dumbbell, X, List, Upload, Pencil, Trash2,
   ChevronDown, ChevronRight, ChevronLeft, Check, Camera,
 } from 'lucide-react'
+import { WeightsView } from './WeightsModel'
 import machineImg from '../../assets/illustrations/objects/machine.png'
 import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
 import modalExercisesImg from '../../assets/illustrations/characters/modal_exercises.png'
@@ -148,6 +149,9 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   const [previewMuscleFilter, setPreviewMuscleFilter] = useState<string>('all')
   const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'machine' | 'exercise'; id: number } | null>(null)
+  const [showCreatedToast, setShowCreatedToast] = useState(false)
+  const [createdMachineName, setCreatedMachineName] = useState('')
+  const [toastProgress, setToastProgress] = useState(100)
   const [showExerciseManager, setShowExerciseManager] = useState(false)
   const [machineSuccess, setMachineSuccess] = useState(false)
   const [machConfirmClose, setMachConfirmClose] = useState(false)
@@ -186,6 +190,21 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   useEffect(() => {
     setActiveMuscleFilter('Todos')
   }, [machineStep])
+
+  useEffect(() => {
+    if (showCreatedToast) {
+      setToastProgress(100)
+      const start = Date.now()
+      const duration = 4500
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - start
+        const remaining = Math.max(0, 100 - (elapsed / duration) * 100)
+        setToastProgress(remaining)
+        if (remaining <= 0) clearInterval(interval)
+      }, 30)
+      return () => clearInterval(interval)
+    }
+  }, [showCreatedToast])
 
   function getCinematicFilter(intensity: number): string {
     const t = intensity / 100
@@ -818,7 +837,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                     transition={{ delay: 0.5, duration: 0.4 }}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => { setShowMachineModal(false); setMachineSuccess(false) }}
+                    onClick={() => { setShowMachineModal(false); setMachineSuccess(false); setCreatedMachineName(machineForm.name.trim()); setShowCreatedToast(true); setToastProgress(100); setTimeout(() => setShowCreatedToast(false), 4500) }}
                     className="px-8 py-2.5 rounded-2xl text-xs font-bold text-white cursor-pointer"
                     style={{ background: GREEN_GRAD }}
                   >
@@ -864,7 +883,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                           key={s}
                           animate={{
                             width: s === machineStep + 1 ? 16 : 6,
-                            background: s === machineStep + 1 ? ORANGE_GRAD : 'rgba(0,0,0,0.12)',
+                            background: s === machineStep + 1 ? (editingMachine ? ORANGE_GRAD : BLUE_GRAD) : 'rgba(0,0,0,0.12)',
                           }}
                           transition={{ type: 'spring', stiffness: 300, damping: 22 }}
                           className="rounded-full"
@@ -1351,12 +1370,12 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                       </div>
                       <div className="flex-1 flex justify-end">
                         <motion.button
-                          whileHover={machineStep < 2 || (machineStep === 2 && true) ? { scale: 1.06, boxShadow: '0 8px 30px rgba(255,149,0,0.35), 0 0 60px rgba(255,149,0,0.1)' } : {}}
+                          whileHover={machineStep < 2 || (machineStep === 2 && true) ? { scale: 1.06 } : {}}
                           whileTap={{ scale: 0.92 }}
                           onClick={() => { if (machineStep < 2) setMachineStep(s => s + 1); else saveMachine() }}
                           className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
                           style={{
-                            background: machineStep === 0 && !machineForm.name.trim() ? 'rgba(0,0,0,0.15)' : ORANGE_GRAD,
+                            background: machineStep === 0 && !machineForm.name.trim() ? 'rgba(0,0,0,0.15)' : (editingMachine ? ORANGE_GRAD : (machineStep === 2 ? GREEN_GRAD : BLUE_GRAD)),
                             cursor: machineStep === 0 && !machineForm.name.trim() ? 'not-allowed' : 'pointer',
                           }}
                         >
@@ -1396,8 +1415,8 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                         border: '1px solid rgba(0,0,0,0.04)',
                       }}
                     >
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,149,0,0.1)' }}>
-                        <X size={18} color={ORANGE} />
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: editingMachine ? 'rgba(255,149,0,0.1)' : `${RED}15` }}>
+                        <X size={18} color={editingMachine ? ORANGE : RED} />
                       </div>
                       <div>
                         <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>{editingMachine ? '¿Deseas salirte de la edición?' : '¿Abandonar el registro?'}</p>
@@ -1420,7 +1439,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                           whileTap={{ scale: 0.98 }}
                           onClick={() => { setMachConfirmClose(false); setShowMachineModal(false) }}
                           className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                          style={{ background: ORANGE }}
+                          style={{ background: editingMachine ? ORANGE : RED }}
                         >
                           Salir
                         </motion.button>
@@ -2193,8 +2212,8 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                         border: '1px solid rgba(0,0,0,0.04)',
                       }}
                     >
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,149,0,0.1)' }}>
-                        <X size={18} color={ORANGE} />
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: exEditing ? 'rgba(255,149,0,0.1)' : `${RED}15` }}>
+                        <X size={18} color={exEditing ? ORANGE : RED} />
                       </div>
                       <div>
                         <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>{exEditing ? '¿Deseas salirte de la edición?' : '¿Abandonar el registro?'}</p>
@@ -2217,7 +2236,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                           whileTap={{ scale: 0.98 }}
                           onClick={() => { setExConfirmClose(false); setShowExerciseManager(false); setExCreatedCount(0) }}
                           className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                          style={{ background: ORANGE }}
+                          style={{ background: exEditing ? ORANGE : RED }}
                         >
                           Salir
                         </motion.button>
@@ -2529,6 +2548,55 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                 </motion.button>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Creation Toast (bottom-right) ── */}
+      <AnimatePresence>
+        {showCreatedToast && createdMachineName && (
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-6 right-6 z-[70] flex items-center gap-4 rounded-2xl overflow-hidden"
+            style={{
+              background: 'rgba(255,255,255,0.75)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              boxShadow: '0 24px 80px rgba(18,112,183,0.15), 0 8px 32px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(255,255,255,0.5)',
+            }}
+          >
+            {/* Gradient accent strip */}
+            <div className="w-1 flex-shrink-0 self-stretch" style={{ background: 'linear-gradient(180deg, #1270B7, #7ec8e3)' }} />
+
+            {/* 3D Model */}
+            <div className="w-[76px] h-[76px] flex-shrink-0 rounded-xl overflow-hidden ml-4" style={{ background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), rgba(248,251,255,0.8)' }}>
+              <WeightsView />
+            </div>
+
+            {/* Text */}
+            <div className="flex-1 min-w-0 py-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>¡Máquina creada!</span>
+                <motion.span
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.2 }}
+                  className="text-base"
+                >✓</motion.span>
+              </div>
+              <p className="text-xs font-medium mt-0.5 truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{createdMachineName}</p>
+            </div>
+
+            {/* Progress bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: 'rgba(0,0,0,0.06)' }}>
+              <motion.div
+                style={{ width: `${toastProgress}%`, height: '100%', background: 'linear-gradient(90deg, #1270B7, #7ec8e3)' }}
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

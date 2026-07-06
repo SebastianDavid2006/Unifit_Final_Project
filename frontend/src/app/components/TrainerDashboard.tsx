@@ -16,6 +16,7 @@ import AgendaModule from './AgendaModule'
 import EquipmentModule from './EquipmentModule'
 import AdminModule from './AdminModule'
 import coachImg from '../../assets/illustrations/characters/coach.png'
+import trophyImg from '../../assets/images/trophy.png'
 
 // ── Colors ──
 
@@ -168,6 +169,7 @@ export function TrainerDashboard() {
   const [trainersCount, setTrainersCount] = useState('8')
   const [showSavedToast, setShowSavedToast] = useState(false)
   const [configTab, setConfigTab] = useState<'gym' | 'admin'>('gym')
+const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month')
   const [instagram, setInstagram] = useState('@unifit_gym')
   const [facebook, setFacebook] = useState('UNIFIT Gym')
   const [website, setWebsite] = useState('www.unifit.edu/gimnasio')
@@ -880,57 +882,114 @@ export function TrainerDashboard() {
   ) }
 
   function renderStats() {
+    const kpiData = [
+      { label: 'Estudiantes Activos', value: '847', change: '+12%', color: BLUE, icon: Users },
+      { label: 'Asistencia Promedio', value: '94%', change: '+3%', color: '#30D158', icon: Activity },
+      { label: 'Retención Mensual', value: '91%', change: '+5%', color: '#BF5AF2', icon: Target },
+    ]
+    const miniStats = [
+      { label: 'H/M', value: '58% / 42%', color: BLUE, icon: Users },
+      { label: 'Edad Promedio', value: '22 años', color: '#30D158', icon: Clock },
+      { label: 'Top Facultad', value: 'Ingeniería', color: '#FF9F0A', icon: Award },
+      { label: 'Nuevos Este Mes', value: '67', color: '#BF5AF2', icon: Sparkles },
+    ]
     return (
       <div className="p-8 space-y-6 max-w-[1440px] mx-auto relative">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
-            <div>
-              <h1 className="text-[1.8rem] font-extrabold" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>Estadísticas</h1>
-              <p className="text-sm font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Métricas de rendimiento y crecimiento</p>
+        {/* ── Premium Banner ── */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="relative rounded-3xl mb-8"
+          style={{
+            background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.03)',
+          }}
+        >
+          <div className="absolute inset-0 pointer-events-none rounded-3xl overflow-hidden" style={{
+            maskImage: 'linear-gradient(to right, black 60%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, black 60%, transparent 100%)'
+          }}>
+            <div className="absolute inset-0 opacity-30" style={{
+              background: 'radial-gradient(ellipse at 80% 10%, rgba(0,122,255,0.03) 0%, transparent 40%), radial-gradient(ellipse at 10% 80%, rgba(245,166,35,0.02) 0%, transparent 40%), radial-gradient(ellipse at 50% 50%, rgba(230,57,70,0.02) 0%, transparent 50%)',
+            }} />
+          </div>
+          <div style={{ position: 'absolute', right: 40, bottom: 0, height: 170, width: 200, zIndex: 20, pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', width: '80%', height: '50%', background: 'rgba(191,90,242,0.1)', filter: 'blur(30px)', borderRadius: '50%' }} />
+            <img src={trophyImg} alt="Trofeo" className="w-full h-full object-contain drop-shadow-xl relative" style={{ objectPosition: 'center bottom' }} />
+          </div>
+          <div className="relative z-10 p-8 flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="w-1 h-12 rounded-full" style={{ background: BLUE_GRAD }} />
+              <div>
+                <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Estadísticas</h1>
+                <p className="text-xs mt-1" style={{ color: 'rgba(0,0,0,0.4)' }}>Métricas de rendimiento y crecimiento</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 p-0.5 rounded-xl" style={{ background: 'rgba(0,0,0,0.04)' }}>
+              {(['week', 'month', 'year'] as const).map(p => (
+                <button key={p} onClick={() => setStatsPeriod(p)}
+                  className="px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all"
+                  style={{ background: statsPeriod === p ? BLUE_GRAD : 'transparent', color: statsPeriod === p ? '#fff' : 'rgba(0,0,0,0.3)' }}
+                >{p === 'week' ? 'Semana' : p === 'month' ? 'Mes' : 'Año'}</button>
+              ))}
             </div>
           </div>
         </motion.div>
 
+        {/* ── KPI Cards ── */}
         <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: 'Estudiantes Activos', value: '847', change: '+12%', color: BLUE },
-            { label: 'Asistencia Promedio', value: '94%', change: '+3%', color: '#30D158' },
-            { label: 'Retención Mensual', value: '91%', change: '+5%', color: '#BF5AF2' },
-          ].map((kpi, i) => (
-            <motion.div
-              key={kpi.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.06 }}
-              className="rounded-2xl p-5 premium-card"
-            >
-              <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.4)' }}>{kpi.label}</p>
-              <p className="text-3xl font-extrabold mt-1" style={{ color: '#1A1A1E' }}>{kpi.value}</p>
-              <div className="flex items-center gap-1 mt-1">
-                <ArrowUp size={12} style={{ color: kpi.color }} />
-                <span className="text-xs font-bold" style={{ color: kpi.color }}>{kpi.change}</span>
-                <span className="text-xs" style={{ color: 'rgba(0,0,0,0.25)' }}>vs. mes anterior</span>
-              </div>
-            </motion.div>
-          ))}
+          {kpiData.map((kpi, i) => {
+            const Icon = kpi.icon
+            return (
+              <motion.div
+                key={kpi.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + i * 0.06 }}
+                whileHover={{ scale: 1.02, y: -2 }}
+                className="rounded-2xl p-6 premium-card relative overflow-hidden cursor-default"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 rounded-full translate-x-8 -translate-y-8 opacity-[0.06]" style={{ background: kpi.color }} />
+                <div className="flex items-start justify-between mb-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${kpi.color}12` }}>
+                    <Icon size={17} style={{ color: kpi.color }} />
+                  </div>
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ background: `${kpi.color}10` }}>
+                    <ArrowUp size={10} style={{ color: kpi.color }} />
+                    <span className="text-[10px] font-bold" style={{ color: kpi.color }}>{kpi.change}</span>
+                  </div>
+                </div>
+                <p className="text-[11px] font-semibold" style={{ color: 'rgba(0,0,0,0.4)' }}>{kpi.label}</p>
+                <p className="text-3xl font-extrabold mt-1" style={{ color: '#1A1A1E' }}>{kpi.value}</p>
+                <p className="text-[10px] mt-1.5" style={{ color: 'rgba(0,0,0,0.2)' }}>vs. período anterior</p>
+              </motion.div>
+            )
+          })}
         </div>
 
+        {/* ── Charts ── */}
         <div className="grid grid-cols-2 gap-4">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
+            whileHover={{ scale: 1.01 }}
             className="rounded-2xl p-6 premium-card"
           >
-            <p className="text-xs font-bold mb-4" style={{ color: 'rgba(0,0,0,0.3)' }}>ASISTENCIA SEMANAL</p>
-            <ResponsiveContainer width="100%" height={200}>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
+                <BarChart3 size={14} style={{ color: BLUE }} />
+              </div>
+              <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>ASISTENCIA SEMANAL</span>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
               <BarChart data={weeklyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
                 <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                <Bar dataKey="asistentes" radius={[6, 6, 0, 0]}>
+                <Bar dataKey="asistentes" radius={[8, 8, 0, 0]}>
                   {weeklyData.map((_, i) => (
                     <Cell key={i} fill={i === 2 || i === 4 ? BLUE : 'rgba(18,112,183,0.15)'} />
                   ))}
@@ -943,10 +1002,16 @@ export function TrainerDashboard() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            whileHover={{ scale: 1.01 }}
             className="rounded-2xl p-6 premium-card"
           >
-            <p className="text-xs font-bold mb-4" style={{ color: 'rgba(0,0,0,0.3)' }}>TENDENCIA DE CRECIMIENTO</p>
-            <ResponsiveContainer width="100%" height={200}>
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
+                <TrendingUp size={14} style={{ color: BLUE }} />
+              </div>
+              <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>TENDENCIA DE CRECIMIENTO</span>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={[
                 { mes: 'Ene', estudiantes: 520 }, { mes: 'Feb', estudiantes: 580 },
                 { mes: 'Mar', estudiantes: 610 }, { mes: 'Abr', estudiantes: 680 },
@@ -968,24 +1033,27 @@ export function TrainerDashboard() {
           </motion.div>
         </div>
 
+        {/* ── Mini Stats ── */}
         <div className="grid grid-cols-4 gap-3">
-          {[
-            { label: 'H/M', value: '58% / 42%', color: BLUE },
-            { label: 'Edad Promedio', value: '22 años', color: '#30D158' },
-            { label: 'Top Facultad', value: 'Ingeniería', color: '#FF9F0A' },
-            { label: 'Nuevos Este Mes', value: '67', color: '#BF5AF2' },
-          ].map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 + i * 0.04 }}
-              className="rounded-xl p-4 premium-card text-center"
-            >
-              <p className="text-[10px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>{s.label}</p>
-              <p className="text-base font-extrabold mt-1" style={{ color: s.color }}>{s.value}</p>
-            </motion.div>
-          ))}
+          {miniStats.map((s, i) => {
+            const Icon = s.icon
+            return (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 + i * 0.04 }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                className="rounded-xl p-4 premium-card text-center cursor-default"
+              >
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center mx-auto mb-2" style={{ background: `${s.color}10` }}>
+                  <Icon size={13} style={{ color: s.color }} />
+                </div>
+                <p className="text-[10px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>{s.label}</p>
+                <p className="text-base font-extrabold mt-1" style={{ color: s.color }}>{s.value}</p>
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     )
