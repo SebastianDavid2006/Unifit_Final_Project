@@ -11,11 +11,10 @@ import {
   muscleIcons, statusConfig, meshInputBg, meshInputHover, muscleToZones,
 } from '../../data/constants'
 import { StatusBadge } from '../../components/ui/StatusBadge'
-import machineImg from '../../assets/illustrations/objects/machine.png'
-import machineTreadmillImg from '../../assets/illustrations/objects/machine-treadmill.png'
+import machineImg from '../../assets/illustrations/modules/equipment_module.webp'
+import machineTreadmillImg from '../../assets/illustrations/equipment/treadmill.webp'
+import machineExercisesImg from '../../assets/illustrations/equipment/cable_machine.webp'
 import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
-import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
-import checkSuccessImg from '../../assets/objects/ui/check_success.png'
 
 interface MachineModalProps {
   show: boolean

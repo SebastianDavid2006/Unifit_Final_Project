@@ -3,7 +3,7 @@ import { BLUE, RED, ORANGE, GREEN, YELLOW, BLUE_GRAD, muscleIcons, statusConfig 
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Pencil, Trash2, List } from 'lucide-react'
-import machineImg from '../../assets/illustrations/objects/machine.png'
+import machineImg from '../../assets/illustrations/modules/equipment_module.webp'
 
 interface MachinePreviewModalProps {
   machine: Machine | null

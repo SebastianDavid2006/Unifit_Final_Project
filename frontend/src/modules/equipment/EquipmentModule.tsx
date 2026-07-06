@@ -8,13 +8,12 @@ import {
 import { WeightsView } from '../../assets/models/ui/equipment/weights/WeightsModel'
 import { TrashView } from '../../assets/models/ui/actions/trash/TrashModel'
 import { PenView } from '../../assets/models/ui/actions/pen/PenModel'
-import machineImg from '../../assets/illustrations/objects/machine.png'
-import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
+import machineImg from '../../assets/illustrations/modules/equipment_module.webp'
+import machineExercisesImg from '../../assets/illustrations/equipment/cable_machine.webp'
 import modalExercisesImg from '../../assets/illustrations/characters/coach/coach_bench_press.webp'
 import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
 import coachExerciseSuccessImg from '../../assets/illustrations/characters/coach/coach_exercise_success.webp'
-import machineTreadmillImg from '../../assets/illustrations/objects/machine-treadmill.png'
-import checkSuccessImg from '../../assets/objects/ui/check_success.png'
+import machineTreadmillImg from '../../assets/illustrations/equipment/treadmill.webp'
 import { initialMachines, initialExercises } from '../../data/mockData'
 import { BLUE, BLUE_GRAD, GREEN_GRAD, ORANGE_GRAD, RED, ORANGE, muscleIcons, statusConfig } from '../../data/constants'
 import type { Machine, Exercise, Status } from '../../data/types'
@@ -723,7 +722,7 @@ export default function EquipmentModule({
               <p className="text-xs font-medium mt-0.5 truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{createToast.name}</p>
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: 'rgba(0,0,0,0.06)' }}>
-              <div style={{ width: `${createToast.progress}%`, height: '100%', background: 'linear-gradient(90deg, #F5A623, #FF8C42)', transition: 'width 0.1s linear' }} />
+              <div style={{ width: `${createToast.progress}%`, height: '100%', background: 'linear-gradient(90deg, #1270B7, #1A8CDB)', transition: 'width 0.1s linear' }} />
             </div>
           </motion.div>
         )}

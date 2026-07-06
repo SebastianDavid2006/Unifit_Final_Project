@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import Cropper from 'react-easy-crop'
 import { X } from 'lucide-react'
 import { BLUE, RED, BLUE_GRAD } from '../../data/constants'
-import machineImg from '../../assets/illustrations/objects/machine.png'
+import machineImg from '../../assets/illustrations/modules/equipment_module.webp'
 
 interface ImageEditorModalProps {
   show: boolean

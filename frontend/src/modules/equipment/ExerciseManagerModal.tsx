@@ -12,7 +12,7 @@ import {
 } from '../../data/constants'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import coachExerciseSuccessImg from '../../assets/illustrations/characters/coach/coach_exercise_success.webp'
-import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
+import machineExercisesImg from '../../assets/illustrations/equipment/cable_machine.webp'
 import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
 
 interface ExerciseManagerModalProps {
@@ -202,7 +202,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                         key={s}
                         animate={{
                           width: s === props.step + 1 ? 16 : 6,
-                          background: s === props.step + 1 ? ORANGE_GRAD : 'rgba(0,0,0,0.12)',
+                          background: s === props.step + 1 ? (props.editing ? ORANGE_GRAD : BLUE_GRAD) : 'rgba(0,0,0,0.12)',
                         }}
                         transition={{ type: 'spring', stiffness: 300, damping: 22 }}
                         className="rounded-full"
@@ -523,7 +523,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                     {props.step === 0 ? 'Cancelar' : 'Anterior'}
                   </motion.button>
                   <motion.button
-                    whileHover={props.step < 2 || !props.form.name.trim() ? { scale: 1 } : { scale: 1.06, boxShadow: '0 8px 30px rgba(255,149,0,0.35), 0 0 60px rgba(255,149,0,0.1)' }}
+                    whileHover={props.step < 2 || !props.form.name.trim() ? { scale: 1 } : { scale: 1.06, boxShadow: props.editing ? '0 8px 30px rgba(255,149,0,0.35), 0 0 60px rgba(255,149,0,0.1)' : '0 8px 30px rgba(18,112,183,0.35), 0 0 60px rgba(18,112,183,0.1)' }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => {
                       if (props.step < 2) { props.onStepChange(props.step + 1) }
@@ -531,8 +531,8 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                     }}
                     className="px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all duration-200"
                     style={{
-                      background: ORANGE_GRAD,
-                      boxShadow: '0 4px 20px rgba(255,149,0,0.3)',
+                      background: props.editing ? ORANGE_GRAD : BLUE_GRAD,
+                      boxShadow: props.editing ? '0 4px 20px rgba(255,149,0,0.3)' : '0 4px 20px rgba(18,112,183,0.3)',
                       opacity: props.step === 0 && !props.form.name.trim() ? 0.5 : 1,
                     }}
                     disabled={props.step === 0 && !props.form.name.trim()}
