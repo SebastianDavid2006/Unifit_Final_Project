@@ -11,9 +11,9 @@ import {
   muscleIcons, statusConfig, meshInputBg, meshInputHover,
 } from '../../data/constants'
 import { StatusBadge } from '../../components/ui/StatusBadge'
-import coachExerciseSuccessImg from '../../../assets/illustrations/characters/coach_exercise_success.png'
+import coachExerciseSuccessImg from '../../../assets/illustrations/characters/coach/coach_exercise_success.webp'
 import machineExercisesImg from '../../../assets/illustrations/objects/machine_exercises.png'
-import coachCongratsImg from '../../../assets/illustrations/characters/coach_congratulations.png'
+import coachCongratsImg from '../../../assets/illustrations/characters/coach/coach_congratulations.webp'
 
 interface ExerciseManagerModalProps {
   show: boolean
@@ -40,6 +40,7 @@ interface ExerciseManagerModalProps {
   onConfirmClose: (v: boolean) => void
   onAskCreateAnother: (v: boolean) => void
   onCreatedCountChange: (v: number) => void
+  onCreateAnotherNo: () => void
 }
 
 export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
@@ -593,7 +594,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           props.onAskCreateAnother(false)
-                          // showSuccess will be set to true by parent
+                          props.onCreateAnotherNo()
                         }}
                         className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
                         style={{ background: GREEN_GRAD }}

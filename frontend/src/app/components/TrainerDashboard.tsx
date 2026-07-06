@@ -13,9 +13,9 @@ import {
 import { StudentProfile, TABS } from './StudentProfile'
 import StudentsModule from './StudentsModule'
 import AgendaModule from './AgendaModule'
-import EquipmentModule from '../pages/equipment/EquipmentModule'
+import EquipmentPage from '../pages/EquipmentPage'
 import AdminModule from './AdminModule'
-import coachImg from '../../assets/illustrations/characters/coach.png'
+import coachImg from '../../assets/illustrations/characters/coach/coach_default.webp'
 import trophyImg from '../../assets/images/trophy.png'
 
 // ── Colors ──
@@ -868,7 +868,7 @@ const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month
   }
 
   function renderEquipment() { return (
-    <EquipmentModule
+    <EquipmentPage
       search={equipSearch}
       searchFocused={equipSearchFocused}
       statusFilter={equipStatusFilter}

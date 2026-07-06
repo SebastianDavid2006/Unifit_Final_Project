@@ -5,14 +5,14 @@ import {
   Search, Plus, Dumbbell, X, List, Upload, Pencil, Trash2,
   ChevronDown, ChevronRight, ChevronLeft, Check, Camera,
 } from 'lucide-react'
-import { WeightsView } from '../../components/models/WeightsModel'
-import { TrashView } from '../../components/models/TrashModel'
-import { PenView } from '../../components/models/PenModel'
+import { WeightsView } from '../../../assets/models/WeightsModel'
+import { TrashView } from '../../../assets/models/TrashModel'
+import { PenView } from '../../../assets/models/PenModel'
 import machineImg from '../../../assets/illustrations/objects/machine.png'
 import machineExercisesImg from '../../../assets/illustrations/objects/machine_exercises.png'
-import modalExercisesImg from '../../../assets/illustrations/characters/modal_exercises.png'
-import coachCongratsImg from '../../../assets/illustrations/characters/coach_congratulations.png'
-import coachExerciseSuccessImg from '../../../assets/illustrations/characters/coach_exercise_success.png'
+import modalExercisesImg from '../../../assets/illustrations/characters/coach/coach_bench_press.webp'
+import coachCongratsImg from '../../../assets/illustrations/characters/coach/coach_congratulations.webp'
+import coachExerciseSuccessImg from '../../../assets/illustrations/characters/coach/coach_exercise_success.webp'
 import machineTreadmillImg from '../../../assets/illustrations/objects/machine-treadmill.png'
 import checkSuccessImg from '../../../assets/objects/ui/check_success.png'
 import { initialMachines, initialExercises } from '../../data/mockData'
@@ -56,6 +56,8 @@ export default function EquipmentModule({
   const [previewMuscleFilter, setPreviewMuscleFilter] = useState<string>('all')
   const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'machine' | 'exercise'; id: number } | null>(null)
+  const [pendingMachineToast, setPendingMachineToast] = useState<{ name: string; edited: boolean } | null>(null)
+  const [pendingExerciseToast, setPendingExerciseToast] = useState<{ name: string } | null>(null)
 
   const [showImageEditor, setShowImageEditor] = useState(false)
   const [imageToEdit, setImageToEdit] = useState('')
@@ -67,6 +69,8 @@ export default function EquipmentModule({
 
   const [showMuscleDropdown, setShowMuscleDropdown] = useState(false)
   const muscleDropdownRef = useRef<HTMLButtonElement>(null)
+
+  const [activeMuscleFilter, setActiveMuscleFilter] = useState('Todos')
 
   const zones = useMemo(() => [...new Set(ex.exercises.map(e => e.zone))], [ex.exercises])
 
@@ -97,8 +101,6 @@ export default function EquipmentModule({
     return ex.exercises.filter(e => zonesForMuscle.includes(e.zone))
   }, [activeMuscleFilter, ex.exercises])
 
-  const [activeMuscleFilter, setActiveMuscleFilter] = useState('Todos')
-
   const meshInputBg = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'
   const meshInputHover = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'
 
@@ -113,6 +115,22 @@ export default function EquipmentModule({
       img.src = imageToEdit
     }
   }, [imageToEdit])
+
+  useEffect(() => {
+    if (!machine.showModal && pendingMachineToast) {
+      const { name, edited } = pendingMachineToast
+      if (edited) editToast.trigger(name)
+      else createToast.trigger(name)
+      setPendingMachineToast(null)
+    }
+  }, [machine.showModal])
+
+  useEffect(() => {
+    if (!ex.showModal && pendingExerciseToast) {
+      editToast.trigger(pendingExerciseToast.name)
+      setPendingExerciseToast(null)
+    }
+  }, [ex.showModal])
 
   function getMachineExercises(m: Machine) {
     return ex.exercises.filter(e => m.exerciseIds.includes(e.id))
@@ -170,19 +188,24 @@ export default function EquipmentModule({
   function handleSaveMachine() {
     const result = machine.save()
     if (!result) return
-    if (result.edited) {
-      editToast.trigger(result.name)
-    } else {
-      createToast.trigger(result.name)
-    }
+    machine.setShowSuccess(true)
+    setPendingMachineToast({ name: result.name, edited: result.edited })
   }
 
   function handleSaveExercise() {
     const result = ex.save()
     if (!result) return
-    if (result.edited) {
-      editToast.trigger(result.name)
+    if (result.wasNew) {
+      ex.setAskCreateAnother(true)
+    } else {
+      ex.setShowSuccess(true)
+      setPendingExerciseToast({ name: result.name })
     }
+  }
+
+  function handleExerciseCreateAnotherNo() {
+    ex.setShowSuccess(true)
+    ex.setCreatedCount(0)
   }
 
   function handleDelete() {
@@ -532,6 +555,7 @@ export default function EquipmentModule({
         onConfirmClose={(v) => ex.setConfirmClose(v)}
         onAskCreateAnother={(v) => ex.setAskCreateAnother(v)}
         onCreatedCountChange={(v) => ex.setCreatedCount(v)}
+        onCreateAnotherNo={handleExerciseCreateAnotherNo}
       />
 
       {/* ── Machine Preview Modal ── */}

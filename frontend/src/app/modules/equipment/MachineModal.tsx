@@ -13,7 +13,7 @@ import {
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import machineImg from '../../../assets/illustrations/objects/machine.png'
 import machineTreadmillImg from '../../../assets/illustrations/objects/machine-treadmill.png'
-import coachCongratsImg from '../../../assets/illustrations/characters/coach_congratulations.png'
+import coachCongratsImg from '../../../assets/illustrations/characters/coach/coach_congratulations.webp'
 import machineExercisesImg from '../../../assets/illustrations/objects/machine_exercises.png'
 import checkSuccessImg from '../../../assets/objects/ui/check_success.png'
 
@@ -174,7 +174,7 @@ export function MachineModal(props: MachineModalProps) {
                   transition={{ delay: 0.5, duration: 0.4 }}
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => { props.onClose(); props.onSave() }}
+                  onClick={() => { props.onClose() }}
                   className="px-8 py-2.5 rounded-2xl text-xs font-bold text-white cursor-pointer"
                   style={{ background: GREEN_GRAD }}
                 >
