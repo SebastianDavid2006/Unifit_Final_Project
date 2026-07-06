@@ -26,12 +26,10 @@ function Model() {
   })
 
   return (
-    <group rotation={[-0.25, 0, 0]}>
-      <group ref={ref}>
-        <Center>
-          <Clone object={scene} />
-        </Center>
-      </group>
+    <group ref={ref} rotation={[0, 0, -0.7]}>
+      <Center>
+        <Clone object={scene} />
+      </Center>
     </group>
   )
 }

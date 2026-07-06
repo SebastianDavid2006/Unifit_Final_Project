@@ -909,8 +909,8 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                         <div className="flex-1" />
                         {editingMachine ? (
                           <div className="flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
-                            <div className="w-5 h-5 flex-shrink-0">
-                              <PenView />
+                            <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
+                              <Pencil size={12} style={{ color: 'rgba(0,0,0,0.25)' }} />
                             </div>
                             <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.25)' }}>Editando...</span>
                           </div>
@@ -1813,10 +1813,10 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                       <div className="flex-1" />
                       {exEditing ? (
                         <div className="flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
-                          <div className="w-5 h-5 flex-shrink-0">
-                            <PenView />
-                          </div>
-                          <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.25)' }}>Editando...</span>
+                          <div className="w-5 h-5 flex-shrink-0 flex items-center justify-center">
+                              <Pencil size={12} style={{ color: 'rgba(0,0,0,0.25)' }} />
+                            </div>
+                            <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.25)' }}>Editando...</span>
                         </div>
                       ) : null}
                       <motion.button
@@ -2667,7 +2667,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               <p className="text-xs font-medium mt-0.5 truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{editedName}</p>
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: 'rgba(0,0,0,0.06)' }}>
-              <div style={{ width: `${toastEditedProgress}%`, height: '100%', background: 'linear-gradient(90deg, #1270B7, #7ec8e3)', transition: 'width 0.1s linear' }} />
+              <div style={{ width: `${toastEditedProgress}%`, height: '100%', background: 'linear-gradient(90deg, #F5A623, #FF8C42)', transition: 'width 0.1s linear' }} />
             </div>
           </motion.div>
         )}
@@ -2703,7 +2703,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
 
             {/* Progress bar */}
             <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: 'rgba(0,0,0,0.06)' }}>
-              <div style={{ width: `${toastProgress}%`, height: '100%', background: 'linear-gradient(90deg, #1270B7, #7ec8e3)', transition: 'width 0.1s linear' }} />
+              <div style={{ width: `${toastProgress}%`, height: '100%', background: 'linear-gradient(90deg, #F5A623, #FF8C42)', transition: 'width 0.1s linear' }} />
             </div>
           </motion.div>
         )}
