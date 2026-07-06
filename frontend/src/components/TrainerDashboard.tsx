@@ -15,8 +15,8 @@ import StudentsModule from './StudentsModule'
 import AgendaModule from './AgendaModule'
 import EquipmentPage from '../pages/EquipmentPage'
 import AdminModule from './AdminModule'
-import coachImg from '../../assets/illustrations/characters/coach/coach_default.webp'
-import trophyImg from '../../assets/images/trophy.png'
+import coachImg from '../assets/illustrations/characters/coach/coach_default.webp'
+import trophyImg from '../assets/images/trophy.png'
 
 // ── Colors ──
 

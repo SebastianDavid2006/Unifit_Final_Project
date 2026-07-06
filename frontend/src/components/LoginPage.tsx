@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { Dumbbell, User, Shield, ArrowRight, Brain, Zap } from 'lucide-react'
-import logotipo from '../../assets/images/Logotipo.png'
+import logotipo from '../assets/images/Logotipo.png'
 
 interface LoginPageProps {
   onSelect: (platform: 'trainer' | 'student' | 'admin') => void

@@ -11,9 +11,9 @@ import {
   muscleIcons, statusConfig, meshInputBg, meshInputHover,
 } from '../../data/constants'
 import { StatusBadge } from '../../components/ui/StatusBadge'
-import coachExerciseSuccessImg from '../../../assets/illustrations/characters/coach/coach_exercise_success.webp'
-import machineExercisesImg from '../../../assets/illustrations/objects/machine_exercises.png'
-import coachCongratsImg from '../../../assets/illustrations/characters/coach/coach_congratulations.webp'
+import coachExerciseSuccessImg from '../../assets/illustrations/characters/coach/coach_exercise_success.webp'
+import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
+import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
 
 interface ExerciseManagerModalProps {
   show: boolean

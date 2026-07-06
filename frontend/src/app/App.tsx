@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Brain } from 'lucide-react'
-import { TrainerDashboard } from './components/TrainerDashboard'
-import { StudentMobileApp } from './components/StudentMobileApp'
-import { AdminDashboard } from './components/AdminDashboard'
-import { LoginPage } from './components/LoginPage'
+import { TrainerDashboard } from '../components/TrainerDashboard'
+import { StudentMobileApp } from '../components/StudentMobileApp'
+import { AdminDashboard } from '../components/AdminDashboard'
+import { LoginPage } from '../components/LoginPage'
 
 type Platform = 'trainer' | 'student' | 'admin'
 

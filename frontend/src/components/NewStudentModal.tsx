@@ -6,9 +6,9 @@ import {
 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import confetti from 'canvas-confetti'
-import lectorHuellaImg from '../../assets/illustrations/objects/lector_huella.png'
-import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
-import checkSuccessImg from '../../assets/objects/ui/check_success.png'
+import lectorHuellaImg from '../assets/illustrations/objects/lector_huella.png'
+import coachCongratsImg from '../assets/illustrations/characters/coach/coach_congratulations.webp'
+import checkSuccessImg from '../assets/objects/ui/check_success.png'
 
 const BLUE = '#1270B7'
 const RED = '#F43843'

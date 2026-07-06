@@ -10,7 +10,7 @@ import {
   Calendar, FileText, Dumbbell,
   Zap, Flame, Shield, BarChart2,
 } from 'lucide-react'
-import bodyImg from '../../assets/illustrations/characters/human_body_default.png'
+import bodyImg from '../assets/illustrations/characters/human_body_default.png'
 
 interface Student {
   id: number
