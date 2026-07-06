@@ -714,7 +714,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setMachConfirmClose(true)}
           >
             <motion.div
@@ -723,7 +723,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className={`rounded-3xl w-full flex flex-col mx-4 relative`}
+              className="rounded-3xl w-full flex flex-col mx-4 relative"
               style={machineSuccess ? {
                 background: '#FFFFFF',
                 border: '1px solid rgba(0,0,0,0.04)',
@@ -1621,7 +1621,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setExConfirmClose(true)}
           >
             <motion.div
@@ -2240,7 +2240,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setPreviewMachine(null)}
           >
             <motion.div
@@ -2250,7 +2250,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
               className="rounded-3xl w-full max-w-lg flex flex-col mx-4 overflow-hidden"
-              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)' }}
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 25px 60px rgba(0,0,0,0.12)' }}
             >
               {/* Image */}
               <div className="relative" style={{ height: 160, background: `${statusConfig[previewMachine.status].color}08` }}>
@@ -2316,36 +2316,6 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                   ))}
                 </div>
 
-                {(() => {
-                  const allExs = getMachineExercises(previewMachine)
-                  const exs = previewMuscleFilter === 'all'
-                    ? allExs
-                    : allExs.filter(ex => ex.muscleGroups.includes(previewMuscleFilter))
-                  return exs.length > 0 ? (
-                    <div className="mb-5">
-                      <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                        {previewMuscleFilter === 'all' ? `Todos los ejercicios (${exs.length})` : `${previewMuscleFilter} (${exs.length})`}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {exs.map(ex => (
-                          <span key={ex.id} className="px-2.5 py-1 rounded-lg text-[11px] font-medium" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }}>
-                            {ex.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mb-5">
-                      <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                        {previewMuscleFilter}
-                      </p>
-                      <p className="text-xs py-2" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                        No hay ejercicios de esta categoría asignados a esta máquina.
-                      </p>
-                    </div>
-                  )
-                })()}
-
                 <div className="flex items-center gap-3">
                   <motion.button
                     whileHover={{ scale: 1.03 }}
@@ -2385,7 +2355,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setPreviewExercise(null)}
           >
             <motion.div
@@ -2395,7 +2365,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
               className="rounded-3xl w-full max-w-lg flex flex-col mx-4 overflow-hidden"
-              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)' }}
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 25px 60px rgba(0,0,0,0.12)' }}
             >
               {/* Image */}
               <div className="relative" style={{ height: 160, background: 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(10,132,255,0.05) 0%, transparent 50%)' }}>
@@ -2504,7 +2474,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[60] flex items-center justify-center"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
             onClick={() => setDeleteConfirm(null)}
           >
             <motion.div
@@ -2512,7 +2482,7 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 8 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center gap-5 p-8 rounded-2xl max-w-xs text-center mx-4"
+              className="flex flex-col items-center gap-5 p-8 rounded-3xl max-w-xs text-center mx-4"
               style={{
                 background: '#FFFFFF',
                 boxShadow: '0 20px 60px rgba(0,0,0,0.15)',

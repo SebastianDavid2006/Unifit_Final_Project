@@ -13,8 +13,8 @@ import {
 import { StudentProfile, TABS } from './StudentProfile'
 import StudentsModule from './StudentsModule'
 import AgendaModule from './AgendaModule'
-import AdminModule from './AdminModule'
 import EquipmentModule from './EquipmentModule'
+import AdminModule from './AdminModule'
 import coachImg from '../../assets/illustrations/characters/coach.png'
 
 // ── Colors ──
@@ -126,7 +126,7 @@ function RiskBadge({ risk }: { risk: 'high' | 'medium' | 'low' }) {
   )
 }
 
-type Section = 'dashboard' | 'students' | 'routines' | 'equipment' | 'schedule' | 'stats' | 'configuration' | 'admin'
+type Section = 'dashboard' | 'students' | 'routines' | 'equipment' | 'schedule' | 'stats' | 'configuration'
 
 const sidebarItems: { id: Section; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -135,7 +135,6 @@ const sidebarItems: { id: Section; label: string; icon: typeof LayoutDashboard }
   { id: 'equipment', label: 'Máquinas', icon: Dumbbell },
   { id: 'schedule', label: 'Agenda', icon: Calendar },
   { id: 'stats', label: 'Estadísticas', icon: BarChart3 },
-  { id: 'admin', label: 'Admin', icon: Shield },
   { id: 'configuration', label: 'Configuración', icon: Settings },
 ]
 
@@ -168,6 +167,7 @@ export function TrainerDashboard() {
   const [machinesCount, setMachinesCount] = useState('24')
   const [trainersCount, setTrainersCount] = useState('8')
   const [showSavedToast, setShowSavedToast] = useState(false)
+  const [configTab, setConfigTab] = useState<'gym' | 'admin'>('gym')
   const [instagram, setInstagram] = useState('@unifit_gym')
   const [facebook, setFacebook] = useState('UNIFIT Gym')
   const [website, setWebsite] = useState('www.unifit.edu/gimnasio')
@@ -694,7 +694,6 @@ export function TrainerDashboard() {
               {section === 'routines' && renderRoutines()}
               {section === 'equipment' && renderEquipment()}
               {section === 'schedule' && <AgendaModule />}
-              {section === 'admin' && <AdminModule />}
               {section === 'stats' && renderStats()}
               {section === 'configuration' && renderConfiguration()}
             </motion.div>
@@ -1001,18 +1000,20 @@ export function TrainerDashboard() {
               <h1 className="text-[1.8rem] font-extrabold" style={{ color: '#1A1A1E', letterSpacing: '-0.03em' }}>Configuración</h1>
               <p className="text-sm font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Administra la información del gimnasio</p>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                setShowSavedToast(true)
-                setTimeout(() => setShowSavedToast(false), 2500)
-              }}
-              className="ml-auto flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
-              style={{ background: BLUE_GRAD }}
-            >
-              <CheckCircle size={15} /> Guardar Cambios
-            </motion.button>
+            {configTab === 'gym' && (
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  setShowSavedToast(true)
+                  setTimeout(() => setShowSavedToast(false), 2500)
+                }}
+                className="ml-auto flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ background: BLUE_GRAD }}
+              >
+                <CheckCircle size={15} /> Guardar Cambios
+              </motion.button>
+            )}
           </div>
         </motion.div>
 
@@ -1028,172 +1029,202 @@ export function TrainerDashboard() {
           </motion.div>
         )}
 
-        <div className="grid grid-cols-2 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
-            className="rounded-2xl p-6 premium-card space-y-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Settings size={15} style={{ color: BLUE }} />
-              <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>INFORMACIÓN GENERAL</span>
-            </div>
-            <div>
-              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre del Gimnasio</label>
-              <input value={gymName} onChange={e => setGymName(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Dirección</label>
-              <input value={gymAddress} onChange={e => setGymAddress(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Teléfono</label>
-                <input value={gymPhone} onChange={e => setGymPhone(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Email</label>
-                <input value={gymEmail} onChange={e => setGymEmail(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Apertura</label>
-                <input value={openTime} onChange={e => setOpenTime(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Cierre</label>
-                <input value={closeTime} onChange={e => setCloseTime(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.12 }}
-            className="rounded-2xl p-6 premium-card space-y-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Award size={15} style={{ color: BLUE }} />
-              <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>CAPACIDAD Y PERSONAL</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Capacidad Máxima</label>
-                <input value={maxCapacity} onChange={e => setMaxCapacity(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Máquinas</label>
-                <input value={machinesCount} onChange={e => setMachinesCount(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-              </div>
-            </div>
-            <div>
-              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Entrenadores</label>
-              <input value={trainersCount} onChange={e => setTrainersCount(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-            </div>
-            <div className="flex items-center gap-3 mt-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <div
-                  onClick={() => setOpenWeekends(!openWeekends)}
-                  className="w-4 h-4 rounded flex items-center justify-center transition-all"
-                  style={{
-                    background: openWeekends ? BLUE_GRAD : 'transparent',
-                    border: `1.5px solid ${openWeekends ? BLUE : 'rgba(0,0,0,0.1)'}`,
-                  }}
-                >
-                  {openWeekends && <CheckCircle size={10} color="white" />}
-                </div>
-                <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>Abrir fines de semana</span>
-              </label>
-            </div>
-          </motion.div>
+        {/* Sub-tabs */}
+        <div className="flex items-center gap-2 mb-6">
+          {([
+            { id: 'gym' as const, label: 'Gimnasio', icon: Settings },
+            { id: 'admin' as const, label: 'Administrador', icon: Shield },
+          ]).map(t => (
+            <motion.button
+              key={t.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setConfigTab(t.id)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
+              style={{
+                background: configTab === t.id ? `${BLUE}10` : 'rgba(0,0,0,0.02)',
+                color: configTab === t.id ? BLUE : 'rgba(0,0,0,0.4)',
+                border: `1px solid ${configTab === t.id ? `${BLUE}25` : 'rgba(0,0,0,0.04)'}`,
+              }}
+            >
+              <t.icon size={15} />
+              {t.label}
+            </motion.button>
+          ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16 }}
-            className="rounded-2xl p-6 premium-card space-y-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Award size={15} style={{ color: BLUE }} />
-              <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>REDES SOCIALES</span>
-            </div>
-            <div>
-              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Instagram</label>
-              <input value={instagram} onChange={e => setInstagram(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Facebook</label>
-              <input value={facebook} onChange={e => setFacebook(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Sitio Web</label>
-              <input value={website} onChange={e => setWebsite(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="rounded-2xl p-6 premium-card space-y-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Target size={15} style={{ color: BLUE }} />
-              <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>PLANES DE MEMBRESÍA</span>
-            </div>
-            <div>
-              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Plan Básico</label>
-              <input value={planBasic} onChange={e => setPlanBasic(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Plan Premium</label>
-              <input value={planPremium} onChange={e => setPlanPremium(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Plan VIP</label>
-              <input value={planVip} onChange={e => setPlanVip(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-            </div>
-          </motion.div>
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.24 }}
-          className="rounded-2xl p-6 premium-card space-y-4"
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <Activity size={15} style={{ color: BLUE }} />
-            <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>SERVICIOS Y POLÍTICAS</span>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: 'Servicio de Toallas', checked: towelService, setter: setTowelService },
-              { label: 'Casilleros', checked: lockerService, setter: setLockerService },
-              { label: 'Check-in Obligatorio', checked: checkInRequired, setter: setCheckInRequired },
-              { label: 'Acceso Invitados', checked: allowGuestAccess, setter: setAllowGuestAccess },
-            ].map(s => (
-              <label key={s.label} className="flex items-center gap-2 cursor-pointer">
-                <div
-                  onClick={() => s.setter(!s.checked)}
-                  className="w-4 h-4 rounded flex items-center justify-center transition-all"
-                  style={{
-                    background: s.checked ? BLUE_GRAD : 'transparent',
-                    border: `1.5px solid ${s.checked ? BLUE : 'rgba(0,0,0,0.1)'}`,
-                  }}
-                >
-                  {s.checked && <CheckCircle size={10} color="white" />}
+        {configTab === 'admin' ? (
+          <AdminModule />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 }}
+                className="rounded-2xl p-6 premium-card space-y-4"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Settings size={15} style={{ color: BLUE }} />
+                  <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>INFORMACIÓN GENERAL</span>
                 </div>
-                <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.label}</span>
-              </label>
-            ))}
-          </div>
-        </motion.div>
+                <div>
+                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre del Gimnasio</label>
+                  <input value={gymName} onChange={e => setGymName(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Dirección</label>
+                  <input value={gymAddress} onChange={e => setGymAddress(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Teléfono</label>
+                    <input value={gymPhone} onChange={e => setGymPhone(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Email</label>
+                    <input value={gymEmail} onChange={e => setGymEmail(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Apertura</label>
+                    <input value={openTime} onChange={e => setOpenTime(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Cierre</label>
+                    <input value={closeTime} onChange={e => setCloseTime(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 }}
+                className="rounded-2xl p-6 premium-card space-y-4"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Award size={15} style={{ color: BLUE }} />
+                  <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>CAPACIDAD Y PERSONAL</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Capacidad Máxima</label>
+                    <input value={maxCapacity} onChange={e => setMaxCapacity(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Máquinas</label>
+                    <input value={machinesCount} onChange={e => setMachinesCount(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Entrenadores</label>
+                  <input value={trainersCount} onChange={e => setTrainersCount(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                </div>
+                <div className="flex items-center gap-3 mt-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      onClick={() => setOpenWeekends(!openWeekends)}
+                      className="w-4 h-4 rounded flex items-center justify-center transition-all"
+                      style={{
+                        background: openWeekends ? BLUE_GRAD : 'transparent',
+                        border: `1.5px solid ${openWeekends ? BLUE : 'rgba(0,0,0,0.1)'}`,
+                      }}
+                    >
+                      {openWeekends && <CheckCircle size={10} color="white" />}
+                    </div>
+                    <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>Abrir fines de semana</span>
+                  </label>
+                </div>
+              </motion.div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.16 }}
+                className="rounded-2xl p-6 premium-card space-y-4"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Award size={15} style={{ color: BLUE }} />
+                  <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>REDES SOCIALES</span>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Instagram</label>
+                  <input value={instagram} onChange={e => setInstagram(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Facebook</label>
+                  <input value={facebook} onChange={e => setFacebook(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Sitio Web</label>
+                  <input value={website} onChange={e => setWebsite(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="rounded-2xl p-6 premium-card space-y-4"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Target size={15} style={{ color: BLUE }} />
+                  <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>PLANES DE MEMBRESÍA</span>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Plan Básico</label>
+                  <input value={planBasic} onChange={e => setPlanBasic(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Plan Premium</label>
+                  <input value={planPremium} onChange={e => setPlanPremium(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Plan VIP</label>
+                  <input value={planVip} onChange={e => setPlanVip(e.target.value)} className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium" style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                </div>
+              </motion.div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.24 }}
+              className="rounded-2xl p-6 premium-card space-y-4"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Activity size={15} style={{ color: BLUE }} />
+                <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>SERVICIOS Y POLÍTICAS</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { label: 'Servicio de Toallas', checked: towelService, setter: setTowelService },
+                  { label: 'Casilleros', checked: lockerService, setter: setLockerService },
+                  { label: 'Check-in Obligatorio', checked: checkInRequired, setter: setCheckInRequired },
+                  { label: 'Acceso Invitados', checked: allowGuestAccess, setter: setAllowGuestAccess },
+                ].map(s => (
+                  <label key={s.label} className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      onClick={() => s.setter(!s.checked)}
+                      className="w-4 h-4 rounded flex items-center justify-center transition-all"
+                      style={{
+                        background: s.checked ? BLUE_GRAD : 'transparent',
+                        border: `1.5px solid ${s.checked ? BLUE : 'rgba(0,0,0,0.1)'}`,
+                      }}
+                    >
+                      {s.checked && <CheckCircle size={10} color="white" />}
+                    </div>
+                    <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.label}</span>
+                  </label>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
       </div>
     )
   }
