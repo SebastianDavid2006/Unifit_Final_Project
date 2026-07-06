@@ -7,6 +7,8 @@ import {
   ChevronDown, ChevronRight, ChevronLeft, Check, Camera,
 } from 'lucide-react'
 import { WeightsView } from './WeightsModel'
+import { TrashView } from './TrashModel'
+import { PenView } from './PenModel'
 import machineImg from '../../assets/illustrations/objects/machine.png'
 import machineExercisesImg from '../../assets/illustrations/objects/machine_exercises.png'
 import modalExercisesImg from '../../assets/illustrations/characters/modal_exercises.png'
@@ -152,6 +154,12 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
   const [showCreatedToast, setShowCreatedToast] = useState(false)
   const [createdMachineName, setCreatedMachineName] = useState('')
   const [toastProgress, setToastProgress] = useState(100)
+  const [showDeletedToast, setShowDeletedToast] = useState(false)
+  const [deletedName, setDeletedName] = useState('')
+  const [toastDeletedProgress, setToastDeletedProgress] = useState(100)
+  const [showEditedToast, setShowEditedToast] = useState(false)
+  const [editedName, setEditedName] = useState('')
+  const [toastEditedProgress, setToastEditedProgress] = useState(100)
   const [showExerciseManager, setShowExerciseManager] = useState(false)
   const [machineSuccess, setMachineSuccess] = useState(false)
   const [machConfirmClose, setMachConfirmClose] = useState(false)
@@ -205,6 +213,36 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
       return () => clearInterval(interval)
     }
   }, [showCreatedToast])
+
+  useEffect(() => {
+    if (showDeletedToast) {
+      setToastDeletedProgress(100)
+      const start = Date.now()
+      const duration = 4500
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - start
+        const remaining = Math.max(0, 100 - (elapsed / duration) * 100)
+        setToastDeletedProgress(remaining)
+        if (remaining <= 0) clearInterval(interval)
+      }, 30)
+      return () => clearInterval(interval)
+    }
+  }, [showDeletedToast])
+
+  useEffect(() => {
+    if (showEditedToast) {
+      setToastEditedProgress(100)
+      const start = Date.now()
+      const duration = 4500
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - start
+        const remaining = Math.max(0, 100 - (elapsed / duration) * 100)
+        setToastEditedProgress(remaining)
+        if (remaining <= 0) clearInterval(interval)
+      }, 30)
+      return () => clearInterval(interval)
+    }
+  }, [showEditedToast])
 
   function getCinematicFilter(intensity: number): string {
     const t = intensity / 100
@@ -316,6 +354,10 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
     }
     if (editingMachine) {
       setShowMachineModal(false)
+      setEditedName(data.name)
+      setShowEditedToast(true)
+      setToastEditedProgress(100)
+      setTimeout(() => setShowEditedToast(false), 4500)
     } else {
       setMachineSuccess(true)
     }
@@ -426,6 +468,10 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
       setShowExerciseManager(false)
       setExSuccess(false)
       setExEditing(null)
+      setEditedName(data.name)
+      setShowEditedToast(true)
+      setToastEditedProgress(100)
+      setTimeout(() => setShowEditedToast(false), 4500)
     }
   }
 
@@ -863,7 +909,9 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                         <div className="flex-1" />
                         {editingMachine ? (
                           <div className="flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
-                            <Pencil size={12} style={{ color: 'rgba(0,0,0,0.25)' }} />
+                            <div className="w-5 h-5 flex-shrink-0">
+                              <PenView />
+                            </div>
                             <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.25)' }}>Editando...</span>
                           </div>
                         ) : null}
@@ -1765,7 +1813,9 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                       <div className="flex-1" />
                       {exEditing ? (
                         <div className="flex items-center gap-1.5 absolute left-1/2 -translate-x-1/2">
-                          <Pencil size={12} style={{ color: 'rgba(0,0,0,0.25)' }} />
+                          <div className="w-5 h-5 flex-shrink-0">
+                            <PenView />
+                          </div>
                           <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.25)' }}>Editando...</span>
                         </div>
                       ) : null}
@@ -2509,8 +2559,8 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               }}
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${RED}15` }}>
-                <Trash2 size={18} color={RED} />
+              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0" style={{ background: `${RED}10` }}>
+                <TrashView />
               </div>
               <div>
                 <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>¿Eliminar {deleteConfirm.type === 'machine' ? 'máquina' : 'ejercicio'}?</p>
@@ -2532,9 +2582,13 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
+                    const name = deleteConfirm.type === 'machine'
+                      ? machines.find(m => m.id === deleteConfirm.id)?.name
+                      : exercises.find(e => e.id === deleteConfirm.id)?.name
                     if (deleteConfirm.type === 'machine') {
                       deleteMachine(deleteConfirm.id)
                       setPreviewMachine(null)
+                      if (name) { setDeletedName(name); setShowDeletedToast(true); setToastDeletedProgress(100); setTimeout(() => setShowDeletedToast(false), 4500) }
                     } else {
                       deleteExercise(deleteConfirm.id)
                       setPreviewExercise(null)
@@ -2548,6 +2602,73 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
                 </motion.button>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Delete Toast (bottom-right) ── */}
+      <AnimatePresence>
+        {showDeletedToast && deletedName && (
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-6 right-6 z-[70] flex items-center gap-4 rounded-2xl overflow-hidden"
+            style={{
+              background: 'rgba(255,255,255,0.75)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              boxShadow: '0 24px 80px rgba(244,56,67,0.12), 0 8px 32px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(255,255,255,0.5)',
+            }}
+          >
+            {/* 3D Model */}
+            <div className="w-[60px] h-[60px] flex-shrink-0" style={{ background: `${RED}08` }}>
+              <TrashView />
+            </div>
+
+            {/* Text */}
+            <div className="flex-1 min-w-0 py-3 pr-5">
+              <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>Máquina eliminada</p>
+              <p className="text-xs font-medium mt-0.5 truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{deletedName}</p>
+            </div>
+
+            {/* Progress bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: 'rgba(0,0,0,0.06)' }}>
+              <div style={{ width: `${toastDeletedProgress}%`, height: '100%', background: `linear-gradient(90deg, ${RED}, #FF6B6B)`, transition: 'width 0.1s linear' }} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Edit Toast (bottom-right) ── */}
+      <AnimatePresence>
+        {showEditedToast && editedName && (
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-6 right-6 z-[70] flex items-center gap-4 rounded-2xl overflow-hidden"
+            style={{
+              background: 'rgba(255,255,255,0.75)',
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              boxShadow: '0 24px 80px rgba(18,112,183,0.15), 0 8px 32px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(255,255,255,0.5)',
+            }}
+          >
+            <div className="w-[60px] h-[60px] flex-shrink-0" style={{ background: `${BLUE}08` }}>
+              <PenView />
+            </div>
+            <div className="flex-1 min-w-0 py-3 pr-5">
+              <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>Registro actualizado</p>
+              <p className="text-xs font-medium mt-0.5 truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{editedName}</p>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: 'rgba(0,0,0,0.06)' }}>
+              <div style={{ width: `${toastEditedProgress}%`, height: '100%', background: 'linear-gradient(90deg, #1270B7, #7ec8e3)', transition: 'width 0.1s linear' }} />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -2569,33 +2690,20 @@ export default function EquipmentModule({ search, searchFocused, statusFilter, s
               border: '1px solid rgba(255,255,255,0.5)',
             }}
           >
-            {/* Gradient accent strip */}
-            <div className="w-1 flex-shrink-0 self-stretch" style={{ background: 'linear-gradient(180deg, #1270B7, #7ec8e3)' }} />
-
             {/* 3D Model */}
-            <div className="w-[76px] h-[76px] flex-shrink-0 rounded-xl overflow-hidden ml-4" style={{ background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), rgba(248,251,255,0.8)' }}>
+            <div className="w-[76px] h-[76px] flex-shrink-0" style={{ background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), rgba(248,251,255,0.8)' }}>
               <WeightsView />
             </div>
 
             {/* Text */}
-            <div className="flex-1 min-w-0 py-3">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>¡Máquina creada!</span>
-                <motion.span
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.2 }}
-                  className="text-base"
-                >✓</motion.span>
-              </div>
+            <div className="flex-1 min-w-0 py-3 pr-5">
+              <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>¡Máquina creada!</p>
               <p className="text-xs font-medium mt-0.5 truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{createdMachineName}</p>
             </div>
 
             {/* Progress bar */}
             <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: 'rgba(0,0,0,0.06)' }}>
-              <motion.div
-                style={{ width: `${toastProgress}%`, height: '100%', background: 'linear-gradient(90deg, #1270B7, #7ec8e3)' }}
-              />
+              <div style={{ width: `${toastProgress}%`, height: '100%', background: 'linear-gradient(90deg, #1270B7, #7ec8e3)', transition: 'width 0.1s linear' }} />
             </div>
           </motion.div>
         )}
