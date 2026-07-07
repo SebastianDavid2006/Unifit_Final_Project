@@ -5,7 +5,8 @@ import {
 } from 'recharts'
 import { Users, Clock, Bell, BarChart3, GraduationCap, Sparkles, AlertTriangle, Target } from 'lucide-react'
 import { StudentsView } from '../../assets/models/ui/users/students/StudentsModel'
-import { CalendarView } from '../../assets/models/ui/dashboard/calendar/CalendarModel'
+import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarModel'
+import { ListView } from '../../assets/models/ui/objects/list/ListModel'
 import { BLUE, BLUE_GRAD, RED } from '../../data/constants'
 import coachImg from '../../assets/illustrations/characters/coach/coach_default.webp'
 
@@ -20,7 +21,7 @@ const DONUT_COLORS = ['#1270B7', '#30D158', '#F1C827', '#BF5AF2', '#FF9500', '#F
 
 const cards = [
   { label: 'Estudiantes Registrados', value: '847', view: StudentsView },
-  { label: 'Asistencias de Hoy', value: '12', view: CalendarView },
+  { label: 'Asistencias de Hoy', value: '12', view: ListView },
   { label: 'Personas Activas', value: '43', view: StudentsView },
   { label: 'Citas Programadas', value: '24', view: CalendarView },
 ]
@@ -179,19 +180,17 @@ export default function DashboardModule() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -4, transition: { duration: 0.2 } }}
               className="relative rounded-2xl px-5 pb-5 pt-14 group cursor-pointer premium-card transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:pt-[68px] group-hover:pb-7"
             >
-              <div className="absolute top-0 left-4 right-4 h-[3px] rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500" style={{ background: `linear-gradient(90deg, ${colors.text}, transparent)` }} />
               <div
-                className="absolute left-1/2 -translate-x-1/2 top-2 w-14 h-14 z-20 pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.6]"
+                className="absolute left-1/2 -translate-x-1/2 top-1 w-14 h-14 z-20 pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.6]"
                 style={{ transformOrigin: 'bottom center' }}
               >
                 <ModelView />
               </div>
               <div className="relative z-10 text-center mt-6">
-                <span className="stat-value text-gradient-static block" style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1 }}>{card.value}</span>
-                <p className="text-xs mt-1.5 font-semibold" style={{ color: 'rgba(0,0,0,0.45)' }}>{card.label}</p>
+                <span className="stat-value text-gradient-static block transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.15]" style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1 }}>{card.value}</span>
+                <p className="text-xs mt-1.5 font-semibold transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" style={{ color: 'rgba(0,0,0,0.45)' }}>{card.label}</p>
               </div>
             </motion.div>
           )
@@ -202,23 +201,29 @@ export default function DashboardModule() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 + cards.length * 0.06, ease: [0.16, 1, 0.3, 1] }}
-          whileHover={{ y: -4, transition: { duration: 0.2 } }}
-          className="relative rounded-2xl px-5 pb-5 pt-14 group cursor-pointer premium-card transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:pt-[68px] group-hover:pb-7 overflow-hidden"
-        >
-          <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{
+          whileHover={{
+            scale: 1.05,
+            boxShadow: '0 24px 70px rgba(198,60,0,0.35), 0 10px 30px rgba(144,19,34,0.25), 0 4px 12px rgba(0,0,0,0.2)',
+            transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] }
+          }}
+          className="relative rounded-2xl px-4 pb-4 pt-10 group cursor-pointer overflow-hidden"
+          style={{
             background: `
-              radial-gradient(ellipse at 30% 20%, rgba(255,200,0,0.35), transparent 50%),
-              radial-gradient(ellipse at 70% 40%, rgba(18,112,183,0.3), transparent 50%),
-              radial-gradient(ellipse at 50% 80%, rgba(230,57,70,0.25), transparent 50%)
+              radial-gradient(ellipse at 20% 10%, #C63C00 0%, #C63C00 35%, #901322 55%, transparent 70%),
+              radial-gradient(ellipse at 75% 25%, #901322 0%, #901322 35%, #8A0000 55%, transparent 70%),
+              radial-gradient(ellipse at 50% 95%, #8A0000 0%, #8A0000 35%, #C63C00 55%, transparent 70%),
+              #1A0000
             `,
-          }} />
-          <div className="absolute top-0 left-4 right-4 h-[3px] rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500" style={{ background: 'linear-gradient(90deg, #F1C827, #1270B7, #E63946)' }} />
-          <div className="absolute left-1/2 -translate-x-1/2 top-3 w-12 h-12 z-20 pointer-events-none flex items-center justify-center">
-            <Bell size={22} style={{ color: '#E63946' }} />
-          </div>
-          <div className="relative z-10 text-center mt-6">
-            <span className="block text-lg font-extrabold" style={{ color: '#1A1A1E', lineHeight: 1 }}>Pendientes</span>
-            <p className="text-xs mt-1 font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>del día</p>
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.15), 0 12px 40px rgba(0,0,0,0.12)',
+            borderRadius: 20,
+          }}
+        >
+          <div className="relative z-10 flex flex-col items-center mt-4">
+            <div className="w-10 h-10 flex items-center justify-center mb-1 transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.2]">
+              <Bell size={20} style={{ color: 'rgba(255,255,255,0.85)' }} />
+            </div>
+            <span className="block text-base font-extrabold transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.15]" style={{ color: '#FFFFFF', lineHeight: 1 }}>Pendientes</span>
+            <p className="text-[11px] mt-0.5 font-semibold transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" style={{ color: 'rgba(255,255,255,0.6)' }}>del día</p>
           </div>
         </motion.div>
       </div>

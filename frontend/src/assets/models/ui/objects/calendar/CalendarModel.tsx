@@ -19,7 +19,7 @@ function Loader() {
 
 function Model() {
   const ref = useRef<Group>(null)
-  const { scene } = useGLTF('/models/ui/dashboard/calendar/calendar.glb')
+  const { scene } = useGLTF('/models/ui/objects/calendar/calendar.glb')
 
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += delta * 0.8
