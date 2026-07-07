@@ -6,16 +6,16 @@ import {
 } from 'recharts'
 import {
   LayoutDashboard, Users, ClipboardList, Dumbbell, Calendar,
-  TrendingUp, AlertTriangle, Clock, Activity, Target, Award,
-  ChevronRight, Search, Plus, ArrowUp, ArrowDown, Sparkles,
-  Play, MoreHorizontal, CheckCircle, Flame, MapPin, RefreshCw, Bell, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Menu, X, Filter, Shield,
+  TrendingUp, Clock, Activity, Target, Award,
+  Search, Plus, ArrowUp, Sparkles,
+  CheckCircle, Bell, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Filter, Shield,
 } from 'lucide-react'
 import { StudentProfile, TABS } from '../modules/students/StudentProfile'
 import StudentsModule from '../modules/students/StudentsModule'
 import AgendaModule from '../modules/agenda/AgendaModule'
 import EquipmentPage from './EquipmentPage'
 import AdminModule from '../modules/admin/AdminModule'
-import coachImg from '../assets/illustrations/characters/coach/coach_default.webp'
+import DashboardModule from '../modules/dashboard/DashboardModule'
 import trophyImg from '../assets/images/trophy.png'
 
 // ── Colors ──
@@ -56,17 +56,6 @@ const students = [
   { id: 5, name: 'Valentina Torres', firstName: 'Valentina', secondName: '', lastName: 'Torres', secondLastName: 'Paz', documentType: 'CC', documentNumber: '5678901234', birthDate: '28/02/2000', gender: 'Femenino', eps: 'Salud Total', bloodType: 'O-', email: 'valentina.torres@email.com', phone: '3045678901', contactName: 'Luis Torres', contactPhone: '3141098765', carnetId: 'UNI-005', program: 'Biología', institution: 'Universitaria de Colombia', faculty: 'Ciencias', semestre: 5, semester: '5', modality: 'Presencial', jornada: 'Nocturna', graduationStatus: 'No egresado', adherence: 88, risk: 'low' as const, status: 'active' as const, lastVisit: 'Hoy, 9:15 AM', avatar: 'VT', goal: 'Flexibilidad', sessions: 31, weight: 55, height: 160 },
   { id: 6, name: 'Sebastián Herrera', firstName: 'Sebastián', secondName: '', lastName: 'Herrera', secondLastName: 'Castro', documentType: 'CC', documentNumber: '6789012345', birthDate: '14/09/1996', gender: 'Masculino', eps: 'Famisanar', bloodType: 'A-', email: 'sebastian.herrera@email.com', phone: '3056789012', contactName: 'Laura Herrera', contactPhone: '3152109876', carnetId: 'UNI-006', program: 'Industrial', institution: 'Universitaria de Bogotá', faculty: 'Ingeniería', semestre: 9, semester: '9', modality: 'Presencial', jornada: 'Diurna', graduationStatus: 'Egresado', adherence: 22, risk: 'high' as const, status: 'inactive' as const, lastVisit: 'Hace 18 días', avatar: 'SH', goal: 'Cardio', sessions: 4, weight: 91, height: 183 },
   { id: 7, name: 'Luisa Mendoza', firstName: 'Luisa', secondName: 'Fernanda', lastName: 'Mendoza', secondLastName: 'Ríos', documentType: 'CC', documentNumber: '7890123456', birthDate: '03/12/1999', gender: 'Femenino', eps: 'Sanitas', bloodType: 'O+', email: 'luisa.mendoza@email.com', phone: '3067890123', contactName: 'Raúl Mendoza', contactPhone: '3163210987', carnetId: 'UNI-007', program: 'Artes Plásticas', institution: 'Universitaria de Colombia', faculty: 'Arte', semestre: 3, semester: '3', modality: 'Presencial', jornada: 'Diurna', graduationStatus: 'No egresado', adherence: 95, risk: 'low' as const, status: 'process' as const, lastVisit: 'Hoy, 6:00 AM', avatar: 'LM', goal: 'Bienestar', sessions: 42, weight: 60, height: 168 },
-]
-
-const kpis = [
-  { label: 'Asistencia Hoy', value: '78', unit: '%', change: +5.2, icon: Users, color: BLUE },
-  { label: 'Activos', value: '156', unit: '', change: +12, icon: Activity, color: BLUE },
-  { label: 'Entrenamientos', value: '43', unit: '/día', change: -2, icon: Dumbbell, color: YELLOW },
-  { label: 'Progreso Prom.', value: '68', unit: '%', change: +3.1, icon: TrendingUp, color: BLUE },
-  { label: 'En Riesgo', value: '12', unit: '', change: -3, icon: AlertTriangle, color: RED },
-  { label: 'Hora Pico', value: '5PM', unit: '', change: 0, icon: Clock, color: YELLOW },
-  { label: 'Adherencia', value: '73', unit: '%', change: +1.8, icon: Target, color: BLUE },
-  { label: 'Rendimiento', value: '82', unit: '/100', change: +4, icon: Award, color: YELLOW },
 ]
 
 const routines = [
@@ -684,7 +673,7 @@ const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              {section === 'dashboard' && renderDashboard()}
+              {section === 'dashboard' && <DashboardModule />}
               {section === 'students' && (
                 <StudentsModule
                   students={students}
@@ -706,144 +695,6 @@ const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month
   )
 
   // ── RENDERERS ──
-
-  function renderDashboard() {
-    return (
-      <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="relative rounded-3xl gradient-border"
-          style={{
-            background: 'linear-gradient(145deg, #FFFFFF 0%, #F0F7FF 25%, #EBF5FF 50%, #FFF8E8 100%)',
-            boxShadow: '0 20px 60px rgba(0,122,255,0.06), 0 8px 20px rgba(0,0,0,0.02)',
-          }}
-        >
-          <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
-          <div
-            className="absolute inset-0 opacity-60"
-            style={{
-              background: `
-                radial-gradient(ellipse at 80% 10%, rgba(0,122,255,0.04) 0%, transparent 40%),
-                radial-gradient(ellipse at 10% 80%, rgba(245,166,35,0.03) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 50%, rgba(230,57,70,0.02) 0%, transparent 50%)
-              `,
-              backgroundSize: '200% 200%',
-              animation: 'mesh-shift 15s ease-in-out infinite',
-            }}
-          />
-          </div>
-          <div className="relative z-10 p-8">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
-                <div>
-                  <p className="text-[10px] font-bold tracking-[0.18em] uppercase" style={{ color: 'rgba(0,0,0,0.25)' }}>Jueves, 28 de Mayo · 2026</p>
-                  <h1 className="mt-0.5" style={{ color: '#1A1A1E', fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.04em' }}>
-                    Buenos días, <span className="text-gradient-warm">Sebastián.</span>
-                  </h1>
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4 mt-6">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="col-span-2 rounded-2xl p-6"
-                style={{
-                  background: 'rgba(255,255,255,0.6)',
-                  backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255,255,255,0.4)',
-                }}
-              >
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles size={15} style={{ color: BLUE }} />
-                  <span className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: 'rgba(0,0,0,0.3)' }}>Resumen Inteligente</span>
-                  <div className="ml-auto flex items-center gap-1.5">
-                    <div className="dot-live" style={{ width: 5, height: 5 }} />
-                    <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.25)' }}>Actualizado ahora</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { icon: Users, value: '14', text: 'estudiantes pendientes de revisión', color: RED },
-                    { icon: AlertTriangle, value: '3', text: 'en riesgo de abandono requieren atención inmediata', color: '#FF3B30' },
-                    { icon: Clock, value: '4PM-6PM', text: 'ocupación máxima proyectada para hoy', color: '#BF5AF2' },
-                    { icon: Target, value: '5', text: 'estudiantes de Ingeniería superan 90% adherencia', color: '#30D158' },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3 rounded-xl nested-card">
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}0A` }}>
-                        <item.icon size={14} style={{ color: item.color }} />
-                      </div>
-                      <div>
-                        <p className="text-lg font-extrabold" style={{ color: '#1A1A1E', lineHeight: 1.2 }}>{item.value}</p>
-                        <p className="text-xs leading-snug mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>{item.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            style={{
-              position: 'absolute',
-              right: 24,
-              top: -50,
-              width: 400,
-              height: 'auto',
-              zIndex: 20,
-            }}
-          >
-            <img src={coachImg} alt="Coach Dashboard" className="w-full h-auto" />
-            <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-10" style={{
-              background: 'linear-gradient(to top, rgba(240,247,255,1) 0%, transparent 60%)',
-            }} />
-          </motion.div>
-        </motion.div>
-        <div className="grid grid-cols-4 gap-4">
-          {kpis.map((kpi, i) => (
-            <motion.div
-              key={kpi.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.05, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="relative rounded-2xl p-5 overflow-hidden group cursor-pointer premium-card"
-            >
-              <div className="absolute top-0 left-4 right-4 h-[3px] rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500" style={{ background: `linear-gradient(90deg, ${kpi.color}, transparent)` }} />
-              <div className="relative z-10">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${kpi.color}08` }}>
-                    <kpi.icon size={17} style={{ color: kpi.color }} />
-                  </div>
-                  {kpi.change !== 0 && (
-                    <div className="flex items-center gap-0.5 text-[11px] font-bold px-2 py-0.5 rounded-lg" style={{
-                      background: kpi.change > 0 ? 'rgba(48,209,88,0.08)' : 'rgba(255,59,48,0.08)',
-                      color: kpi.change > 0 ? '#30D158' : '#FF3B30',
-                    }}>
-                      {kpi.change > 0 ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
-                      {Math.abs(kpi.change)}%
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-end gap-1.5">
-                  <span className="stat-value text-gradient-static" style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1 }}>{kpi.value}</span>
-                  <span className="mb-0.5 text-xs font-medium" style={{ color: 'rgba(0,0,0,0.3)' }}>{kpi.unit}</span>
-                </div>
-                <p className="text-xs mt-1.5 font-semibold" style={{ color: 'rgba(0,0,0,0.45)' }}>{kpi.label}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    )
-  }
 
   function renderRoutines() {
     return (
