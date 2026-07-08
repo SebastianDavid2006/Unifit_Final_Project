@@ -1,12 +1,14 @@
 import { motion } from 'motion/react'
 import {
-  BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis,
+  BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { Users, Clock, Bell, BarChart3, GraduationCap, Sparkles, AlertTriangle, Target } from 'lucide-react'
+import { Users, Clock, BarChart3, Sparkles, AlertTriangle, Target } from 'lucide-react'
 import { StudentsView } from '../../assets/models/ui/users/students/StudentsModel'
+import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarModel'
 import { ListView } from '../../assets/models/ui/objects/list/ListModel'
+import { PriorityBellView } from '../../assets/models/ui/objects/priority_bell/PriorityBellModel'
 import { BLUE, BLUE_GRAD, RED } from '../../data/constants'
 import coachImg from '../../assets/illustrations/characters/coach/coach_default.webp'
 
@@ -20,32 +22,31 @@ const CARD_COLORS = [
 const DONUT_COLORS = ['#1270B7', '#30D158', '#F1C827', '#BF5AF2', '#FF9500', '#F43843']
 
 const cards = [
-  { label: 'Estudiantes Registrados', value: '847', view: StudentsView },
+  { label: 'Estudiantes Registrados', value: '847', view: StudentCardView },
   { label: 'Asistencias de Hoy', value: '12', view: ListView },
   { label: 'Personas Activas', value: '43', view: StudentsView },
   { label: 'Citas Programadas', value: '24', view: CalendarView },
 ]
 
 const weeklyAttendance = [
-  { day: 'Lun', asistentes: 45 },
-  { day: 'Mar', asistentes: 67 },
-  { day: 'Mié', asistentes: 52 },
-  { day: 'Jue', asistentes: 78 },
-  { day: 'Vie', asistentes: 89 },
-  { day: 'Sáb', asistentes: 34 },
-  { day: 'Dom', asistentes: 12 },
+  { day: 'Lun 25', asistentes: 45 },
+  { day: 'Mar 26', asistentes: 67 },
+  { day: 'Mié 27', asistentes: 52 },
+  { day: 'Jue 28', asistentes: 78 },
+  { day: 'Vie 29', asistentes: 89 },
+  { day: 'Sáb 30', asistentes: 34 },
+  { day: 'Dom 31', asistentes: 12 },
 ]
 
-const careerAttendance = [
-  { name: 'Ingeniería', value: 42 },
-  { name: 'Medicina', value: 38 },
-  { name: 'Derecho', value: 29 },
-  { name: 'Administración', value: 35 },
-  { name: 'Arte', value: 18 },
-  { name: 'Ciencias', value: 22 },
+const peakByDay = [
+  { day: 'Lun 25', hour: 19 },
+  { day: 'Mar 26', hour: 18 },
+  { day: 'Mié 27', hour: 12 },
+  { day: 'Jue 28', hour: 19 },
+  { day: 'Vie 29', hour: 17 },
+  { day: 'Sáb 30', hour: 10 },
+  { day: 'Dom 31', hour: 8 },
 ]
-
-const totalAttendance = careerAttendance.reduce((s, c) => s + c.value, 0)
 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
@@ -174,6 +175,7 @@ export default function DashboardModule() {
         {cards.map((card, i) => {
           const colors = CARD_COLORS[i]
           const ModelView = card.view
+          const isActive = i === 2
           return (
             <motion.div
               key={card.label}
@@ -181,7 +183,17 @@ export default function DashboardModule() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
               className="relative rounded-2xl px-5 pb-5 pt-14 group cursor-pointer premium-card transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:pt-[68px] group-hover:pb-7"
+              style={isActive ? {
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06), 0 12px 40px rgba(48,209,88,0.12)',
+              } : {}}
             >
+              {isActive && (
+                <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{
+                  background: 'linear-gradient(145deg, rgba(48,209,88,0.08), transparent 60%)',
+                  borderRadius: 20,
+                }} />
+              )}
+              <div className="absolute top-0 left-4 right-4 h-[3px] rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500" style={{ background: `linear-gradient(90deg, ${colors.text}, transparent)` }} />
               <div
                 className="absolute left-1/2 -translate-x-1/2 top-1 w-14 h-14 z-20 pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.6]"
                 style={{ transformOrigin: 'bottom center' }}
@@ -200,13 +212,8 @@ export default function DashboardModule() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 + cards.length * 0.06, ease: [0.16, 1, 0.3, 1] }}
-          whileHover={{
-            scale: 1.05,
-            boxShadow: '0 24px 70px rgba(198,60,0,0.35), 0 10px 30px rgba(144,19,34,0.25), 0 4px 12px rgba(0,0,0,0.2)',
-            transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] }
-          }}
-          className="relative rounded-2xl px-4 pb-4 pt-10 group cursor-pointer overflow-hidden"
+          transition={{ delay: 0.1 + cards.length * 0.06, ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
+          className="relative rounded-2xl px-5 pb-5 pt-14 group cursor-pointer transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.04]"
           style={{
             background: `
               radial-gradient(ellipse at 20% 10%, #C63C00 0%, #C63C00 35%, #901322 55%, transparent 70%),
@@ -218,12 +225,19 @@ export default function DashboardModule() {
             borderRadius: 20,
           }}
         >
-          <div className="relative z-10 flex flex-col items-center mt-4">
-            <div className="w-10 h-10 flex items-center justify-center mb-1 transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.2]">
-              <Bell size={20} style={{ color: 'rgba(255,255,255,0.85)' }} />
-            </div>
-            <span className="block text-base font-extrabold transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.15]" style={{ color: '#FFFFFF', lineHeight: 1 }}>Pendientes</span>
-            <p className="text-[11px] mt-0.5 font-semibold transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" style={{ color: 'rgba(255,255,255,0.6)' }}>del día</p>
+          <div
+            className="absolute left-1/2 -translate-x-1/2 top-1 w-14 h-14 z-20 pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.6]"
+            style={{ transformOrigin: 'bottom center' }}
+          >
+            <PriorityBellView />
+          </div>
+          <div
+            className="absolute -inset-2 rounded-[24px] pointer-events-none glow-ring z-0"
+            style={{ background: 'linear-gradient(135deg, rgba(198,60,0,0.25), rgba(144,19,34,0.15), rgba(138,0,0,0.1))', filter: 'blur(16px)' }}
+          />
+          <div className="relative z-10 text-center mt-6">
+            <span className="block" style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1, color: '#FFFFFF' }}>8</span>
+            <p className="text-xs mt-1.5 font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>Pendientes del día</p>
           </div>
         </motion.div>
       </div>
@@ -245,14 +259,16 @@ export default function DashboardModule() {
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={weeklyAttendance}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
-              <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.65)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.65)' }} axisLine={false} tickLine={false} />
               <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="asistentes" radius={[8, 8, 0, 0]}>
-                {weeklyAttendance.map((_, i) => (
-                  <Cell key={i} fill={i >= 4 ? BLUE : 'rgba(18,112,183,0.15)'} />
-                ))}
-              </Bar>
+              <defs>
+                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={BLUE} stopOpacity={1} />
+                  <stop offset="100%" stopColor={BLUE} stopOpacity={0.15} />
+                </linearGradient>
+              </defs>
+              <Bar dataKey="asistentes" radius={[8, 8, 0, 0]} fill="url(#barGradient)" />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
@@ -265,40 +281,45 @@ export default function DashboardModule() {
         >
           <div className="flex items-center gap-2 mb-5">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
-              <GraduationCap size={14} style={{ color: BLUE }} />
+              <Clock size={14} style={{ color: BLUE }} />
             </div>
-            <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>ASISTENCIA POR FACULTAD</span>
+            <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>HORA PICO DE LA SEMANA</span>
           </div>
           <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Pie
-                data={careerAttendance}
-                cx="50%"
-                cy="50%"
-                innerRadius={70}
-                outerRadius={110}
-                dataKey="value"
-                stroke="none"
-              >
-                {careerAttendance.map((_, i) => (
-                  <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={<ChartTooltip />} />
-            </PieChart>
+            <BarChart data={peakByDay} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
+              <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.65)' }} axisLine={false} tickLine={false} />
+              <YAxis
+                domain={[12, 22]}
+                ticks={[12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]}
+                interval={0}
+                padding={{ top: 0, bottom: 0 }}
+                tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.65)' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => v === 12 ? '12pm' : `${v-12}pm`}
+              />
+              <Tooltip
+                content={({ active, payload }: any) => {
+                  if (!active || !payload?.length) return null
+                  const v = payload[0].value
+                  const label = v === 12 ? '12pm' : `${v-12}pm`
+                  return (
+                    <div style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 14, padding: '8px 14px', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                      <p style={{ color: '#1A1A1E', fontSize: 13, fontWeight: 700 }}>{payload[0].payload.day} · {label}</p>
+                    </div>
+                  )
+                }}
+              />
+              <defs>
+                <linearGradient id="peakGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={BLUE} stopOpacity={1} />
+                  <stop offset="100%" stopColor={BLUE} stopOpacity={0.15} />
+                </linearGradient>
+              </defs>
+              <Bar dataKey="hour" radius={[8, 8, 0, 0]} fill="url(#peakGradient)" />
+            </BarChart>
           </ResponsiveContainer>
-          <div className="flex items-center justify-center gap-2 text-center -mt-4 mb-1">
-            <span className="text-2xl font-extrabold" style={{ color: '#1A1A1E' }}>{totalAttendance}</span>
-            <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>total asistencias</span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
-            {careerAttendance.map((item, i) => (
-              <div key={item.name} className="flex items-center gap-1.5">
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: DONUT_COLORS[i % DONUT_COLORS.length], flexShrink: 0 }} />
-                <span className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.45)' }}>{item.name}</span>
-              </div>
-            ))}
-          </div>
         </motion.div>
       </div>
     </div>
