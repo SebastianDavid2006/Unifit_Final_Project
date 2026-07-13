@@ -1,7 +1,8 @@
-import { useRef, Suspense } from 'react'
+import { useRef, Suspense, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, ContactShadows, Environment, Center, useProgress, Html, Clone } from '@react-three/drei'
-import { Group } from 'three'
+import { Group, Mesh, MeshStandardMaterial } from 'three'
+import * as THREE from 'three'
 
 function Loader() {
   const { progress } = useProgress()
@@ -20,9 +21,24 @@ function Loader() {
 function Model() {
   const ref = useRef<Group>(null)
   const { scene } = useGLTF('/models/ui/users/students/student.glb')
+  const materialsRef = useRef<THREE.MeshStandardMaterial[]>([])
+
+  useEffect(() => {
+    scene.traverse((child) => {
+      if (child instanceof Mesh && child.material instanceof MeshStandardMaterial) {
+        child.material = child.material.clone()
+        materialsRef.current.push(child.material)
+      }
+    })
+  }, [scene])
 
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += delta * 0.8
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 600)
+    materialsRef.current.forEach((mat) => {
+      mat.emissive = new THREE.Color('#30D158')
+      mat.emissiveIntensity = pulse * 0.6
+    })
   })
 
   return (
