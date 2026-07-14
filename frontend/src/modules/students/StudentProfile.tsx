@@ -8,9 +8,12 @@ import {
 import {
   TrendingUp, AlertTriangle, Activity,
   Calendar, FileText, Dumbbell,
-  Zap, Flame, Shield, BarChart2,
+  Zap, Flame, Shield, BarChart2, Maximize2, X,
 } from 'lucide-react'
-import bodyImg from '../../assets/illustrations/characters/human_body_default.png'
+import bodyImg from '../../assets/illustrations/characters/anatomical/anatomy_male_normal.png'
+import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
+import { TelephoneView } from '../../assets/models/ui/objects/telephone/TelephoneModel'
+import { CapView } from '../../assets/models/ui/objects/cap/CapModel'
 
 interface Student {
   id: number
@@ -129,6 +132,7 @@ export const TABS = [
 
 export function StudentProfile({ student, tab = 'overview', onTabChange }: { student: Student; tab?: string; onTabChange?: (t: string) => void }) {
   const [localTab, setLocalTab] = useState('overview')
+  const [modalOpen, setModalOpen] = useState(false)
   const currentTab = tab ?? localTab
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
@@ -142,88 +146,86 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         top: '-60px', right: '-40px',
       }} />
 
-      {/* Glass card with avatar + name + ALL tab content inside */}
       <div className="relative z-10 flex-shrink-0 px-8 pt-8">
-        <div className="relative rounded-2xl p-6 pt-14 pb-10" style={{
-          background: 'rgba(255,255,255,0.65)',
-          backdropFilter: 'blur(30px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(30px) saturate(1.4)',
-          border: '1px solid rgba(255,255,255,0.5)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03), 0 12px 32px rgba(0,0,0,0.02)',
-          borderRadius: 20,
-        }}>
-          <div className="absolute left-1/2 -translate-x-1/2 -top-8">
-            <div
-              className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-bold shadow-lg"
-              style={{
-                background: student.risk === 'high'
-                  ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
-                  : student.risk === 'medium'
-                  ? 'linear-gradient(135deg, #FF9500, #E68600)'
-                  : 'linear-gradient(135deg, #30D158, #20A040)',
-                fontSize: 26,
-              }}
-            >
-              {student.avatar}
-            </div>
-          </div>
-          <h2 className="text-[#1D1D1F] text-2xl font-bold text-center">{student.name}</h2>
 
           <AnimatePresence mode="wait">
             <motion.div key={currentTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <div className="mt-10 text-left">
+              <div className="text-left">
 
               {currentTab === 'overview' && (
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="rounded-2xl p-5" style={{
-                    background: 'rgba(255,255,255,0.5)',
-                    border: '1px solid rgba(255,255,255,0.4)',
-                    borderRadius: 16,
-                  }}>
-                    <h3 className="text-[#1D1D1F] text-sm font-semibold mb-3">Información General</h3>
-                    <div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                        {[
-                          { label: 'Primer nombre', value: student.firstName },
-                          { label: 'Segundo nombre', value: student.secondName },
-                          { label: 'Primer apellido', value: student.lastName },
-                          { label: 'Segundo apellido', value: student.secondLastName },
-                          { label: 'Tipo de documento', value: student.documentType },
-                          { label: 'Número de documento', value: student.documentNumber },
+                  {/* Columna izquierda: info personal */}
+                  <div className="flex flex-col h-full gap-4 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+                    {[
+                      {
+                        title: 'Información General',
+                        icon: <StudentCardView />,
+                        fields: [
+                          { label: 'Documento', value: `${student.documentType}. ${student.documentNumber}` },
                           { label: 'Fecha de nacimiento', value: student.birthDate },
                           { label: 'Género', value: student.gender },
-                          { label: 'EPS', value: student.eps },
-                          { label: 'Grupo sanguíneo', value: student.bloodType },
-                          { label: 'Certificado EPS', value: student.epsCertificate ? 'Adjunto' : '—', href: student.epsCertificate },
+                        ],
+                      },
+                      {
+                        title: 'Contacto',
+                        icon: <TelephoneView />,
+                        fields: [
                           { label: 'Email', value: student.email },
                           { label: 'Teléfono', value: student.phone },
-                          { label: 'Nombre contacto', value: student.contactName },
-                          { label: 'Teléfono contacto', value: student.contactPhone },
-                          { label: 'Número carnet', value: student.carnetId },
+                          { label: 'Contacto de emergencia', value: student.contactName },
+                          { label: 'Tel. contacto', value: student.contactPhone },
+                        ],
+                      },
+                      {
+                        title: 'Información académica',
+                        icon: <CapView />,
+                        fields: [
                           { label: 'Programa', value: student.program },
-                          { label: 'Institución', value: student.institution },
                           { label: 'Semestre', value: `${student.semestre}°` },
-                          { label: 'Modalidad', value: student.modality },
                           { label: 'Jornada', value: student.jornada },
-                          { label: 'Estado', value: student.graduationStatus },
-                        ].map(item => (
-                          <div key={item.label} className="py-1" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                            <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>{item.label}</p>
-                            {'href' in item && item.href ? (
-                              <a href={item.href} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold underline" style={{ color: '#E63946' }}>{item.value}</a>
-                            ) : (
-                              <p className="text-xs font-semibold" style={{ color: '#1D1D1F' }}>{item.value}</p>
-                            )}
-                          </div>
-                        ))}
+                        ],
+                      },
+                    ].map(section => (
+                      <div key={section.title} className="rounded-2xl p-4" style={{
+                        background: 'rgba(255,255,255,0.5)',
+                        border: '1px solid rgba(255,255,255,0.4)',
+                      }}>
+                        <div className="flex items-center gap-2.5 mb-3">
+                          <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                          <div className="w-8 h-8 flex-shrink-0">{section.icon}</div>
+                          <p className="text-sm font-extrabold capitalize" style={{ color: '#1D1D1F' }}>{section.title}</p>
+                        </div>
+                        <div className="flex flex-col">
+                          {section.fields.map(field => (
+                            <div key={field.label} className="flex flex-col pb-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                              <p className="text-[11px] mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
+                              <p className="text-sm font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
 
-                  <div className="flex flex-col items-center justify-center relative">
-                    <motion.div
-                      animate={{ scale: [1, 1.02, 1], y: [0, -3, 0] }}
-                      transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+                  {/* Columna central: imagen corporal */}
+                  <div className="flex flex-col items-center relative">
+                    <div
+                      className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3"
+                      style={{
+                        background: student.risk === 'high'
+                          ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
+                          : student.risk === 'medium'
+                          ? 'linear-gradient(135deg, #FF9500, #E68600)'
+                          : 'linear-gradient(135deg, #30D158, #20A040)',
+                        fontSize: 26,
+                      }}
+                    >
+                      {student.avatar}
+                    </div>
+                    <h2 className="text-[#1D1D1F] text-2xl font-bold text-center mb-2">
+                      {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
+                    </h2>
+                    <div
                       className="flex flex-col items-center relative"
                     >
                       <div className="absolute rounded-full pointer-events-none" style={{
@@ -235,12 +237,19 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         top: '45%',
                         transform: 'translate(-50%, -50%)',
                       }} />
-                      <img
-                        src={bodyImg}
-                        alt="Anatomía"
-                        className="w-[500px] h-[670px] object-contain relative"
+                      <video
+                        src="/student-body.webm"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        preload="auto"
+                        className="w-full h-[670px] object-contain relative"
                         style={{
                           filter: 'saturate(1.1) drop-shadow(0 0 100px rgba(147,51,234,0.4))',
+                          maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+                          WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+                          imageRendering: 'auto',
                         }}
                       />
                       <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none" style={{
@@ -256,24 +265,27 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         background: 'linear-gradient(90deg, transparent, rgba(147,51,234,0.15), transparent)',
                         bottom: 4,
                       }} />
-                    </motion.div>
+                    </div>
                   </div>
 
-                  <div className="rounded-2xl p-5 flex flex-col" style={{
-                    background: 'rgba(255,255,255,0.5)',
-                    border: '1px solid rgba(255,255,255,0.4)',
-                    borderRadius: 16,
-                  }}>
-                    <h3 className="text-[#1D1D1F] text-sm font-semibold mb-1">Perfil Físico</h3>
-                    <p className="text-xs mb-2" style={{ color: 'rgba(0,0,0,0.35)' }}>Capacidades funcionales</p>
-                    <div className="flex-1" style={{ minHeight: 240 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart data={bodyRadar} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                          <PolarGrid stroke="rgba(0,0,0,0.06)" />
-                          <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(0,0,0,0.35)', fontSize: 11 }} />
-                          <Radar name="Capacidad" dataKey="value" stroke="#E63946" fill="#E63946" fillOpacity={0.08} strokeWidth={2.5} />
-                        </RadarChart>
-                      </ResponsiveContainer>
+                  {/* Columna derecha: perfil físico */}
+                  <div className="flex flex-col gap-4">
+                    <div className="rounded-2xl p-5 w-full flex flex-col" style={{
+                      background: 'rgba(255,255,255,0.5)',
+                      border: '1px solid rgba(255,255,255,0.4)',
+                      borderRadius: 16,
+                    }}>
+                      <h3 className="text-[#1D1D1F] text-sm font-semibold mb-1">Perfil Físico</h3>
+                      <p className="text-xs mb-2" style={{ color: 'rgba(0,0,0,0.35)' }}>Capacidades funcionales</p>
+                      <div className="flex-1" style={{ minHeight: 240 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart data={bodyRadar} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                            <PolarGrid stroke="rgba(0,0,0,0.06)" />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(0,0,0,0.35)', fontSize: 11 }} />
+                            <Radar name="Capacidad" dataKey="value" stroke="#E63946" fill="#E63946" fillOpacity={0.08} strokeWidth={2.5} />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -348,7 +360,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                               }}
                             >
                               {attended ? '✓' : wi * 7 + di + 1}
-                            </motion.div>
+                    </motion.div>
                           ))}
                         </div>
                       ))}
@@ -453,7 +465,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 <div className="space-y-6">
                   {currentTab === 'assessment' && (
                     <>
-                      <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-4" style={{ gridTemplateColumns: '0.6fr 2fr 0.6fr' }}>
                         {[
                           { section: 'Antropometría', items: [{ label: 'Peso', value: `${student.weight} kg` }, { label: 'Altura', value: `${student.height} cm` }, { label: 'IMC', value: imc }, { label: 'Grasa corporal', value: '17%' }, { label: 'Masa muscular', value: '52 kg' }, { label: 'Circunf. cintura', value: '82 cm' }] },
                           { section: 'Capacidades Físicas', items: [{ label: 'Fuerza máx. (1RM)', value: '100 kg' }, { label: 'VO2 Max', value: '42 ml/kg/min' }, { label: 'Flexibilidad', value: '28 cm (sit & reach)' }, { label: 'Potencia', value: '85/100' }, { label: 'Movilidad', value: '72/100' }, { label: 'Equilibrio', value: '78/100' }] },
@@ -567,7 +579,108 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
             </motion.div>
           </AnimatePresence>
         </div>
-      </div>
+
+        {/* Modal información completa */}
+        <AnimatePresence>
+          {modalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setModalOpen(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-3xl p-6"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                  scrollbarWidth: 'thin',
+                }}
+              >
+                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setModalOpen(false)}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-xl flex items-center justify-center z-10" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                  <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                </motion.button>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    {
+                      title: 'Datos personales',
+                      icon: <StudentCardView />,
+                      fields: [
+                        { label: 'Tipo de documento', value: student.documentType },
+                        { label: 'Número de documento', value: student.documentNumber },
+                        { label: 'Fecha de nacimiento', value: student.birthDate },
+                        { label: 'Género', value: student.gender },
+                        { label: 'Número carnet', value: student.carnetId },
+                      ],
+                    },
+                    {
+                      title: 'Contacto',
+                      icon: <ListView />,
+                      fields: [
+                        { label: 'Email', value: student.email },
+                        { label: 'Teléfono', value: student.phone },
+                        { label: 'Contacto de emergencia', value: student.contactName },
+                        { label: 'Tel. contacto', value: student.contactPhone },
+                      ],
+                    },
+                    {
+                      title: 'Información académica',
+                      icon: <CalendarView />,
+                      fields: [
+                        { label: 'Programa', value: student.program },
+                        { label: 'Institución', value: student.institution },
+                        { label: 'Semestre', value: `${student.semestre}°` },
+                        { label: 'Modalidad', value: student.modality },
+                        { label: 'Jornada', value: student.jornada },
+                        { label: 'Estado', value: student.graduationStatus },
+                      ],
+                    },
+                    {
+                      title: 'Salud',
+                      icon: <Activity size={18} style={{ color: '#E63946' }} />,
+                      fields: [
+                        { label: 'EPS', value: student.eps },
+                        { label: 'Grupo sanguíneo', value: student.bloodType },
+                        { label: 'Peso', value: `${student.weight} kg` },
+                        { label: 'Altura', value: `${student.height} cm` },
+                        { label: 'IMC', value: imc },
+                      ],
+                    },
+                  ].map(section => (
+                    <div key={section.title} className="rounded-2xl p-4" style={{
+                      background: 'rgba(0,0,0,0.02)',
+                      border: '1px solid rgba(0,0,0,0.04)',
+                    }}>
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <div className="w-7 h-7 flex-shrink-0">{section.icon}</div>
+                        <p className="text-xs font-extrabold capitalize" style={{ color: '#1D1D1F' }}>{section.title}</p>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {section.fields.map(field => (
+                          <div key={field.label} className="flex flex-col">
+                            <p className="text-[10px] mb-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{field.label}</p>
+                            <p className="text-xs font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
     </div>
   )
 }

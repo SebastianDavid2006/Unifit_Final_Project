@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { StudentProfile, TABS } from '../modules/students/StudentProfile'
 import StudentsModule from '../modules/students/StudentsModule'
+import iconRunning from '../assets/icons/animated/icon_running.gif'
 import AgendaModule from '../modules/agenda/AgendaModule'
 import EquipmentPage from './EquipmentPage'
 import AdminModule from '../modules/admin/AdminModule'
@@ -597,8 +598,14 @@ const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month
           {selectedStudent && (
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setSelectedStudent(null)}
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(16px) saturate(1.5)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+              }}
             >
-              <ChevronLeft size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
+              <img src={iconRunning} alt="Volver" className="w-5 h-5 object-contain" style={{ transform: 'scaleX(-1)' }} />
             </motion.button>
           )}
 
