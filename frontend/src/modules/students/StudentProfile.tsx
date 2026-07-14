@@ -154,9 +154,74 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               <div className="text-left h-full">
 
               {currentTab === 'overview' && (
-                <div className="h-full" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto', gap: 16, alignItems: 'start' }}>
+                <div className="flex h-full gap-2">
+                  {/* Columna izquierda */}
+                  <div className="flex flex-col gap-2" style={{ flex: '1 1 0%' }}>
+                    {/* Info General */}
+                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Información General</p>
+                      </div>
+                      <div className="flex flex-col">
+                        {[
+                          { label: 'Documento', value: `${student.documentType}. ${student.documentNumber}` },
+                          { label: 'Fecha de nacimiento', value: student.birthDate },
+                          { label: 'Género', value: student.gender },
+                        ].map((field, fi, arr) => (
+                          <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 6 : 0 }}>
+                            <p className="text-xs mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
+                            <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Contacto */}
+                    <div className="rounded-[28px] p-5" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <div className="w-8 h-8 flex-shrink-0"><TelephoneView /></div>
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Contacto</p>
+                      </div>
+                      <div className="flex flex-col">
+                        {[
+                          { label: 'Email', value: student.email },
+                          { label: 'Teléfono', value: student.phone },
+                          { label: 'Contacto de emergencia', value: student.contactName },
+                          { label: 'Tel. contacto', value: student.contactPhone },
+                        ].map((field, fi, arr) => (
+                          <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 8 : 0 }}>
+                            <p className="text-xs mb-1" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
+                            <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Info académica */}
+                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <div className="w-8 h-8 flex-shrink-0"><CapView /></div>
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Información académica</p>
+                      </div>
+                      <div className="flex flex-col">
+                        {[
+                          { label: 'Programa', value: student.program },
+                          { label: 'Semestre', value: `${student.semestre}°` },
+                          { label: 'Jornada', value: student.jornada },
+                        ].map((field, fi, arr) => (
+                          <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 6 : 0 }}>
+                            <p className="text-xs mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
+                            <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Centro */}
-                  <div className="flex flex-col items-center justify-center relative overflow-hidden" style={{ gridColumn: 2, gridRow: '1 / -1' }}>
+                  <div className="flex flex-col items-center justify-center relative overflow-hidden" style={{ flex: '2 1 0%' }}>
                     <div
                       className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3"
                       style={{
@@ -187,126 +252,61 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     </div>
                   </div>
 
-                  {/* Fila 1 */}
-                  <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)', gridColumn: 1, gridRow: 1 }}>
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-                      <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Información General</p>
-                    </div>
-                    <div className="flex flex-col">
-                      {[
-                        { label: 'Documento', value: `${student.documentType}. ${student.documentNumber}` },
-                        { label: 'Fecha de nacimiento', value: student.birthDate },
-                        { label: 'Género', value: student.gender },
-                      ].map((field, fi, arr) => (
-                        <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 6 : 0 }}>
-                          <p className="text-xs mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
-                          <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)', gridColumn: 3, gridRow: 1 }}>
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Estado del proceso</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { label: 'Unifit Score', value: '87', unit: '/100' },
-                        { label: 'Adherencia', value: '92%', unit: '' },
-                        { label: 'Constancia', value: '85%', unit: '' },
-                        { label: 'Evolución física', value: '+12%', unit: '' },
-                      ].map(m => (
-                        <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                          <p className="text-base font-extrabold" style={{ color: '#1D1D1F' }}>{m.value}{m.unit}</p>
-                          <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Fila 2 */}
-                  <div className="rounded-[28px] p-5" style={{ background: 'rgba(255,255,255,0.5)', gridColumn: 1, gridRow: 2 }}>
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-                      <div className="w-8 h-8 flex-shrink-0"><TelephoneView /></div>
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Contacto</p>
-                    </div>
-                    <div className="flex flex-col">
-                      {[
-                        { label: 'Email', value: student.email },
-                        { label: 'Teléfono', value: student.phone },
-                        { label: 'Contacto de emergencia', value: student.contactName },
-                        { label: 'Tel. contacto', value: student.contactPhone },
-                      ].map((field, fi, arr) => (
-                        <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 8 : 0 }}>
-                          <p className="text-xs mb-1" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
-                          <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)', gridColumn: 3, gridRow: 2 }}>
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Métricas actuales</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { label: 'Peso', value: `${student.weight} kg` },
-                        { label: 'Estatura', value: `${student.height} cm` },
-                        { label: 'IMC', value: imc },
-                        { label: 'Grasa corporal', value: '17%' },
-                        { label: 'Masa muscular', value: '52 kg' },
-                        { label: 'Agua corporal', value: '58%' },
-                      ].map(m => (
-                        <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                          <p className="text-base font-extrabold" style={{ color: '#1D1D1F' }}>{m.value}</p>
-                          <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Fila 3 */}
-                  <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)', gridColumn: 1, gridRow: 3 }}>
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-                      <div className="w-8 h-8 flex-shrink-0"><CapView /></div>
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Información académica</p>
-                    </div>
-                    <div className="flex flex-col">
-                      {[
-                        { label: 'Programa', value: student.program },
-                        { label: 'Semestre', value: `${student.semestre}°` },
-                        { label: 'Jornada', value: student.jornada },
-                      ].map((field, fi, arr) => (
-                        <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 6 : 0 }}>
-                          <p className="text-xs mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
-                          <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[28px] p-4 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))', gridColumn: 3, gridRow: 3 }}>
-                    <div className="absolute inset-0 pointer-events-none" style={{
-                      background: 'linear-gradient(110deg, transparent 25%, rgba(255,215,0,0.15) 37%, rgba(255,255,255,0.4) 50%, rgba(255,215,0,0.15) 63%, transparent 75%)',
-                      backgroundSize: '200% 100%',
-                      animation: 'shimmerGold 3s ease-in-out infinite',
-                    }} />
-                    <div className="relative z-10">
+                  {/* Columna derecha */}
+                  <div className="flex flex-col gap-2" style={{ flex: '1 1 0%' }}>
+                    {/* Estado del proceso */}
+                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
                       <div className="flex items-center gap-2.5 mb-3">
-                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(212,175,55,0.5)' }} />
-                        <div className="w-8 h-8 flex-shrink-0"><TrophyView /></div>
-                        <p className="text-lg font-extrabold capitalize" style={{ color: '#B8860B' }}>Objetivo físico</p>
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Estado del proceso</p>
                       </div>
-                      <div className="rounded-2xl p-3" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.15)' }}>
-                        <p className="text-base font-bold" style={{ color: '#B8860B' }}>{student.goal}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { label: 'Unifit Score', value: '87', unit: '/100' },
+                          { label: 'Adherencia', value: '92%', unit: '' },
+                          { label: 'Constancia', value: '85%', unit: '' },
+                          { label: 'Evolución física', value: '+12%', unit: '' },
+                        ].map(m => (
+                          <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                            <p className="text-base font-extrabold" style={{ color: '#1D1D1F' }}>{m.value}{m.unit}</p>
+                            <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Métricas actuales */}
+                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Métricas actuales</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { label: 'Peso', value: `${student.weight} kg` },
+                          { label: 'Estatura', value: `${student.height} cm` },
+                          { label: 'IMC', value: imc },
+                          { label: 'Grasa corporal', value: '17%' },
+                          { label: 'Masa muscular', value: '52 kg' },
+                          { label: 'Agua corporal', value: '58%' },
+                        ].map(m => (
+                          <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                            <p className="text-base font-extrabold" style={{ color: '#1D1D1F' }}>{m.value}</p>
+                            <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Objetivo físico */}
+                    <div className="rounded-[28px] p-4 relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-2.5 mb-3">
+                          <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(212,175,55,0.5)' }} />
+                          <div className="w-8 h-8 flex-shrink-0"><TrophyView /></div>
+                          <p className="text-lg font-extrabold capitalize" style={{ color: '#B8860B' }}>Objetivo físico</p>
+                        </div>
+                        <div className="rounded-2xl p-3" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.15)' }}>
+                          <p className="text-sm font-bold leading-relaxed" style={{ color: '#B8860B' }}>{student.goal}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
