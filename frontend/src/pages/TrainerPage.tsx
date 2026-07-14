@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, ClipboardList, Dumbbell, Calendar,
   TrendingUp, Clock, Activity, Target, Award,
   Search, Plus, ArrowUp, Sparkles,
-  CheckCircle, Bell, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Filter, Shield,
+  CheckCircle, Bell, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Filter, Shield, Menu,
 } from 'lucide-react'
 import { StudentProfile, TABS } from '../modules/students/StudentProfile'
 import StudentsModule from '../modules/students/StudentsModule'
@@ -144,6 +144,7 @@ export function TrainerDashboard() {
   const [showEquipFilters, setShowEquipFilters] = useState(false)
   const [equipViewMode, setEquipViewMode] = useState<'machines' | 'exercises'>('machines')
   const [equipSearchHovered, setEquipSearchHovered] = useState(false)
+  const [showStudentsFilters, setShowStudentsFilters] = useState(false)
 
 
   // ── Gym Configuration ──
@@ -372,29 +373,47 @@ const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month
           <div className="relative px-7 pt-5 pb-3 flex items-center gap-3">
           {!selectedStudent && section === 'students' && (
             <div className="flex-1 flex justify-center">
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0, scaleX: searchFocused ? 1.04 : 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="flex items-center gap-3 px-4 py-2 rounded-2xl max-w-md w-full"
-                style={{
-                  background: searchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
-                  backdropFilter: 'blur(24px) saturate(1.6)',
-                  border: searchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
-                  boxShadow: searchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
-                  transformOrigin: 'center',
-                }}
-              >
-                <Search size={16} style={{ color: searchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
-                <input
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setSearchFocused(false)}
-                  placeholder="Buscar por nombre o documento..."
-                  className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
-                />
-              </motion.div>
+              <div className="flex items-center gap-2 max-w-md w-full">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0, scaleX: searchFocused ? 1.04 : 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  className="flex items-center gap-3 px-4 py-2 rounded-2xl flex-1 min-w-0"
+                  style={{
+                    background: searchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(24px) saturate(1.6)',
+                    border: searchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                    boxShadow: searchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
+                    transformOrigin: 'center',
+                  }}
+                >
+                  <Search size={16} style={{ color: searchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
+                  <input
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setSearchFocused(false)}
+                    placeholder="Buscar por nombre o documento..."
+                    className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
+                  />
+                </motion.div>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowStudentsFilters(!showStudentsFilters)}
+                  className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                  style={{
+                    marginLeft: searchFocused ? 6 : 0,
+                    background: showStudentsFilters ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(24px) saturate(1.6)',
+                    border: showStudentsFilters ? '1px solid rgba(255,255,255,0.6)' : '1px solid rgba(255,255,255,0.25)',
+                    boxShadow: showStudentsFilters ? '0 4px 24px rgba(0,0,0,0.08)' : '0 4px 16px rgba(0,0,0,0.03)',
+                    color: showStudentsFilters ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
+                  }}
+                >
+                  <Menu size={18} />
+                </motion.button>
+              </div>
             </div>
           )}
           {!selectedStudent && section === 'schedule' && (
@@ -680,6 +699,8 @@ const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month
                   search={search}
                   riskFilter={riskFilter}
                   onSelectStudent={setSelectedStudent}
+                  showFilters={showStudentsFilters}
+                  onToggleFilters={() => setShowStudentsFilters(!showStudentsFilters)}
                 />
               )}
               {section === 'routines' && renderRoutines()}

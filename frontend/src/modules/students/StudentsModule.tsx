@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Search, Plus, ClipboardList, Menu, ChevronRight } from 'lucide-react'
+import { Search, Plus, ClipboardList, ChevronRight } from 'lucide-react'
 import studentsImg from '../../assets/illustrations/characters/students/students_group.webp'
 import NewStudentModal from './NewStudentModal'
 
@@ -35,10 +35,11 @@ interface Props {
   search: string
   riskFilter: 'all' | 'high' | 'medium' | 'low'
   onSelectStudent: (s: Student) => void
+  showFilters: boolean
+  onToggleFilters: () => void
 }
 
-export default function StudentsModule({ students, search, riskFilter, onSelectStudent }: Props) {
-  const [showFilters, setShowFilters] = useState(false)
+export default function StudentsModule({ students, search, riskFilter, onSelectStudent, showFilters, onToggleFilters }: Props) {
   const [filterCategory, setFilterCategory] = useState<'eps' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
   const [filterSearch, setFilterSearch] = useState('')
@@ -99,21 +100,11 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
 
           <div className="flex items-center gap-3 pr-4">
             <motion.button
-              whileHover={{ scale: 1.1, backgroundColor: 'rgba(0,0,0,0.05)' }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setShowFilters(!showFilters)}
-              className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${showFilters ? 'bg-black/5 text-[#1A1A1E]' : 'text-black/30'}`}
-              style={{ border: '1px solid rgba(0,0,0,0.05)' }}
-            >
-              <Menu size={20} />
-            </motion.button>
-
-            <motion.button
               initial="initial"
               whileHover="hover"
               whileTap={{ scale: 0.9, boxShadow: '0 0 40px rgba(244,56,67,0.6), 0 0 80px rgba(18,112,183,0.4), 0 0 120px rgba(241,200,39,0.2)', transition: { duration: 0.15 } }}
               onClick={() => setShowNewStudent(true)}
-              className="flex items-center rounded-2xl overflow-hidden relative text-white"
+              className="flex items-center rounded-full overflow-hidden relative text-white"
               style={{ 
                 height: 44, 
                 padding: '0 12px',
