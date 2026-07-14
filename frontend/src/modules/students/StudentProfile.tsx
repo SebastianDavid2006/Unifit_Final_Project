@@ -14,6 +14,7 @@ import bodyImg from '../../assets/illustrations/characters/anatomical/anatomy_ma
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '../../assets/models/ui/objects/telephone/TelephoneModel'
 import { CapView } from '../../assets/models/ui/objects/cap/CapModel'
+import { TrophyView } from '../../assets/models/ui/objects/trophy/TrophyModel'
 
 interface Student {
   id: number
@@ -138,7 +139,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
   return (
-    <div className="flex flex-col size-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Background orbs */}
       <div className="floating-sphere" style={{
         width: 280, height: 280,
@@ -146,145 +147,169 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         top: '-60px', right: '-40px',
       }} />
 
-      <div className="relative z-10 flex-shrink-0 px-8 pt-8">
+      <div className="relative z-10 flex-1 min-h-0 px-8 pt-8 overflow-hidden">
 
           <AnimatePresence mode="wait">
-            <motion.div key={currentTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              <div className="text-left">
+            <motion.div key={currentTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">
+              <div className="text-left h-full">
 
               {currentTab === 'overview' && (
-                <div className="grid grid-cols-3 gap-4">
-                  {/* Columna izquierda: info personal */}
-                  <div className="flex flex-col h-full gap-4 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
-                    {[
-                      {
-                        title: 'Información General',
-                        icon: <StudentCardView />,
-                        fields: [
+                <div className="flex flex-col gap-4 h-full">
+                  {/* Fila 1 */}
+                  <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 2fr 1fr' }}>
+                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Información General</p>
+                      </div>
+                      <div className="flex flex-col">
+                        {[
                           { label: 'Documento', value: `${student.documentType}. ${student.documentNumber}` },
                           { label: 'Fecha de nacimiento', value: student.birthDate },
                           { label: 'Género', value: student.gender },
-                        ],
-                      },
-                      {
-                        title: 'Contacto',
-                        icon: <TelephoneView />,
-                        fields: [
+                        ].map((field, fi, arr) => (
+                          <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 6 : 0 }}>
+                            <p className="text-xs mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
+                            <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center justify-center relative overflow-hidden">
+                      <div
+                        className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3"
+                        style={{
+                          background: student.risk === 'high'
+                            ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
+                            : student.risk === 'medium'
+                            ? 'linear-gradient(135deg, #FF9500, #E68600)'
+                            : 'linear-gradient(135deg, #30D158, #20A040)',
+                          fontSize: 26,
+                        }}
+                      >
+                        {student.avatar}
+                      </div>
+                      <h2 className="text-[#1D1D1F] text-2xl font-bold text-center mb-2">
+                        {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
+                      </h2>
+                      <div className="flex flex-col items-center relative" style={{ height: 200 }}>
+                        <video
+                          src="/student-body.webm"
+                          autoPlay loop muted playsInline preload="auto"
+                          className="w-full h-full object-cover relative"
+                          style={{
+                            filter: 'saturate(1.1)',
+                            maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+                            WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="rounded-[28px] p-4 flex flex-col justify-center" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Métricas actuales</p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { label: 'Peso', value: `${student.weight} kg` },
+                          { label: 'Estatura', value: `${student.height} cm` },
+                          { label: 'IMC', value: imc },
+                          { label: 'Grasa', value: '17%' },
+                          { label: 'Masa musc.', value: '52 kg' },
+                          { label: 'Agua corp.', value: '58%' },
+                        ].map(m => (
+                          <div key={m.label} className="rounded-xl p-2 text-center" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                            <p className="text-sm font-extrabold" style={{ color: '#1D1D1F' }}>{m.value}</p>
+                            <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fila 2 */}
+                  <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 2fr 1fr' }}>
+                    <div className="rounded-[28px] p-5" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <div className="w-8 h-8 flex-shrink-0"><TelephoneView /></div>
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Contacto</p>
+                      </div>
+                      <div className="flex flex-col">
+                        {[
                           { label: 'Email', value: student.email },
                           { label: 'Teléfono', value: student.phone },
                           { label: 'Contacto de emergencia', value: student.contactName },
                           { label: 'Tel. contacto', value: student.contactPhone },
-                        ],
-                      },
-                      {
-                        title: 'Información académica',
-                        icon: <CapView />,
-                        fields: [
+                        ].map((field, fi, arr) => (
+                          <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 8 : 0 }}>
+                            <p className="text-xs mb-1" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
+                            <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div />
+                    <div className="rounded-[28px] p-5 flex flex-col justify-center" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="flex items-center gap-2.5 mb-4">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Estado del proceso</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { label: 'Unifit Score', value: '87', unit: '/100', highlight: true },
+                          { label: 'Adherencia', value: '92%', unit: '', highlight: false },
+                          { label: 'Constancia', value: '85%', unit: '', highlight: false },
+                          { label: 'Evolución física', value: '+12%', unit: '', highlight: false },
+                        ].map(m => (
+                          <div key={m.label} className="rounded-2xl p-4 text-center" style={{ background: m.highlight ? 'rgba(230,57,70,0.06)' : 'rgba(0,0,0,0.02)' }}>
+                            <p className="text-xl font-extrabold" style={{ color: '#1D1D1F' }}>{m.value}{m.unit}</p>
+                            <p className="text-xs font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fila 3 */}
+                  <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 2fr 1fr' }}>
+                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                      <div className="flex items-center gap-2.5 mb-2">
+                        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
+                        <div className="w-8 h-8 flex-shrink-0"><CapView /></div>
+                        <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Información académica</p>
+                      </div>
+                      <div className="flex flex-col">
+                        {[
                           { label: 'Programa', value: student.program },
                           { label: 'Semestre', value: `${student.semestre}°` },
                           { label: 'Jornada', value: student.jornada },
-                        ],
-                      },
-                    ].map(section => (
-                      <div key={section.title} className="rounded-2xl p-4" style={{
-                        background: 'rgba(255,255,255,0.5)',
-                        border: '1px solid rgba(255,255,255,0.4)',
-                      }}>
-                        <div className="flex items-center gap-2.5 mb-3">
-                          <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-                          <div className="w-8 h-8 flex-shrink-0">{section.icon}</div>
-                          <p className="text-sm font-extrabold capitalize" style={{ color: '#1D1D1F' }}>{section.title}</p>
-                        </div>
-                        <div className="flex flex-col">
-                          {section.fields.map(field => (
-                            <div key={field.label} className="flex flex-col pb-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                              <p className="text-[11px] mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
-                              <p className="text-sm font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
-                            </div>
-                          ))}
-                        </div>
+                        ].map((field, fi, arr) => (
+                          <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 6 : 0 }}>
+                            <p className="text-xs mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
+                            <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Columna central: imagen corporal */}
-                  <div className="flex flex-col items-center relative">
-                    <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3"
-                      style={{
-                        background: student.risk === 'high'
-                          ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
-                          : student.risk === 'medium'
-                          ? 'linear-gradient(135deg, #FF9500, #E68600)'
-                          : 'linear-gradient(135deg, #30D158, #20A040)',
-                        fontSize: 26,
-                      }}
-                    >
-                      {student.avatar}
                     </div>
-                    <h2 className="text-[#1D1D1F] text-2xl font-bold text-center mb-2">
-                      {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
-                    </h2>
-                    <div
-                      className="flex flex-col items-center relative"
-                    >
-                      <div className="absolute rounded-full pointer-events-none" style={{
-                        background: 'radial-gradient(ellipse at 50% 40%, rgba(147,51,234,0.5), transparent 50%)',
-                        filter: 'blur(60px)',
-                        width: 550,
-                        height: 750,
-                        left: '50%',
-                        top: '45%',
-                        transform: 'translate(-50%, -50%)',
+                    <div />
+                    <div className="rounded-[28px] p-4 relative overflow-hidden flex flex-col justify-center" style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
+                      <div className="absolute inset-0 pointer-events-none" style={{
+                        background: 'linear-gradient(110deg, transparent 25%, rgba(255,215,0,0.15) 37%, rgba(255,255,255,0.4) 50%, rgba(255,215,0,0.15) 63%, transparent 75%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmerGold 3s ease-in-out infinite',
                       }} />
-                      <video
-                        src="/student-body.webm"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        preload="auto"
-                        className="w-full h-[670px] object-contain relative"
-                        style={{
-                          filter: 'saturate(1.1) drop-shadow(0 0 100px rgba(147,51,234,0.4))',
-                          maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
-                          WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
-                          imageRendering: 'auto',
-                        }}
-                      />
-                      <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none" style={{
-                        width: 280,
-                        height: 40,
-                        background: 'radial-gradient(ellipse at 50% 100%, rgba(147,51,234,0.4), transparent 60%)',
-                        filter: 'blur(20px)',
-                        bottom: -10,
-                      }} />
-                      <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none" style={{
-                        width: 200,
-                        height: 2,
-                        background: 'linear-gradient(90deg, transparent, rgba(147,51,234,0.15), transparent)',
-                        bottom: 4,
-                      }} />
-                    </div>
-                  </div>
-
-                  {/* Columna derecha: perfil físico */}
-                  <div className="flex flex-col gap-4">
-                    <div className="rounded-2xl p-5 w-full flex flex-col" style={{
-                      background: 'rgba(255,255,255,0.5)',
-                      border: '1px solid rgba(255,255,255,0.4)',
-                      borderRadius: 16,
-                    }}>
-                      <h3 className="text-[#1D1D1F] text-sm font-semibold mb-1">Perfil Físico</h3>
-                      <p className="text-xs mb-2" style={{ color: 'rgba(0,0,0,0.35)' }}>Capacidades funcionales</p>
-                      <div className="flex-1" style={{ minHeight: 240 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <RadarChart data={bodyRadar} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                            <PolarGrid stroke="rgba(0,0,0,0.06)" />
-                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(0,0,0,0.35)', fontSize: 11 }} />
-                            <Radar name="Capacidad" dataKey="value" stroke="#E63946" fill="#E63946" fillOpacity={0.08} strokeWidth={2.5} />
-                          </RadarChart>
-                        </ResponsiveContainer>
+                      <div className="relative z-10">
+                        <div className="flex items-center gap-2.5 mb-3">
+                          <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(212,175,55,0.5)' }} />
+                          <div className="w-8 h-8 flex-shrink-0"><TrophyView /></div>
+                          <p className="text-lg font-extrabold capitalize" style={{ color: '#B8860B' }}>Objetivo físico</p>
+                        </div>
+                        <div className="rounded-2xl p-3" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.15)' }}>
+                          <p className="text-base font-bold" style={{ color: '#B8860B' }}>{student.goal}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -465,7 +490,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 <div className="space-y-6">
                   {currentTab === 'assessment' && (
                     <>
-                <div className="grid gap-4" style={{ gridTemplateColumns: '0.6fr 2fr 0.6fr' }}>
+                <div className="grid gap-4 h-full" style={{ gridTemplateColumns: '0.6fr 2fr 0.6fr' }}>
                         {[
                           { section: 'Antropometría', items: [{ label: 'Peso', value: `${student.weight} kg` }, { label: 'Altura', value: `${student.height} cm` }, { label: 'IMC', value: imc }, { label: 'Grasa corporal', value: '17%' }, { label: 'Masa muscular', value: '52 kg' }, { label: 'Circunf. cintura', value: '82 cm' }] },
                           { section: 'Capacidades Físicas', items: [{ label: 'Fuerza máx. (1RM)', value: '100 kg' }, { label: 'VO2 Max', value: '42 ml/kg/min' }, { label: 'Flexibilidad', value: '28 cm (sit & reach)' }, { label: 'Potencia', value: '85/100' }, { label: 'Movilidad', value: '72/100' }, { label: 'Equilibrio', value: '78/100' }] },
@@ -530,7 +555,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     </>
                   )}
                   {currentTab === 'documents' && (
-                    <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-4" style={{ gridTemplateColumns: '0.7fr 2fr 0.7fr', height: '100%' }}>
                       {[
                         { name: 'Contrato de Matrícula', date: '15 Ene 2026', type: 'PDF', signed: true },
                         { name: 'Consentimiento Informado', date: '15 Ene 2026', type: 'PDF', signed: true },

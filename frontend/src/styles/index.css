@@ -30,6 +30,11 @@
   100% { background-position: 200% center; }
 }
 
+@keyframes shimmerGold {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
 @keyframes particle-drift {
   0% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
   10% { opacity: 0.6; }
