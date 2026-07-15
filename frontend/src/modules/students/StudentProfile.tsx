@@ -156,7 +156,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               {currentTab === 'overview' && (
                 <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
                   {/* Fila 1 - Izquierda: Info General */}
-                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '1', gridRow: '1', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-2">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
@@ -177,7 +177,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </div>
 
                   {/* Centro - spans todas las filas */}
-                  <div className="flex flex-col items-center relative" style={{ gridRow: '1 / 4', paddingTop: 16 }}>
+                  <div className="flex flex-col items-center relative" style={{ gridColumn: '2', gridRow: '1 / 4', paddingTop: 16 }}>
                     <div
                       className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3"
                       style={{
@@ -210,7 +210,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </div>
 
                   {/* Fila 1 - Derecha: Estado del proceso */}
-                  <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                  <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '3', gridRow: '1', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-4">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Estado del proceso</p>
@@ -248,7 +248,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </div>
 
                   {/* Fila 2 - Izquierda: Contacto */}
-                  <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                  <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '1', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-3">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><TelephoneView /></div>
@@ -270,7 +270,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </div>
 
                   {/* Fila 2 - Derecha: Métricas actuales */}
-                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '3', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-3">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Métricas actuales</p>
@@ -293,7 +293,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </div>
 
                   {/* Fila 3 - Izquierda: Info académica */}
-                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '1', gridRow: '3', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-2">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><CapView /></div>
@@ -314,7 +314,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </div>
 
                   {/* Fila 3 - Derecha: Objetivo físico */}
-                  <div className="rounded-[28px] p-5 relative overflow-hidden transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
+                  <div className="rounded-[28px] p-5 relative overflow-hidden transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '3', gridRow: '3', background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
                     <div className="absolute inset-0 pointer-events-none" style={{
                       background: 'linear-gradient(110deg, transparent 25%, rgba(255,215,0,0.15) 37%, rgba(255,255,255,0.4) 50%, rgba(255,215,0,0.15) 63%, transparent 75%)',
                       backgroundSize: '200% 100%',
