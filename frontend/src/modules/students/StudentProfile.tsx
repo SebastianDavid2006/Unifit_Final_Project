@@ -177,9 +177,9 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </div>
 
                   {/* Centro - spans todas las filas */}
-                  <div className="flex flex-col items-center relative" style={{ gridColumn: '2', gridRow: '1 / 4', paddingTop: 16 }}>
+                  <div className="flex flex-col items-center relative" style={{ gridColumn: '2', gridRow: '1 / 4', paddingTop: 16, alignSelf: 'stretch', overflow: 'visible' }}>
                     <div
-                      className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3"
+                      className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3 relative z-10"
                       style={{
                         background: student.risk === 'high'
                           ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
@@ -191,10 +191,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     >
                       {student.avatar}
                     </div>
-                    <h2 className="text-[#1D1D1F] text-2xl font-bold text-center mb-2">
+                    <h2 className="text-[#1D1D1F] text-2xl font-bold text-center mb-2 relative z-10">
                       {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
                     </h2>
-                    <div className="flex-1 w-full relative" style={{ minHeight: 0 }}>
+                    <div className="absolute left-0 right-0" style={{ top: 110, bottom: -60 }}>
                       <video
                         src="/student-body.webm"
                         autoPlay loop muted playsInline preload="auto"
@@ -202,8 +202,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         style={{
                           objectFit: 'contain',
                           filter: 'saturate(1.1)',
-                          maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
-                          WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
+                          maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
+                          WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
                         }}
                       />
                     </div>
@@ -218,28 +218,33 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     <div className="flex items-center gap-5">
                       <div className="relative flex-shrink-0" style={{ width: 96, height: 96 }}>
                         <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+                          <defs>
+                            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor="#30D158" />
+                              <stop offset="100%" stopColor="#00C7BE" />
+                            </linearGradient>
+                          </defs>
                           <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
-                          <circle cx="18" cy="18" r="15.9" fill="none" stroke="#E63946" strokeWidth="2.8" strokeLinecap="round"
+                          <circle cx="18" cy="18" r="15.9" fill="none" stroke="url(#scoreGrad)" strokeWidth="2.8" strokeLinecap="round"
                             strokeDasharray={`${87 * 0.999} ${100 - 87 * 0.999}`} />
                         </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <p className="text-2xl font-extrabold" style={{ color: '#1D1D1F' }}>87</p>
-                          <p className="text-[9px]" style={{ color: 'rgba(0,0,0,0.3)' }}>/100</p>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <p className="text-2xl font-extrabold" style={{ background: 'linear-gradient(90deg, #30D158, #00C7BE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>87%</p>
                         </div>
                       </div>
                       <div className="flex flex-col flex-1 gap-4">
                         {[
-                          { label: 'Adherencia', value: 92, color: '#30D158' },
-                          { label: 'Constancia', value: 85, color: '#FF9500' },
-                          { label: 'Evolución física', value: 76, color: '#FF6B8A' },
+                          { label: 'Adherencia', value: 92, gradient: 'linear-gradient(90deg, #30D158, #00C7BE)' },
+                          { label: 'Constancia', value: 85, gradient: 'linear-gradient(90deg, #FF9500, #FFCC02)' },
+                          { label: 'Evolución física', value: 76, gradient: 'linear-gradient(90deg, #FF6B8A, #FF375F)' },
                         ].map(m => (
                           <div key={m.label}>
                             <div className="flex items-center justify-between mb-1.5">
                               <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{m.label}</p>
-                              <p className="text-xs font-bold" style={{ color: m.color }}>{m.value}%</p>
+                              <p className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{m.value}%</p>
                             </div>
                             <div className="w-full h-2.5 rounded-full" style={{ background: 'rgba(0,0,0,0.05)' }}>
-                              <div className="h-full rounded-full" style={{ width: `${m.value}%`, background: m.color }} />
+                              <div className="h-full rounded-full" style={{ width: `${m.value}%`, background: m.gradient }} />
                             </div>
                           </div>
                         ))}
