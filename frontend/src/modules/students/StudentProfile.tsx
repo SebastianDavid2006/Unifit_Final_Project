@@ -221,7 +221,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </div>
 
                   {/* Centro */}
-                  <div className="flex flex-col items-center justify-center relative overflow-hidden" style={{ flex: '2 1 0%' }}>
+                  <div className="flex flex-col items-center relative" style={{ flex: '2 1 0%', paddingTop: 16 }}>
                     <div
                       className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3"
                       style={{
@@ -238,12 +238,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     <h2 className="text-[#1D1D1F] text-2xl font-bold text-center mb-2">
                       {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
                     </h2>
-                    <div className="flex flex-col items-center relative" style={{ height: 200 }}>
+                    <div className="flex-1 w-full relative" style={{ minHeight: 0 }}>
                       <video
                         src="/student-body.webm"
                         autoPlay loop muted playsInline preload="auto"
-                        className="w-full h-full object-cover relative"
+                        className="absolute inset-0 w-full h-full"
                         style={{
+                          objectFit: 'contain',
                           filter: 'saturate(1.1)',
                           maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
                           WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
