@@ -158,7 +158,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   {/* Columna izquierda */}
                   <div className="flex flex-col gap-2" style={{ flex: '1 1 0%' }}>
                     {/* Info General */}
-                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                    <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
                       <div className="flex items-center gap-2.5 mb-2">
                         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                         <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
@@ -178,7 +178,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       </div>
                     </div>
                     {/* Contacto */}
-                    <div className="rounded-[28px] p-5" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                    <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
                       <div className="flex items-center gap-2.5 mb-3">
                         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                         <div className="w-8 h-8 flex-shrink-0"><TelephoneView /></div>
@@ -199,7 +199,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       </div>
                     </div>
                     {/* Info académica */}
-                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                    <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
                       <div className="flex items-center gap-2.5 mb-2">
                         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                         <div className="w-8 h-8 flex-shrink-0"><CapView /></div>
@@ -256,7 +256,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   {/* Columna derecha */}
                   <div className="flex flex-col gap-2" style={{ flex: '1 1 0%' }}>
                     {/* Estado del proceso */}
-                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                    <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
                       <div className="flex items-center gap-2.5 mb-3">
                         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                         <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Estado del proceso</p>
@@ -276,7 +276,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       </div>
                     </div>
                     {/* Métricas actuales */}
-                    <div className="rounded-[28px] p-4" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                    <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'rgba(255,255,255,0.5)' }}>
                       <div className="flex items-center gap-2.5 mb-3">
                         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                         <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Métricas actuales</p>
@@ -298,7 +298,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       </div>
                     </div>
                     {/* Objetivo físico */}
-                    <div className="rounded-[28px] p-4 relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.5)' }}>
+                    <div className="rounded-[28px] p-4 relative overflow-hidden transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
+                      <div className="absolute inset-0 pointer-events-none" style={{
+                        background: 'linear-gradient(110deg, transparent 25%, rgba(255,215,0,0.15) 37%, rgba(255,255,255,0.4) 50%, rgba(255,215,0,0.15) 63%, transparent 75%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmerGold 3s ease-in-out infinite',
+                      }} />
                       <div className="relative z-10">
                         <div className="flex items-center gap-2.5 mb-3">
                           <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(212,175,55,0.5)' }} />
