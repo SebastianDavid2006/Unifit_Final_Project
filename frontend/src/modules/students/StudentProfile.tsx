@@ -10,7 +10,6 @@ import {
   Calendar, FileText, Dumbbell, Plus,
   Flame, Shield, BarChart2, Maximize2, X,
 } from 'lucide-react'
-import bodyImg from '../../assets/illustrations/characters/anatomical/anatomy_male_normal.png'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '../../assets/models/ui/objects/telephone/TelephoneModel'
 import { CapView } from '../../assets/models/ui/objects/cap/CapModel'
@@ -140,7 +139,7 @@ function ChartTooltip({ active, payload, label }: any) {
     }}>
       <p style={{ color: 'rgba(0,0,0,0.4)', fontSize: 11, marginBottom: 4 }}>{label}</p>
       {payload.map((p: any, i: number) => (
-        <p key={i} style={{ color: p.color || '#1D1D1F', fontSize: 13, fontWeight: 600 }}>
+        <p key={i} style={{ color: p.color || '#0D1B2A', fontSize: 13, fontWeight: 600 }}>
           {p.value} <span style={{ color: 'rgba(0,0,0,0.35)', fontWeight: 400 }}>{p.name}</span>
         </p>
       ))}
@@ -159,6 +158,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [localTab, setLocalTab] = useState('overview')
   const [modalOpen, setModalOpen] = useState(false)
   const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'año'>('mes')
+  const [hoveredCol, setHoveredCol] = useState<number | null>(null)
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 1))
+  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+  const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
+  const prevPeriod = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+  const nextPeriod = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
   const currentTab = tab ?? localTab
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
@@ -172,7 +177,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         top: '-60px', right: '-40px',
       }} />
 
-      <div className="relative z-10 flex-1 min-h-0 px-8 pt-8 overflow-hidden">
+      <div className="relative z-10 flex-1 min-h-0 p-8 overflow-hidden">
 
           <AnimatePresence mode="wait">
             <motion.div key={currentTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">
@@ -185,7 +190,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     <div className="flex items-center gap-2.5 mb-2">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Información General</p>
+                      <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Información General</p>
                     </div>
                     <div className="flex flex-col">
                       {[
@@ -195,7 +200,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       ].map((field, fi, arr) => (
                         <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 6 : 0 }}>
                           <p className="text-xs mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
-                          <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          <p className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{field.value}</p>
                         </div>
                       ))}
                     </div>
@@ -216,7 +221,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     >
                       {student.avatar}
                     </div>
-                    <h2 className="text-[#1D1D1F] text-2xl font-bold text-center mb-2 relative z-10">
+                    <h2 className="text-[#0D1B2A] text-2xl font-bold text-center mb-2 relative z-10">
                       {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
                     </h2>
                     <div className="absolute left-0 right-0" style={{ top: 110, bottom: -60 }}>
@@ -238,7 +243,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '3', gridRow: '1', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-4">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Estado del proceso</p>
+                      <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Estado del proceso</p>
                     </div>
                     <div className="flex items-center gap-5">
                       <div className="relative flex-shrink-0" style={{ width: 96, height: 96 }}>
@@ -282,7 +287,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     <div className="flex items-center gap-2.5 mb-3">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><TelephoneView /></div>
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Contacto</p>
+                      <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Contacto</p>
                     </div>
                     <div className="flex flex-col">
                       {[
@@ -293,7 +298,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       ].map((field, fi, arr) => (
                         <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 8 : 0 }}>
                           <p className="text-xs mb-1" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
-                          <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          <p className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{field.value}</p>
                         </div>
                       ))}
                     </div>
@@ -303,7 +308,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '3', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-3">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Métricas actuales</p>
+                      <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Métricas actuales</p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       {[
@@ -315,7 +320,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         { label: 'Agua corporal', value: '58%' },
                       ].map(m => (
                         <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                          <p className="text-base font-extrabold" style={{ color: '#1D1D1F' }}>{m.value}</p>
+                          <p className="text-base font-extrabold" style={{ color: '#0D1B2A' }}>{m.value}</p>
                           <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
                         </div>
                       ))}
@@ -327,7 +332,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     <div className="flex items-center gap-2.5 mb-2">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><CapView /></div>
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#1D1D1F' }}>Información académica</p>
+                      <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Información académica</p>
                     </div>
                     <div className="flex flex-col">
                       {[
@@ -337,7 +342,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       ].map((field, fi, arr) => (
                         <div key={field.label} className="flex flex-col" style={{ borderBottom: fi < arr.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none', paddingBottom: fi < arr.length - 1 ? 6 : 0 }}>
                           <p className="text-xs mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{field.label}</p>
-                          <p className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                          <p className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{field.value}</p>
                         </div>
                       ))}
                     </div>
@@ -365,7 +370,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               )}
 
               {currentTab === 'progress' && (
-                <div className="space-y-6">
+                <div className="max-w-[1200px] mx-auto space-y-6">
                   {/* KPI Cards */}
                   <div className="grid grid-cols-4 gap-4">
                     {(() => {
@@ -413,7 +418,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             key={m.label}
                             whileHover={{ scale: 1.03 }}
                             transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
-                            className="relative rounded-2xl p-5 flex flex-col items-center text-center group cursor-pointer"
+                            className="relative rounded-2xl p-4 flex flex-col items-center text-center group cursor-pointer"
                             style={cardStyle}
                           >
                             <div
@@ -444,31 +449,31 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
 
                   {/* Historial de Entradas y Salidas */}
                   <div className="rounded-2xl" style={{
-                    background: 'rgba(255,255,255,0.85)',
-                    backdropFilter: 'blur(24px)',
-                    WebkitBackdropFilter: 'blur(24px)',
-                    border: '1px solid rgba(255,255,255,0.8)',
+                    background: '#FFFFFF',
+                    border: '1px solid rgba(0,0,0,0.04)',
                     borderRadius: 20,
                     boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
                     overflow: 'hidden',
                   }}>
-                    <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.12)' }}>
-                          <Calendar size={18} style={{ color: '#E63946' }} />
-                        </div>
-                        <h3 className="text-[#1D1D1F] text-lg font-bold">Historial de Entradas y Salidas</h3>
+                    <div className="flex items-center justify-between px-5 py-3 relative" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                      <div className="flex items-center gap-1">
+                        <button onClick={prevPeriod} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all hover:text-[#E63946]" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
+                        <span className="text-sm font-bold px-1" style={{ color: '#0D1B2A' }}>
+                          {vistaCalendario === 'semana' ? '04 — 10 Mayo' : vistaCalendario === 'mes' ? `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}` : `${currentDate.getFullYear()}`}
+                        </span>
+                        <button onClick={nextPeriod} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all hover:text-[#E63946]" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
                       </div>
-                      <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                      <h3 className="text-[#0D1B2A] text-sm font-bold absolute left-1/2 -translate-x-1/2">Historial de Entradas y Salidas</h3>
+                      <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: 'rgba(0,0,0,0.04)' }}>
                         {(['semana', 'mes', 'año'] as const).map(v => (
                           <button
                             key={v}
                             onClick={() => setVistaCalendario(v)}
-                            className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all"
+                            className="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
                             style={{
-                              background: vistaCalendario === v ? '#FFFFFF' : 'transparent',
-                              color: vistaCalendario === v ? '#1D1D1F' : 'rgba(0,0,0,0.35)',
-                              boxShadow: vistaCalendario === v ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
+                              background: vistaCalendario === v ? RED_GRAD : 'transparent',
+                              color: vistaCalendario === v ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                              boxShadow: vistaCalendario === v ? '0 2px 8px rgba(230,57,70,0.25)' : 'none',
                             }}
                           >
                             {v === 'semana' ? 'Semana' : v === 'mes' ? 'Mes' : 'Año'}
@@ -478,137 +483,161 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     </div>
 
                     {(vistaCalendario === 'semana') && (
-                      <div className="px-6 pt-5 pb-4">
-                        <div className="flex items-center justify-between mb-5">
-                          <h4 className="text-base font-bold" style={{ color: '#1D1D1F' }}>Semana del 04 — 10 Mayo 2026</h4>
-                          <div className="flex gap-1">
-                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all hover:bg-black/5" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
-                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all hover:bg-black/5" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
-                          </div>
-                        </div>
-                        <div className="w-full">
-                          <div className="grid gap-4 px-2 mb-3" style={{ gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr' }}>
-                            {['Día', 'Entrada', 'Salida', 'Duración'].map(h => (
-                              <div key={h} className="text-sm font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{h}</div>
-                            ))}
-                          </div>
-                          <div className="space-y-1">
-                            {(() => {
-                              const semana = historialAsistencia.filter(r => {
-                                const d = parseInt(r.fecha.split(' ')[0])
-                                return d >= 4 && d <= 10
-                              })
-                              return [...semana].reverse().map((r, i) => (
-                                <motion.div
-                                  key={i}
-                                  initial={{ opacity: 0, x: -8 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: i * 0.04 }}
-                                  className="grid gap-4 items-center px-4 py-4 rounded-xl transition-all"
-                                  style={{
-                                    gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr',
-                                    background: i % 2 === 0 ? 'rgba(230,57,70,0.04)' : 'transparent',
-                                    borderLeft: i % 2 === 0 ? '3px solid rgba(230,57,70,0.15)' : '3px solid transparent',
-                                  }}
-                                >
-                                  <div className="flex flex-col">
-                                    <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.dia}</span>
-                                    <span className="text-sm" style={{ color: 'rgba(0,0,0,0.35)' }}>{r.fecha}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2.5">
-                                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#30D158' }} />
-                                    <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.entrada}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2.5">
-                                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#FF9500' }} />
-                                    <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.salida}</span>
-                                  </div>
-                                  <span className="text-base font-bold" style={{ color: '#E63946' }}>{r.duracion}</span>
-                                </motion.div>
-                              ))
-                            })()}
-                          </div>
+                      <div className="px-5 pt-4 pb-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          {(() => {
+                            const semana = historialAsistencia.filter(r => {
+                              const d = parseInt(r.fecha.split(' ')[0])
+                              return d >= 4 && d <= 10
+                            })
+                            return [...semana].reverse().map((r, i) => (
+                              <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                className="rounded-xl p-4 text-center transition-all hover:scale-[1.02] group"
+                                style={{
+                                  background: 'rgba(255,255,255,0.6)',
+                                  border: '1px solid rgba(230,57,70,0.1)',
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                                }}
+                              >
+                                <p className="text-xl font-bold transition-colors" style={{ color: '#E63946' }}><span className="group-hover:text-[#C62828]">{r.duracion}</span></p>
+                                <p className="text-sm font-semibold mt-1" style={{ color: '#0D1B2A' }}>{r.dia} {r.fecha}</p>
+                                <div className="flex justify-center items-center gap-3 mt-2">
+                                  <span className="text-xs font-semibold" style={{ color: '#0D1B2A' }}>{r.entrada}</span>
+                                  <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.15)' }}>→</span>
+                                  <span className="text-xs font-semibold" style={{ color: '#0D1B2A' }}>{r.salida}</span>
+                                </div>
+                              </motion.div>
+                            ))
+                          })()}
                         </div>
                       </div>
                     )}
 
                     {(vistaCalendario === 'mes') && (
-                      <div className="px-6 pt-5 pb-4">
-                        <div className="flex items-center justify-between mb-5">
-                          <h4 className="text-base font-bold" style={{ color: '#1D1D1F' }}>Mayo 2026</h4>
-                          <div className="flex gap-1">
-                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all hover:bg-black/5" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
-                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all hover:bg-black/5" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          {[...historialAsistencia].reverse().map((r, i) => (
-                            <motion.div
-                              key={i}
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: i * 0.05 }}
-                              className="rounded-xl p-4 flex items-center gap-4 transition-all hover:scale-[1.02]"
-                              style={{
-                                background: 'rgba(255,255,255,0.6)',
-                                border: '1px solid rgba(230,57,70,0.1)',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                              }}
-                            >
-                              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(48,209,88,0.12)' }}>
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#30D158" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
+                      <div className="px-5 pt-4 pb-4">
+                        {(() => {
+                          const daysInMonth = 31
+                          const firstDay = 5
+                          const dayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+                          const attendanceByDay: Record<number, AttendanceRecord> = {}
+                          historialAsistencia.forEach(r => {
+                            const d = parseInt(r.fecha.split(' ')[0])
+                            attendanceByDay[d] = r
+                          })
+                          const weeks: (number | null)[][] = []
+                          let currentWeek: (number | null)[] = []
+                          for (let i = 0; i < firstDay; i++) currentWeek.push(null)
+                          for (let d = 1; d <= daysInMonth; d++) {
+                            currentWeek.push(d)
+                            if (currentWeek.length === 7) {
+                              weeks.push(currentWeek)
+                              currentWeek = []
+                            }
+                          }
+                          if (currentWeek.length > 0) {
+                            while (currentWeek.length < 7) currentWeek.push(null)
+                            weeks.push(currentWeek)
+                          }
+                          return (
+                            <div>
+                              <div className="grid grid-cols-7" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                                {dayLabels.map((dn, di) => {
+                                  const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
+                                  return (
+                                    <div key={dn}
+                                      onMouseEnter={() => setHoveredCol(di)}
+                                      onMouseLeave={() => setHoveredCol(null)}
+                                      className="text-center py-2.5 text-[11px] font-bold tracking-wide transition-all rounded-t-md"
+                                      style={{
+                                        color: hoveredCol === di ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                                        background: hoveredCol === di ? RED_GRAD : 'transparent',
+                                      }}
+                                    >{dn}</div>
+                                  )
+                                })}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                  <p className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{r.dia} {r.fecha}</p>
-                                  <span className="text-xs font-bold" style={{ color: '#E63946' }}>{r.duracion}</span>
+                              {weeks.map((week, wi) => (
+                                <div key={wi} className="grid grid-cols-7">
+                                  {week.map((day, di) => {
+                                    if (day === null) return <div key={`e-${wi}-${di}`} className="min-h-[72px]" style={{ borderRight: di < 6 ? '1px solid rgba(0,0,0,0.03)' : 'none', borderBottom: wi < weeks.length - 1 ? '1px solid rgba(0,0,0,0.03)' : 'none' }} />
+                                    const record = attendanceByDay[day]
+                                    const isToday = day === 13
+                                    const isHovered = hoveredCol === di
+                                    return (
+                                      <motion.div
+                                        key={day}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: (wi * 7 + di) * 0.005 }}
+                                        className="relative min-h-[80px] p-2 cursor-pointer transition-all"
+                                        style={{
+                                          background: isHovered ? 'rgba(230,57,70,0.06)' : '#FFFFFF',
+                                          borderRight: di < 6 ? '1px solid rgba(0,0,0,0.03)' : 'none',
+                                          borderBottom: wi < weeks.length - 1 ? '1px solid rgba(0,0,0,0.03)' : 'none',
+                                          transform: isHovered ? 'scale(1.03)' : 'scale(1)',
+                                          transition: 'transform 0.18s ease, background 0.18s ease',
+                                          zIndex: isHovered ? 5 : 1,
+                                        }}
+                                        onMouseEnter={() => setHoveredCol(di)}
+                                        onMouseLeave={() => setHoveredCol(null)}
+                                      >
+                                        <span className={`inline-flex items-center justify-center text-sm font-bold rounded-md transition-colors ${isToday ? 'bg-[#E63946] text-white' : ''}`}
+                                          style={{
+                                            width: 24,
+                                            height: 24,
+                                            color: isToday ? '#FFFFFF' : isHovered ? '#E63946' : (record ? '#0D1B2A' : 'rgba(0,0,0,0.12)'),
+                                          }}
+                                        >{day}</span>
+                                        {record && (
+                                          <div className="mt-1 space-y-0.5">
+                                            <div className="text-sm font-bold leading-tight" style={{ color: '#E63946' }}>{record.duracion}</div>
+                                            <div className="flex items-center gap-1">
+                                              <span className="text-[9px] font-semibold" style={{ color: '#0D1B2A' }}>{record.entrada}</span>
+                                              <span className="text-[9px] font-medium" style={{ color: 'rgba(0,0,0,0.15)' }}>→</span>
+                                              <span className="text-[9px] font-semibold" style={{ color: '#0D1B2A' }}>{record.salida}</span>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </motion.div>
+                                    )
+                                  })}
                                 </div>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="w-2 h-2 rounded-full" style={{ background: '#30D158' }} />
-                                    <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>{r.entrada}</span>
-                                  </div>
-                                  <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="w-2 h-2 rounded-full" style={{ background: '#FF9500' }} />
-                                    <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>{r.salida}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                        <div className="flex items-center justify-center mt-4 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                          <span className="text-xs font-semibold" style={{ color: '#E63946' }}>{historialAsistencia.length} asistencias en mayo · {Math.round((historialAsistencia.length / 20) * 100)}% asistencia</span>
-                        </div>
+                              ))}
+                            </div>
+                          )
+                        })()}
                       </div>
                     )}
 
                     {(vistaCalendario === 'año') && (
-                      <div className="px-6 pt-5 pb-4">
-                        <h4 className="text-sm font-bold mb-5" style={{ color: '#1D1D1F' }}>2026</h4>
-                        <div className="grid grid-cols-4 gap-4">
+                      <div className="px-5 pt-4 pb-4">
+                        <div className="grid grid-cols-3 gap-4">
                           {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'].map((mes, mi) => {
                             const asistencias = mi === 4 ? historialAsistencia.length : Math.floor(Math.random() * 18) + 3
                             const pct = Math.round((asistencias / 20) * 100)
                             return (
-                              <div
+                              <motion.div
                                 key={mi}
-                                className="rounded-xl p-3 text-center transition-all hover:scale-105 cursor-pointer"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: mi * 0.04 }}
+                                className="rounded-xl p-5 text-center transition-all hover:scale-105 cursor-pointer"
                                 style={{
                                   background: mi === 4 ? 'rgba(230,57,70,0.05)' : 'rgba(0,0,0,0.015)',
                                   border: mi === 4 ? '1px solid rgba(230,57,70,0.15)' : '1px solid rgba(0,0,0,0.04)',
                                 }}
                               >
-                                <p className="text-xs font-bold mb-2" style={{ color: mi === 4 ? '#1D1D1F' : 'rgba(0,0,0,0.3)' }}>{mes}</p>
-                                <p className="text-base font-bold" style={{ color: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.2)' }}>{asistencias}</p>
-                                <div className="w-full h-1 rounded-full mt-2" style={{ background: 'rgba(0,0,0,0.05)' }}>
+                                <p className="text-sm font-bold mb-2" style={{ color: mi === 4 ? '#0D1B2A' : 'rgba(0,0,0,0.3)' }}>{mes}</p>
+                                <p className="text-xl font-bold" style={{ color: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.2)' }}>{asistencias}</p>
+                                <div className="w-full h-1.5 rounded-full mt-3" style={{ background: 'rgba(0,0,0,0.05)' }}>
                                   <div className="h-full rounded-full" style={{ width: `${pct}%`, background: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.1)' }} />
                                 </div>
-                                <p className="text-[9px] mt-1.5 font-medium" style={{ color: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.2)' }}>{pct}%</p>
-                              </div>
+                                <p className="text-xs mt-2 font-medium" style={{ color: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.2)' }}>{pct}%</p>
+                              </motion.div>
                             )
                           })}
                         </div>
@@ -624,7 +653,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     <div className="space-y-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-[#1D1D1F] text-lg font-bold">Valoraciones Físicas</h3>
+                          <h3 className="text-[#0D1B2A] text-lg font-bold">Valoraciones Físicas</h3>
                           <p className="text-sm mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Historial completo de evaluaciones del estudiante</p>
                         </div>
                         <motion.button
@@ -732,7 +761,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-2">
-                                    <p className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{v.date}</p>
+                                    <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{v.date}</p>
                                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: `${v.color}15`, color: v.color }}>
                                       {v.type}
                                     </span>
@@ -757,7 +786,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                               <div className="grid grid-cols-3 gap-3 mb-4">
                                 {v.metrics.slice(0, 6).map(m => (
                                   <div key={m.label} className="text-center">
-                                    <p className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{m.value}</p>
+                                    <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{m.value}</p>
                                     <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
                                   </div>
                                 ))}
@@ -838,7 +867,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${section.color}12` }}>
                               <section.icon size={17} style={{ color: section.color }} />
                             </div>
-                            <h3 className="text-[#1D1D1F] text-sm font-bold">{section.title}</h3>
+                            <h3 className="text-[#0D1B2A] text-sm font-bold">{section.title}</h3>
                           </div>
                           <div className="flex-1 space-y-3">
                             {section.docs.map((doc, di) => (
@@ -867,7 +896,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-[#1D1D1F] text-sm font-semibold">{doc.name}</p>
+                                <p className="text-[#0D1B2A] text-sm font-semibold">{doc.name}</p>
                                 <p className="text-[11px] mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{doc.date}</p>
                                 <button
                                   className="mt-3 w-full py-2 rounded-xl text-[11px] font-semibold transition-all"
@@ -974,13 +1003,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       <div className="flex items-center gap-2.5 mb-3">
                         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                         <div className="w-7 h-7 flex-shrink-0">{section.icon}</div>
-                        <p className="text-xs font-extrabold capitalize" style={{ color: '#1D1D1F' }}>{section.title}</p>
+                        <p className="text-xs font-extrabold capitalize" style={{ color: '#0D1B2A' }}>{section.title}</p>
                       </div>
                       <div className="flex flex-col gap-2">
                         {section.fields.map(field => (
                           <div key={field.label} className="flex flex-col">
                             <p className="text-[10px] mb-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{field.label}</p>
-                            <p className="text-xs font-semibold" style={{ color: '#1D1D1F' }}>{field.value}</p>
+                            <p className="text-xs font-semibold" style={{ color: '#0D1B2A' }}>{field.value}</p>
                           </div>
                         ))}
                       </div>
