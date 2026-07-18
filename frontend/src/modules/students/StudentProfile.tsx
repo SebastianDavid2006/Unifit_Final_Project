@@ -7,7 +7,7 @@ import {
 } from 'recharts'
 import {
   TrendingUp, AlertTriangle, Activity,
-  Calendar, FileText, Dumbbell,
+  Calendar, FileText, Dumbbell, Clock,
   Zap, Flame, Shield, BarChart2, Maximize2, X,
 } from 'lucide-react'
 import bodyImg from '../../assets/illustrations/characters/anatomical/anatomy_male_normal.png'
@@ -102,6 +102,27 @@ const nutritionData = [
   { day: 'D', calorias: 1700 },
 ]
 
+interface AttendanceRecord {
+  dia: string
+  fecha: string
+  entrada: string
+  salida: string
+  duracion: string
+}
+
+const historialAsistencia: AttendanceRecord[] = [
+  { dia: 'Lunes',    fecha: '04 Mayo',  entrada: '06:30 AM', salida: '08:15 AM', duracion: '1h 45min' },
+  { dia: 'Martes',   fecha: '05 Mayo',  entrada: '07:00 AM', salida: '08:30 AM', duracion: '1h 30min' },
+  { dia: 'Miércoles',fecha: '06 Mayo',  entrada: '06:45 AM', salida: '08:00 AM', duracion: '1h 15min' },
+  { dia: 'Viernes',  fecha: '08 Mayo',  entrada: '07:15 AM', salida: '09:00 AM', duracion: '1h 45min' },
+  { dia: 'Lunes',    fecha: '11 Mayo',  entrada: '06:30 AM', salida: '08:15 AM', duracion: '1h 45min' },
+  { dia: 'Martes',   fecha: '12 Mayo',  entrada: '07:00 AM', salida: '08:45 AM', duracion: '1h 45min' },
+  { dia: 'Miércoles',fecha: '13 Mayo',  entrada: '06:45 AM', salida: '08:00 AM', duracion: '1h 15min' },
+  { dia: 'Jueves',   fecha: '14 Mayo',  entrada: '07:00 AM', salida: '08:30 AM', duracion: '1h 30min' },
+  { dia: 'Viernes',  fecha: '15 Mayo',  entrada: '06:30 AM', salida: '08:15 AM', duracion: '1h 45min' },
+  { dia: 'Lunes',    fecha: '18 Mayo',  entrada: '07:00 AM', salida: '08:00 AM', duracion: '1h 00min' },
+]
+
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
@@ -126,8 +147,7 @@ function ChartTooltip({ active, payload, label }: any) {
 export const TABS = [
   { id: 'overview', label: 'General', icon: Activity },
   { id: 'progress', label: 'Actividad', icon: Calendar },
-  { id: 'routines', label: 'Rutinas', icon: Dumbbell },
-  { id: 'assessment', label: 'Valoraciones', icon: BarChart2 },
+  { id: 'assessment', label: 'Evaluación Física', icon: BarChart2 },
   { id: 'documents', label: 'Documentos', icon: FileText },
 ] as const
 
@@ -341,173 +361,113 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
 
               {currentTab === 'progress' && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-3 gap-4">
-                    {[
-                      { label: 'Reducción de peso', value: '-6 kg', sub: 'En 5 meses', color: '#30D158', icon: TrendingUp },
-                      { label: 'Grasa corporal', value: '-5%', sub: '22% → 17%', color: '#FF9500', icon: Flame },
-                      { label: 'Masa muscular', value: '+4 kg', sub: '48 → 52 kg', color: '#FF6B8A', icon: Zap },
-                    ].map(m => (
-                      <div key={m.label} className="rounded-2xl p-6" style={cardStyle}>
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${m.color}08` }}>
-                            <m.icon size={18} style={{ color: m.color }} />
+                  {/* KPI Cards */}
+                  <div className="grid grid-cols-4 gap-4">
+                    {(() => {
+                      const asistenciasEsteMes = historialAsistencia.length
+                      const asistenciasTotales = 42
+                      const totalMinutos = historialAsistencia.reduce((acc, r) => {
+                        const [h, m] = r.duracion.replace('h', '').replace('min', '').split(/\s+/).map(s => parseInt(s) || 0)
+                        return acc + h * 60 + m
+                      }, 0)
+                      const horas = Math.floor(totalMinutos / 60)
+                      const mins = totalMinutos % 60
+                      const tiempoTotal = `${horas}h ${mins.toString().padStart(2, '0')}min`
+                      const ordenDias: Record<string, number> = { Lunes: 1, Martes: 2, Miércoles: 3, Jueves: 4, Viernes: 5, Sábado: 6, Domingo: 7 }
+                      let racha = 0
+                      const copia = [...historialAsistencia].reverse()
+                      for (let i = 0; i < copia.length; i++) {
+                        racha++
+                        if (i < copia.length - 1) {
+                          const diaActual = ordenDias[copia[i].dia] || 0
+                          const diaAnterior = ordenDias[copia[i + 1].dia] || 0
+                          if (diaActual === 1 && diaAnterior === 5) continue
+                          if (diaActual - diaAnterior !== 1) break
+                        }
+                      }
+
+                      return [
+                        { label: 'Racha actual', value: `${racha} días`, color: '#30D158', icon: Zap },
+                        { label: 'Tiempo total entrenado', value: tiempoTotal, color: '#BF5AF2', icon: Clock },
+                        { label: 'Asistencias totales', value: `${asistenciasTotales}`, color: '#FF6B8A', icon: Calendar },
+                        { label: 'Asistencias este mes', value: `${asistenciasEsteMes}/20`, color: '#FF9500', icon: TrendingUp },
+                      ].map(m => (
+                        <div key={m.label} className="rounded-2xl p-6" style={cardStyle}>
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${m.color}15` }}>
+                              <m.icon size={20} style={{ color: m.color }} />
+                            </div>
                           </div>
+                          <p className="stat-value" style={{ color: m.color, fontSize: '1.8rem', fontWeight: 700, lineHeight: 1 }}>{m.value}</p>
+                          <p className="text-[#1D1D1F] text-sm font-semibold mt-1">{m.label}</p>
                         </div>
-                        <p className="stat-value" style={{ color: m.color, fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{m.value}</p>
-                        <p className="text-[#1D1D1F] text-sm font-semibold mt-1">{m.label}</p>
-                        <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.sub}</p>
+                      ))
+                    })()}
+                  </div>
+
+                  {/* Historial de Entradas y Salidas */}
+                  <div className="rounded-2xl" style={{
+                    background: 'rgba(255,255,255,0.85)',
+                    backdropFilter: 'blur(24px)',
+                    WebkitBackdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255,255,255,0.8)',
+                    borderRadius: 20,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
+                    overflow: 'hidden',
+                  }}>
+                    <div className="flex items-center gap-3 px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.12)' }}>
+                        <Calendar size={18} style={{ color: '#E63946' }} />
                       </div>
-                    ))}
-                  </div>
-                  <div className="rounded-2xl p-6" style={cardStyle}>
-                    <h3 className="text-[#1D1D1F] text-sm font-semibold mb-1">Evolución Corporal</h3>
-                    <p className="text-xs mb-5" style={{ color: 'rgba(0,0,0,0.35)' }}>Últimos 5 meses — peso, grasa y masa muscular</p>
-                    <ResponsiveContainer width="100%" height={240}>
-                      <AreaChart data={progressHistory}>
-                        <defs>
-                          <linearGradient id="pesoGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#E63946" stopOpacity={0.12} />
-                            <stop offset="100%" stopColor="#E63946" stopOpacity={0} />
-                          </linearGradient>
-                          <linearGradient id="muscGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#FF6B8A" stopOpacity={0.12} />
-                            <stop offset="100%" stopColor="#FF6B8A" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
-                        <XAxis dataKey="month" tick={{ fill: 'rgba(0,0,0,0.3)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: 'rgba(0,0,0,0.3)', fontSize: 11 }} axisLine={false} tickLine={false} width={28} />
-                        <ReTooltip content={<ChartTooltip />} />
-                        <Area type="monotone" dataKey="peso" stroke="#E63946" strokeWidth={2.5} fill="url(#pesoGrad)" name="Peso" />
-                        <Area type="monotone" dataKey="musculo" stroke="#FF6B8A" strokeWidth={2.5} fill="url(#muscGrad)" name="Músculo" />
-                        <Area type="monotone" dataKey="grasa" stroke="#FF9500" strokeWidth={1.5} fill="none" strokeDasharray="4 3" name="Grasa %" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="rounded-2xl p-6" style={cardStyle}>
-                      <h3 className="text-[#1D1D1F] text-sm font-semibold mb-5">Calendario de Asistencia — Mayo 2026</h3>
-                      <div className="grid grid-cols-7 gap-1.5 mb-2">
-                        {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => (
-                          <div key={d} className="text-center text-[10px] font-bold py-1" style={{ color: 'rgba(0,0,0,0.25)' }}>{d}</div>
+                      <h3 className="text-[#1D1D1F] text-lg font-bold">Historial de Entradas y Salidas</h3>
+                    </div>
+                    <div className="px-6 pt-5 pb-1">
+                      <div className="grid gap-4 px-1 mb-3" style={{ gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr' }}>
+                        {['Día', 'Entrada', 'Salida', 'Duración'].map(h => (
+                          <div key={h} className="text-sm font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{h}</div>
                         ))}
-                      </div>
-                      {attendanceCalendar.map((week, wi) => (
-                        <div key={wi} className="grid grid-cols-7 gap-1.5 mb-1.5">
-                          {week.map((attended, di) => (
-                            <motion.div
-                              key={di}
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ delay: (wi * 7 + di) * 0.02 }}
-                              className="aspect-square rounded-xl flex items-center justify-center text-xs"
-                              style={{
-                                background: attended ? 'rgba(230,57,70,0.08)' : 'rgba(0,0,0,0.02)',
-                                border: attended ? '1px solid rgba(230,57,70,0.2)' : '1px solid rgba(0,0,0,0.04)',
-                                color: attended ? RED : 'rgba(0,0,0,0.2)',
-                              }}
-                            >
-                              {attended ? '✓' : wi * 7 + di + 1}
-                    </motion.div>
-                          ))}
-                        </div>
-                      ))}
-                      <div className="mt-5 flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded" style={{ background: 'rgba(230,57,70,0.08)', border: '1px solid rgba(230,57,70,0.2)' }} />
-                          <span className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>Asistió</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.08)' }} />
-                          <span className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>No asistió</span>
-                        </div>
                       </div>
                     </div>
-                    <div className="rounded-2xl p-6" style={cardStyle}>
-                      <h3 className="text-[#1D1D1F] text-sm font-semibold mb-5">Estadísticas de Asistencia</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        {[
-                          { label: 'Este mes', value: '14/20', sub: '70% de asistencia', color: '#FF9500' },
-                          { label: 'Racha actual', value: '3 días', sub: 'Mejor racha: 12 días', color: '#30D158' },
-                          { label: 'Promedio semanal', value: '3.2', sub: 'sesiones por semana', color: '#FF6B8A' },
-                          { label: 'Total histórico', value: `${student.sessions}`, sub: 'sesiones totales', color: '#BF5AF2' },
-                        ].map(m => (
-                          <div key={m.label} className="p-4 rounded-xl nested-card">
-                            <p className="stat-value" style={{ color: m.color, fontSize: '1.6rem', fontWeight: 700, lineHeight: 1 }}>{m.value}</p>
-                            <p className="text-[#1D1D1F] text-xs font-semibold mt-1">{m.label}</p>
-                            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.3)' }}>{m.sub}</p>
-                          </div>
+                    <div className="px-6 overflow-y-auto" style={{ maxHeight: 340, scrollbarWidth: 'thin' }}>
+                      <div className="space-y-0.5 pb-3">
+                        {[...historialAsistencia].reverse().map((r, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.04 }}
+                            className="grid gap-4 items-center px-3 py-3 rounded-xl transition-all"
+                            style={{
+                              gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr',
+                              background: i % 2 === 0 ? 'rgba(230,57,70,0.04)' : 'transparent',
+                              borderLeft: i % 2 === 0 ? '3px solid rgba(230,57,70,0.15)' : '3px solid transparent',
+                            }}
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.dia}</span>
+                              <span className="text-sm" style={{ color: 'rgba(0,0,0,0.35)' }}>{r.fecha}</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#30D158' }} />
+                              <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.entrada}</span>
+                            </div>
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#FF9500' }} />
+                              <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.salida}</span>
+                            </div>
+                            <span className="text-base font-bold" style={{ color: '#E63946' }}>{r.duracion}</span>
+                          </motion.div>
                         ))}
                       </div>
+                    </div>
+                    <div className="px-6 py-3 flex items-center justify-center" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                      <span className="text-sm font-medium" style={{ color: 'rgba(0,0,0,0.3)' }}>
+                        {historialAsistencia.length} asistencias registradas
+                      </span>
                     </div>
                   </div>
                 </div>
               )}
-
-              {currentTab === 'routines' && (
-                <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h3 className="text-[#1D1D1F] font-semibold">Rutina Actual: <span style={{ color: RED }}>Hipertrofia Superior</span></h3>
-                      <p className="text-sm mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>5 ejercicios · 60 minutos · Nivel Avanzado</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    {routineExercises.map((ex, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.06 }}
-                        whileHover={{ y: -2 }}
-                        className="flex items-center gap-6 p-5 rounded-2xl"
-                        style={cardStyle}
-                      >
-                        <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0"
-                          style={{ background: 'linear-gradient(135deg, rgba(230,57,70,0.12), rgba(204,0,51,0.08))', color: RED, fontSize: 15 }}
-                        >
-                          {i + 1}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-[#1D1D1F] font-semibold">{ex.name}</p>
-                          <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{ex.muscle}</p>
-                        </div>
-                        <div className="flex items-center gap-6">
-                          <div className="text-center">
-                            <p className="text-[#1D1D1F] text-sm font-bold">{ex.sets}</p>
-                            <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.3)' }}>series</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-[#1D1D1F] text-sm font-bold">{ex.reps}</p>
-                            <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.3)' }}>reps</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-[#1D1D1F] text-sm font-bold">{ex.weight}</p>
-                            <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.3)' }}>carga</p>
-                          </div>
-                          <div className="text-center">
-                            <p style={{ color: '#FF9500', fontSize: 14, fontWeight: 700 }}>{ex.calories}</p>
-                            <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.3)' }}>kcal est.</p>
-                          </div>
-                        </div>
-                        <span
-                          className="px-2.5 py-1 rounded-lg text-[10px] font-semibold"
-                          style={{
-                            background: ex.difficulty === 'Avanzado' ? 'rgba(230,57,70,0.08)' : 'rgba(255,149,0,0.08)',
-                            color: ex.difficulty === 'Avanzado' ? RED : '#FF9500',
-                            border: `1px solid ${ex.difficulty === 'Avanzado' ? 'rgba(230,57,70,0.15)' : 'rgba(255,149,0,0.15)'}`,
-                          }}
-                        >
-                          {ex.difficulty}
-                        </span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-
 
               {(currentTab === 'assessment' || currentTab === 'documents') && (
                 <div className="space-y-6">

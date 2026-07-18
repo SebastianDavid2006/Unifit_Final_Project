@@ -117,12 +117,11 @@ function RiskBadge({ risk }: { risk: 'high' | 'medium' | 'low' }) {
   )
 }
 
-type Section = 'dashboard' | 'students' | 'routines' | 'equipment' | 'schedule' | 'stats' | 'configuration'
+type Section = 'dashboard' | 'students' | 'equipment' | 'schedule' | 'stats' | 'configuration'
 
 const sidebarItems: { id: Section; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'students', label: 'Estudiantes', icon: Users },
-  { id: 'routines', label: 'Rutinas', icon: ClipboardList },
   { id: 'equipment', label: 'Máquinas', icon: Dumbbell },
   { id: 'schedule', label: 'Agenda', icon: Calendar },
   { id: 'stats', label: 'Estadísticas', icon: BarChart3 },
@@ -710,7 +709,6 @@ const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month
                   onToggleFilters={() => setShowStudentsFilters(!showStudentsFilters)}
                 />
               )}
-              {section === 'routines' && renderRoutines()}
               {section === 'equipment' && renderEquipment()}
               {section === 'schedule' && <AgendaModule />}
               {section === 'stats' && renderStats()}
@@ -723,28 +721,6 @@ const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month
   )
 
   // ── RENDERERS ──
-
-  function renderRoutines() {
-    return (
-      <div className="p-8 space-y-6 max-w-[1440px] mx-auto">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-[#1A1A1E]">Rutinas</h2>
-            <p className="text-sm mt-1 font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{routines.length} rutinas activas</p>
-          </div>
-          <motion.button whileHover={{ scale: 1.02 }} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold premium-btn"><Plus size={15} /> Nueva Rutina</motion.button>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          {routines.map((r, i) => (
-            <div key={r.id} className="rounded-2xl p-6 premium-card">
-              <p className="font-bold">{r.name}</p>
-              <p className="text-xs text-black/30">{r.category}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
 
   function renderEquipment() { return (
     <EquipmentPage
