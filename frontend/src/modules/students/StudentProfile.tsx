@@ -7,14 +7,18 @@ import {
 } from 'recharts'
 import {
   TrendingUp, AlertTriangle, Activity,
-  Calendar, FileText, Dumbbell, Clock,
-  Zap, Flame, Shield, BarChart2, Maximize2, X,
+  Calendar, FileText, Dumbbell, Plus,
+  Flame, Shield, BarChart2, Maximize2, X,
 } from 'lucide-react'
 import bodyImg from '../../assets/illustrations/characters/anatomical/anatomy_male_normal.png'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '../../assets/models/ui/objects/telephone/TelephoneModel'
 import { CapView } from '../../assets/models/ui/objects/cap/CapModel'
 import { TrophyView } from '../../assets/models/ui/objects/trophy/TrophyModel'
+import { ListView } from '../../assets/models/ui/objects/list/ListModel'
+import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarModel'
+import { ClockView } from '../../assets/models/ui/objects/clock/ClockModel'
+import fireGif from '../../assets/icons/animated/fire.gif'
 
 interface Student {
   id: number
@@ -154,6 +158,7 @@ export const TABS = [
 export function StudentProfile({ student, tab = 'overview', onTabChange }: { student: Student; tab?: string; onTabChange?: (t: string) => void }) {
   const [localTab, setLocalTab] = useState('overview')
   const [modalOpen, setModalOpen] = useState(false)
+  const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'año'>('mes')
   const currentTab = tab ?? localTab
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
@@ -386,22 +391,54 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         }
                       }
 
-                      return [
-                        { label: 'Racha actual', value: `${racha} días`, color: '#30D158', icon: Zap },
-                        { label: 'Tiempo total entrenado', value: tiempoTotal, color: '#BF5AF2', icon: Clock },
-                        { label: 'Asistencias totales', value: `${asistenciasTotales}`, color: '#FF6B8A', icon: Calendar },
-                        { label: 'Asistencias este mes', value: `${asistenciasEsteMes}/20`, color: '#FF9500', icon: TrendingUp },
-                      ].map(m => (
-                        <div key={m.label} className="rounded-2xl p-6" style={cardStyle}>
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${m.color}15` }}>
-                              <m.icon size={20} style={{ color: m.color }} />
+                      const items = [
+                        { label: 'Racha actual', value: `${racha} días`, model: 'fire' },
+                        { label: 'Tiempo total entrenado', value: tiempoTotal, model: 'clock' },
+                        { label: 'Asistencias totales', value: `${asistenciasTotales}`, model: 'list' },
+                        { label: 'Asistencias este mes', value: `${asistenciasEsteMes}/20`, model: 'calendar' },
+                      ]
+                      return items.map((m, idx) => {
+                        const iconEl = m.model === 'fire' ? (
+                          <img src={fireGif} alt="fire" style={{ width: 52, height: 52, objectFit: 'contain' }} />
+                        ) : m.model === 'clock' ? (
+                          <div style={{ width: 52, height: 52 }}><ClockView /></div>
+                        ) : m.model === 'list' ? (
+                          <div style={{ width: 52, height: 52 }}><ListView /></div>
+                        ) : (
+                          <div style={{ width: 52, height: 52 }}><CalendarView /></div>
+                        )
+                        const esFuego = m.model === 'fire'
+                        return (
+                          <motion.div
+                            key={m.label}
+                            whileHover={{ scale: 1.03 }}
+                            transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
+                            className="relative rounded-2xl p-5 flex flex-col items-center text-center group cursor-pointer"
+                            style={cardStyle}
+                          >
+                            <div
+                              className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.5] mb-5 flex items-center justify-center"
+                              style={{ transformOrigin: 'bottom center' }}
+                            >
+                              {iconEl}
                             </div>
-                          </div>
-                          <p className="stat-value" style={{ color: m.color, fontSize: '1.8rem', fontWeight: 700, lineHeight: 1 }}>{m.value}</p>
-                          <p className="text-[#1D1D1F] text-sm font-semibold mt-1">{m.label}</p>
-                        </div>
-                      ))
+                            <p className={esFuego ? '' : 'text-gradient-warm'} style={{
+                              fontSize: '1.8rem', fontWeight: 700, lineHeight: 1,
+                              ...(esFuego ? {
+                                background: 'linear-gradient(135deg, #FF6B00, #FF2D00, #FF9500)',
+                                backgroundSize: '200% auto',
+                                backgroundClip: 'text',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                animation: 'shimmer 5s linear infinite',
+                              } : {}),
+                            }}>{m.value}</p>
+                            <p className="text-sm font-semibold mt-2" style={{
+                              color: esFuego ? '#FF6B00' : 'rgba(0,0,0,0.5)',
+                            }}>{m.label}</p>
+                          </motion.div>
+                        )
+                      })
                     })()}
                   </div>
 
@@ -415,56 +452,168 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
                     overflow: 'hidden',
                   }}>
-                    <div className="flex items-center gap-3 px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.12)' }}>
-                        <Calendar size={18} style={{ color: '#E63946' }} />
+                    <div className="flex items-center justify-between px-6 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.12)' }}>
+                          <Calendar size={18} style={{ color: '#E63946' }} />
+                        </div>
+                        <h3 className="text-[#1D1D1F] text-lg font-bold">Historial de Entradas y Salidas</h3>
                       </div>
-                      <h3 className="text-[#1D1D1F] text-lg font-bold">Historial de Entradas y Salidas</h3>
-                    </div>
-                    <div className="px-6 pt-5 pb-1">
-                      <div className="grid gap-4 px-1 mb-3" style={{ gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr' }}>
-                        {['Día', 'Entrada', 'Salida', 'Duración'].map(h => (
-                          <div key={h} className="text-sm font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{h}</div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="px-6 overflow-y-auto" style={{ maxHeight: 340, scrollbarWidth: 'thin' }}>
-                      <div className="space-y-0.5 pb-3">
-                        {[...historialAsistencia].reverse().map((r, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.04 }}
-                            className="grid gap-4 items-center px-3 py-3 rounded-xl transition-all"
+                      <div className="flex items-center gap-1 rounded-xl p-1" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                        {(['semana', 'mes', 'año'] as const).map(v => (
+                          <button
+                            key={v}
+                            onClick={() => setVistaCalendario(v)}
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all"
                             style={{
-                              gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr',
-                              background: i % 2 === 0 ? 'rgba(230,57,70,0.04)' : 'transparent',
-                              borderLeft: i % 2 === 0 ? '3px solid rgba(230,57,70,0.15)' : '3px solid transparent',
+                              background: vistaCalendario === v ? '#FFFFFF' : 'transparent',
+                              color: vistaCalendario === v ? '#1D1D1F' : 'rgba(0,0,0,0.35)',
+                              boxShadow: vistaCalendario === v ? '0 1px 4px rgba(0,0,0,0.06)' : 'none',
                             }}
                           >
-                            <div className="flex flex-col">
-                              <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.dia}</span>
-                              <span className="text-sm" style={{ color: 'rgba(0,0,0,0.35)' }}>{r.fecha}</span>
-                            </div>
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#30D158' }} />
-                              <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.entrada}</span>
-                            </div>
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#FF9500' }} />
-                              <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.salida}</span>
-                            </div>
-                            <span className="text-base font-bold" style={{ color: '#E63946' }}>{r.duracion}</span>
-                          </motion.div>
+                            {v === 'semana' ? 'Semana' : v === 'mes' ? 'Mes' : 'Año'}
+                          </button>
                         ))}
                       </div>
                     </div>
-                    <div className="px-6 py-3 flex items-center justify-center" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                      <span className="text-sm font-medium" style={{ color: 'rgba(0,0,0,0.3)' }}>
-                        {historialAsistencia.length} asistencias registradas
-                      </span>
-                    </div>
+
+                    {(vistaCalendario === 'semana') && (
+                      <div className="px-6 pt-5 pb-4">
+                        <div className="flex items-center justify-between mb-5">
+                          <h4 className="text-base font-bold" style={{ color: '#1D1D1F' }}>Semana del 04 — 10 Mayo 2026</h4>
+                          <div className="flex gap-1">
+                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all hover:bg-black/5" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
+                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all hover:bg-black/5" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
+                          </div>
+                        </div>
+                        <div className="w-full">
+                          <div className="grid gap-4 px-2 mb-3" style={{ gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr' }}>
+                            {['Día', 'Entrada', 'Salida', 'Duración'].map(h => (
+                              <div key={h} className="text-sm font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{h}</div>
+                            ))}
+                          </div>
+                          <div className="space-y-1">
+                            {(() => {
+                              const semana = historialAsistencia.filter(r => {
+                                const d = parseInt(r.fecha.split(' ')[0])
+                                return d >= 4 && d <= 10
+                              })
+                              return [...semana].reverse().map((r, i) => (
+                                <motion.div
+                                  key={i}
+                                  initial={{ opacity: 0, x: -8 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: i * 0.04 }}
+                                  className="grid gap-4 items-center px-4 py-4 rounded-xl transition-all"
+                                  style={{
+                                    gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr',
+                                    background: i % 2 === 0 ? 'rgba(230,57,70,0.04)' : 'transparent',
+                                    borderLeft: i % 2 === 0 ? '3px solid rgba(230,57,70,0.15)' : '3px solid transparent',
+                                  }}
+                                >
+                                  <div className="flex flex-col">
+                                    <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.dia}</span>
+                                    <span className="text-sm" style={{ color: 'rgba(0,0,0,0.35)' }}>{r.fecha}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#30D158' }} />
+                                    <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.entrada}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#FF9500' }} />
+                                    <span className="text-base font-semibold" style={{ color: '#1D1D1F' }}>{r.salida}</span>
+                                  </div>
+                                  <span className="text-base font-bold" style={{ color: '#E63946' }}>{r.duracion}</span>
+                                </motion.div>
+                              ))
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {(vistaCalendario === 'mes') && (
+                      <div className="px-6 pt-5 pb-4">
+                        <div className="flex items-center justify-between mb-5">
+                          <h4 className="text-base font-bold" style={{ color: '#1D1D1F' }}>Mayo 2026</h4>
+                          <div className="flex gap-1">
+                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all hover:bg-black/5" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
+                            <button className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all hover:bg-black/5" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {[...historialAsistencia].reverse().map((r, i) => (
+                            <motion.div
+                              key={i}
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.05 }}
+                              className="rounded-xl p-4 flex items-center gap-4 transition-all hover:scale-[1.02]"
+                              style={{
+                                background: 'rgba(255,255,255,0.6)',
+                                border: '1px solid rgba(230,57,70,0.1)',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                              }}
+                            >
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(48,209,88,0.12)' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#30D158" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{r.dia} {r.fecha}</p>
+                                  <span className="text-xs font-bold" style={{ color: '#E63946' }}>{r.duracion}</span>
+                                </div>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full" style={{ background: '#30D158' }} />
+                                    <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>{r.entrada}</span>
+                                  </div>
+                                  <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full" style={{ background: '#FF9500' }} />
+                                    <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>{r.salida}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-center mt-4 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                          <span className="text-xs font-semibold" style={{ color: '#E63946' }}>{historialAsistencia.length} asistencias en mayo · {Math.round((historialAsistencia.length / 20) * 100)}% asistencia</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {(vistaCalendario === 'año') && (
+                      <div className="px-6 pt-5 pb-4">
+                        <h4 className="text-sm font-bold mb-5" style={{ color: '#1D1D1F' }}>2026</h4>
+                        <div className="grid grid-cols-4 gap-4">
+                          {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'].map((mes, mi) => {
+                            const asistencias = mi === 4 ? historialAsistencia.length : Math.floor(Math.random() * 18) + 3
+                            const pct = Math.round((asistencias / 20) * 100)
+                            return (
+                              <div
+                                key={mi}
+                                className="rounded-xl p-3 text-center transition-all hover:scale-105 cursor-pointer"
+                                style={{
+                                  background: mi === 4 ? 'rgba(230,57,70,0.05)' : 'rgba(0,0,0,0.015)',
+                                  border: mi === 4 ? '1px solid rgba(230,57,70,0.15)' : '1px solid rgba(0,0,0,0.04)',
+                                }}
+                              >
+                                <p className="text-xs font-bold mb-2" style={{ color: mi === 4 ? '#1D1D1F' : 'rgba(0,0,0,0.3)' }}>{mes}</p>
+                                <p className="text-base font-bold" style={{ color: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.2)' }}>{asistencias}</p>
+                                <div className="w-full h-1 rounded-full mt-2" style={{ background: 'rgba(0,0,0,0.05)' }}>
+                                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.1)' }} />
+                                </div>
+                                <p className="text-[9px] mt-1.5 font-medium" style={{ color: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.2)' }}>{pct}%</p>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -472,110 +621,263 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               {(currentTab === 'assessment' || currentTab === 'documents') && (
                 <div className="space-y-6">
                   {currentTab === 'assessment' && (
-                    <>
-                <div className="grid gap-4 h-full" style={{ gridTemplateColumns: '0.6fr 2fr 0.6fr' }}>
-                        {[
-                          { section: 'Antropometría', items: [{ label: 'Peso', value: `${student.weight} kg` }, { label: 'Altura', value: `${student.height} cm` }, { label: 'IMC', value: imc }, { label: 'Grasa corporal', value: '17%' }, { label: 'Masa muscular', value: '52 kg' }, { label: 'Circunf. cintura', value: '82 cm' }] },
-                          { section: 'Capacidades Físicas', items: [{ label: 'Fuerza máx. (1RM)', value: '100 kg' }, { label: 'VO2 Max', value: '42 ml/kg/min' }, { label: 'Flexibilidad', value: '28 cm (sit & reach)' }, { label: 'Potencia', value: '85/100' }, { label: 'Movilidad', value: '72/100' }, { label: 'Equilibrio', value: '78/100' }] },
-                          { section: 'Salud y Bienestar', items: [{ label: 'Nivel de estrés', value: '4/10' }, { label: 'Calidad de sueño', value: '7.2 h/noche' }, { label: 'Energía percibida', value: '7/10' }, { label: 'Dolor muscular', value: 'Leve' }, { label: 'Lesiones activas', value: 'Ninguna' }, { label: 'Frecuencia card.', value: '68 bpm' }] },
-                        ].map(s => (
-                          <div key={s.section} className="rounded-2xl p-6 premium-card">
-                            <h3 className="text-sm font-semibold mb-5" style={{ color: '#E63946' }}>{s.section}</h3>
-                            <div className="space-y-1">
-                              {s.items.map(item => (
-                                <div key={item.label} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                                  <span className="text-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>{item.label}</span>
-                                  <span className="text-xs font-semibold" style={{ color: '#1D1D1F' }}>{item.value}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-[#1D1D1F] text-lg font-bold">Valoraciones Físicas</h3>
+                          <p className="text-sm mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Historial completo de evaluaciones del estudiante</p>
+                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+                          style={{
+                            background: 'linear-gradient(135deg, #E63946, #D32F2F)',
+                            color: '#FFFFFF',
+                            boxShadow: '0 4px 16px rgba(230,57,70,0.25)',
+                          }}
+                        >
+                          <Plus size={16} />
+                          Nueva Valoración
+                        </motion.button>
                       </div>
 
-                      <div className="rounded-2xl p-8" style={{
-                        background: 'linear-gradient(145deg, rgba(255,59,48,0.04), rgba(255,255,255,0.3))',
-                        border: '1px solid rgba(255,59,48,0.08)',
-                      }}>
-                        <div className="flex items-center gap-3 mb-6">
-                          <AlertTriangle size={22} style={{ color: '#FF3B30' }} />
-                          <h3 className="text-[#1D1D1F] font-semibold">Análisis de Riesgo</h3>
-                        </div>
-                        <div className="grid grid-cols-3 gap-6 mb-6">
-                          {[
-                            { label: 'Riesgo de abandono', value: student.risk === 'high' ? '76%' : student.risk === 'medium' ? '42%' : '8%', color: student.risk === 'high' ? '#FF3B30' : student.risk === 'medium' ? '#FF9500' : '#30D158' },
-                            { label: 'Riesgo de lesión', value: '18%', color: '#FF9500' },
-                            { label: 'Nivel de fatiga', value: '34%', color: '#BF5AF2' },
-                          ].map(m => (
-                            <div key={m.label} className="text-center">
-                              <p style={{ color: m.color, fontSize: '3rem', fontWeight: 800, lineHeight: 1 }}>{m.value}</p>
-                              <p className="text-sm mt-2 font-medium" style={{ color: 'rgba(0,0,0,0.45)' }}>{m.label}</p>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          {[
-                            { title: 'Factores de riesgo', items: ['Baja adherencia sostenida', 'Ausencias sin justificar', 'Reducción en intensidad de sesiones', 'Sin respuesta a comunicaciones'], icon: AlertTriangle, color: '#FF3B30' },
-                            { title: 'Factores protectores', items: ['Progreso en masa muscular', 'Historial previo de adherencia alta', 'Rutina adaptada correctamente', 'Sin lesiones registradas'], icon: Shield, color: '#30D158' },
-                          ].map(section => (
-                            <div key={section.title} className="rounded-2xl p-6 premium-card">
-                              <div className="flex items-center gap-2 mb-4">
-                                <section.icon size={16} style={{ color: section.color }} />
-                                <h3 className="text-[#1D1D1F] text-sm font-semibold">{section.title}</h3>
+                      <div className="grid grid-cols-2 gap-5">
+                        {[
+                          {
+                            date: '15 May 2026',
+                            evaluator: 'Dr. Carlos Mendoza',
+                            type: 'Completa',
+                            metrics: [
+                              { label: 'Peso', value: '72 kg' },
+                              { label: 'IMC', value: '22.4' },
+                              { label: 'Grasa corporal', value: '17%' },
+                              { label: 'Masa muscular', value: '52 kg' },
+                              { label: 'VO2 Max', value: '42 ml/kg/min' },
+                              { label: 'Fuerza 1RM', value: '100 kg' },
+                            ],
+                            score: 87,
+                            routine: 'Rutina Enero-Marzo',
+                            color: '#30D158',
+                          },
+                          {
+                            date: '20 Feb 2026',
+                            evaluator: 'Dr. Carlos Mendoza',
+                            type: 'Parcial',
+                            metrics: [
+                              { label: 'Peso', value: '74 kg' },
+                              { label: 'IMC', value: '23.1' },
+                              { label: 'Grasa corporal', value: '19%' },
+                              { label: 'Masa muscular', value: '50 kg' },
+                              { label: 'VO2 Max', value: '39 ml/kg/min' },
+                              { label: 'Fuerza 1RM', value: '95 kg' },
+                            ],
+                            score: 79,
+                            routine: 'Rutina Octubre-Diciembre',
+                            color: '#FF9500',
+                          },
+                          {
+                            date: '10 Nov 2025',
+                            evaluator: 'Dr. Carlos Mendoza',
+                            type: 'Inicial',
+                            metrics: [
+                              { label: 'Peso', value: '78 kg' },
+                              { label: 'IMC', value: '24.3' },
+                              { label: 'Grasa corporal', value: '22%' },
+                              { label: 'Masa muscular', value: '48 kg' },
+                              { label: 'VO2 Max', value: '35 ml/kg/min' },
+                              { label: 'Fuerza 1RM', value: '85 kg' },
+                            ],
+                            score: 65,
+                            routine: 'Rutina Julio-Septiembre',
+                            color: '#E63946',
+                          },
+                          {
+                            date: '05 Jun 2025',
+                            evaluator: 'Dr. Carlos Mendoza',
+                            type: 'Completa',
+                            metrics: [
+                              { label: 'Peso', value: '80 kg' },
+                              { label: 'IMC', value: '25.0' },
+                              { label: 'Grasa corporal', value: '24%' },
+                              { label: 'Masa muscular', value: '46 kg' },
+                              { label: 'VO2 Max', value: '33 ml/kg/min' },
+                              { label: 'Fuerza 1RM', value: '80 kg' },
+                            ],
+                            score: 58,
+                            routine: 'Rutina Abril-Junio',
+                            color: '#E63946',
+                          },
+                        ].map((v, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.08 }}
+                            className="rounded-2xl overflow-hidden"
+                            style={{
+                              background: '#FFFFFF',
+                              border: '1px solid rgba(0,0,0,0.04)',
+                              borderRadius: 20,
+                              boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
+                            }}
+                          >
+                            <div className="flex items-center justify-between px-5 py-4" style={{
+                              background: `linear-gradient(135deg, ${v.color}08, ${v.color}03)`,
+                              borderBottom: '1px solid rgba(0,0,0,0.04)',
+                            }}>
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${v.color}15` }}>
+                                  <BarChart2 size={18} style={{ color: v.color }} />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{v.date}</p>
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: `${v.color}15`, color: v.color }}>
+                                      {v.type}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px]" style={{ color: 'rgba(0,0,0,0.35)' }}>{v.evaluator}</p>
+                                </div>
                               </div>
-                              <div className="space-y-3">
-                                {section.items.map((item, i) => (
-                                  <div key={i} className="flex items-start gap-2.5">
-                                    <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: section.color }} />
-                                    <p className="text-sm" style={{ color: 'rgba(0,0,0,0.55)' }}>{item}</p>
+                              <div className="flex flex-col items-center">
+                                <div className="relative" style={{ width: 44, height: 44 }}>
+                                  <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+                                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
+                                    <circle cx="18" cy="18" r="15.9" fill="none" stroke={v.color} strokeWidth="2.8" strokeLinecap="round"
+                                      strokeDasharray={`${v.score * 0.999} ${100 - v.score * 0.999}`} />
+                                  </svg>
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <p className="text-[10px] font-extrabold" style={{ color: v.color }}>{v.score}%</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="p-5">
+                              <div className="grid grid-cols-3 gap-3 mb-4">
+                                {v.metrics.slice(0, 6).map(m => (
+                                  <div key={m.label} className="text-center">
+                                    <p className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{m.value}</p>
+                                    <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
                                   </div>
                                 ))}
                               </div>
+                              <div className="flex items-center justify-between gap-2 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                                <div className="flex items-center gap-2 text-[11px]" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                                  <Dumbbell size={13} />
+                                  {v.routine}
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    className="px-3.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+                                    style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                                  >
+                                    Ver valoración
+                                  </button>
+                                  <button
+                                    className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all"
+                                    style={{ background: `${v.color}15`, color: v.color }}
+                                  >
+                                    Ver rutina
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                          ))}
-                        </div>
+                          </motion.div>
+                        ))}
                       </div>
-                    </>
+                    </div>
                   )}
                   {currentTab === 'documents' && (
-                <div className="grid gap-4" style={{ gridTemplateColumns: '0.7fr 2fr 0.7fr', height: '100%' }}>
+                    <div className="grid grid-cols-3 gap-6 h-full">
                       {[
-                        { name: 'Contrato de Matrícula', date: '15 Ene 2026', type: 'PDF', signed: true },
-                        { name: 'Consentimiento Informado', date: '15 Ene 2026', type: 'PDF', signed: true },
-                        { name: 'Informe Médico Inicial', date: '20 Ene 2026', type: 'PDF', signed: true },
-                        { name: 'Valoración Inicial', date: '22 Ene 2026', type: 'PDF', signed: true },
-                        { name: 'Rutina Enero-Marzo', date: '25 Ene 2026', type: 'PDF', signed: false },
-                        { name: 'Informe de Progreso Q1', date: '31 Mar 2026', type: 'PDF', signed: false },
-                      ].map((doc, i) => (
+                        {
+                          title: 'Documentos Legales',
+                          icon: Shield,
+                          color: '#BF5AF2',
+                          docs: [
+                            { name: 'Contrato de Matrícula', date: '15 Ene 2026', signed: true },
+                            { name: 'Consentimiento Informado', date: '15 Ene 2026', signed: true },
+                          ],
+                        },
+                        {
+                          title: 'Informes Médicos',
+                          icon: Activity,
+                          color: '#FF9500',
+                          docs: [
+                            { name: 'Informe Médico Inicial', date: '20 Ene 2026', signed: true },
+                            { name: 'Valoración Inicial', date: '22 Ene 2026', signed: true },
+                          ],
+                        },
+                        {
+                          title: 'Rutinas y Progreso',
+                          icon: TrendingUp,
+                          color: '#E63946',
+                          docs: [
+                            { name: 'Rutina Enero-Marzo', date: '25 Ene 2026', signed: false },
+                            { name: 'Informe de Progreso Q1', date: '31 Mar 2026', signed: false },
+                          ],
+                        },
+                      ].map((section, si) => (
                         <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 8 }}
+                          key={section.title}
+                          initial={{ opacity: 0, y: 12 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.06 }}
-                          whileHover={{ y: -4 }}
-                          className="rounded-2xl p-6 premium-card"
+                          transition={{ delay: si * 0.1 }}
+                          className="rounded-2xl p-5 flex flex-col"
+                          style={{
+                            background: 'rgba(255,255,255,0.6)',
+                            backdropFilter: 'blur(16px)',
+                            WebkitBackdropFilter: 'blur(16px)',
+                            border: '1px solid rgba(255,255,255,0.7)',
+                            borderRadius: 20,
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                          }}
                         >
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.08)' }}>
-                              <FileText size={17} style={{ color: '#E63946' }} />
+                          <div className="flex items-center gap-3 mb-5 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${section.color}12` }}>
+                              <section.icon size={17} style={{ color: section.color }} />
                             </div>
-                            {doc.signed && (
-                              <span
-                                className="ml-auto px-2.5 py-1 rounded-lg text-[10px] font-semibold"
-                                style={{ background: 'rgba(48,209,88,0.08)', color: '#30D158', border: '1px solid rgba(48,209,88,0.15)' }}
-                              >
-                                Firmado
-                              </span>
-                            )}
+                            <h3 className="text-[#1D1D1F] text-sm font-bold">{section.title}</h3>
                           </div>
-                          <p className="text-[#1D1D1F] text-sm font-semibold">{doc.name}</p>
-                          <p className="text-xs mt-1" style={{ color: 'rgba(0,0,0,0.35)' }}>{doc.date} · {doc.type}</p>
-                          <button
-                            className="mt-4 w-full py-2 rounded-xl text-xs font-semibold transition-all"
-                            style={{ background: 'rgba(0,0,0,0.03)', color: 'rgba(0,0,0,0.45)', border: '1px solid rgba(0,0,0,0.06)' }}
-                          >
-                            Ver documento
-                          </button>
+                          <div className="flex-1 space-y-3">
+                            {section.docs.map((doc, di) => (
+                              <motion.div
+                                key={di}
+                                initial={{ opacity: 0, x: -6 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: si * 0.1 + di * 0.06 }}
+                                className="rounded-xl p-4 transition-all hover:scale-[1.02]"
+                                style={{
+                                  background: 'rgba(255,255,255,0.7)',
+                                  border: '1px solid rgba(0,0,0,0.05)',
+                                }}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.06)' }}>
+                                    <FileText size={14} style={{ color: '#E63946' }} />
+                                  </div>
+                                  {doc.signed ? (
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'rgba(48,209,88,0.1)', color: '#30D158' }}>
+                                      Firmado
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'rgba(255,149,0,0.1)', color: '#FF9500' }}>
+                                      Pendiente
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[#1D1D1F] text-sm font-semibold">{doc.name}</p>
+                                <p className="text-[11px] mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{doc.date}</p>
+                                <button
+                                  className="mt-3 w-full py-2 rounded-xl text-[11px] font-semibold transition-all"
+                                  style={{ background: 'rgba(0,0,0,0.03)', color: 'rgba(0,0,0,0.45)', border: '1px solid rgba(0,0,0,0.06)' }}
+                                >
+                                  Ver documento
+                                </button>
+                              </motion.div>
+                            ))}
+                          </div>
                         </motion.div>
                       ))}
                     </div>
