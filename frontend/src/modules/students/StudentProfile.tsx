@@ -159,11 +159,30 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [modalOpen, setModalOpen] = useState(false)
   const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'año'>('mes')
   const [hoveredCol, setHoveredCol] = useState<number | null>(null)
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 1))
+  const [hoveredCell, setHoveredCell] = useState<{w: number; d: number} | null>(null)
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 4))
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
-  const prevPeriod = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-  const nextPeriod = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+  const getWeekStart = (d: Date) => { const r = new Date(d); const day = r.getDay(); r.setDate(r.getDate() - (day === 0 ? 6 : day - 1)); return r }
+  const getWeekEnd = (d: Date) => { const r = new Date(getWeekStart(d)); r.setDate(r.getDate() + 6); return r }
+  const formatWeekRange = (d: Date) => {
+    const start = getWeekStart(d), end = getWeekEnd(d)
+    return `${start.getDate()} ${monthNames[start.getMonth()].slice(0,3)} — ${end.getDate()} ${monthNames[end.getMonth()].slice(0,3)} ${start.getFullYear()}`
+  }
+  const prevPeriod = () => setCurrentDate(d => {
+    const r = new Date(d)
+    if (vistaCalendario === 'semana') r.setDate(r.getDate() - 7)
+    else if (vistaCalendario === 'año') r.setFullYear(r.getFullYear() - 1)
+    else r.setMonth(r.getMonth() - 1)
+    return r
+  })
+  const nextPeriod = () => setCurrentDate(d => {
+    const r = new Date(d)
+    if (vistaCalendario === 'semana') r.setDate(r.getDate() + 7)
+    else if (vistaCalendario === 'año') r.setFullYear(r.getFullYear() + 1)
+    else r.setMonth(r.getMonth() + 1)
+    return r
+  })
   const currentTab = tab ?? localTab
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
@@ -457,11 +476,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   }}>
                     <div className="flex items-center justify-between px-5 py-3 relative" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                       <div className="flex items-center gap-1">
-                        <button onClick={prevPeriod} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all hover:text-[#E63946]" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
+                        <button onClick={prevPeriod} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
                         <span className="text-sm font-bold px-1" style={{ color: '#0D1B2A' }}>
-                          {vistaCalendario === 'semana' ? '04 — 10 Mayo' : vistaCalendario === 'mes' ? `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}` : `${currentDate.getFullYear()}`}
+                          {vistaCalendario === 'semana' ? formatWeekRange(currentDate) : vistaCalendario === 'mes' ? `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}` : `${currentDate.getFullYear()}`}
                         </span>
-                        <button onClick={nextPeriod} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all hover:text-[#E63946]" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
+                        <button onClick={nextPeriod} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
                       </div>
                       <h3 className="text-[#0D1B2A] text-sm font-bold absolute left-1/2 -translate-x-1/2">Historial de Entradas y Salidas</h3>
                       <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: 'rgba(0,0,0,0.04)' }}>
@@ -484,35 +503,69 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
 
                     {(vistaCalendario === 'semana') && (
                       <div className="px-5 pt-4 pb-4">
-                        <div className="grid grid-cols-2 gap-3">
-                          {(() => {
-                            const semana = historialAsistencia.filter(r => {
-                              const d = parseInt(r.fecha.split(' ')[0])
-                              return d >= 4 && d <= 10
-                            })
-                            return [...semana].reverse().map((r, i) => (
-                              <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.05 }}
-                                className="rounded-xl p-4 text-center transition-all hover:scale-[1.02] group"
-                                style={{
-                                  background: 'rgba(255,255,255,0.6)',
-                                  border: '1px solid rgba(230,57,70,0.1)',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                                }}
-                              >
-                                <p className="text-xl font-bold transition-colors" style={{ color: '#E63946' }}><span className="group-hover:text-[#C62828]">{r.duracion}</span></p>
-                                <p className="text-sm font-semibold mt-1" style={{ color: '#0D1B2A' }}>{r.dia} {r.fecha}</p>
-                                <div className="flex justify-center items-center gap-3 mt-2">
-                                  <span className="text-xs font-semibold" style={{ color: '#0D1B2A' }}>{r.entrada}</span>
-                                  <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.15)' }}>→</span>
-                                  <span className="text-xs font-semibold" style={{ color: '#0D1B2A' }}>{r.salida}</span>
-                                </div>
-                              </motion.div>
-                            ))
-                          })()}
+                        <div className="w-full">
+                          <div className="grid gap-4 px-2 mb-3" style={{ gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr' }}>
+                            {['Día', 'Entrada', 'Salida', 'Duración'].map(h => (
+                              <div key={h} className="text-sm font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{h}</div>
+                            ))}
+                          </div>
+                          <div className="space-y-1">
+                            {(() => {
+                              const weekStart = getWeekStart(currentDate)
+                              const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+                              const monthShort = monthNames[weekStart.getMonth()].slice(0,3)
+                              return Array.from({ length: 7 }, (_, i) => {
+                                const dayDate = new Date(weekStart)
+                                dayDate.setDate(weekStart.getDate() + i)
+                                const dayNum = dayDate.getDate()
+                                const record = historialAsistencia.find(r => {
+                                  const rd = parseInt(r.fecha.split(' ')[0])
+                                  const rm = monthNames.findIndex(mn => mn.startsWith(r.fecha.split(' ')[1]?.slice(0,3)))
+                                  return rd === dayNum && rm === dayDate.getMonth()
+                                })
+                                const hasData = !!record
+                                return (
+                                  <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, x: -8 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: i * 0.04 }}
+                                    className="grid gap-4 items-center px-4 py-4 rounded-xl transition-all"
+                                    style={{
+                                      gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr',
+                                      background: hasData ? (i % 2 === 0 ? 'rgba(230,57,70,0.04)' : 'transparent') : 'rgba(0,0,0,0.015)',
+                                      borderLeft: hasData ? (i % 2 === 0 ? '3px solid rgba(230,57,70,0.15)' : '3px solid transparent') : '3px solid transparent',
+                                      opacity: hasData ? 1 : 0.5,
+                                    }}
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="text-base font-semibold" style={{ color: hasData ? '#0D1B2A' : 'rgba(0,0,0,0.25)' }}>{dayNames[i]}</span>
+                                      <span className="text-sm" style={{ color: hasData ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.15)' }}>{dayNum} {monthShort}</span>
+                                    </div>
+                                    {hasData ? (
+                                      <>
+                                        <div className="flex items-center gap-2.5">
+                                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#30D158' }} />
+                                          <span className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{record.entrada}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2.5">
+                                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#C62828' }} />
+                                          <span className="text-base font-semibold" style={{ color: '#C62828' }}>{record.salida}</span>
+                                        </div>
+                                        <span className="text-base font-bold" style={{ color: '#E63946' }}>{record.duracion}</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
+                                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
+                                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
+                                      </>
+                                    )}
+                                  </motion.div>
+                                )
+                              })
+                            })()}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -575,30 +628,26 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                         transition={{ delay: (wi * 7 + di) * 0.005 }}
                                         className="relative min-h-[80px] p-2 cursor-pointer transition-all"
                                         style={{
-                                          background: isHovered ? 'rgba(230,57,70,0.06)' : '#FFFFFF',
+                                          background: (hoveredCell?.w === wi && hoveredCell?.d === di) ? 'rgba(230,57,70,0.12)' : (record ? 'rgba(230,57,70,0.06)' : '#FFFFFF'),
                                           borderRight: di < 6 ? '1px solid rgba(0,0,0,0.03)' : 'none',
                                           borderBottom: wi < weeks.length - 1 ? '1px solid rgba(0,0,0,0.03)' : 'none',
-                                          transform: isHovered ? 'scale(1.03)' : 'scale(1)',
+                                          transform: (hoveredCell?.w === wi && hoveredCell?.d === di) ? 'scale(1.03)' : 'scale(1)',
                                           transition: 'transform 0.18s ease, background 0.18s ease',
-                                          zIndex: isHovered ? 5 : 1,
+                                          zIndex: (hoveredCell?.w === wi && hoveredCell?.d === di) ? 5 : 1,
                                         }}
-                                        onMouseEnter={() => setHoveredCol(di)}
-                                        onMouseLeave={() => setHoveredCol(null)}
+                                        onMouseEnter={() => { setHoveredCol(di); setHoveredCell({w: wi, d: di}) }}
+                                        onMouseLeave={() => { setHoveredCell(null); setHoveredCol(null) }}
                                       >
-                                        <span className={`inline-flex items-center justify-center text-sm font-bold rounded-md transition-colors ${isToday ? 'bg-[#E63946] text-white' : ''}`}
-                                          style={{
-                                            width: 24,
-                                            height: 24,
-                                            color: isToday ? '#FFFFFF' : isHovered ? '#E63946' : (record ? '#0D1B2A' : 'rgba(0,0,0,0.12)'),
-                                          }}
+                                        <span className={`inline-flex items-center justify-center text-sm font-bold rounded-md transition-all ${isToday || (hoveredCell?.w === wi && hoveredCell?.d === di) ? 'bg-[#E63946] text-white' : record ? 'text-[#0D1B2A]' : 'text-black/10'}`}
+                                          style={{ width: 24, height: 24 }}
                                         >{day}</span>
                                         {record && (
-                                          <div className="mt-1 space-y-0.5">
-                                            <div className="text-sm font-bold leading-tight" style={{ color: '#E63946' }}>{record.duracion}</div>
+                                          <div className="mt-1.5 space-y-0.5">
+                                            <div className="text-xs font-bold leading-tight" style={{ color: '#0D1B2A' }}>{record.duracion}</div>
                                             <div className="flex items-center gap-1">
                                               <span className="text-[9px] font-semibold" style={{ color: '#0D1B2A' }}>{record.entrada}</span>
                                               <span className="text-[9px] font-medium" style={{ color: 'rgba(0,0,0,0.15)' }}>→</span>
-                                              <span className="text-[9px] font-semibold" style={{ color: '#0D1B2A' }}>{record.salida}</span>
+                                              <span className="text-[9px] font-semibold" style={{ color: '#C62828' }}>{record.salida}</span>
                                             </div>
                                           </div>
                                         )}
@@ -615,28 +664,58 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
 
                     {(vistaCalendario === 'año') && (
                       <div className="px-5 pt-4 pb-4">
-                        <div className="grid grid-cols-3 gap-4">
-                          {['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'].map((mes, mi) => {
-                            const asistencias = mi === 4 ? historialAsistencia.length : Math.floor(Math.random() * 18) + 3
-                            const pct = Math.round((asistencias / 20) * 100)
+                        <div className="grid grid-cols-3 gap-3">
+                          {Array.from({ length: 12 }, (_, mi) => {
+                            const mDays = new Date(currentDate.getFullYear(), mi + 1, 0).getDate()
+                            const firstDow = new Date(currentDate.getFullYear(), mi, 1).getDay()
+                            const pad = firstDow === 0 ? 6 : firstDow - 1
+                            const dayLabelsMini = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+                            const hasAttendance = mi === 4
+                            const asistencias = mi === 4 ? historialAsistencia.length : 0
                             return (
                               <motion.div
                                 key={mi}
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: mi * 0.04 }}
-                                className="rounded-xl p-5 text-center transition-all hover:scale-105 cursor-pointer"
+                                className="rounded-xl p-3 transition-all hover:shadow-md cursor-pointer"
                                 style={{
-                                  background: mi === 4 ? 'rgba(230,57,70,0.05)' : 'rgba(0,0,0,0.015)',
+                                  background: mi === 4 ? 'rgba(230,57,70,0.04)' : 'rgba(0,0,0,0.015)',
                                   border: mi === 4 ? '1px solid rgba(230,57,70,0.15)' : '1px solid rgba(0,0,0,0.04)',
                                 }}
+                                onClick={() => { setVistaCalendario('mes'); setCurrentDate(new Date(currentDate.getFullYear(), mi, 1)) }}
                               >
-                                <p className="text-sm font-bold mb-2" style={{ color: mi === 4 ? '#0D1B2A' : 'rgba(0,0,0,0.3)' }}>{mes}</p>
-                                <p className="text-xl font-bold" style={{ color: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.2)' }}>{asistencias}</p>
-                                <div className="w-full h-1.5 rounded-full mt-3" style={{ background: 'rgba(0,0,0,0.05)' }}>
-                                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.1)' }} />
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="text-[10px] font-extrabold" style={{ color: mi === 4 ? '#0D1B2A' : 'rgba(0,0,0,0.4)' }}>{['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][mi]}</span>
+                                  {hasAttendance && <span className="text-[8px] font-bold" style={{ color: '#E63946' }}>{asistencias}</span>}
                                 </div>
-                                <p className="text-xs mt-2 font-medium" style={{ color: mi === 4 ? '#E63946' : 'rgba(0,0,0,0.2)' }}>{pct}%</p>
+                                <div className="grid grid-cols-7 gap-0">
+                                  {dayLabelsMini.map((ld, ldi) => (
+                                    <div key={ldi} className="text-[6px] font-bold text-center" style={{ color: 'rgba(0,0,0,0.25)' }}>{ld}</div>
+                                  ))}
+                                  {Array.from({ length: pad }, (_, pi) => <div key={`p-${pi}`} />)}
+                                  {Array.from({ length: mDays }, (_, di) => {
+                                    const d = di + 1
+                                    const isT = d === 13 && mi === 4
+                                    const attDay = historialAsistencia.find(r => {
+                                      const dayNum = parseInt(r.fecha.split(' ')[0])
+                                      const monthName = r.fecha.split(' ')[1]?.slice(0,3)
+                                      const monthIdx = monthNames.findIndex(mn => mn.startsWith(monthName))
+                                      return dayNum === d && monthIdx === mi
+                                    })
+                                    return (
+                                      <div key={di}
+                                        className="relative text-center text-[8px] font-bold py-[1px] rounded-sm transition-colors"
+                                        style={{
+                                          color: isT ? '#FFFFFF' : attDay ? '#0D1B2A' : 'rgba(0,0,0,0.15)',
+                                          background: isT ? '#E63946' : attDay ? 'rgba(230,57,70,0.06)' : 'transparent',
+                                        }}
+                                      >
+                                        {d}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
                               </motion.div>
                             )
                           })}
@@ -648,7 +727,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               )}
 
               {(currentTab === 'assessment' || currentTab === 'documents') && (
-                <div className="space-y-6">
+                <div className="max-w-[1200px] mx-auto space-y-6">
                   {currentTab === 'assessment' && (
                     <div className="space-y-6">
                       <div className="flex items-center justify-between">
