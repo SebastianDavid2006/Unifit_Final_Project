@@ -6,7 +6,7 @@ import {
   BarChart, Bar,
 } from 'recharts'
 import {
-  TrendingUp, AlertTriangle, Activity,
+  AlertTriangle, Activity,
   Calendar, FileText, Dumbbell, Plus,
   Flame, Shield, BarChart2, Maximize2, X,
 } from 'lucide-react'
@@ -17,6 +17,9 @@ import { TrophyView } from '../../assets/models/ui/objects/trophy/TrophyModel'
 import { ListView } from '../../assets/models/ui/objects/list/ListModel'
 import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarModel'
 import { ClockView } from '../../assets/models/ui/objects/clock/ClockModel'
+import { DocumentView } from '../../assets/models/ui/objects/document/DocumentModel'
+import { ScalesOfJusticeView } from '../../assets/models/ui/objects/scales_of_justice/ScalesOfJusticeModel'
+import { KitView } from '../../assets/models/ui/objects/kit/KitModel'
 import fireGif from '../../assets/icons/animated/fire.gif'
 
 interface Student {
@@ -512,9 +515,9 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           <div className="space-y-1">
                             {(() => {
                               const weekStart = getWeekStart(currentDate)
-                              const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+                              const dayNames = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
                               const monthShort = monthNames[weekStart.getMonth()].slice(0,3)
-                              return Array.from({ length: 7 }, (_, i) => {
+                              return Array.from({ length: 5 }, (_, i) => {
                                 const dayDate = new Date(weekStart)
                                 dayDate.setDate(weekStart.getDate() + i)
                                 const dayNum = dayDate.getDate()
@@ -901,8 +904,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       {[
                         {
                           title: 'Documentos Legales',
-                          icon: Shield,
-                          color: '#BF5AF2',
+                          desc: 'Contratos y consentimientos firmados',
                           docs: [
                             { name: 'Contrato de Matrícula', date: '15 Ene 2026', signed: true },
                             { name: 'Consentimiento Informado', date: '15 Ene 2026', signed: true },
@@ -910,20 +912,18 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         },
                         {
                           title: 'Informes Médicos',
-                          icon: Activity,
-                          color: '#FF9500',
+                          desc: 'Valoraciones y exámenes clínicos',
                           docs: [
                             { name: 'Informe Médico Inicial', date: '20 Ene 2026', signed: true },
                             { name: 'Valoración Inicial', date: '22 Ene 2026', signed: true },
                           ],
                         },
                         {
-                          title: 'Rutinas y Progreso',
-                          icon: TrendingUp,
-                          color: '#E63946',
+                          title: 'Lesiones y Seguimiento',
+                          desc: 'Reportes de lesiones y recuperación',
                           docs: [
-                            { name: 'Rutina Enero-Marzo', date: '25 Ene 2026', signed: false },
-                            { name: 'Informe de Progreso Q1', date: '31 Mar 2026', signed: false },
+                            { name: 'Reporte de Lesión - Tobillo', date: '12 Feb 2026', signed: false },
+                            { name: 'Seguimiento de Recuperación', date: '28 Feb 2026', signed: false },
                           ],
                         },
                       ].map((section, si) => (
@@ -942,48 +942,76 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
                           }}
                         >
-                          <div className="flex items-center gap-3 mb-5 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${section.color}12` }}>
-                              <section.icon size={17} style={{ color: section.color }} />
+                          <div className="flex items-start gap-3 mb-5">
+                            <div className="w-14 h-14 flex-shrink-0">
+                              {si === 0 ? <ScalesOfJusticeView /> : si === 1 ? <DocumentView /> : <KitView />}
                             </div>
-                            <h3 className="text-[#0D1B2A] text-sm font-bold">{section.title}</h3>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-[#0D1B2A] text-base font-bold">{section.title}</h3>
+                              <p className="text-xs mt-0.5" style={{ color: '#0D1B2A' }}>{section.desc}</p>
+                            </div>
                           </div>
                           <div className="flex-1 space-y-3">
                             {section.docs.map((doc, di) => (
-                              <motion.div
-                                key={di}
-                                initial={{ opacity: 0, x: -6 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: si * 0.1 + di * 0.06 }}
-                                className="rounded-xl p-4 transition-all hover:scale-[1.02]"
-                                style={{
-                                  background: 'rgba(255,255,255,0.7)',
-                                  border: '1px solid rgba(0,0,0,0.05)',
-                                }}
-                              >
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.06)' }}>
-                                    <FileText size={14} style={{ color: '#E63946' }} />
-                                  </div>
-                                  {doc.signed ? (
-                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'rgba(48,209,88,0.1)', color: '#30D158' }}>
+                              doc.signed ? (
+                                <motion.div
+                                  key={di}
+                                  initial={{ opacity: 0, x: -6 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: si * 0.1 + di * 0.06 }}
+                                  className="rounded-xl p-4 transition-all hover:scale-[1.02]"
+                                  style={{
+                                    background: '#FFFFFF',
+                                    border: '1px solid rgba(0,0,0,0.06)',
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.06)' }}>
+                                      <FileText size={14} style={{ color: '#E63946' }} />
+                                    </div>
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'rgba(48,209,88,0.12)', color: '#30D158' }}>
                                       Firmado
                                     </span>
-                                  ) : (
-                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'rgba(255,149,0,0.1)', color: '#FF9500' }}>
+                                  </div>
+                                  <p className="text-[#0D1B2A] text-sm font-semibold">{doc.name}</p>
+                                  <p className="text-[11px] mt-0.5" style={{ color: '#0D1B2A' }}>{doc.date}</p>
+                                  <button
+                                    className="mt-3 w-full py-2 rounded-xl text-[11px] font-semibold transition-all"
+                                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                                  >
+                                    Ver documento
+                                  </button>
+                                </motion.div>
+                              ) : (
+                                <motion.div
+                                  key={di}
+                                  initial={{ opacity: 0, x: -6 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: si * 0.1 + di * 0.06 }}
+                                  className="rounded-xl p-4 transition-all hover:scale-[1.02]"
+                                  style={{
+                                    background: 'rgba(230,57,70,0.04)',
+                                    border: '1px dashed rgba(230,57,70,0.25)',
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.1)' }}>
+                                      <FileText size={14} style={{ color: '#E63946' }} />
+                                    </div>
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'rgba(230,57,70,0.1)', color: '#C62828' }}>
                                       Pendiente
                                     </span>
-                                  )}
-                                </div>
-                                <p className="text-[#0D1B2A] text-sm font-semibold">{doc.name}</p>
-                                <p className="text-[11px] mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{doc.date}</p>
-                                <button
-                                  className="mt-3 w-full py-2 rounded-xl text-[11px] font-semibold transition-all"
-                                  style={{ background: 'rgba(0,0,0,0.03)', color: 'rgba(0,0,0,0.45)', border: '1px solid rgba(0,0,0,0.06)' }}
-                                >
-                                  Ver documento
-                                </button>
-                              </motion.div>
+                                  </div>
+                                  <p className="text-[#0D1B2A] text-sm font-semibold">{doc.name}</p>
+                                  <p className="text-[11px] mt-1" style={{ color: '#C62828' }}>Este documento aún no ha sido entregado</p>
+                                  <button
+                                    className="mt-3 w-full py-2 rounded-xl text-[11px] font-bold transition-all"
+                                    style={{ background: '#E63946', color: '#FFFFFF' }}
+                                  >
+                                    Solicitar
+                                  </button>
+                                </motion.div>
+                              )
                             ))}
                           </div>
                         </motion.div>
