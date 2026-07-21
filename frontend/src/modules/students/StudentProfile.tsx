@@ -9,6 +9,8 @@ import {
   AlertTriangle, Activity,
   Calendar, FileText, Dumbbell, Plus,
   Flame, Shield, BarChart2, Maximize2, X,
+  CheckCircle, XCircle, Clock, Eye,
+  MoreVertical, Download, Trash2, Upload,
 } from 'lucide-react'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '../../assets/models/ui/objects/telephone/TelephoneModel'
@@ -17,9 +19,10 @@ import { TrophyView } from '../../assets/models/ui/objects/trophy/TrophyModel'
 import { ListView } from '../../assets/models/ui/objects/list/ListModel'
 import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarModel'
 import { ClockView } from '../../assets/models/ui/objects/clock/ClockModel'
-import { DocumentView } from '../../assets/models/ui/objects/document/DocumentModel'
 import { ScalesOfJusticeView } from '../../assets/models/ui/objects/scales_of_justice/ScalesOfJusticeModel'
+import { StethoscopeView } from '../../assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { KitView } from '../../assets/models/ui/objects/kit/KitModel'
+import { TrashView } from '../../assets/models/ui/actions/trash/TrashModel'
 import fireGif from '../../assets/icons/animated/fire.gif'
 
 interface Student {
@@ -164,6 +167,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [hoveredCol, setHoveredCol] = useState<number | null>(null)
   const [hoveredCell, setHoveredCell] = useState<{w: number; d: number} | null>(null)
   const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 4))
+  const [signatureModalOpen, setSignatureModalOpen] = useState(false)
+  const [fileModalOpen, setFileModalOpen] = useState(false)
+  const [fileModalData, setFileModalData] = useState<{name: string, date: string} | null>(null)
+  const [openMenuDoc, setOpenMenuDoc] = useState<string | null>(null)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteDocName, setDeleteDocName] = useState('')
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   const getWeekStart = (d: Date) => { const r = new Date(d); const day = r.getDay(); r.setDate(r.getDate() - (day === 0 ? 6 : day - 1)); return r }
@@ -191,6 +200,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
   return (
+    <>
+      <style>{`@keyframes shimmer { 0% { background-position: 200% center } 100% { background-position: -200% center } }`}</style>
     <div className="flex flex-col h-full overflow-hidden">
       {/* Background orbs */}
       <div className="floating-sphere" style={{
@@ -375,7 +386,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     <div className="absolute inset-0 pointer-events-none" style={{
                       background: 'linear-gradient(110deg, transparent 25%, rgba(255,215,0,0.15) 37%, rgba(255,255,255,0.4) 50%, rgba(255,215,0,0.15) 63%, transparent 75%)',
                       backgroundSize: '200% 100%',
-                      animation: 'shimmerGold 3s ease-in-out infinite',
+                      animation: 'shimmer 3s ease-in-out infinite',
                     }} />
                     <div className="relative z-10">
                       <div className="flex items-center gap-2.5 mb-4">
@@ -477,16 +488,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
                     overflow: 'hidden',
                   }}>
-                    <div className="flex items-center justify-between px-5 py-3 relative" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                      <div className="flex items-center gap-1">
-                        <button onClick={prevPeriod} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
-                        <span className="text-sm font-bold px-1" style={{ color: '#0D1B2A' }}>
-                          {vistaCalendario === 'semana' ? formatWeekRange(currentDate) : vistaCalendario === 'mes' ? `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}` : `${currentDate.getFullYear()}`}
-                        </span>
-                        <button onClick={nextPeriod} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
+                    <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                      <div className="flex items-center gap-2 flex-1">
+                        <Calendar size={16} style={{ color: '#E63946' }} />
+                        <h3 className="text-[#0D1B2A] text-sm font-bold whitespace-nowrap">Historial de Entradas y Salidas</h3>
                       </div>
-                      <h3 className="text-[#0D1B2A] text-sm font-bold absolute left-1/2 -translate-x-1/2">Historial de Entradas y Salidas</h3>
-                      <div className="flex items-center gap-0.5 rounded-lg p-0.5" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                      <div className="flex items-center gap-0.5 rounded-lg p-0.5 flex-shrink-0" style={{ background: 'rgba(0,0,0,0.04)' }}>
                         {(['semana', 'mes', 'año'] as const).map(v => (
                           <button
                             key={v}
@@ -502,13 +509,20 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           </button>
                         ))}
                       </div>
+                      <div className="flex items-center gap-1 flex-1 justify-end">
+                        <button onClick={prevPeriod} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all flex-shrink-0" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
+                        <span className="text-sm font-bold px-1 text-center min-w-[160px]" style={{ color: '#0D1B2A' }}>
+                          {vistaCalendario === 'semana' ? formatWeekRange(currentDate) : vistaCalendario === 'mes' ? `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}` : `${currentDate.getFullYear()}`}
+                        </span>
+                        <button onClick={nextPeriod} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all flex-shrink-0" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
+                      </div>
                     </div>
 
                     {(vistaCalendario === 'semana') && (
                       <div className="px-5 pt-4 pb-4">
                         <div className="w-full">
-                          <div className="grid gap-4 px-2 mb-3" style={{ gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr' }}>
-                            {['Día', 'Entrada', 'Salida', 'Duración'].map(h => (
+                          <div className="grid gap-4 px-2 mb-3" style={{ gridTemplateColumns: '1.3fr 0.8fr 1fr 1fr 0.8fr' }}>
+                            {['Día', 'Asistencia', 'Entrada', 'Salida', 'Duración'].map(h => (
                               <div key={h} className="text-sm font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{h}</div>
                             ))}
                           </div>
@@ -533,35 +547,46 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                     initial={{ opacity: 0, x: -8 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: i * 0.04 }}
-                                    className="grid gap-4 items-center px-4 py-4 rounded-xl transition-all"
+                                    className="grid gap-4 items-center px-4 py-3 rounded-xl transition-all cursor-pointer"
                                     style={{
-                                      gridTemplateColumns: '1.3fr 1fr 1fr 0.8fr',
-                                      background: hasData ? (i % 2 === 0 ? 'rgba(230,57,70,0.04)' : 'transparent') : 'rgba(0,0,0,0.015)',
-                                      borderLeft: hasData ? (i % 2 === 0 ? '3px solid rgba(230,57,70,0.15)' : '3px solid transparent') : '3px solid transparent',
-                                      opacity: hasData ? 1 : 0.5,
+                                      gridTemplateColumns: '1.3fr 0.8fr 1fr 1fr 0.8fr',
+                                      background: hasData ? 'rgba(48,209,88,0.06)' : 'rgba(230,57,70,0.04)',
+                                      borderLeft: hasData ? '3px solid #30D158' : '3px solid #E63946',
+                                      opacity: 1,
                                     }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateX(4px)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)' }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateX(0px)'; e.currentTarget.style.boxShadow = 'none' }}
                                   >
                                     <div className="flex flex-col">
-                                      <span className="text-base font-semibold" style={{ color: hasData ? '#0D1B2A' : 'rgba(0,0,0,0.25)' }}>{dayNames[i]}</span>
-                                      <span className="text-sm" style={{ color: hasData ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.15)' }}>{dayNum} {monthShort}</span>
+                                      <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{dayNames[i]}</span>
+                                      <span className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{dayNum} {monthShort}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                      {hasData ? <CheckCircle size={14} style={{ color: '#30D158' }} /> : <XCircle size={14} style={{ color: '#E63946' }} />}
+                                      <span className="text-xs font-bold" style={{ color: hasData ? '#30D158' : '#E63946' }}>
+                                        {hasData ? 'Asistió' : 'No asistió'}
+                                      </span>
                                     </div>
                                     {hasData ? (
                                       <>
-                                        <div className="flex items-center gap-2.5">
-                                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#30D158' }} />
-                                          <span className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{record.entrada}</span>
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#30D158' }} />
+                                          <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{record.entrada}</span>
                                         </div>
-                                        <div className="flex items-center gap-2.5">
-                                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#C62828' }} />
-                                          <span className="text-base font-semibold" style={{ color: '#C62828' }}>{record.salida}</span>
+                                        <div className="flex items-center gap-2">
+                                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: '#C62828' }} />
+                                          <span className="text-sm font-semibold" style={{ color: '#C62828' }}>{record.salida}</span>
                                         </div>
-                                        <span className="text-base font-bold" style={{ color: '#E63946' }}>{record.duracion}</span>
+                                        <div className="flex items-center gap-1.5">
+                                          <Clock size={14} style={{ color: '#0D1B2A' }} />
+                                          <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{record.duracion}</span>
+                                        </div>
                                       </>
                                     ) : (
                                       <>
-                                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
-                                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
-                                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
+                                        <span className="text-xs" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
+                                        <span className="text-xs" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
+                                        <span className="text-xs" style={{ color: 'rgba(0,0,0,0.15)' }}>—</span>
                                       </>
                                     )}
                                   </motion.div>
@@ -732,171 +757,162 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               {(currentTab === 'assessment' || currentTab === 'documents') && (
                 <div className="max-w-[1200px] mx-auto space-y-6">
                   {currentTab === 'assessment' && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-[#0D1B2A] text-lg font-bold">Valoraciones Físicas</h3>
-                          <p className="text-sm mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Historial completo de evaluaciones del estudiante</p>
-                        </div>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
-                          style={{
-                            background: 'linear-gradient(135deg, #E63946, #D32F2F)',
-                            color: '#FFFFFF',
-                            boxShadow: '0 4px 16px rgba(230,57,70,0.25)',
-                          }}
-                        >
-                          <Plus size={16} />
-                          Nueva Valoración
-                        </motion.button>
-                      </div>
+                    <div className="space-y-4 relative">
+                      <motion.button
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.96 }}
+                        className="fixed bottom-8 right-8 z-40 flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg"
+                        style={{
+                          background: 'linear-gradient(135deg, #E63946, #D32F2F)',
+                          color: '#FFFFFF',
+                          boxShadow: '0 8px 32px rgba(230,57,70,0.35)',
+                        }}
+                      >
+                        <Plus size={18} />
+                        Nueva Valoración
+                      </motion.button>
 
-                      <div className="grid grid-cols-2 gap-5">
-                        {[
-                          {
-                            date: '15 May 2026',
-                            evaluator: 'Dr. Carlos Mendoza',
-                            type: 'Completa',
-                            metrics: [
-                              { label: 'Peso', value: '72 kg' },
-                              { label: 'IMC', value: '22.4' },
-                              { label: 'Grasa corporal', value: '17%' },
-                              { label: 'Masa muscular', value: '52 kg' },
-                              { label: 'VO2 Max', value: '42 ml/kg/min' },
-                              { label: 'Fuerza 1RM', value: '100 kg' },
-                            ],
-                            score: 87,
-                            routine: 'Rutina Enero-Marzo',
-                            color: '#30D158',
-                          },
-                          {
-                            date: '20 Feb 2026',
-                            evaluator: 'Dr. Carlos Mendoza',
-                            type: 'Parcial',
-                            metrics: [
-                              { label: 'Peso', value: '74 kg' },
-                              { label: 'IMC', value: '23.1' },
-                              { label: 'Grasa corporal', value: '19%' },
-                              { label: 'Masa muscular', value: '50 kg' },
-                              { label: 'VO2 Max', value: '39 ml/kg/min' },
-                              { label: 'Fuerza 1RM', value: '95 kg' },
-                            ],
-                            score: 79,
-                            routine: 'Rutina Octubre-Diciembre',
-                            color: '#FF9500',
-                          },
-                          {
-                            date: '10 Nov 2025',
-                            evaluator: 'Dr. Carlos Mendoza',
-                            type: 'Inicial',
-                            metrics: [
-                              { label: 'Peso', value: '78 kg' },
-                              { label: 'IMC', value: '24.3' },
-                              { label: 'Grasa corporal', value: '22%' },
-                              { label: 'Masa muscular', value: '48 kg' },
-                              { label: 'VO2 Max', value: '35 ml/kg/min' },
-                              { label: 'Fuerza 1RM', value: '85 kg' },
-                            ],
-                            score: 65,
-                            routine: 'Rutina Julio-Septiembre',
-                            color: '#E63946',
-                          },
-                          {
-                            date: '05 Jun 2025',
-                            evaluator: 'Dr. Carlos Mendoza',
-                            type: 'Completa',
-                            metrics: [
-                              { label: 'Peso', value: '80 kg' },
-                              { label: 'IMC', value: '25.0' },
-                              { label: 'Grasa corporal', value: '24%' },
-                              { label: 'Masa muscular', value: '46 kg' },
-                              { label: 'VO2 Max', value: '33 ml/kg/min' },
-                              { label: 'Fuerza 1RM', value: '80 kg' },
-                            ],
-                            score: 58,
-                            routine: 'Rutina Abril-Junio',
-                            color: '#E63946',
-                          },
-                        ].map((v, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.08 }}
-                            className="rounded-2xl overflow-hidden"
-                            style={{
-                              background: '#FFFFFF',
-                              border: '1px solid rgba(0,0,0,0.04)',
-                              borderRadius: 20,
-                              boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
-                            }}
-                          >
-                            <div className="flex items-center justify-between px-5 py-4" style={{
-                              background: `linear-gradient(135deg, ${v.color}08, ${v.color}03)`,
-                              borderBottom: '1px solid rgba(0,0,0,0.04)',
-                            }}>
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${v.color}15` }}>
-                                  <BarChart2 size={18} style={{ color: v.color }} />
-                                </div>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{v.date}</p>
-                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: `${v.color}15`, color: v.color }}>
-                                      {v.type}
-                                    </span>
+                      {[
+                        {
+                          date: '15 May 2026',
+                          evaluator: 'Dr. Carlos Mendoza',
+                          type: 'Completa',
+                          metrics: [
+                            { label: 'Peso', value: '72 kg' },
+                            { label: 'IMC', value: '22.4' },
+                            { label: 'Grasa corporal', value: '17%' },
+                            { label: 'Masa muscular', value: '52 kg' },
+                            { label: 'VO2 Max', value: '42 ml/kg/min' },
+                            { label: 'Fuerza 1RM', value: '100 kg' },
+                          ],
+                          score: 87,
+                          routine: 'Rutina Enero-Marzo',
+                          color: '#30D158',
+                        },
+                        {
+                          date: '20 Feb 2026',
+                          evaluator: 'Dr. Carlos Mendoza',
+                          type: 'Parcial',
+                          metrics: [
+                            { label: 'Peso', value: '74 kg' },
+                            { label: 'IMC', value: '23.1' },
+                            { label: 'Grasa corporal', value: '19%' },
+                            { label: 'Masa muscular', value: '50 kg' },
+                            { label: 'VO2 Max', value: '39 ml/kg/min' },
+                            { label: 'Fuerza 1RM', value: '95 kg' },
+                          ],
+                          score: 79,
+                          routine: 'Rutina Octubre-Diciembre',
+                          color: '#FF9500',
+                        },
+                        {
+                          date: '10 Nov 2025',
+                          evaluator: 'Dr. Carlos Mendoza',
+                          type: 'Inicial',
+                          metrics: [
+                            { label: 'Peso', value: '78 kg' },
+                            { label: 'IMC', value: '24.3' },
+                            { label: 'Grasa corporal', value: '22%' },
+                            { label: 'Masa muscular', value: '48 kg' },
+                            { label: 'VO2 Max', value: '35 ml/kg/min' },
+                            { label: 'Fuerza 1RM', value: '85 kg' },
+                          ],
+                          score: 65,
+                          routine: 'Rutina Julio-Septiembre',
+                          color: '#E63946',
+                        },
+                        {
+                          date: '05 Jun 2025',
+                          evaluator: 'Dr. Carlos Mendoza',
+                          type: 'Completa',
+                          metrics: [
+                            { label: 'Peso', value: '80 kg' },
+                            { label: 'IMC', value: '25.0' },
+                            { label: 'Grasa corporal', value: '24%' },
+                            { label: 'Masa muscular', value: '46 kg' },
+                            { label: 'VO2 Max', value: '33 ml/kg/min' },
+                            { label: 'Fuerza 1RM', value: '80 kg' },
+                          ],
+                          score: 58,
+                          routine: 'Rutina Abril-Junio',
+                          color: '#E63946',
+                        },
+                      ].map((v, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: 16 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.08, ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
+                          className="rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer"
+                          style={{
+                            background: '#FFFFFF',
+                            border: '1px solid rgba(0,0,0,0.04)',
+                            borderRadius: 20,
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.08)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0px)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.03)' }}
+                        >
+                          <div className="flex gap-0">
+                            <div className="w-1.5 flex-shrink-0" style={{ background: v.color, borderRadius: '20px 0 0 20px' }} />
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between px-6 py-4" style={{
+                                background: `linear-gradient(135deg, ${v.color}06, ${v.color}02)`,
+                                borderBottom: '1px solid rgba(0,0,0,0.04)',
+                              }}>
+                                <div className="flex items-center gap-4">
+                                  <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${v.color}12` }}>
+                                    <BarChart2 size={20} style={{ color: v.color }} />
                                   </div>
-                                  <p className="text-[11px]" style={{ color: 'rgba(0,0,0,0.35)' }}>{v.evaluator}</p>
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <div className="relative" style={{ width: 44, height: 44 }}>
-                                  <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-                                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
-                                    <circle cx="18" cy="18" r="15.9" fill="none" stroke={v.color} strokeWidth="2.8" strokeLinecap="round"
-                                      strokeDasharray={`${v.score * 0.999} ${100 - v.score * 0.999}`} />
-                                  </svg>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <p className="text-[10px] font-extrabold" style={{ color: v.color }}>{v.score}%</p>
+                                  <div>
+                                    <div className="flex items-center gap-2.5">
+                                      <p className="text-base font-bold" style={{ color: '#0D1B2A' }}>{v.date}</p>
+                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ background: `${v.color}15`, color: v.color }}>
+                                        {v.type}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{v.evaluator}</p>
                                   </div>
                                 </div>
-                              </div>
-                            </div>
-                            <div className="p-5">
-                              <div className="grid grid-cols-3 gap-3 mb-4">
-                                {v.metrics.slice(0, 6).map(m => (
-                                  <div key={m.label} className="text-center">
-                                    <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{m.value}</p>
-                                    <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
+                                <div className="flex items-center gap-4">
+                                  <div className="hidden sm:flex items-center gap-2 text-[11px]" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                                    <Dumbbell size={13} />
+                                    {v.routine}
                                   </div>
-                                ))}
-                              </div>
-                              <div className="flex items-center justify-between gap-2 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                                <div className="flex items-center gap-2 text-[11px]" style={{ color: 'rgba(0,0,0,0.35)' }}>
-                                  <Dumbbell size={13} />
-                                  {v.routine}
+                                  <div className="relative flex-shrink-0" style={{ width: 48, height: 48 }}>
+                                    <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+                                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
+                                      <circle cx="18" cy="18" r="15.9" fill="none" stroke={v.color} strokeWidth="2.8" strokeLinecap="round"
+                                        strokeDasharray={`${v.score * 0.999} ${100 - v.score * 0.999}`} />
+                                    </svg>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <p className="text-[11px] font-extrabold" style={{ color: v.color }}>{v.score}%</p>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    className="px-3.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
-                                    style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
-                                  >
+                              </div>
+                              <div className="px-6 py-4">
+                                <div className="flex items-center gap-6 flex-wrap">
+                                  {v.metrics.slice(0, 6).map(m => (
+                                    <div key={m.label} className="flex items-center gap-2">
+                                      <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{m.value}</span>
+                                      <span className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="flex gap-2 mt-4 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                                  <button className="px-4 py-2 rounded-xl text-[11px] font-semibold transition-all hover:opacity-80" style={{ background: v.color, color: '#FFFFFF' }}>
                                     Ver valoración
                                   </button>
-                                  <button
-                                    className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold transition-all"
-                                    style={{ background: `${v.color}15`, color: v.color }}
-                                  >
+                                  <button className="px-4 py-2 rounded-xl text-[11px] font-semibold transition-all" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}>
                                     Ver rutina
                                   </button>
                                 </div>
                               </div>
                             </div>
-                          </motion.div>
-                        ))}
-                      </div>
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
                   )}
                   {currentTab === 'documents' && (
@@ -906,52 +922,52 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           title: 'Documentos Legales',
                           desc: 'Contratos y consentimientos firmados',
                           docs: [
-                            { name: 'Contrato de Matrícula', date: '15 Ene 2026', signed: true },
-                            { name: 'Consentimiento Informado', date: '15 Ene 2026', signed: true },
+                            { name: 'Contrato Firmado', date: '15 Ene 2026', signed: true, originalName: 'contrato_firmado_v2.pdf' },
+                            { name: 'Aceptación de Tratamiento de Datos', date: '15 Ene 2026', signed: true, originalName: 'aceptacion_datos_2026.pdf' },
                           ],
                         },
                         {
                           title: 'Informes Médicos',
-                          desc: 'Valoraciones y exámenes clínicos',
+                          desc: 'Certificados y expedientes médicos',
                           docs: [
-                            { name: 'Informe Médico Inicial', date: '20 Ene 2026', signed: true },
-                            { name: 'Valoración Inicial', date: '22 Ene 2026', signed: true },
+                            { name: 'Certificado EPS', date: '20 Ene 2026', signed: true, originalName: 'certificado_eps_2026.pdf' },
+                            { name: 'Historia Clínica', date: '22 Ene 2026', signed: true, originalName: 'historia_clinica.pdf' },
                           ],
                         },
                         {
                           title: 'Lesiones y Seguimiento',
                           desc: 'Reportes de lesiones y recuperación',
                           docs: [
-                            { name: 'Reporte de Lesión - Tobillo', date: '12 Feb 2026', signed: false },
-                            { name: 'Seguimiento de Recuperación', date: '28 Feb 2026', signed: false },
+                            { name: 'Reporte de Lesión - Tobillo', date: '12 Feb 2026', signed: true, originalName: 'reporte_tobillo.pdf' },
+                            { name: 'Seguimiento de Recuperación', date: '28 Feb 2026', signed: true, originalName: 'seguimiento_recuperacion.pdf' },
                           ],
                         },
                       ].map((section, si) => (
-                        <motion.div
-                          key={section.title}
-                          initial={{ opacity: 0, y: 12 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: si * 0.1 }}
-                          className="rounded-2xl p-5 flex flex-col"
-                          style={{
-                            background: 'rgba(255,255,255,0.6)',
-                            backdropFilter: 'blur(16px)',
-                            WebkitBackdropFilter: 'blur(16px)',
-                            border: '1px solid rgba(255,255,255,0.7)',
-                            borderRadius: 20,
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-                          }}
-                        >
-                          <div className="flex items-start gap-3 mb-5">
-                            <div className="w-14 h-14 flex-shrink-0">
-                              {si === 0 ? <ScalesOfJusticeView /> : si === 1 ? <DocumentView /> : <KitView />}
-                            </div>
+                          <motion.div
+                            key={section.title}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: si * 0.1 }}
+                            className="rounded-2xl p-5 flex flex-col"
+                            style={{
+                              background: 'rgba(255,255,255,0.6)',
+                              backdropFilter: 'blur(16px)',
+                              WebkitBackdropFilter: 'blur(16px)',
+                              border: '1px solid rgba(255,255,255,0.7)',
+                              borderRadius: 20,
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                            }}
+                          >
+                            <div className="flex items-start gap-3 mb-5">
+                              <div className="w-14 h-14 flex-shrink-0">
+                                {si === 0 ? <ScalesOfJusticeView /> : si === 1 ? <StethoscopeView /> : <KitView />}
+                              </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-[#0D1B2A] text-base font-bold">{section.title}</h3>
-                              <p className="text-xs mt-0.5" style={{ color: '#0D1B2A' }}>{section.desc}</p>
+                              <h3 className="text-[#0D1B2A] text-lg font-bold">{section.title}</h3>
+                              <p className="text-sm mt-0.5" style={{ color: '#0D1B2A' }}>{section.desc}</p>
                             </div>
                           </div>
-                          <div className="flex-1 space-y-3">
+                          <div className="flex-1 space-y-4">
                             {section.docs.map((doc, di) => (
                               doc.signed ? (
                                 <motion.div
@@ -959,28 +975,43 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                   initial={{ opacity: 0, x: -6 }}
                                   animate={{ opacity: 1, x: 0 }}
                                   transition={{ delay: si * 0.1 + di * 0.06 }}
-                                  className="rounded-xl p-4 transition-all hover:scale-[1.02]"
+                                  className="rounded-xl p-5 transition-all duration-300 cursor-pointer relative overflow-hidden"
                                   style={{
                                     background: '#FFFFFF',
                                     border: '1px solid rgba(0,0,0,0.06)',
                                   }}
+                                  onMouseEnter={(e) => {
+                                    setOpenMenuDoc(`${si}-${di}`)
+                                    e.currentTarget.style.transform = 'scale(1.02)'
+                                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    setOpenMenuDoc(null)
+                                    e.currentTarget.style.transform = 'scale(1)'
+                                    e.currentTarget.style.boxShadow = 'none'
+                                  }}
                                 >
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.06)' }}>
-                                      <FileText size={14} style={{ color: '#E63946' }} />
+                                  <div className={`transition-all duration-300 ${openMenuDoc === `${si}-${di}` ? 'opacity-0' : 'opacity-100'}`}>
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.06)' }}>
+                                        <FileText size={16} style={{ color: '#E63946' }} />
+                                      </div>
+                                      <div>
+                                        <p className="text-[#0D1B2A] text-sm font-semibold leading-tight">{doc.name}</p>
+                                        <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{doc.date}</p>
+                                        <p className="text-[10px] mt-0.5 font-mono" style={{ color: 'rgba(0,0,0,0.35)' }}>{doc.originalName}</p>
+                                      </div>
                                     </div>
-                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'rgba(48,209,88,0.12)', color: '#30D158' }}>
-                                      Firmado
-                                    </span>
                                   </div>
-                                  <p className="text-[#0D1B2A] text-sm font-semibold">{doc.name}</p>
-                                  <p className="text-[11px] mt-0.5" style={{ color: '#0D1B2A' }}>{doc.date}</p>
-                                  <button
-                                    className="mt-3 w-full py-2 rounded-xl text-[11px] font-semibold transition-all"
-                                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                                  <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl transition-all duration-300 ${openMenuDoc === `${si}-${di}` ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} style={{ background: 'radial-gradient(circle at 20% 30%, rgba(230,57,70,0.08), rgba(230,57,70,0.02) 50%, rgba(255,255,255,0.95) 70%)', backdropFilter: 'blur(4px)' }}
+                                    onClick={() => {
+                                      setFileModalData({ name: doc.name, date: doc.date })
+                                      setFileModalOpen(true)
+                                    }}
                                   >
-                                    Ver documento
-                                  </button>
+                                    <Eye size={28} style={{ color: '#E63946' }} />
+                                    <span className="text-xs font-semibold" style={{ color: '#E63946' }}>Ver contenido</span>
+                                  </div>
                                 </motion.div>
                               ) : (
                                 <motion.div
@@ -988,11 +1019,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                   initial={{ opacity: 0, x: -6 }}
                                   animate={{ opacity: 1, x: 0 }}
                                   transition={{ delay: si * 0.1 + di * 0.06 }}
-                                  className="rounded-xl p-4 transition-all hover:scale-[1.02]"
+                                  className="rounded-xl p-4 transition-all cursor-pointer"
                                   style={{
                                     background: 'rgba(230,57,70,0.04)',
                                     border: '1px dashed rgba(230,57,70,0.25)',
                                   }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.02)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(230,57,70,0.12)' }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none' }}
                                 >
                                   <div className="flex items-center justify-between mb-2">
                                     <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.1)' }}>
@@ -1023,7 +1056,66 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
 
               </div>
             </motion.div>
-          </AnimatePresence>
+        </AnimatePresence>
+
+        {/* Modal firma */}
+        <AnimatePresence>
+          {signatureModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setSignatureModalOpen(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-lg rounded-3xl p-6"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                }}
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Firma del Estudiante</h3>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Contrato Firmado</p>
+                  </div>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setSignatureModalOpen(false)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                  </motion.button>
+                </div>
+                <div className="rounded-2xl p-6 flex flex-col items-center justify-center" style={{ background: 'rgba(0,0,0,0.02)', border: '1px dashed rgba(0,0,0,0.08)' }}>
+                  <svg viewBox="0 0 400 120" className="w-full h-auto" style={{ maxHeight: 120 }}>
+                    <path d="M30,90 C40,50 60,30 80,40 C100,50 95,75 110,65 C125,55 130,35 150,30 C170,25 180,50 195,55 C210,60 220,40 240,35 C260,30 270,55 280,60 C290,65 300,45 320,50 C340,55 345,70 355,65 C365,60 370,50 380,55"
+                      fill="none" stroke="#0D1B2A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <line x1="30" y1="100" x2="380" y2="100" stroke="rgba(0,0,0,0.1)" strokeWidth="1" strokeDasharray="4 3" />
+                  </svg>
+                </div>
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'rgba(48,209,88,0.12)', color: '#30D158' }}>Firmado</span>
+                    <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>15 Ene 2026 - 10:32 AM</span>
+                  </div>
+                  <button
+                    className="px-4 py-2 rounded-xl text-[11px] font-semibold transition-all"
+                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                    onClick={() => setSignatureModalOpen(false)}
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         </div>
 
         {/* Modal información completa */}
@@ -1127,6 +1219,121 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Modal visor de documento */}
+        <AnimatePresence>
+          {fileModalOpen && fileModalData && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setFileModalOpen(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-2xl rounded-3xl overflow-hidden"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                }}
+              >
+                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.08)' }}>
+                      <FileText size={16} style={{ color: '#E63946' }} />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{fileModalData.name}</h3>
+                      <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>{fileModalData.date} · PDF</p>
+                    </div>
+                  </div>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setFileModalOpen(false)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                  </motion.button>
+                </div>
+                  <div className="p-6 flex flex-col items-center justify-center min-h-[300px]" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                    <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(230,57,70,0.06)' }}>
+                      <FileText size={36} style={{ color: '#E63946' }} />
+                    </div>
+                    <p className="text-sm font-semibold mb-1" style={{ color: '#0D1B2A' }}>Vista previa del documento</p>
+                    <p className="text-xs text-center max-w-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>Este es un documento firmado electrónicamente.</p>
+                    <div className="flex gap-2 mt-6">
+                      <button className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2" style={{ background: '#E63946', color: '#FFFFFF' }}>
+                        <Download size={14} /> Descargar
+                      </button>
+                      <button className="px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2" style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}>
+                        <Upload size={14} /> Reemplazar
+                      </button>
+                      <button onClick={() => { setFileModalOpen(false); setDeleteDocName(fileModalData?.name || ''); setDeleteModalOpen(true) }} className="px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2" style={{ background: 'rgba(230,57,70,0.08)', color: '#E63946', border: '1px solid rgba(230,57,70,0.15)' }}>
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </div>
+                  </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal eliminar documento */}
+        <AnimatePresence>
+          {deleteModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[70] flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setDeleteModalOpen(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-md rounded-3xl p-6 flex flex-col items-center text-center"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                }}
+              >
+                <div className="w-14 h-14 mb-4">
+                  <TrashView />
+                </div>
+                <h3 className="text-base font-bold mb-1" style={{ color: '#0D1B2A' }}>¿Eliminar documento?</h3>
+                <p className="text-sm mb-6" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                  Esta acción no se puede deshacer.
+                </p>
+                <div className="flex gap-2.5 w-full">
+                  <button
+                    onClick={() => setDeleteModalOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all"
+                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => setDeleteModalOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all"
+                    style={{ background: '#E63946', color: '#FFFFFF' }}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
     </div>
+    </>
   )
 }
