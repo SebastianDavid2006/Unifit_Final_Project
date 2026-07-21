@@ -9,7 +9,7 @@ import {
   AlertTriangle, Activity,
   Calendar, FileText, Dumbbell, Plus,
   Flame, Shield, BarChart2, Maximize2, X,
-  CheckCircle, XCircle, Clock, Eye,
+  Check, CheckCircle, XCircle, Clock, Eye,
   MoreVertical, Download, Trash2, Upload,
 } from 'lucide-react'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
@@ -173,6 +173,25 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [openMenuDoc, setOpenMenuDoc] = useState<string | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteDocName, setDeleteDocName] = useState('')
+  const [selectedAssessment, setSelectedAssessment] = useState<any>(null)
+  const [showAssessmentOptions, setShowAssessmentOptions] = useState(false)
+  const [showValuationModal, setShowValuationModal] = useState(false)
+  const [showRoutineViewModal, setShowRoutineViewModal] = useState(false)
+  const [showNewRoutineModal, setShowNewRoutineModal] = useState(false)
+  const [routineStep, setRoutineStep] = useState(1)
+  const [routineForm, setRoutineForm] = useState({
+    name: '', description: '', duration: '', frequency: '', level: 'Intermedio',
+  })
+  const [showNewValuationModal, setShowNewValuationModal] = useState(false)
+  const [valuationStep, setValuationStep] = useState(1)
+  const [valuationForm, setValuationForm] = useState({
+    nivelActividad: '', objetivoTarjetas: [] as string[], objetivoDetalle: '',
+    peso: '', estatura: '', imc: '', grasaCorporal: '',
+    masaMuscular: '', masaMagra: '', grasaVisceral: '',
+    presionArterial: '', edadMetabolica: '', aguaCorporal: '', resistenciaMuscular: '',
+    antecedentesSalud: [] as string[], observacionesEntrenador: '',
+    diasDisponibles: [] as string[], observacionesFinales: '',
+  })
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   const getWeekStart = (d: Date) => { const r = new Date(d); const day = r.getDay(); r.setDate(r.getDate() - (day === 0 ? 6 : day - 1)); return r }
@@ -757,162 +776,86 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               {(currentTab === 'assessment' || currentTab === 'documents') && (
                 <div className="max-w-[1200px] mx-auto space-y-6">
                   {currentTab === 'assessment' && (
-                    <div className="space-y-4 relative">
-                      <motion.button
-                        whileHover={{ scale: 1.04 }}
-                        whileTap={{ scale: 0.96 }}
-                        className="fixed bottom-8 right-8 z-40 flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg"
-                        style={{
-                          background: 'linear-gradient(135deg, #E63946, #D32F2F)',
-                          color: '#FFFFFF',
-                          boxShadow: '0 8px 32px rgba(230,57,70,0.35)',
-                        }}
-                      >
-                        <Plus size={18} />
-                        Nueva Valoración
-                      </motion.button>
-
-                      {[
-                        {
-                          date: '15 May 2026',
-                          evaluator: 'Dr. Carlos Mendoza',
-                          type: 'Completa',
-                          metrics: [
-                            { label: 'Peso', value: '72 kg' },
-                            { label: 'IMC', value: '22.4' },
-                            { label: 'Grasa corporal', value: '17%' },
-                            { label: 'Masa muscular', value: '52 kg' },
-                            { label: 'VO2 Max', value: '42 ml/kg/min' },
-                            { label: 'Fuerza 1RM', value: '100 kg' },
-                          ],
-                          score: 87,
-                          routine: 'Rutina Enero-Marzo',
-                          color: '#30D158',
-                        },
-                        {
-                          date: '20 Feb 2026',
-                          evaluator: 'Dr. Carlos Mendoza',
-                          type: 'Parcial',
-                          metrics: [
-                            { label: 'Peso', value: '74 kg' },
-                            { label: 'IMC', value: '23.1' },
-                            { label: 'Grasa corporal', value: '19%' },
-                            { label: 'Masa muscular', value: '50 kg' },
-                            { label: 'VO2 Max', value: '39 ml/kg/min' },
-                            { label: 'Fuerza 1RM', value: '95 kg' },
-                          ],
-                          score: 79,
-                          routine: 'Rutina Octubre-Diciembre',
-                          color: '#FF9500',
-                        },
-                        {
-                          date: '10 Nov 2025',
-                          evaluator: 'Dr. Carlos Mendoza',
-                          type: 'Inicial',
-                          metrics: [
-                            { label: 'Peso', value: '78 kg' },
-                            { label: 'IMC', value: '24.3' },
-                            { label: 'Grasa corporal', value: '22%' },
-                            { label: 'Masa muscular', value: '48 kg' },
-                            { label: 'VO2 Max', value: '35 ml/kg/min' },
-                            { label: 'Fuerza 1RM', value: '85 kg' },
-                          ],
-                          score: 65,
-                          routine: 'Rutina Julio-Septiembre',
-                          color: '#E63946',
-                        },
-                        {
-                          date: '05 Jun 2025',
-                          evaluator: 'Dr. Carlos Mendoza',
-                          type: 'Completa',
-                          metrics: [
-                            { label: 'Peso', value: '80 kg' },
-                            { label: 'IMC', value: '25.0' },
-                            { label: 'Grasa corporal', value: '24%' },
-                            { label: 'Masa muscular', value: '46 kg' },
-                            { label: 'VO2 Max', value: '33 ml/kg/min' },
-                            { label: 'Fuerza 1RM', value: '80 kg' },
-                          ],
-                          score: 58,
-                          routine: 'Rutina Abril-Junio',
-                          color: '#E63946',
-                        },
-                      ].map((v, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 16 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.08, ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
-                          className="rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer"
+                      <div className="space-y-4">
+                      <div className="flex justify-center mb-6">
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setShowNewValuationModal(true)}
+                          className="flex items-center gap-2.5 px-6 py-3 rounded-full cursor-pointer"
                           style={{
-                            background: '#FFFFFF',
-                            border: '1px solid rgba(0,0,0,0.04)',
-                            borderRadius: 20,
-                            boxShadow: '0 2px 12px rgba(0,0,0,0.03)',
+                            background: 'radial-gradient(ellipse at 20% 30%, rgba(230,57,70,0.9) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.4) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(241,200,39,0.25) 0%, transparent 50%), #CC0033',
+                            boxShadow: '0 8px 32px rgba(230,57,70,0.35)',
+                            color: '#FFFFFF',
+                            border: 'none',
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.08)' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0px)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.03)' }}
                         >
-                          <div className="flex gap-0">
-                            <div className="w-1.5 flex-shrink-0" style={{ background: v.color, borderRadius: '20px 0 0 20px' }} />
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between px-6 py-4" style={{
-                                background: `linear-gradient(135deg, ${v.color}06, ${v.color}02)`,
-                                borderBottom: '1px solid rgba(0,0,0,0.04)',
-                              }}>
-                                <div className="flex items-center gap-4">
-                                  <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${v.color}12` }}>
-                                    <BarChart2 size={20} style={{ color: v.color }} />
-                                  </div>
-                                  <div>
-                                    <div className="flex items-center gap-2.5">
-                                      <p className="text-base font-bold" style={{ color: '#0D1B2A' }}>{v.date}</p>
-                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ background: `${v.color}15`, color: v.color }}>
-                                        {v.type}
-                                      </span>
+                          <Plus size={20} />
+                          <span className="text-sm font-semibold">Nueva Valoración</span>
+                        </motion.button>
+                      </div>
+
+                      {([
+                        { date: '15 May 2026' },
+                        { date: '20 Feb 2026' },
+                        { date: '10 Nov 2025' },
+                        { date: '05 Jun 2025' },
+                      ] as const).map((v, i, arr) => {
+                        const isFirst = i === 0
+                        const isLast = i === arr.length - 1
+                        const status = isFirst ? 'Actual' : isLast ? 'Inicial' : 'Seguimiento'
+                        const statusColor = isFirst ? '#1270B7' : isLast ? '#E63946' : '#FF9500'
+                        const statusBg = isFirst ? 'rgba(18,112,183,0.12)' : isLast ? 'rgba(230,57,70,0.12)' : 'rgba(255,149,0,0.12)'
+                        return (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.08, ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
+                            className="rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer"
+                            style={{
+                              background: isFirst ? 'linear-gradient(135deg, rgba(18,112,183,0.04), #FFFFFF)' : '#FFFFFF',
+                              border: isFirst ? '2px solid rgba(18,112,183,0.2)' : '1px solid rgba(0,0,0,0.04)',
+                              borderRadius: 20,
+                              boxShadow: isFirst ? '0 8px 32px rgba(18,112,183,0.12), 0 2px 8px rgba(18,112,183,0.06)' : '0 2px 12px rgba(0,0,0,0.03)',
+                            }}
+                            onClick={() => { setSelectedAssessment(v); setShowAssessmentOptions(true) }}
+                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isFirst ? '0 12px 40px rgba(18,112,183,0.2)' : '0 12px 40px rgba(0,0,0,0.08)' }}
+                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0px)'; e.currentTarget.style.boxShadow = isFirst ? '0 8px 32px rgba(18,112,183,0.12), 0 2px 8px rgba(18,112,183,0.06)' : '0 2px 12px rgba(0,0,0,0.03)' }}
+                          >
+                            <div className="flex gap-0">
+                              <div className="w-1.5 flex-shrink-0" style={{ background: statusColor, borderRadius: '20px 0 0 20px' }} />
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between px-6 py-4" style={{
+                                  background: isFirst ? 'linear-gradient(135deg, rgba(18,112,183,0.06), rgba(18,112,183,0.02))' : 'transparent',
+                                  borderBottom: '1px solid rgba(0,0,0,0.04)',
+                                }}>
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: statusBg }}>
+                                      <BarChart2 size={20} style={{ color: statusColor }} />
                                     </div>
-                                    <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{v.evaluator}</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                  <div className="hidden sm:flex items-center gap-2 text-[11px]" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                                    <Dumbbell size={13} />
-                                    {v.routine}
-                                  </div>
-                                  <div className="relative flex-shrink-0" style={{ width: 48, height: 48 }}>
-                                    <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-                                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
-                                      <circle cx="18" cy="18" r="15.9" fill="none" stroke={v.color} strokeWidth="2.8" strokeLinecap="round"
-                                        strokeDasharray={`${v.score * 0.999} ${100 - v.score * 0.999}`} />
-                                    </svg>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <p className="text-[11px] font-extrabold" style={{ color: v.color }}>{v.score}%</p>
+                                    <div>
+                                      <div className="flex items-center gap-2.5">
+                                        <p className="text-base font-bold" style={{ color: '#0D1B2A' }}>{v.date}</p>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ background: statusBg, color: statusColor }}>
+                                          {status}
+                                        </span>
+                                      </div>
+                                      {isFirst && (
+                                        <p className="text-[10px] mt-0.5 font-semibold" style={{ color: '#1270B7' }}>Última valoración</p>
+                                      )}
                                     </div>
                                   </div>
-                                </div>
-                              </div>
-                              <div className="px-6 py-4">
-                                <div className="flex items-center gap-6 flex-wrap">
-                                  {v.metrics.slice(0, 6).map(m => (
-                                    <div key={m.label} className="flex items-center gap-2">
-                                      <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{m.value}</span>
-                                      <span className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</span>
+                                  {isFirst && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: 'linear-gradient(135deg, #1270B7, #7ec8e3)', boxShadow: '0 4px 12px rgba(18,112,183,0.3)' }}>
+                                      <span className="text-[10px] font-bold text-white">Más reciente</span>
                                     </div>
-                                  ))}
-                                </div>
-                                <div className="flex gap-2 mt-4 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                                  <button className="px-4 py-2 rounded-xl text-[11px] font-semibold transition-all hover:opacity-80" style={{ background: v.color, color: '#FFFFFF' }}>
-                                    Ver valoración
-                                  </button>
-                                  <button className="px-4 py-2 rounded-xl text-[11px] font-semibold transition-all" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}>
-                                    Ver rutina
-                                  </button>
+                                  )}
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
+                          </motion.div>
+                        )
+                      })}
                     </div>
                   )}
                   {currentTab === 'documents' && (
@@ -1327,6 +1270,916 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     style={{ background: '#E63946', color: '#FFFFFF' }}
                   >
                     Eliminar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal nueva valoración */}
+        <AnimatePresence>
+          {showNewValuationModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center"
+              style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
+              onClick={() => setShowNewValuationModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97, y: 8 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="rounded-3xl w-full max-w-2xl flex flex-col mx-4 overflow-hidden"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.04)',
+                  boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
+                  maxHeight: '90vh',
+                }}
+              >
+                {/* Header */}
+                <div className="flex-shrink-0 px-6 pt-4 pb-0">
+                  <div className="flex justify-end">
+                    <motion.button
+                      initial="rest"
+                      whileHover="hover"
+                      whileTap="tap"
+                      variants={{
+                        rest: { scale: 1, background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' },
+                        hover: { scale: 1.15, background: 'rgba(244,56,67,0.1)', color: '#F43843' },
+                        tap: { scale: 0.9 },
+                      }}
+                      onClick={() => setShowNewValuationModal(false)}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
+                    >
+                      <X size={15} />
+                    </motion.button>
+                  </div>
+                  {/* Step dots */}
+                  <div className="flex items-center justify-center gap-1.5" style={{ marginTop: 12, marginBottom: 16 }}>
+                    {[1, 2, 3, 4, 5, 6].map(s => (
+                      <motion.div
+                        key={s}
+                        animate={{
+                          width: s === valuationStep ? 16 : 6,
+                          background: s === valuationStep ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : 'rgba(0,0,0,0.12)',
+                        }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+                        className="rounded-full"
+                        style={{ height: 6 }}
+                      />
+                    ))}
+                  </div>
+                  {/* Step title */}
+                  <span className="text-lg font-bold tracking-wide text-center block" style={{
+                    color: '#1A1A1E',
+                    marginBottom: 10,
+                  }}>
+                    {['Contexto del estudiante', 'Medidas corporales', 'Evaluación Clínica', 'Antecedentes de salud', 'Plan de entrenamiento', 'Observaciones finales'][valuationStep - 1]}
+                  </span>
+                </div>
+
+                {/* Scrollable body */}
+                <div className="flex-1 overflow-y-auto px-6 pb-6">
+                  <motion.div
+                    key={valuationStep}
+                    initial={{ opacity: 0, filter: 'blur(6px)' }}
+                    animate={{ opacity: 1, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, filter: 'blur(6px)' }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    {/* ═══════ Paso 1: Contexto del estudiante ═══════ */}
+                    {valuationStep === 1 && (
+                      <div className="space-y-5">
+                        <div className="flex flex-col gap-1 relative group">
+                          <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Nivel de actividad física</label>
+                          <div className="relative">
+                            <select
+                              value={valuationForm.nivelActividad}
+                              onChange={e => setValuationForm(p => ({ ...p, nivelActividad: e.target.value }))}
+                              className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full appearance-none transition-all duration-200 cursor-pointer"
+                              style={{
+                                background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                                color: '#1A1A1E',
+                                border: '1px solid transparent',
+                                paddingRight: 32,
+                              }}
+                              onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                              onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.borderColor = 'transparent' } }}
+                              onFocus={e => { e.target.style.borderColor = '#1270B7'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                              onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+                            >
+                              <option value="">Seleccionar nivel</option>
+                              <option value="Sedentario">Sedentario</option>
+                              <option value="Ligeramente activo">Ligeramente activo</option>
+                              <option value="Activo">Activo</option>
+                              <option value="Muy activo">Muy activo</option>
+                              <option value="Extremadamente activo">Extremadamente activo</option>
+                            </select>
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 group-hover:opacity-60" style={{ color: 'rgba(0,0,0,0.2)' }}>
+                              <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                                <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Objetivo del usuario</label>
+                          <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más objetivos. Si seleccionas "Otro", los demás se deseleccionan.</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {[
+                              { value: 'Perdida de peso', icon: '🔥' },
+                              { value: 'Ganancia muscular', icon: '💪' },
+                              { value: 'Acondicionamiento fisico', icon: '🏃' },
+                              { value: 'Salud', icon: '❤️' },
+                              { value: 'Rendimiento deportivo', icon: '🏆' },
+                              { value: 'Otro', icon: '📝' },
+                            ].map(item => {
+                              const isOtro = item.value === 'Otro'
+                              const selected = valuationForm.objetivoTarjetas.includes(item.value)
+                              const otroSelected = valuationForm.objetivoTarjetas.includes('Otro')
+                              const disabled = otroSelected && !isOtro
+                              return (
+                                <motion.button
+                                  key={item.value}
+                                  type="button"
+                                  whileHover={!disabled ? { scale: 1.06 } : {}}
+                                  whileTap={!disabled ? { scale: 0.95 } : {}}
+                                  onClick={() => {
+                                    if (disabled) return
+                                    if (isOtro) {
+                                      setValuationForm(p => ({
+                                        ...p,
+                                        objetivoTarjetas: selected ? [] : ['Otro'],
+                                      }))
+                                    } else if (otroSelected) {
+                                      setValuationForm(p => ({
+                                        ...p,
+                                        objetivoTarjetas: p.objetivoTarjetas.includes(item.value)
+                                          ? p.objetivoTarjetas.filter((t: string) => t !== item.value)
+                                          : [...p.objetivoTarjetas.filter((t: string) => t !== 'Otro'), item.value],
+                                      }))
+                                    } else {
+                                      setValuationForm(p => ({
+                                        ...p,
+                                        objetivoTarjetas: p.objetivoTarjetas.includes(item.value)
+                                          ? p.objetivoTarjetas.filter((t: string) => t !== item.value)
+                                          : [...p.objetivoTarjetas, item.value],
+                                      }))
+                                    }
+                                  }}
+                                  className="flex flex-col items-center px-3 pt-3 pb-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                  style={{
+                                    background: selected ? (isOtro ? 'linear-gradient(135deg, #F1C827, #FFE066)' : 'linear-gradient(135deg, #1270B7, #7ec8e3)') : 'rgba(0,0,0,0.03)',
+                                    color: selected ? '#FFFFFF' : disabled ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.35)',
+                                    border: '1px solid transparent',
+                                    boxShadow: selected ? (isOtro ? '0 4px 20px rgba(241,200,39,0.25)' : '0 4px 20px rgba(18,112,183,0.25)') : 'none',
+                                    opacity: disabled ? 0.4 : 1,
+                                    filter: disabled ? 'blur(0.6px)' : 'none',
+                                    pointerEvents: disabled ? 'none' : 'auto',
+                                    cursor: disabled ? 'not-allowed' : 'pointer',
+                                  }}
+                                  onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = isOtro ? 'rgba(241,200,39,0.12)' : 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = isOtro ? '#B8860B' : '#1270B7' } }}
+                                  onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                                >
+                                  <motion.span
+                                    animate={{
+                                      fontSize: selected ? '2rem' : '1.2rem',
+                                      marginTop: selected ? -8 : 0,
+                                      filter: selected ? 'drop-shadow(0 8px 16px rgba(0,0,0,0.15))' : 'none',
+                                    }}
+                                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                  >{item.icon}</motion.span>
+                                  <span style={{ marginTop: selected ? -4 : 2 }}>{item.value}</span>
+                                </motion.button>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>¿Cuál es el objetivo?</label>
+                          <div className="relative rounded-xl overflow-hidden" style={{
+                            background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,185,0,0.08), rgba(255,215,0,0.15))',
+                            border: '1px solid rgba(212,175,55,0.35)',
+                            boxShadow: '0 0 25px rgba(255,215,0,0.1), inset 0 1px 0 rgba(255,215,0,0.2)',
+                          }}>
+                            <div className="absolute inset-0 pointer-events-none" style={{
+                              background: 'linear-gradient(110deg, transparent 20%, rgba(255,215,0,0.25) 35%, rgba(255,255,255,0.4) 50%, rgba(255,215,0,0.25) 65%, transparent 80%)',
+                              backgroundSize: '200% 100%',
+                              animation: 'shimmer 2.5s ease-in-out infinite',
+                            }} />
+                            <textarea
+                              value={valuationForm.objetivoDetalle}
+                              onChange={e => setValuationForm(p => ({ ...p, objetivoDetalle: e.target.value }))}
+                              placeholder="Describe a detalle el objetivo del estudiante..."
+                              rows={3}
+                              className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all duration-200 resize-none relative"
+                              style={{
+                                background: 'transparent',
+                                color: '#B8860B',
+                                border: 'none',
+                                boxShadow: 'none',
+                                fontWeight: 700,
+                                textShadow: '0 0 8px rgba(255,215,0,0.2)',
+                              }}
+                              onFocus={e => { e.currentTarget.parentElement!.style.boxShadow = '0 0 40px rgba(255,215,0,0.2)' }}
+                              onBlur={e => { e.currentTarget.parentElement!.style.boxShadow = '0 0 25px rgba(255,215,0,0.08)' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ═══════ Paso 2: Medidas corporales ═══════ */}
+                    {valuationStep === 2 && (
+                      <div className="space-y-5">
+                        <div className="grid grid-cols-2 gap-3">
+                          {[
+                            { key: 'peso', label: 'Peso (kg)', type: 'number' },
+                            { key: 'estatura', label: 'Estatura (cm)', type: 'number' },
+                            { key: 'imc', label: 'IMC', type: 'number' },
+                            { key: 'grasaCorporal', label: 'Grasa corporal (%)', type: 'number' },
+                            { key: 'masaMuscular', label: 'Masa muscular (kg)', type: 'number' },
+                            { key: 'masaMagra', label: 'Masa magra (kg)', type: 'number' },
+                            { key: 'grasaVisceral', label: 'Grasa visceral (nivel)', type: 'number' },
+                          ].map(field => (
+                            <div key={field.key} className="flex flex-col gap-1 group">
+                              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{field.label}</label>
+                              <input
+                                type={field.type}
+                                value={(valuationForm as any)[field.key]}
+                                onChange={e => setValuationForm(p => ({ ...p, [field.key]: e.target.value }))}
+                                className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
+                                style={{
+                                  background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                                  color: '#1A1A1E',
+                                  border: '1px solid transparent',
+                                }}
+                                onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                                onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.borderColor = 'transparent' } }}
+                                onFocus={e => { e.target.style.borderColor = '#1270B7'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                                onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ═══════ Paso 3: Evaluación Clínica ═══════ */}
+                    {valuationStep === 3 && (
+                      <div className="space-y-5">
+                        <div className="grid grid-cols-2 gap-3">
+                          {[
+                            { key: 'presionArterial', label: 'Presión arterial', type: 'text' },
+                            { key: 'edadMetabolica', label: 'Edad metabólica', type: 'number' },
+                            { key: 'aguaCorporal', label: 'Agua corporal (%)', type: 'number' },
+                            { key: 'resistenciaMuscular', label: 'Resistencia muscular', type: 'text' },
+                          ].map(field => (
+                            <div key={field.key} className="flex flex-col gap-1 group">
+                              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{field.label}</label>
+                              <input
+                                type={field.type}
+                                value={(valuationForm as any)[field.key]}
+                                onChange={e => setValuationForm(p => ({ ...p, [field.key]: e.target.value }))}
+                                className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
+                                style={{
+                                  background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                                  color: '#1A1A1E',
+                                  border: '1px solid transparent',
+                                }}
+                                onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                                onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.borderColor = 'transparent' } }}
+                                onFocus={e => { e.target.style.borderColor = '#1270B7'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                                onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ═══════ Paso 4: Antecedentes de salud ═══════ */}
+                    {valuationStep === 4 && (
+                      <div className="space-y-5">
+                        <div>
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Antecedentes de salud</label>
+                          <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más antecedentes.</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {['Osteomuscular', 'Respiratorio', 'Psiquiátrico', 'Cardiovascular', 'Metabólico', 'Psicológico'].map(item => {
+                              const selected = valuationForm.antecedentesSalud.includes(item)
+                              return (
+                                <motion.button
+                                  key={item}
+                                  type="button"
+                                  whileHover={!selected ? { scale: 1.06 } : {}}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => {
+                                    setValuationForm(p => ({
+                                      ...p,
+                                      antecedentesSalud: selected
+                                        ? p.antecedentesSalud.filter((s: string) => s !== item)
+                                        : [...p.antecedentesSalud, item],
+                                    }))
+                                  }}
+                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                  style={{
+                                    background: selected ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : 'rgba(0,0,0,0.03)',
+                                    color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                                    border: '1px solid transparent',
+                                    boxShadow: selected ? '0 4px 20px rgba(18,112,183,0.25)' : 'none',
+                                  }}
+                                  onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
+                                  onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                                >
+                                  <span>{item}</span>
+                                </motion.button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Observaciones del entrenador</label>
+                          <textarea
+                            value={valuationForm.observacionesEntrenador}
+                            onChange={e => setValuationForm(p => ({ ...p, observacionesEntrenador: e.target.value }))}
+                            placeholder="Notas del entrenador sobre los antecedentes..."
+                            rows={3}
+                            className="w-full px-3 py-2.5 rounded-xl text-xs font-medium outline-none transition-all duration-200 resize-none"
+                            style={{
+                              background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                              color: '#1A1A1E',
+                              border: '1px solid transparent',
+                            }}
+                            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.borderColor = 'transparent' } }}
+                            onFocus={e => { e.target.style.borderColor = '#1270B7'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ═══════ Paso 5: Plan de entrenamiento ═══════ */}
+                    {valuationStep === 5 && (
+                      <div className="space-y-5">
+                        <div>
+                          <label className="text-[11px] font-bold mb-2 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Días de la semana</label>
+                          <div className="flex flex-wrap gap-2">
+                            {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].map(dia => {
+                              const selected = valuationForm.diasDisponibles.includes(dia)
+                              return (
+                                <motion.button
+                                  key={dia}
+                                  type="button"
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => {
+                                    setValuationForm(p => ({
+                                      ...p,
+                                      diasDisponibles: selected
+                                        ? p.diasDisponibles.filter((d: string) => d !== dia)
+                                        : [...p.diasDisponibles, dia],
+                                    }))
+                                  }}
+                                  className="px-4 py-3 rounded-xl text-xs font-semibold transition-all duration-200"
+                                  style={{
+                                    background: selected ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : 'rgba(0,0,0,0.03)',
+                                    color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.7)',
+                                    border: selected ? 'none' : '1px solid rgba(0,0,0,0.06)',
+                                    boxShadow: selected ? '0 4px 12px rgba(18,112,183,0.25)' : 'none',
+                                  }}
+                                >
+                                  {dia}
+                                </motion.button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ═══════ Paso 6: Observaciones finales ═══════ */}
+                    {valuationStep === 6 && (
+                      <div className="space-y-5">
+                        <div className="flex flex-col gap-1">
+                          <textarea
+                            value={valuationForm.observacionesFinales}
+                            onChange={e => setValuationForm(p => ({ ...p, observacionesFinales: e.target.value }))}
+                            placeholder="Escribe aquí las observaciones finales..."
+                            rows={6}
+                            className="w-full px-3 py-2.5 rounded-xl text-xs font-medium outline-none transition-all duration-200 resize-none"
+                            style={{
+                              background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                              color: '#1A1A1E',
+                              border: '1px solid transparent',
+                            }}
+                            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.borderColor = 'transparent' } }}
+                            onFocus={e => { e.target.style.borderColor = '#1270B7'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex-shrink-0 px-6 py-4" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', background: 'rgba(255,255,255,0.8)' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 flex justify-start">
+                      {valuationStep > 1 ? (
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setValuationStep(s => s - 1)}
+                          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+                          style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                          Atrás
+                        </motion.button>
+                      ) : <div />}
+                    </div>
+
+                    <div className="flex-1 flex justify-end">
+                      <motion.button
+                        type="button"
+                        whileHover={valuationStep < 6 ? { scale: 1.04, boxShadow: '0 8px 25px rgba(18,112,183,0.35)', transition: { duration: 0.15 } } : {}}
+                        whileTap={valuationStep < 6 ? { scale: 0.92, boxShadow: '0 2px 8px rgba(18,112,183,0.2)', transition: { duration: 0.1 } } : {}}
+                        onClick={() => {
+                          if (valuationStep < 6) {
+                            setValuationStep(s => s + 1)
+                          } else {
+                            setShowNewValuationModal(false)
+                            setValuationStep(1)
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                        style={{
+                          background: valuationStep === 6 ? 'linear-gradient(135deg, #22C55E, #16A34A)' : 'linear-gradient(135deg, #1270B7, #7ec8e3)',
+                        }}
+                      >
+                        {valuationStep === 6 ? (
+                          <>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            Guardar Valoración
+                          </>
+                        ) : (
+                          <>
+                            Siguiente
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                          </>
+                        )}
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Choice modal: Ver Valoración / Ver Rutina */}
+        <AnimatePresence>
+          {showAssessmentOptions && selectedAssessment && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center"
+              style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setShowAssessmentOptions(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 20 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex gap-6">
+                  <motion.button
+                    whileHover={{ scale: 1.04, y: -6 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { setShowAssessmentOptions(false); setShowValuationModal(true) }}
+                    className="relative w-72 h-80 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
+                    style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+                  >
+                    <div className="absolute inset-0" style={{
+                      background: `linear-gradient(135deg, ${selectedAssessment.color}22, ${selectedAssessment.color}11)`,
+                    }} />
+                    <div className="absolute inset-0 pointer-events-none" style={{
+                      background: `linear-gradient(to top, ${selectedAssessment.color} 0%, ${selectedAssessment.color}dd 50%, rgba(0,0,0,0.5) 100%)`,
+                    }} />
+                    <div className="relative z-10 flex flex-col items-center">
+                      <BarChart2 size={40} className="text-white mb-3" />
+                      <span className="text-xl font-extrabold text-white tracking-tight">Ver Valoración</span>
+                      <span className="text-[11px] text-white/60 mt-1">Detalles de la evaluación</span>
+                    </div>
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.04, y: -6 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { setShowAssessmentOptions(false); setShowRoutineViewModal(true) }}
+                    className="relative w-72 h-80 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
+                    style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+                  >
+                    <div className="absolute inset-0" style={{
+                      background: 'linear-gradient(135deg, rgba(48,209,88,0.13), rgba(48,209,88,0.06))',
+                    }} />
+                    <div className="absolute inset-0 pointer-events-none" style={{
+                      background: 'linear-gradient(to top, rgba(26,138,63,0.95) 0%, rgba(48,209,88,0.6) 50%, rgba(0,0,0,0.5) 100%)',
+                    }} />
+                    <div className="relative z-10 flex flex-col items-center">
+                      <Dumbbell size={40} className="text-white mb-3" />
+                      <span className="text-xl font-extrabold text-white tracking-tight">Ver Rutina</span>
+                      <span className="text-[11px] text-white/60 mt-1">Ejercicios y series asignados</span>
+                    </div>
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal detalle de valoración */}
+        <AnimatePresence>
+          {showValuationModal && selectedAssessment && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setShowValuationModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-lg rounded-3xl p-6"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                }}
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${selectedAssessment.color}15` }}>
+                      <BarChart2 size={20} style={{ color: selectedAssessment.color }} />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Valoración {selectedAssessment.type}</h3>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{selectedAssessment.date} · {selectedAssessment.evaluator}</p>
+                    </div>
+                  </div>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowValuationModal(false)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                  </motion.button>
+                </div>
+
+                <div className="flex items-center justify-center mb-6">
+                  <div className="relative flex-shrink-0" style={{ width: 80, height: 80 }}>
+                    <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke={selectedAssessment.color} strokeWidth="2.8" strokeLinecap="round"
+                        strokeDasharray={`${selectedAssessment.score * 0.999} ${100 - selectedAssessment.score * 0.999}`} />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <p className="text-lg font-extrabold" style={{ color: selectedAssessment.color }}>{selectedAssessment.score}%</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {selectedAssessment.metrics.map((m: any) => (
+                    <div key={m.label} className="rounded-xl p-3 flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                      <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{m.label}</span>
+                      <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{m.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-5 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(0,0,0,0.5)' }}>
+                      <Dumbbell size={14} />
+                      {selectedAssessment.routine}
+                    </div>
+                    <button
+                      onClick={() => setShowValuationModal(false)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+                      style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal detalle de rutina */}
+        <AnimatePresence>
+          {showRoutineViewModal && selectedAssessment && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setShowRoutineViewModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-2xl rounded-3xl p-6"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                }}
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(48,209,88,0.12)' }}>
+                      <Dumbbell size={20} style={{ color: '#30D158' }} />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>{selectedAssessment.routine}</h3>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{selectedAssessment.date} · Asociada a la valoración</p>
+                    </div>
+                  </div>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowRoutineViewModal(false)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                  </motion.button>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="grid gap-3 px-1 mb-2" style={{ gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr' }}>
+                    {['Ejercicio', 'Series', 'Repeticiones', 'Peso', 'Calorías'].map(h => (
+                      <div key={h} className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{h}</div>
+                    ))}
+                  </div>
+                  {routineExercises.map((ex, i) => (
+                    <motion.div
+                      key={ex.name}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      className="grid gap-3 items-center px-3 py-2.5 rounded-xl"
+                      style={{
+                        gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr',
+                        background: i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
+                      }}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.name}</span>
+                      </div>
+                      <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{ex.sets}</span>
+                      <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.reps}</span>
+                      <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.weight}</span>
+                      <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.calories}</span>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="mt-5 pt-4 flex justify-end" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <button
+                    onClick={() => setShowRoutineViewModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal nueva rutina */}
+        <AnimatePresence>
+          {showNewRoutineModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setShowNewRoutineModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-lg rounded-3xl p-6"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                }}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(48,209,88,0.12)' }}>
+                      <Dumbbell size={20} style={{ color: '#30D158' }} />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Nueva Rutina</h3>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Paso {routineStep} de 2</p>
+                    </div>
+                  </div>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowNewRoutineModal(false)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                  </motion.button>
+                </div>
+
+                <div className="flex gap-1.5 mb-6">
+                  {[1, 2].map(s => (
+                    <div key={s} className="flex-1 h-1.5 rounded-full transition-all" style={{
+                      background: s <= routineStep ? 'linear-gradient(90deg, #30D158, #00C7BE)' : 'rgba(0,0,0,0.06)',
+                    }} />
+                  ))}
+                </div>
+
+                {routineStep === 1 && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre de la rutina *</label>
+                      <input
+                        value={routineForm.name}
+                        onChange={e => setRoutineForm(p => ({ ...p, name: e.target.value }))}
+                        placeholder="Ej: Rutina Hipertrofia Enero"
+                        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                        style={{
+                          background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                          color: '#1A1A1E',
+                          border: '1px solid transparent',
+                        }}
+                        onFocus={e => { e.currentTarget.style.borderColor = '#1270B7'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.12)' }}
+                        onBlur={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = 'none' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Descripción</label>
+                      <textarea
+                        value={routineForm.description}
+                        onChange={e => setRoutineForm(p => ({ ...p, description: e.target.value }))}
+                        placeholder="Objetivos y notas de la rutina"
+                        rows={3}
+                        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none"
+                        style={{
+                          background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                          color: '#1A1A1E',
+                          border: '1px solid transparent',
+                        }}
+                        onFocus={e => { e.currentTarget.style.borderColor = '#1270B7'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.12)' }}
+                        onBlur={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = 'none' }}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración</label>
+                        <select
+                          value={routineForm.duration}
+                          onChange={e => setRoutineForm(p => ({ ...p, duration: e.target.value }))}
+                          className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
+                          style={{
+                            background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                            color: '#1A1A1E',
+                            border: '1px solid transparent',
+                          }}
+                        >
+                          <option value="">Seleccionar</option>
+                          <option value="4 semanas">4 semanas</option>
+                          <option value="8 semanas">8 semanas</option>
+                          <option value="12 semanas">12 semanas</option>
+                          <option value="16 semanas">16 semanas</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Frecuencia</label>
+                        <select
+                          value={routineForm.frequency}
+                          onChange={e => setRoutineForm(p => ({ ...p, frequency: e.target.value }))}
+                          className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
+                          style={{
+                            background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                            color: '#1A1A1E',
+                            border: '1px solid transparent',
+                          }}
+                        >
+                          <option value="">Seleccionar</option>
+                          <option value="3 días/semana">3 días/semana</option>
+                          <option value="4 días/semana">4 días/semana</option>
+                          <option value="5 días/semana">5 días/semana</option>
+                          <option value="6 días/semana">6 días/semana</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nivel</label>
+                      <select
+                        value={routineForm.level}
+                        onChange={e => setRoutineForm(p => ({ ...p, level: e.target.value }))}
+                        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
+                        style={{
+                          background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                          color: '#1A1A1E',
+                          border: '1px solid transparent',
+                        }}
+                      >
+                        <option value="Principiante">Principiante</option>
+                        <option value="Intermedio">Intermedio</option>
+                        <option value="Avanzado">Avanzado</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {routineStep === 2 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>Selecciona los ejercicios para esta rutina</p>
+                    {routineExercises.map((ex, i) => (
+                      <motion.div
+                        key={ex.name}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer"
+                        style={{
+                          background: i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
+                          border: '1px solid rgba(0,0,0,0.04)',
+                        }}
+                      >
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{
+                          background: 'rgba(48,209,88,0.15)',
+                          color: '#30D158',
+                        }}>
+                          <Check size={12} />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.name}</p>
+                          <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{ex.muscle} · {ex.difficulty}</p>
+                        </div>
+                        <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{ex.sets}×{ex.reps}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  {routineStep > 1 ? (
+                    <button
+                      onClick={() => setRoutineStep(s => s - 1)}
+                      className="px-5 py-2.5 rounded-xl text-xs font-semibold transition-all"
+                      style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                    >
+                      Atrás
+                    </button>
+                  ) : <div />}
+                  <button
+                    onClick={() => {
+                      if (routineStep < 2) {
+                        setRoutineStep(s => s + 1)
+                      } else {
+                        setShowNewRoutineModal(false)
+                        setRoutineStep(1)
+                        setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+                      }
+                    }}
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
+                    style={{
+                      background: routineStep === 2 && !routineForm.name ? 'rgba(48,209,88,0.3)' : 'linear-gradient(135deg, #30D158, #1A8A3F)',
+                      color: '#FFFFFF',
+                    }}
+                    disabled={routineStep === 1 && !routineForm.name}
+                  >
+                    {routineStep === 2 ? 'Crear Rutina' : 'Siguiente'}
                   </button>
                 </div>
               </motion.div>
