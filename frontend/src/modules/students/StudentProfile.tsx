@@ -24,6 +24,20 @@ import { StethoscopeView } from '../../assets/models/ui/objects/stethoscope/Stet
 import { KitView } from '../../assets/models/ui/objects/kit/KitModel'
 import { TrashView } from '../../assets/models/ui/actions/trash/TrashModel'
 import fireGif from '../../assets/icons/animated/fire.gif'
+import weightLossIcon from '../../assets/icons/objects/metric_belt.webp'
+import armIcon2 from '../../assets/icons/objects/dumbbel.webp'
+import shoesIcon from '../../assets/icons/objects/shoes.webp'
+import healthIcon from '../../assets/icons/health/health.webp'
+import trophyIcon from '../../assets/icons/objects/trophy.webp'
+import otroIcon from '../../assets/icons/ui/star.webp'
+import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
+import { GREEN_GRAD } from '../../data/constants'
+import musculoIcon from '../../assets/icons/anatomy/musculoskeletal.webp'
+import lungsIcon from '../../assets/icons/anatomy/lungs.webp'
+import brainIcon from '../../assets/icons/anatomy/brain.webp'
+import cardioHealthIcon from '../../assets/icons/anatomy/cardio.webp'
+import liverIcon from '../../assets/icons/anatomy/liver.webp'
+import mindIcon from '../../assets/icons/health/mind.webp'
 
 interface Student {
   id: number
@@ -183,6 +197,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
     name: '', description: '', duration: '', frequency: '', level: 'Intermedio',
   })
   const [showNewValuationModal, setShowNewValuationModal] = useState(false)
+  const [valuationSuccess, setValuationSuccess] = useState(false)
   const [valuationStep, setValuationStep] = useState(1)
   const [valuationForm, setValuationForm] = useState({
     nivelActividad: '', objetivoTarjetas: [] as string[], objetivoDetalle: '',
@@ -218,6 +233,88 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
+
+  const renderValuationSuccess = () => (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="flex flex-col items-center pt-8 px-6"
+    >
+      <div className="relative flex items-center justify-center -mt-28 mb-6">
+        {[...Array(24)].map((_, i) => {
+          const angle = (i / 24) * 360
+          const rad = (angle * Math.PI) / 180
+          return (
+            <motion.span
+              key={i}
+              className="absolute pointer-events-none text-lg select-none"
+              style={{ color: '#4ADE80' }}
+              animate={{
+                x: [0, Math.cos(rad) * (110 + (i % 6) * 20)],
+                y: [0, Math.sin(rad) * (110 + (i % 6) * 20)],
+                opacity: [0, 1, 0],
+                scale: [0, 1.4, 0],
+              }}
+              transition={{
+                duration: 2.5 + (i % 4) * 0.3,
+                repeat: Infinity,
+                delay: i * 0.07,
+                ease: 'easeOut',
+              }}
+            >
+              ✦
+            </motion.span>
+          )
+        })}
+        <div className="relative flex items-center justify-center">
+          <motion.img
+            src={coachCongratsImg}
+            alt="felicitaciones"
+            className="w-72 h-auto object-contain relative z-10"
+            style={{ filter: 'drop-shadow(0 0 30px rgba(34,197,94,0.15))' }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+          />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-24 pointer-events-none z-20" style={{
+            background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, transparent 60%)',
+          }} />
+        </div>
+      </div>
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
+        className="text-lg font-bold text-center"
+        style={{ color: '#1A1A1E' }}
+      >
+        ¡Valoración guardada exitosamente!
+      </motion.p>
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45, duration: 0.4 }}
+        className="text-xs font-medium mt-1 text-center"
+        style={{ color: 'rgba(0,0,0,0.35)' }}
+      >
+        Los datos de la valoración han sido guardados en el sistema.
+      </motion.p>
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.3 }}
+        whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }}
+        whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }}
+        onClick={() => { setShowNewValuationModal(false); setValuationSuccess(false); setValuationStep(1) }}
+        className="mt-8 mb-10 px-8 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
+        style={{ background: GREEN_GRAD }}
+      >
+        Cerrar
+      </motion.button>
+    </motion.div>
+  )
+
   return (
     <>
       <style>{`@keyframes shimmer { 0% { background-position: 200% center } 100% { background-position: -200% center } }`}</style>
@@ -1286,7 +1383,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 flex items-center justify-center"
               style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
-              onClick={() => setShowNewValuationModal(false)}
+              onClick={() => { setShowNewValuationModal(false); setValuationSuccess(false); setValuationStep(1) }}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -1294,7 +1391,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 exit={{ opacity: 0, scale: 0.97, y: 8 }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
-                className="rounded-3xl w-full max-w-2xl flex flex-col mx-4 overflow-hidden"
+                className={`rounded-3xl w-full max-w-2xl flex flex-col mx-4 relative ${valuationSuccess ? 'overflow-visible' : 'overflow-hidden'}`}
                 style={{
                   background: '#FFFFFF',
                   border: '1px solid rgba(0,0,0,0.04)',
@@ -1314,12 +1411,14 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         hover: { scale: 1.15, background: 'rgba(244,56,67,0.1)', color: '#F43843' },
                         tap: { scale: 0.9 },
                       }}
-                      onClick={() => setShowNewValuationModal(false)}
+                      onClick={() => { setShowNewValuationModal(false); setValuationSuccess(false); setValuationStep(1) }}
                       className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
                     >
                       <X size={15} />
                     </motion.button>
                   </div>
+                  {!valuationSuccess && (
+                  <>
                   {/* Step dots */}
                   <div className="flex items-center justify-center gap-1.5" style={{ marginTop: 12, marginBottom: 16 }}>
                     {[1, 2, 3, 4, 5, 6].map(s => (
@@ -1342,10 +1441,15 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   }}>
                     {['Contexto del estudiante', 'Medidas corporales', 'Evaluación Clínica', 'Antecedentes de salud', 'Plan de entrenamiento', 'Observaciones finales'][valuationStep - 1]}
                   </span>
+                  </>
+                  )}
                 </div>
 
                 {/* Scrollable body */}
                 <div className="flex-1 overflow-y-auto px-6 pb-6">
+                  {valuationSuccess ? (
+                    renderValuationSuccess()
+                  ) : (
                   <motion.div
                     key={valuationStep}
                     initial={{ opacity: 0, filter: 'blur(6px)' }}
@@ -1394,17 +1498,21 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más objetivos. Si seleccionas "Otro", los demás se deseleccionan.</p>
                           <div className="grid grid-cols-3 gap-2">
                             {[
-                              { value: 'Perdida de peso', icon: '🔥' },
-                              { value: 'Ganancia muscular', icon: '💪' },
-                              { value: 'Acondicionamiento fisico', icon: '🏃' },
-                              { value: 'Salud', icon: '❤️' },
-                              { value: 'Rendimiento deportivo', icon: '🏆' },
-                              { value: 'Otro', icon: '📝' },
+                              { value: 'Perdida de peso', icon: weightLossIcon },
+                              { value: 'Ganancia muscular', icon: armIcon2 },
+                              { value: 'Acondicionamiento fisico', icon: shoesIcon },
+                              { value: 'Salud', icon: healthIcon },
+                              { value: 'Rendimiento deportivo', icon: trophyIcon },
+                              { value: 'Otro', icon: otroIcon },
                             ].map(item => {
                               const isOtro = item.value === 'Otro'
                               const selected = valuationForm.objetivoTarjetas.includes(item.value)
                               const otroSelected = valuationForm.objetivoTarjetas.includes('Otro')
                               const disabled = otroSelected && !isOtro
+                              const hoverBg = isOtro ? 'rgba(241,200,39,0.12)' : 'rgba(18,112,183,0.12)'
+                              const selectedBg = isOtro ? 'linear-gradient(135deg, #F1C827, #FFE066)' : 'linear-gradient(135deg, #1270B7, #7ec8e3)'
+                              const textColor = selected ? '#FFFFFF' : disabled ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.35)'
+                              const shadow = isOtro ? '0 4px 20px rgba(241,200,39,0.25)' : '0 4px 20px rgba(18,112,183,0.25)'
                               return (
                                 <motion.button
                                   key={item.value}
@@ -1434,29 +1542,34 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                       }))
                                     }
                                   }}
-                                  className="flex flex-col items-center px-3 pt-3 pb-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                  onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = isOtro ? '#B8860B' : '#1270B7' } }}
+                                  onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
                                   style={{
-                                    background: selected ? (isOtro ? 'linear-gradient(135deg, #F1C827, #FFE066)' : 'linear-gradient(135deg, #1270B7, #7ec8e3)') : 'rgba(0,0,0,0.03)',
-                                    color: selected ? '#FFFFFF' : disabled ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.35)',
+                                    background: selected ? selectedBg : 'rgba(0,0,0,0.03)',
+                                    color: textColor,
                                     border: '1px solid transparent',
-                                    boxShadow: selected ? (isOtro ? '0 4px 20px rgba(241,200,39,0.25)' : '0 4px 20px rgba(18,112,183,0.25)') : 'none',
+                                    boxShadow: selected ? shadow : 'none',
                                     opacity: disabled ? 0.4 : 1,
                                     filter: disabled ? 'blur(0.6px)' : 'none',
                                     pointerEvents: disabled ? 'none' : 'auto',
                                     cursor: disabled ? 'not-allowed' : 'pointer',
                                   }}
-                                  onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = isOtro ? 'rgba(241,200,39,0.12)' : 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = isOtro ? '#B8860B' : '#1270B7' } }}
-                                  onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
                                 >
-                                  <motion.span
+                                  <motion.img
+                                    src={item.icon}
+                                    alt=""
+                                    className="mb-0.5"
                                     animate={{
-                                      fontSize: selected ? '2rem' : '1.2rem',
-                                      marginTop: selected ? -8 : 0,
-                                      filter: selected ? 'drop-shadow(0 8px 16px rgba(0,0,0,0.15))' : 'none',
+                                      width: selected ? 52 : 28,
+                                      height: selected ? 52 : 28,
+                                      marginTop: selected ? -28 : 0,
+                                      filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : disabled ? 'grayscale(0.6) blur(0px)' : 'blur(0px)',
+                                      opacity: disabled ? 0.3 : 1,
                                     }}
                                     transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                                  >{item.icon}</motion.span>
-                                  <span style={{ marginTop: selected ? -4 : 2 }}>{item.value}</span>
+                                  />
+                                  <span>{item.value}</span>
                                 </motion.button>
                               )
                             })}
@@ -1573,11 +1686,18 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Antecedentes de salud</label>
                           <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más antecedentes.</p>
                           <div className="grid grid-cols-3 gap-2">
-                            {['Osteomuscular', 'Respiratorio', 'Psiquiátrico', 'Cardiovascular', 'Metabólico', 'Psicológico'].map(item => {
-                              const selected = valuationForm.antecedentesSalud.includes(item)
+                             {[
+                              { value: 'Osteomuscular', icon: musculoIcon },
+                              { value: 'Respiratorio', icon: lungsIcon },
+                              { value: 'Psiquiátrico', icon: brainIcon },
+                              { value: 'Cardiovascular', icon: cardioHealthIcon },
+                              { value: 'Metabólico', icon: liverIcon },
+                              { value: 'Psicológico', icon: mindIcon },
+                            ].map(item => {
+                              const selected = valuationForm.antecedentesSalud.includes(item.value)
                               return (
                                 <motion.button
-                                  key={item}
+                                  key={item.value}
                                   type="button"
                                   whileHover={!selected ? { scale: 1.06 } : {}}
                                   whileTap={{ scale: 0.95 }}
@@ -1585,8 +1705,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                     setValuationForm(p => ({
                                       ...p,
                                       antecedentesSalud: selected
-                                        ? p.antecedentesSalud.filter((s: string) => s !== item)
-                                        : [...p.antecedentesSalud, item],
+                                        ? p.antecedentesSalud.filter((s: string) => s !== item.value)
+                                        : [...p.antecedentesSalud, item.value],
                                     }))
                                   }}
                                   className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
@@ -1599,7 +1719,19 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                   onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
                                   onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
                                 >
-                                  <span>{item}</span>
+                                  <motion.img
+                                    src={item.icon}
+                                    alt=""
+                                    className="mb-0.5"
+                                    animate={{
+                                      width: selected ? 48 : 24,
+                                      height: selected ? 48 : 24,
+                                      marginTop: selected ? -24 : 0,
+                                      filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
+                                    }}
+                                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                  />
+                                  <span>{item.value}</span>
                                 </motion.button>
                               )
                             })}
@@ -1689,9 +1821,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       </div>
                     )}
                   </motion.div>
+                  )}
                 </div>
 
                 {/* Footer */}
+                {!valuationSuccess && (
                 <div className="flex-shrink-0 px-6 py-4" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', background: 'rgba(255,255,255,0.8)' }}>
                   <div className="flex items-center justify-between">
                     <div className="flex-1 flex justify-start">
@@ -1719,8 +1853,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           if (valuationStep < 6) {
                             setValuationStep(s => s + 1)
                           } else {
-                            setShowNewValuationModal(false)
-                            setValuationStep(1)
+                            setValuationSuccess(true)
                           }
                         }}
                         className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
@@ -1743,6 +1876,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     </div>
                   </div>
                 </div>
+                )}
               </motion.div>
             </motion.div>
           )}
