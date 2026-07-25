@@ -31,6 +31,7 @@ import healthIcon from '../../assets/icons/health/health.webp'
 import trophyIcon from '../../assets/icons/objects/trophy.webp'
 import otroIcon from '../../assets/icons/ui/star.webp'
 import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
+import calendarImg from '../../assets/icons/objects/calendar.webp'
 import { GREEN_GRAD } from '../../data/constants'
 import musculoIcon from '../../assets/icons/anatomy/musculoskeletal.webp'
 import lungsIcon from '../../assets/icons/anatomy/lungs.webp'
@@ -1763,14 +1764,16 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     {valuationStep === 5 && (
                       <div className="space-y-5">
                         <div>
-                          <label className="text-[11px] font-bold mb-2 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Días de la semana</label>
-                          <div className="flex flex-wrap gap-2">
+                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Días de la semana</label>
+                          <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona los días disponibles.</p>
+                          <div className="grid grid-cols-3 gap-2">
                             {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].map(dia => {
                               const selected = valuationForm.diasDisponibles.includes(dia)
                               return (
                                 <motion.button
                                   key={dia}
                                   type="button"
+                                  whileHover={!selected ? { scale: 1.06 } : {}}
                                   whileTap={{ scale: 0.95 }}
                                   onClick={() => {
                                     setValuationForm(p => ({
@@ -1780,15 +1783,29 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                         : [...p.diasDisponibles, dia],
                                     }))
                                   }}
-                                  className="px-4 py-3 rounded-xl text-xs font-semibold transition-all duration-200"
+                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
                                   style={{
                                     background: selected ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : 'rgba(0,0,0,0.03)',
-                                    color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.7)',
-                                    border: selected ? 'none' : '1px solid rgba(0,0,0,0.06)',
-                                    boxShadow: selected ? '0 4px 12px rgba(18,112,183,0.25)' : 'none',
+                                    color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                                    border: '1px solid transparent',
+                                    boxShadow: selected ? '0 4px 20px rgba(18,112,183,0.25)' : 'none',
                                   }}
+                                  onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
+                                  onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
                                 >
-                                  {dia}
+                                  <motion.img
+                                    src={calendarImg}
+                                    alt=""
+                                    className="mb-0.5"
+                                    animate={{
+                                      width: selected ? 48 : 24,
+                                      height: selected ? 48 : 24,
+                                      marginTop: selected ? -24 : 0,
+                                      filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
+                                    }}
+                                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                  />
+                                  <span>{dia}</span>
                                 </motion.button>
                               )
                             })}
