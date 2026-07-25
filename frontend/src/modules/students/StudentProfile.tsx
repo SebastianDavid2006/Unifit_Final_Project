@@ -1805,7 +1805,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                     }}
                                     transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                                   />
-                                  <span>{dia}</span>
+                                  <span className="text-sm">{dia}</span>
                                 </motion.button>
                               )
                             })}
