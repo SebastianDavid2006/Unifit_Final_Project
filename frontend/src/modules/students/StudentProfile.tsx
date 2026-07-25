@@ -1446,7 +1446,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 </div>
 
                 {/* Scrollable body */}
-                <div className="flex-1 overflow-y-auto px-6 pb-6">
+                <div className={`flex-1 px-6 ${valuationSuccess ? 'overflow-visible pb-0' : 'overflow-y-auto pb-6'}`}>
                   {valuationSuccess ? (
                     renderValuationSuccess()
                   ) : (
