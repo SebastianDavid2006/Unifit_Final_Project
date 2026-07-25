@@ -1684,8 +1684,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     {valuationStep === 4 && (
                       <div className="space-y-5">
                         <div>
-                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Antecedentes de salud</label>
-                          <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más antecedentes.</p>
+                          <label className="text-xs font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Antecedentes de salud</label>
+                          <p className="text-[11px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más antecedentes.</p>
                           <div className="grid grid-cols-3 gap-2">
                              {[
                               { value: 'Osteomuscular', icon: musculoIcon },
@@ -1764,8 +1764,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     {valuationStep === 5 && (
                       <div className="space-y-5">
                         <div>
-                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Días de la semana</label>
-                          <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona los días disponibles.</p>
+                          <label className="text-xs font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Días de la semana</label>
+                          <p className="text-[11px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona los días disponibles.</p>
                           <div className="grid grid-cols-5 gap-2">
                             {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].map(dia => {
                               const selected = valuationForm.diasDisponibles.includes(dia)
