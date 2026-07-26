@@ -597,6 +597,54 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     })()}
                   </div>
 
+                  {/* Mini Dashboard */}
+                  <div className="grid grid-cols-4 gap-4">
+                    {(() => {
+                      const totalRutinas = student.sessions || historialAsistencia.length
+                      const ultimaRutina = student.lastVisit || '—'
+                      const objetivoTexto = student.goal || 'Sin objetivo'
+                      const estadoMap: Record<string, { label: string; color: string }> = {
+                        high: { label: 'Alto riesgo', color: '#FF3B30' },
+                        medium: { label: 'Riesgo medio', color: '#FF9500' },
+                        low: { label: 'Bajo riesgo', color: '#30D158' },
+                      }
+                      const estado = estadoMap[student.risk] || { label: 'Desconocido', color: 'rgba(0,0,0,0.3)' }
+
+                      const items = [
+                        { label: 'Total de rutinas', value: `${totalRutinas}`, icon: 'dumbbell' },
+                        { label: 'Última rutina realizada', value: ultimaRutina, icon: 'calendar' },
+                        { label: 'Número de objetivos', value: objetivoTexto, icon: 'chart' },
+                        { label: 'Estado del estudiante', value: estado.label, icon: 'shield', color: estado.color },
+                      ]
+                      return items.map((m, idx) => {
+                        const IconComponent = m.icon === 'dumbbell' ? Dumbbell : m.icon === 'calendar' ? Calendar : m.icon === 'chart' ? BarChart2 : Shield
+                        return (
+                          <motion.div
+                            key={m.label}
+                            whileHover={{ scale: 1.03 }}
+                            transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
+                            className="relative rounded-2xl p-4 flex flex-col items-center text-center group cursor-pointer"
+                            style={cardStyle}
+                          >
+                            <div
+                              className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.5] mb-5 flex items-center justify-center"
+                              style={{ transformOrigin: 'bottom center', color: m.color || '#1270B7' }}
+                            >
+                              <IconComponent size={52} />
+                            </div>
+                            <p style={{
+                              fontSize: '1.8rem', fontWeight: 700, lineHeight: 1,
+                              color: m.color || '#0D1B2A',
+                            }}>{m.value}</p>
+                            <p className="text-sm font-semibold mt-2" style={{
+                              color: m.color || 'rgba(0,0,0,0.5)',
+                            }}>{m.label}</p>
+                          </motion.div>
+                        )
+                      })
+                    })()}
+                  </div>
+
                   {/* Historial de Entradas y Salidas */}
                   <div className="rounded-2xl" style={{
                     background: '#FFFFFF',
