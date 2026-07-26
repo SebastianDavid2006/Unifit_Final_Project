@@ -1766,8 +1766,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         <div>
                           <label className="text-xs font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Días de la semana</label>
                           <p className="text-[11px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona los días disponibles.</p>
-                          <div className="grid grid-cols-5 gap-2">
-                            {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'].map(dia => {
+                          <div className="grid grid-cols-6 gap-2">
+                            {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'].map(dia => {
                               const selected = valuationForm.diasDisponibles.includes(dia)
                               return (
                                 <motion.button
