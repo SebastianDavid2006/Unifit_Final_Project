@@ -891,13 +891,21 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           const estado = estadoMap[student.risk] || { label: 'Desconocido', color: 'rgba(0,0,0,0.3)' }
 
                           const items = [
-                            { label: 'Total de rutinas', value: `${totalRutinas}`, icon: 'dumbbell' },
-                            { label: 'Última rutina realizada', value: ultimaRutina, icon: 'calendar' },
-                            { label: 'Número de objetivos', value: numObjetivos, icon: 'chart' },
-                            { label: 'Estado del estudiante', value: estado.label, icon: 'shield', color: estado.color },
+                            { label: 'Total de rutinas', value: `${totalRutinas}`, model: 'list' },
+                            { label: 'Última rutina realizada', value: ultimaRutina, model: 'calendar' },
+                            { label: 'Número de objetivos', value: numObjetivos, model: 'fire' },
+                            { label: 'Estado del estudiante', value: estado.label, model: 'clock', color: estado.color },
                           ]
                           return items.map((m) => {
-                            const IconComponent = m.icon === 'dumbbell' ? Dumbbell : m.icon === 'calendar' ? Calendar : m.icon === 'chart' ? BarChart2 : Shield
+                            const iconEl = m.model === 'fire' ? (
+                              <img src={fireGif} alt="fire" style={{ width: 52, height: 52, objectFit: 'contain' }} />
+                            ) : m.model === 'clock' ? (
+                              <div style={{ width: 52, height: 52 }}><ClockView /></div>
+                            ) : m.model === 'list' ? (
+                              <div style={{ width: 52, height: 52 }}><ListView /></div>
+                            ) : (
+                              <div style={{ width: 52, height: 52 }}><CalendarView /></div>
+                            )
                             return (
                               <motion.div
                                 key={m.label}
@@ -908,9 +916,9 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                               >
                                 <div
                                   className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.5] mb-5 flex items-center justify-center"
-                                  style={{ transformOrigin: 'bottom center', color: m.color || '#1270B7' }}
+                                  style={{ transformOrigin: 'bottom center' }}
                                 >
-                                  <IconComponent size={52} />
+                                  {iconEl}
                                 </div>
                                 <p style={{
                                   fontSize: '1.8rem', fontWeight: 700, lineHeight: 1,
