@@ -930,9 +930,9 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         })()}
                         {/* Tarjeta Nueva Valoración */}
                         <motion.div
-                          whileHover={{ scale: 1.03, boxShadow: '0 12px 40px rgba(230,57,70,0.3), 0 0 60px rgba(230,57,70,0.1)' }}
+                          whileHover={{ boxShadow: '0 12px 40px rgba(230,57,70,0.3), 0 0 60px rgba(230,57,70,0.1)' }}
                           transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
-                          className="relative rounded-2xl flex flex-col items-center text-center group cursor-pointer overflow-hidden"
+                          className="relative rounded-2xl flex flex-col items-center text-center group cursor-pointer"
                           style={{
                             borderRadius: 20,
                             boxShadow: '0 8px 32px rgba(230,57,70,0.12), 0 2px 8px rgba(230,57,70,0.06)',
@@ -940,15 +940,15 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           onClick={() => setShowNewValuationModal(true)}
                         >
                           {/* Mesh gradient — rojo, azul, amarillo (predomina rojo) */}
-                          <div className="absolute inset-0" style={{
+                          <div className="absolute inset-0 rounded-2xl overflow-hidden" style={{
                             background: 'radial-gradient(ellipse at 20% 30%, rgba(230,57,70,0.9) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.4) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(241,200,39,0.25) 0%, transparent 50%), #CC0033',
                             backgroundSize: '200% 200%',
                             animation: 'mesh-shift 15s ease-in-out infinite',
                           }} />
-                          <div className="w-full flex-1 flex items-center justify-center relative pt-4 z-10">
+                          <div className="w-full flex flex-col items-center relative z-10" style={{ marginTop: -30 }}>
                             <div
-                              className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.5]"
-                              style={{ width: '100%', height: 130, position: 'relative', transformOrigin: 'bottom center' }}
+                              className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.6]"
+                              style={{ width: '100%', height: 110, position: 'relative', transformOrigin: 'bottom center' }}
                             >
                               <img
                                 src={physicalAssessmentImg}
@@ -956,12 +956,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                 className="w-full h-full object-contain drop-shadow-xl"
                                 style={{ objectPosition: 'bottom center' }}
                               />
-                              <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{
+                              <div className="absolute bottom-0 left-0 right-0 h-14 pointer-events-none" style={{
                                 background: 'linear-gradient(to top, #CC0033 0%, rgba(204,0,51,0) 100%)',
                               }} />
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 mb-4 z-10">
+                          <div className="flex items-center gap-1.5 mb-3 z-10">
                             <span className="text-sm font-bold text-white/90">Nueva Valoración</span>
                             <Plus size={16} className="text-white/90" />
                           </div>
