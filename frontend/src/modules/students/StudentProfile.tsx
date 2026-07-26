@@ -945,7 +945,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             backgroundSize: '200% 200%',
                             animation: 'mesh-shift 15s ease-in-out infinite',
                           }} />
-                          <div className="w-full flex flex-col items-center relative z-10" style={{ marginTop: -30 }}>
+                          <div className="w-full flex flex-col items-center relative z-10">
                             <div
                               className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.6]"
                               style={{ width: '100%', height: 110, position: 'relative', transformOrigin: 'bottom center' }}
@@ -956,10 +956,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                 className="w-full h-full object-contain drop-shadow-xl"
                                 style={{ objectPosition: 'bottom center' }}
                               />
-                              <div className="absolute bottom-0 left-0 right-0 h-14 pointer-events-none" style={{
-                                background: 'linear-gradient(to top, #CC0033 0%, rgba(204,0,51,0) 100%)',
-                              }} />
                             </div>
+                            <div className="absolute bottom-0 left-0 right-0 h-14 pointer-events-none z-10" style={{
+                              background: 'linear-gradient(to top, #CC0033 0%, rgba(204,0,51,0) 100%)',
+                            }} />
                           </div>
                           <div className="flex items-center gap-1.5 mb-3 z-10">
                             <span className="text-sm font-bold text-white/90">Nueva Valoración</span>
