@@ -932,6 +932,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                         className="relative rounded-2xl overflow-visible cursor-pointer transition-all duration-300"
                         style={{
+                          marginTop: 80,
                           background: 'linear-gradient(135deg, rgba(230,57,70,0.06), #FFFFFF)',
                           border: '2px dashed rgba(230,57,70,0.3)',
                           borderRadius: 20,
@@ -943,18 +944,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       >
                         <div className="flex gap-0">
                           <div className="w-2 flex-shrink-0" style={{ background: 'linear-gradient(135deg, #E63946, #FF6B6B)', borderRadius: '20px 0 0 20px' }} />
-                          <div className="flex-1 flex items-center relative" style={{ minHeight: 100 }}>
+                          <div className="flex-1 flex items-center relative" style={{ minHeight: 90 }}>
                             {/* Imagen héroe — pegada abajo, sobresale arriba */}
-                            <div style={{ position: 'absolute', left: 10, bottom: 0, height: 130, width: 160, zIndex: 20, pointerEvents: 'none' }}>
+                            <div style={{ position: 'absolute', left: 0, bottom: 0, height: 200, width: 220, zIndex: 20, pointerEvents: 'none' }}>
                               <div style={{ position: 'absolute', bottom: 5, left: '50%', transform: 'translateX(-50%)', width: '80%', height: '40%', background: 'rgba(230,57,70,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
                               <img src={physicalAssessmentImg} alt="" className="w-full h-full object-contain drop-shadow-xl relative" style={{ objectPosition: 'bottom center' }} />
                             </div>
-                            <div className="flex items-center justify-between w-full pl-36 pr-6 py-4">
-                              <div className="flex items-center gap-1">
-                                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.12)' }}>
-                                  <Plus size={20} style={{ color: '#E63946' }} />
-                                </div>
-                              </div>
+                            <div className="flex items-center justify-end w-full pr-6 py-4">
                               <div className="flex items-center gap-1.5 px-5 py-2.5 rounded-full" style={{
                                 background: 'linear-gradient(135deg, #E63946, #FF6B6B)',
                                 boxShadow: '0 4px 16px rgba(230,57,70,0.35), 0 0 20px rgba(230,57,70,0.15)',
