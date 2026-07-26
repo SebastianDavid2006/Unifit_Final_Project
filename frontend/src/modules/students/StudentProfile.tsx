@@ -877,12 +877,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 <div className="max-w-[1200px] mx-auto space-y-6">
                   {currentTab === 'assessment' && (
                       <div className="space-y-4">
-                      {/* Mini Dashboard */}
+                      {/* Mini Dashboard + Nueva Valoración */}
                       <div className="grid grid-cols-4 gap-4">
                         {(() => {
                           const totalRutinas = 4
                           const ultimaRutina = '15 May 2026'
-                          const numObjetivos = lastValuationObjectives > 0 ? `${lastValuationObjectives} objetivos` : '—'
                           const estadoMap: Record<string, { label: string; color: string }> = {
                             high: { label: 'Alto riesgo', color: '#FF3B30' },
                             medium: { label: 'Riesgo medio', color: '#FF9500' },
@@ -893,7 +892,6 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           const items = [
                             { label: 'Total de rutinas', value: `${totalRutinas}`, model: 'list' },
                             { label: 'Última rutina realizada', value: ultimaRutina, model: 'calendar' },
-                            { label: 'Número de objetivos', value: numObjetivos, model: 'fire' },
                             { label: 'Estado del estudiante', value: estado.label, model: 'clock', color: estado.color },
                           ]
                           return items.map((m) => {
@@ -920,56 +918,52 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                 >
                                   {iconEl}
                                 </div>
-                                <p style={{
+                                <p className="text-gradient-warm" style={{
                                   fontSize: '1.8rem', fontWeight: 700, lineHeight: 1,
-                                  color: m.color || '#0D1B2A',
                                 }}>{m.value}</p>
                                 <p className="text-sm font-semibold mt-2" style={{
-                                  color: m.color || 'rgba(0,0,0,0.5)',
+                                  color: 'rgba(0,0,0,0.5)',
                                 }}>{m.label}</p>
                               </motion.div>
                             )
                           })
                         })()}
-                      </div>
-
-                      {/* Tarjeta Nueva Valoración */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                        className="relative rounded-2xl overflow-visible cursor-pointer transition-all duration-300"
-                        style={{
-                          marginTop: 80,
-                          background: 'linear-gradient(135deg, rgba(230,57,70,0.06), #FFFFFF)',
-                          border: '2px dashed rgba(230,57,70,0.3)',
-                          borderRadius: 20,
-                          boxShadow: '0 8px 32px rgba(230,57,70,0.1), 0 2px 8px rgba(230,57,70,0.06), 0 0 0 1px rgba(230,57,70,0.02)',
-                        }}
-                        onClick={() => setShowNewValuationModal(true)}
-                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(230,57,70,0.2), 0 0 30px rgba(230,57,70,0.08)' }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(230,57,70,0.1), 0 2px 8px rgba(230,57,70,0.06), 0 0 0 1px rgba(230,57,70,0.02)' }}
-                      >
-                        <div className="flex gap-0">
-                          <div className="w-2 flex-shrink-0" style={{ background: 'linear-gradient(135deg, #E63946, #FF6B6B)', borderRadius: '20px 0 0 20px' }} />
-                          <div className="flex-1 flex items-center relative" style={{ minHeight: 90 }}>
-                            {/* Imagen héroe — pegada abajo, sobresale arriba */}
-                            <div style={{ position: 'absolute', left: 0, bottom: 0, height: 200, width: 220, zIndex: 20, pointerEvents: 'none' }}>
-                              <div style={{ position: 'absolute', bottom: 5, left: '50%', transform: 'translateX(-50%)', width: '80%', height: '40%', background: 'rgba(230,57,70,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
-                              <img src={physicalAssessmentImg} alt="" className="w-full h-full object-contain drop-shadow-xl relative" style={{ objectPosition: 'bottom center' }} />
-                            </div>
-                            <div className="flex items-center justify-end w-full pr-6 py-4">
-                              <div className="flex items-center gap-1.5 px-5 py-2.5 rounded-full" style={{
-                                background: 'linear-gradient(135deg, #E63946, #FF6B6B)',
-                                boxShadow: '0 4px 16px rgba(230,57,70,0.35), 0 0 20px rgba(230,57,70,0.15)',
-                              }}>
-                                <Plus size={14} className="text-white" />
-                                <span className="text-xs font-bold text-white">Nueva Valoración</span>
-                              </div>
+                        {/* Tarjeta Nueva Valoración */}
+                        <motion.div
+                          whileHover={{ scale: 1.03, boxShadow: '0 12px 40px rgba(230,57,70,0.25), 0 0 60px rgba(230,57,70,0.08)' }}
+                          transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
+                          className="relative rounded-2xl flex flex-col items-center text-center group cursor-pointer overflow-hidden"
+                          style={{
+                            borderRadius: 20,
+                            boxShadow: '0 8px 32px rgba(230,57,70,0.12), 0 2px 8px rgba(230,57,70,0.06)',
+                          }}
+                          onClick={() => setShowNewValuationModal(true)}
+                        >
+                          {/* Mesh gradient background */}
+                          <div className="absolute inset-0" style={{
+                            background: 'radial-gradient(ellipse at 80% 10%, rgba(230,57,70,0.25) 0%, transparent 40%), radial-gradient(ellipse at 10% 80%, rgba(200,30,50,0.15) 0%, transparent 40%), radial-gradient(ellipse at 50% 50%, rgba(255,107,107,0.08) 0%, transparent 50%), #CC0033',
+                            backgroundSize: '200% 200%',
+                            animation: 'mesh-shift 15s ease-in-out infinite',
+                          }} />
+                          <div className="w-full flex-1 flex items-center justify-center relative pt-4 z-10">
+                            <div style={{ width: '100%', height: 130, position: 'relative' }}>
+                              <img
+                                src={physicalAssessmentImg}
+                                alt=""
+                                className="w-full h-full object-contain drop-shadow-xl"
+                                style={{ objectPosition: 'bottom center' }}
+                              />
+                              <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{
+                                background: 'linear-gradient(to top, #CC0033 0%, rgba(204,0,51,0) 100%)',
+                              }} />
                             </div>
                           </div>
-                        </div>
-                      </motion.div>
+                          <div className="flex items-center gap-1.5 mb-4 z-10">
+                            <span className="text-sm font-bold text-white/90">Nueva Valoración</span>
+                            <Plus size={16} className="text-white/90" />
+                          </div>
+                        </motion.div>
+                      </div>
 
                       {([
                         { date: '15 May 2026' },
