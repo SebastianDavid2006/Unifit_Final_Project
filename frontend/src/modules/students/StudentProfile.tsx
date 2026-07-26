@@ -946,14 +946,15 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             animation: 'mesh-shift 15s ease-in-out infinite',
                           }} />
                           <div className="w-full flex-1 flex items-center justify-center relative pt-4 z-10">
-                            <div style={{ width: '100%', height: 130, position: 'relative' }}>
-                              <motion.img
+                            <div
+                              className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.5]"
+                              style={{ width: '100%', height: 130, position: 'relative', transformOrigin: 'bottom center' }}
+                            >
+                              <img
                                 src={physicalAssessmentImg}
                                 alt=""
                                 className="w-full h-full object-contain drop-shadow-xl"
                                 style={{ objectPosition: 'bottom center' }}
-                                whileHover={{ scale: 1.15 }}
-                                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                               />
                               <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none" style={{
                                 background: 'linear-gradient(to top, #CC0033 0%, rgba(204,0,51,0) 100%)',
