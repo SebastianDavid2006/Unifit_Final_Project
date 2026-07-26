@@ -296,7 +296,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.45, duration: 0.4 }}
-        className="text-xs font-medium mt-1 text-center"
+        className="text-sm font-medium mt-1 text-center"
         style={{ color: 'rgba(0,0,0,0.35)' }}
       >
         Los datos de la valoración han sido guardados en el sistema.
@@ -749,7 +749,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                     <div key={dn}
                                       onMouseEnter={() => setHoveredCol(di)}
                                       onMouseLeave={() => setHoveredCol(null)}
-                                      className="text-center py-2.5 text-[11px] font-bold tracking-wide transition-all rounded-t-md"
+                                      className="text-center py-2.5 text-xs font-bold tracking-wide transition-all rounded-t-md"
                                       style={{
                                         color: hoveredCol === di ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
                                         background: hoveredCol === di ? RED_GRAD : 'transparent',
@@ -1079,7 +1079,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                   <p className="text-[#0D1B2A] text-sm font-semibold">{doc.name}</p>
                                   <p className="text-[11px] mt-1" style={{ color: '#C62828' }}>Este documento aún no ha sido entregado</p>
                                   <button
-                                    className="mt-3 w-full py-2 rounded-xl text-[11px] font-bold transition-all"
+                                    className="mt-3 w-full py-2 rounded-xl text-xs font-bold transition-all"
                                     style={{ background: '#E63946', color: '#FFFFFF' }}
                                   >
                                     Solicitar
@@ -1462,12 +1462,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     {valuationStep === 1 && (
                       <div className="space-y-5">
                         <div className="flex flex-col gap-1 relative group">
-                          <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Nivel de actividad física</label>
+                          <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Nivel de actividad física</label>
                           <div className="relative">
                             <select
                               value={valuationForm.nivelActividad}
                               onChange={e => setValuationForm(p => ({ ...p, nivelActividad: e.target.value }))}
-                              className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full appearance-none transition-all duration-200 cursor-pointer"
+                              className="px-3 py-2 rounded-xl text-sm font-medium outline-none w-full appearance-none transition-all duration-200 cursor-pointer"
                               style={{
                                 background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
                                 color: '#1A1A1E',
@@ -1495,8 +1495,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         </div>
 
                         <div>
-                          <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Objetivo del usuario</label>
-                          <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más objetivos. Si seleccionas "Otro", los demás se deseleccionan.</p>
+                          <label className="text-xs font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Objetivo del usuario</label>
+                          <p className="text-[11px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más objetivos. Si seleccionas "Otro", los demás se deseleccionan.</p>
                           <div className="grid grid-cols-3 gap-2">
                             {[
                               { value: 'Perdida de peso', icon: weightLossIcon },
@@ -1545,7 +1545,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                   }}
                                   onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = isOtro ? '#B8860B' : '#1270B7' } }}
                                   onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
-                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
                                   style={{
                                     background: selected ? selectedBg : 'rgba(0,0,0,0.03)',
                                     color: textColor,
@@ -1578,7 +1578,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         </div>
 
                         <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>¿Cuál es el objetivo?</label>
+                          <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>¿Cuál es el objetivo?</label>
                           <div className="relative rounded-xl overflow-hidden" style={{
                             background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,185,0,0.08), rgba(255,215,0,0.15))',
                             border: '1px solid rgba(212,175,55,0.35)',
@@ -1594,7 +1594,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                               onChange={e => setValuationForm(p => ({ ...p, objetivoDetalle: e.target.value }))}
                               placeholder="Describe a detalle el objetivo del estudiante..."
                               rows={3}
-                              className="w-full px-3 py-2.5 rounded-xl text-xs outline-none transition-all duration-200 resize-none relative"
+                              className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 resize-none relative"
                               style={{
                                 background: 'transparent',
                                 color: '#B8860B',
@@ -1625,12 +1625,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             { key: 'grasaVisceral', label: 'Grasa visceral (nivel)', type: 'number' },
                           ].map(field => (
                             <div key={field.key} className="flex flex-col gap-1 group">
-                              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{field.label}</label>
+                              <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{field.label}</label>
                               <input
                                 type={field.type}
                                 value={(valuationForm as any)[field.key]}
                                 onChange={e => setValuationForm(p => ({ ...p, [field.key]: e.target.value }))}
-                                className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
+                                className="px-3 py-2 rounded-xl text-sm font-medium outline-none w-full transition-all duration-200"
                                 style={{
                                   background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
                                   color: '#1A1A1E',
@@ -1658,12 +1658,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             { key: 'resistenciaMuscular', label: 'Resistencia muscular', type: 'text' },
                           ].map(field => (
                             <div key={field.key} className="flex flex-col gap-1 group">
-                              <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{field.label}</label>
+                              <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{field.label}</label>
                               <input
                                 type={field.type}
                                 value={(valuationForm as any)[field.key]}
                                 onChange={e => setValuationForm(p => ({ ...p, [field.key]: e.target.value }))}
-                                className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
+                                className="px-3 py-2 rounded-xl text-sm font-medium outline-none w-full transition-all duration-200"
                                 style={{
                                   background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
                                   color: '#1A1A1E',
@@ -1710,7 +1710,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                         : [...p.antecedentesSalud, item.value],
                                     }))
                                   }}
-                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
                                   style={{
                                     background: selected ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : 'rgba(0,0,0,0.03)',
                                     color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
@@ -1739,13 +1739,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           </div>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Observaciones del entrenador</label>
+                          <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Observaciones del entrenador</label>
                           <textarea
                             value={valuationForm.observacionesEntrenador}
                             onChange={e => setValuationForm(p => ({ ...p, observacionesEntrenador: e.target.value }))}
                             placeholder="Notas del entrenador sobre los antecedentes..."
                             rows={3}
-                            className="w-full px-3 py-2.5 rounded-xl text-xs font-medium outline-none transition-all duration-200 resize-none"
+                            className="w-full px-3 py-2.5 rounded-xl text-sm font-medium outline-none transition-all duration-200 resize-none"
                             style={{
                               background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
                               color: '#1A1A1E',
@@ -1783,7 +1783,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                         : [...p.diasDisponibles, dia],
                                     }))
                                   }}
-                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
                                   style={{
                                     background: selected ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : 'rgba(0,0,0,0.03)',
                                     color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
@@ -1823,7 +1823,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             onChange={e => setValuationForm(p => ({ ...p, observacionesFinales: e.target.value }))}
                             placeholder="Escribe aquí las observaciones finales..."
                             rows={6}
-                            className="w-full px-3 py-2.5 rounded-xl text-xs font-medium outline-none transition-all duration-200 resize-none"
+                            className="w-full px-3 py-2.5 rounded-xl text-sm font-medium outline-none transition-all duration-200 resize-none"
                             style={{
                               background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
                               color: '#1A1A1E',
@@ -1852,7 +1852,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => setValuationStep(s => s - 1)}
-                          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+                          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer"
                           style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
                         >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -2297,7 +2297,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.name}</p>
                           <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{ex.muscle} · {ex.difficulty}</p>
                         </div>
-                        <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{ex.sets}×{ex.reps}</span>
+                        <span className="text-sm font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{ex.sets}×{ex.reps}</span>
                       </motion.div>
                     ))}
                   </div>
