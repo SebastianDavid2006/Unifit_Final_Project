@@ -947,7 +947,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           }} />
                           <div className="w-full flex flex-col items-center relative z-10">
                             <div
-                              className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.6]"
+                              className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.2]"
                               style={{ width: '100%', height: 110, position: 'relative', transformOrigin: 'bottom center' }}
                             >
                               <img
