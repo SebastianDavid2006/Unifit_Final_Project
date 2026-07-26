@@ -935,16 +935,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           className="relative rounded-2xl flex flex-col items-center text-center group cursor-pointer"
                           style={{
                             borderRadius: 20,
+                            background: 'radial-gradient(ellipse at 20% 30%, rgba(230,57,70,0.9) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.4) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(241,200,39,0.25) 0%, transparent 50%), #CC0033',
+                            backgroundSize: '200% 200%',
+                            animation: 'mesh-shift 15s ease-in-out infinite',
                             boxShadow: '0 8px 32px rgba(230,57,70,0.12), 0 2px 8px rgba(230,57,70,0.06)',
                           }}
                           onClick={() => setShowNewValuationModal(true)}
                         >
-                          {/* Mesh gradient — rojo, azul, amarillo (predomina rojo) */}
-                          <div className="absolute inset-0 rounded-2xl overflow-hidden" style={{
-                            background: 'radial-gradient(ellipse at 20% 30%, rgba(230,57,70,0.9) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.4) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(241,200,39,0.25) 0%, transparent 50%), #CC0033',
-                            backgroundSize: '200% 200%',
-                            animation: 'mesh-shift 15s ease-in-out infinite',
-                          }} />
                           <div className="w-full flex flex-col items-center relative z-10">
                             <div
                               className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.2]"
