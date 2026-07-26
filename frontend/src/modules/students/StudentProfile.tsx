@@ -32,6 +32,7 @@ import trophyIcon from '../../assets/icons/objects/trophy.webp'
 import otroIcon from '../../assets/icons/ui/star.webp'
 import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
 import calendarImg from '../../assets/icons/objects/calendar.webp'
+import physicalAssessmentImg from '../../assets/illustrations/modules/physical_assessment.webp'
 import { GREEN_GRAD } from '../../data/constants'
 import musculoIcon from '../../assets/icons/anatomy/musculoskeletal.webp'
 import lungsIcon from '../../assets/icons/anatomy/lungs.webp'
@@ -876,23 +877,6 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 <div className="max-w-[1200px] mx-auto space-y-6">
                   {currentTab === 'assessment' && (
                       <div className="space-y-4">
-                      <div className="flex justify-center mb-6">
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setShowNewValuationModal(true)}
-                          className="flex items-center gap-2.5 px-6 py-3 rounded-full cursor-pointer"
-                          style={{
-                            background: 'radial-gradient(ellipse at 20% 30%, rgba(230,57,70,0.9) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.4) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(241,200,39,0.25) 0%, transparent 50%), #CC0033',
-                            boxShadow: '0 8px 32px rgba(230,57,70,0.35)',
-                            color: '#FFFFFF',
-                            border: 'none',
-                          }}
-                        >
-                          <Plus size={20} />
-                          <span className="text-sm font-semibold">Nueva Valoración</span>
-                        </motion.button>
-                      </div>
-
                       {/* Mini Dashboard */}
                       <div className="grid grid-cols-4 gap-4">
                         {(() => {
@@ -940,6 +924,48 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           })
                         })()}
                       </div>
+
+                      {/* Tarjeta Nueva Valoración */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                        className="relative rounded-2xl overflow-visible cursor-pointer transition-all duration-300"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(230,57,70,0.06), #FFFFFF)',
+                          border: '2px dashed rgba(230,57,70,0.3)',
+                          borderRadius: 20,
+                          boxShadow: '0 8px 32px rgba(230,57,70,0.1), 0 2px 8px rgba(230,57,70,0.06), 0 0 0 1px rgba(230,57,70,0.02)',
+                        }}
+                        onClick={() => setShowNewValuationModal(true)}
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(230,57,70,0.2), 0 0 30px rgba(230,57,70,0.08)' }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(230,57,70,0.1), 0 2px 8px rgba(230,57,70,0.06), 0 0 0 1px rgba(230,57,70,0.02)' }}
+                      >
+                        <div className="flex gap-0">
+                          <div className="w-2 flex-shrink-0" style={{ background: 'linear-gradient(135deg, #E63946, #FF6B6B)', borderRadius: '20px 0 0 20px' }} />
+                          <div className="flex-1 flex items-center relative" style={{ minHeight: 100 }}>
+                            {/* Imagen héroe — pegada abajo, sobresale arriba */}
+                            <div style={{ position: 'absolute', left: 10, bottom: 0, height: 130, width: 160, zIndex: 20, pointerEvents: 'none' }}>
+                              <div style={{ position: 'absolute', bottom: 5, left: '50%', transform: 'translateX(-50%)', width: '80%', height: '40%', background: 'rgba(230,57,70,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
+                              <img src={physicalAssessmentImg} alt="" className="w-full h-full object-contain drop-shadow-xl relative" style={{ objectPosition: 'bottom center' }} />
+                            </div>
+                            <div className="flex items-center justify-between w-full pl-36 pr-6 py-4">
+                              <div className="flex items-center gap-1">
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.12)' }}>
+                                  <Plus size={20} style={{ color: '#E63946' }} />
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 px-5 py-2.5 rounded-full" style={{
+                                background: 'linear-gradient(135deg, #E63946, #FF6B6B)',
+                                boxShadow: '0 4px 16px rgba(230,57,70,0.35), 0 0 20px rgba(230,57,70,0.15)',
+                              }}>
+                                <Plus size={14} className="text-white" />
+                                <span className="text-xs font-bold text-white">Nueva Valoración</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
 
                       {([
                         { date: '15 May 2026' },
