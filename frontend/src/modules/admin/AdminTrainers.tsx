@@ -30,7 +30,7 @@ const initialTrainers: Trainer[] = [
   { id: 5, name: 'Roberto Jiménez', email: 'roberto.j@unifit.edu', phone: '+1 555-0105', speciality: 'Rehabilitación Física', students: 12, status: 'active', avatar: 'RJ', rating: 85, joinedAt: '05 May 2024', schedule: 'Lun-Jue 9AM-5PM', certifications: ['Fisioterapia Deportiva', 'Kinesiología'] },
 ]
 
-export default function AdminTrainers({ search, onSelectTrainer, backSignal }: { search: string; onSelectTrainer?: () => void; backSignal?: number }) {
+export default function AdminTrainers({ search, onSelectTrainer, backSignal, trainerTab }: { search: string; onSelectTrainer?: () => void; backSignal?: number; trainerTab?: string }) {
   const [trainers] = useState(initialTrainers)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
 
@@ -51,6 +51,9 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal }: {
   const tableHeaders = ['Nombre', 'Especialidad', 'Estudiantes', 'Estado', '']
 
   if (selectedTrainer) {
+    if (trainerTab && trainerTab !== 'overview') {
+      return <div className="p-8 pt-12 max-w-[1440px] mx-auto" />
+    }
     return (
       <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
         <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>

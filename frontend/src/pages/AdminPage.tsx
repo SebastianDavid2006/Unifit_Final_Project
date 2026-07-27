@@ -296,7 +296,7 @@ export function AdminDashboard() {
             className="size-full"
           >
             {section === 'dashboard' && <AdminDashboardView />}
-            {section === 'trainers' && <AdminTrainers search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} backSignal={backSignal} />}
+            {section === 'trainers' && <AdminTrainers search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} backSignal={backSignal} trainerTab={trainerTab} />}
             {section === 'config' && <AdminConfig />}
             {section === 'docs' && <AdminDocs />}
           </motion.div>
