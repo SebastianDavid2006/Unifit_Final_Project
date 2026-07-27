@@ -30,19 +30,18 @@ const initialTrainers: Trainer[] = [
   { id: 5, name: 'Roberto Jiménez', email: 'roberto.j@unifit.edu', phone: '+1 555-0105', speciality: 'Rehabilitación Física', students: 12, status: 'active', avatar: 'RJ', rating: 85, joinedAt: '05 May 2024', schedule: 'Lun-Jue 9AM-5PM', certifications: ['Fisioterapia Deportiva', 'Kinesiología'] },
 ]
 
-export default function AdminTrainers({ search, onSelectTrainer, trainerTab, onTabChange }: { search: string; onSelectTrainer?: (open: boolean) => void; trainerTab?: string; onTabChange?: (tab: string) => void }) {
+export default function AdminTrainers({ search, onSelectTrainer, onBack }: { search: string; onSelectTrainer?: () => void; onBack?: () => void }) {
   const [trainers] = useState(initialTrainers)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
 
   function handleSelectTrainer(t: Trainer) {
     setSelectedTrainer(t)
-    setTrainerTab('overview')
-    onSelectTrainer?.(true)
+    onSelectTrainer?.()
   }
 
   function handleBack() {
     setSelectedTrainer(null)
-    onSelectTrainer?.(false)
+    onBack?.()
   }
 
   const filtered = useMemo(() =>
@@ -55,17 +54,6 @@ export default function AdminTrainers({ search, onSelectTrainer, trainerTab, onT
   if (selectedTrainer) {
     return (
       <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleBack}
-          className="w-10 h-10 rounded-xl flex items-center justify-center mb-5"
-          style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(16px) saturate(1.5)', border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}
-        >
-          <ChevronRight size={18} style={{ color: 'rgba(0,0,0,0.35)', transform: 'rotate(180deg)' }} />
-        </motion.button>
-
-        {trainerTab === 'overview' && (
         <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
           <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02]" style={{ gridColumn: '1', gridRow: '1', background: 'rgba(255,255,255,0.5)' }}>
             <div className="flex items-center gap-2.5 mb-3">
@@ -215,15 +203,6 @@ export default function AdminTrainers({ search, onSelectTrainer, trainerTab, onT
             </div>
           </div>
         </div>
-        )}
-
-        {trainerTab !== 'overview' && (
-          <div className="flex items-center justify-center py-20">
-            <p className="text-sm font-medium" style={{ color: 'rgba(0,0,0,0.3)' }}>
-              {trainerTab === 'activity' ? 'Actividad' : trainerTab === 'assessment' ? 'Evaluación Física' : trainerTab === 'permissions' ? 'Permisos' : 'Documentos'} — Próximamente
-            </p>
-          </div>
-        )}
       </div>
     )
   }

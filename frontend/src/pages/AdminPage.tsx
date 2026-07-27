@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Search, Menu, Activity, Edit, Trash2 } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2 } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
 import AdminTrainers from '../modules/admin/AdminTrainers'
 import AdminConfig from '../modules/admin/AdminConfig'
 import AdminDocs from '../modules/admin/AdminDocs'
+import iconRunning from '../assets/icons/animated/icon_running.gif'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -18,12 +19,6 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: 'trainers', label: 'Entrenadores', icon: UserPlus },
   { id: 'docs', label: 'Documentación', icon: FileText },
   { id: 'config', label: 'Configuración', icon: Settings },
-]
-
-const ADMIN_TRAINER_TABS = [
-  { id: 'overview', label: 'General', icon: Activity },
-  { id: 'permissions', label: 'Permisos', icon: FileText },
-  { id: 'documents', label: 'Documentos', icon: FileText },
 ]
 
 export function AdminDashboard() {
@@ -165,96 +160,77 @@ export function AdminDashboard() {
       <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable' }}>
         <div className="sticky top-0 z-30">
           <div className="relative px-7 pt-5 pb-3 flex items-center gap-3">
-            {section === 'trainers' && !trainerDetailOpen && (
-              <div className="flex-1 flex justify-center">
-                <div className="flex items-center gap-2 max-w-md w-full">
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    className="flex items-center gap-3 px-4 py-2 rounded-2xl flex-1 min-w-0"
-                    style={{
-                      background: 'rgba(255,255,255,0.12)',
-                      backdropFilter: 'blur(24px) saturate(1.6)',
-                      border: '1px solid rgba(255,255,255,0.25)',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-                    }}
-                  >
-                    <Search size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
-                    <input
-                      value={trainerSearch}
-                      onChange={e => setTrainerSearch(e.target.value)}
-                      placeholder="Buscar entrenador..."
-                      className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
-                    />
-                  </motion.div>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setShowTrainerFilters(!showTrainerFilters)}
-                    className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300"
-                    style={{
-                      background: showTrainerFilters ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)',
-                      backdropFilter: 'blur(24px) saturate(1.6)',
-                      border: showTrainerFilters ? '1px solid rgba(255,255,255,0.6)' : '1px solid rgba(255,255,255,0.25)',
-                      color: showTrainerFilters ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    <Menu size={18} />
-                  </motion.button>
-                </div>
-              </div>
-            )}
             {section === 'trainers' && trainerDetailOpen && (
-              <div className="flex-1 flex items-center justify-center gap-4">
-                <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
-                  background: 'rgba(255,255,255,0.12)',
-                  backdropFilter: 'blur(24px) saturate(1.6)',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                }}>
-                  {ADMIN_TRAINER_TABS.map(t => (
-                    <motion.button key={t.id} onClick={() => setTrainerTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setTrainerDetailOpen(false)}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(16px) saturate(1.5)',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <img src={iconRunning} alt="Volver" className="w-5 h-5 object-contain" style={{ transform: 'scaleX(-1)' }} />
+                </motion.button>
+                <div className="flex-1 flex items-center justify-center gap-4">
+                  <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
+                    background: 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(24px) saturate(1.6)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                  }}>
+                    <motion.button onClick={() => setTrainerTab('overview')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
                       style={{
-                        background: trainerTab === t.id
+                        background: trainerTab === 'overview'
                           ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
                           : 'transparent',
-                        color: trainerTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                        color: trainerTab === 'overview' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
                       }}
                     >
-                      <t.icon size={14} />
-                      {t.label}
+                      <Activity size={14} />
+                      General
                     </motion.button>
-                  ))}
+                    <motion.button onClick={() => setTrainerTab('permissions')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                      style={{
+                        background: trainerTab === 'permissions'
+                          ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                          : 'transparent',
+                        color: trainerTab === 'permissions' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      <FileText size={14} />
+                      Permisos
+                    </motion.button>
+                    <motion.button onClick={() => setTrainerTab('documents')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                      style={{
+                        background: trainerTab === 'documents'
+                          ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                          : 'transparent',
+                        color: trainerTab === 'documents' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      <FileText size={14} />
+                      Documentos
+                    </motion.button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(24px) saturate(1.6)', border: '1px solid rgba(255,255,255,0.25)' }}>
+                      <Edit size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                    </motion.button>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(24px) saturate(1.6)', border: '1px solid rgba(255,255,255,0.25)' }}>
+                      <Trash2 size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                    </motion.button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{
-                      background: 'rgba(255,255,255,0.12)',
-                      backdropFilter: 'blur(24px) saturate(1.6)',
-                      border: '1px solid rgba(255,255,255,0.25)',
-                    }}
-                  >
-                    <Edit size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{
-                      background: 'rgba(255,255,255,0.12)',
-                      backdropFilter: 'blur(24px) saturate(1.6)',
-                      border: '1px solid rgba(255,255,255,0.25)',
-                    }}
-                  >
-                    <Trash2 size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                  </motion.button>
-                </div>
-              </div>
+              </>
             )}
+            {section === 'trainers' && !trainerDetailOpen && <div className="flex-1" />}
             <div className="flex items-center gap-3 ml-auto">
               <motion.button
                 whileHover={{ background: 'rgba(255,255,255,0.28)' }}
@@ -319,7 +295,7 @@ export function AdminDashboard() {
             className="size-full"
           >
             {section === 'dashboard' && <AdminDashboardView />}
-            {section === 'trainers' && <AdminTrainers search={trainerSearch} onSelectTrainer={setTrainerDetailOpen} trainerTab={trainerTab} onTabChange={setTrainerTab} />}
+            {section === 'trainers' && <AdminTrainers search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} onBack={() => setTrainerDetailOpen(false)} />}
             {section === 'config' && <AdminConfig />}
             {section === 'docs' && <AdminDocs />}
           </motion.div>
