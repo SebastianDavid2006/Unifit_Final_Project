@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Search, Menu, ChevronRight, Edit, Trash2 } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Search, Menu, Activity, Edit, Trash2 } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
 import AdminTrainers from '../modules/admin/AdminTrainers'
 import AdminConfig from '../modules/admin/AdminConfig'
@@ -20,12 +20,19 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: 'config', label: 'Configuración', icon: Settings },
 ]
 
+const ADMIN_TRAINER_TABS = [
+  { id: 'overview', label: 'General', icon: Activity },
+  { id: 'permissions', label: 'Permisos', icon: FileText },
+  { id: 'documents', label: 'Documentos', icon: FileText },
+]
+
 export function AdminDashboard() {
   const [section, setSection] = useState<AdminSection>('dashboard')
   const [expanded, setExpanded] = useState(false)
   const [trainerSearch, setTrainerSearch] = useState('')
   const [showTrainerFilters, setShowTrainerFilters] = useState(false)
   const [trainerDetailOpen, setTrainerDetailOpen] = useState(false)
+  const [trainerTab, setTrainerTab] = useState('overview')
 
   return (
     <div className="flex size-full overflow-hidden mesh-bg relative">
@@ -200,13 +207,25 @@ export function AdminDashboard() {
             )}
             {section === 'trainers' && trainerDetailOpen && (
               <div className="flex-1 flex items-center justify-center gap-4">
-                <div className="flex items-center gap-2 rounded-2xl px-4 py-2" style={{
+                <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
                   background: 'rgba(255,255,255,0.12)',
                   backdropFilter: 'blur(24px) saturate(1.6)',
                   border: '1px solid rgba(255,255,255,0.25)',
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                 }}>
-                  <span className="text-sm font-bold" style={{ color: '#1A1A1E' }}>General</span>
+                  {ADMIN_TRAINER_TABS.map(t => (
+                    <motion.button key={t.id} onClick={() => setTrainerTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                      style={{
+                        background: trainerTab === t.id
+                          ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                          : 'transparent',
+                        color: trainerTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      <t.icon size={14} />
+                      {t.label}
+                    </motion.button>
+                  ))}
                 </div>
                 <div className="flex items-center gap-2">
                   <motion.button
@@ -217,7 +236,6 @@ export function AdminDashboard() {
                       background: 'rgba(255,255,255,0.12)',
                       backdropFilter: 'blur(24px) saturate(1.6)',
                       border: '1px solid rgba(255,255,255,0.25)',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                     }}
                   >
                     <Edit size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
@@ -230,7 +248,6 @@ export function AdminDashboard() {
                       background: 'rgba(255,255,255,0.12)',
                       backdropFilter: 'blur(24px) saturate(1.6)',
                       border: '1px solid rgba(255,255,255,0.25)',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                     }}
                   >
                     <Trash2 size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
@@ -302,7 +319,7 @@ export function AdminDashboard() {
             className="size-full"
           >
             {section === 'dashboard' && <AdminDashboardView />}
-            {section === 'trainers' && <AdminTrainers search={trainerSearch} onSelectTrainer={setTrainerDetailOpen} />}
+            {section === 'trainers' && <AdminTrainers search={trainerSearch} onSelectTrainer={setTrainerDetailOpen} trainerTab={trainerTab} onTabChange={setTrainerTab} />}
             {section === 'config' && <AdminConfig />}
             {section === 'docs' && <AdminDocs />}
           </motion.div>

@@ -1,19 +1,11 @@
 import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { Plus, ChevronRight, Activity, BarChart2, FileText, Edit, Trash2 } from 'lucide-react'
+import { motion } from 'motion/react'
+import { Plus, ChevronRight } from 'lucide-react'
 import trainersImg from '../../assets/illustrations/characters/trainers/trainers_group.webp'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
-
-const TRAINER_TABS = [
-  { id: 'overview', label: 'General', icon: Activity },
-  { id: 'activity', label: 'Actividad', icon: BarChart2 },
-  { id: 'assessment', label: 'Evaluación Física', icon: BarChart2 },
-  { id: 'permissions', label: 'Permisos', icon: FileText },
-  { id: 'documents', label: 'Documentos', icon: FileText },
-]
 
 interface Trainer {
   id: number
@@ -38,10 +30,9 @@ const initialTrainers: Trainer[] = [
   { id: 5, name: 'Roberto Jiménez', email: 'roberto.j@unifit.edu', phone: '+1 555-0105', speciality: 'Rehabilitación Física', students: 12, status: 'active', avatar: 'RJ', rating: 85, joinedAt: '05 May 2024', schedule: 'Lun-Jue 9AM-5PM', certifications: ['Fisioterapia Deportiva', 'Kinesiología'] },
 ]
 
-export default function AdminTrainers({ search, onSelectTrainer }: { search: string; onSelectTrainer?: (open: boolean) => void }) {
+export default function AdminTrainers({ search, onSelectTrainer, trainerTab, onTabChange }: { search: string; onSelectTrainer?: (open: boolean) => void; trainerTab?: string; onTabChange?: (tab: string) => void }) {
   const [trainers] = useState(initialTrainers)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
-  const [trainerTab, setTrainerTab] = useState('overview')
 
   function handleSelectTrainer(t: Trainer) {
     setSelectedTrainer(t)
@@ -73,55 +64,6 @@ export default function AdminTrainers({ search, onSelectTrainer }: { search: str
         >
           <ChevronRight size={18} style={{ color: 'rgba(0,0,0,0.35)', transform: 'rotate(180deg)' }} />
         </motion.button>
-
-        <div className="flex items-center justify-center gap-4 mb-8">
-          <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
-            background: 'rgba(255,255,255,0.12)',
-            backdropFilter: 'blur(24px) saturate(1.6)',
-            border: '1px solid rgba(255,255,255,0.25)',
-          }}>
-            {TRAINER_TABS.map(t => (
-              <motion.button key={t.id} onClick={() => setTrainerTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                style={{
-                  background: trainerTab === t.id
-                    ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
-                    : 'transparent',
-                  color: trainerTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
-                }}
-              >
-                <t.icon size={14} />
-                {t.label}
-              </motion.button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{
-                background: 'rgba(255,255,255,0.12)',
-                backdropFilter: 'blur(24px) saturate(1.6)',
-                border: '1px solid rgba(255,255,255,0.25)',
-              }}
-            >
-              <Edit size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{
-                background: 'rgba(255,255,255,0.12)',
-                backdropFilter: 'blur(24px) saturate(1.6)',
-                border: '1px solid rgba(255,255,255,0.25)',
-              }}
-            >
-              <Trash2 size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
-            </motion.button>
-          </div>
-        </div>
 
         {trainerTab === 'overview' && (
         <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
