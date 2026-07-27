@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'motion/react'
-import { Plus, ChevronRight } from 'lucide-react'
+import { Plus, ChevronRight, Shield, UserCog, School, Settings, FileText, BarChart3 } from 'lucide-react'
 import trainersImg from '../../assets/illustrations/characters/trainers/trainers_group.webp'
 
 const RED = '#F43843'
@@ -51,7 +51,98 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
   const tableHeaders = ['Nombre', 'Especialidad', 'Estudiantes', 'Estado', '']
 
   if (selectedTrainer) {
-    if (trainerTab && trainerTab !== 'overview') {
+    if (trainerTab && trainerTab === 'permissions') {
+      const permissions = [
+        { icon: UserCog, label: 'Gestión de Usuarios', desc: 'Crear, editar y eliminar administradores y entrenadores', on: true },
+        { icon: School, label: 'Gestión de Estudiantes', desc: 'Administrar perfiles, progreso y membresías de estudiantes', on: true },
+        { icon: Settings, label: 'Configuración del Sistema', desc: 'Modificar parámetros globales de la plataforma', on: false },
+        { icon: FileText, label: 'Documentación', desc: 'Acceder y gestionar la documentación del sistema', on: true },
+        { icon: BarChart3, label: 'Dashboard y Reportes', desc: 'Visualizar métricas y generar reportes', on: true },
+        { icon: Shield, label: 'Auditoría', desc: 'Revisar registros de actividad y cambios en el sistema', on: false },
+      ]
+
+      return (
+        <div className="p-8 pt-12 max-w-[1440px] mx-auto flex items-start justify-center min-h-[calc(100vh-120px)]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="w-full max-w-xl rounded-[28px] p-8 backdrop-blur-xl"
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.06)',
+            }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <Shield size={20} style={{ color: 'rgba(255,255,255,0.8)' }} />
+              </div>
+              <div>
+                <h2 className="text-lg font-extrabold" style={{ color: '#FFFFFF' }}>Permisos del Sistema</h2>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Configura los accesos y privilegios de {selectedTrainer.name}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {permissions.map((p, i) => (
+                <motion.div
+                  key={p.label}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.08 + i * 0.04, duration: 0.3 }}
+                  className="flex items-center gap-4 rounded-2xl px-5 py-3.5 cursor-pointer transition-all hover:scale-[1.01]"
+                  style={{
+                    background: p.on ? 'rgba(255,255,255,0.06)' : 'transparent',
+                    border: `1px solid ${p.on ? 'rgba(255,255,255,0.08)' : 'transparent'}`,
+                  }}
+                >
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                    <p.icon size={16} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold" style={{ color: '#FFFFFF' }}>{p.label}</p>
+                    <p className="text-[11px] mt-0.5 truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>{p.desc}</p>
+                  </div>
+                  <div
+                    className="relative w-11 h-6 rounded-full flex-shrink-0 transition-all duration-300"
+                    style={{
+                      background: p.on ? 'rgba(48,209,88,0.6)' : 'rgba(255,255,255,0.12)',
+                      boxShadow: p.on ? '0 0 12px rgba(48,209,88,0.25)' : 'none',
+                    }}
+                  >
+                    <motion.div
+                      animate={{ x: p.on ? 20 : 2 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      className="absolute top-1 w-4 h-4 rounded-full"
+                      style={{
+                        background: '#FFFFFF',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                      }}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full mt-6 rounded-2xl py-3.5 text-sm font-bold transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(48,209,88,0.2), rgba(48,209,88,0.1))',
+                border: '1px solid rgba(48,209,88,0.2)',
+                color: '#30D158',
+              }}
+            >
+              Guardar Cambios
+            </motion.button>
+          </motion.div>
+        </div>
+      )
+    }
+
+    if (trainerTab && trainerTab === 'documents') {
       return <div className="p-8 pt-12 max-w-[1440px] mx-auto" />
     }
     return (

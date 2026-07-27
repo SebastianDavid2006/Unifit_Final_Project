@@ -30,6 +30,7 @@ export function AdminDashboard() {
   const [trainerDetailOpen, setTrainerDetailOpen] = useState(false)
   const [trainerTab, setTrainerTab] = useState('overview')
   const [backSignal, setBackSignal] = useState(0)
+  const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
 
   return (
     <div className="flex size-full overflow-hidden mesh-bg relative">
@@ -161,28 +162,25 @@ export function AdminDashboard() {
 
       <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable' }}>
         <AnimatePresence>
-          {section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions' && (
+          {isPermissions && (
             <motion.div
               initial={{ filter: 'blur(24px)', opacity: 0 }}
               animate={{ filter: 'blur(0px)', opacity: 1 }}
               exit={{ filter: 'blur(24px)', opacity: 0 }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="absolute inset-0 pointer-events-none"
+              className="fixed inset-0 pointer-events-none"
             >
               <div className="absolute inset-0" style={{
                 backgroundImage: `url(${permissionsScene})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
-                filter: 'blur(16px)',
               }} />
               <div className="absolute inset-0" style={{
-                backgroundImage: `url(${permissionsScene})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                maskImage: 'radial-gradient(ellipse at center, black 55%, transparent 78%)',
-                WebkitMaskImage: 'radial-gradient(ellipse at center, black 55%, transparent 78%)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                maskImage: 'radial-gradient(ellipse at center, transparent 50%, black 75%)',
+                WebkitMaskImage: 'radial-gradient(ellipse at center, transparent 50%, black 75%)',
               }} />
             </motion.div>
           )}
@@ -197,13 +195,13 @@ export function AdminDashboard() {
                   onClick={() => { setTrainerDetailOpen(false); setBackSignal(s => s + 1) }}
                   className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{
-                    background: 'rgba(255,255,255,0.2)',
+                    background: isPermissions ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.2)',
                     backdropFilter: 'blur(16px) saturate(1.5)',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)'}`,
                     boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
                   }}
                 >
-                  <img src={iconRunning} alt="Volver" className="w-5 h-5 object-contain" style={{ transform: 'scaleX(-1)' }} />
+                  <img src={iconRunning} alt="Volver" className="w-5 h-5 object-contain" style={{ transform: 'scaleX(-1)', filter: isPermissions ? 'brightness(0) invert(1)' : 'none' }} />
                 </motion.button>
                 <div className="flex-1 flex items-center justify-center gap-4">
                   <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
@@ -217,7 +215,7 @@ export function AdminDashboard() {
                         background: trainerTab === 'overview'
                           ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
                           : 'transparent',
-                        color: trainerTab === 'overview' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                        color: trainerTab === 'overview' ? '#FFFFFF' : isPermissions ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)',
                       }}
                     >
                       <Activity size={14} />
@@ -229,7 +227,7 @@ export function AdminDashboard() {
                         background: trainerTab === 'permissions'
                           ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
                           : 'transparent',
-                        color: trainerTab === 'permissions' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                        color: trainerTab === 'permissions' ? '#FFFFFF' : isPermissions ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)',
                       }}
                     >
                       <FileText size={14} />
@@ -241,7 +239,7 @@ export function AdminDashboard() {
                         background: trainerTab === 'documents'
                           ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
                           : 'transparent',
-                        color: trainerTab === 'documents' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                        color: trainerTab === 'documents' ? '#FFFFFF' : isPermissions ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)',
                       }}
                     >
                       <FileText size={14} />
@@ -249,11 +247,11 @@ export function AdminDashboard() {
                     </motion.button>
                   </div>
                   <div className="flex items-center gap-2">
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(24px) saturate(1.6)', border: '1px solid rgba(255,255,255,0.25)' }}>
-                      <Edit size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: isPermissions ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.12)', backdropFilter: 'blur(24px) saturate(1.6)', border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}` }}>
+                      <Edit size={15} style={{ color: isPermissions ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.4)' }} />
                     </motion.button>
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(24px) saturate(1.6)', border: '1px solid rgba(255,255,255,0.25)' }}>
-                      <Trash2 size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: isPermissions ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.12)', backdropFilter: 'blur(24px) saturate(1.6)', border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}` }}>
+                      <Trash2 size={15} style={{ color: isPermissions ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.4)' }} />
                     </motion.button>
                   </div>
                 </div>
@@ -266,13 +264,13 @@ export function AdminDashboard() {
                 whileTap={{ scale: 0.95 }}
                 className="relative w-9 h-9 rounded-xl flex items-center justify-center"
                 style={{
-                  background: 'rgba(255,255,255,0.12)',
+                  background: isPermissions ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.12)',
                   backdropFilter: 'blur(24px) saturate(1.6)',
-                  border: '1px solid rgba(255,255,255,0.25)',
+                  border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}`,
                   boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                 }}
               >
-                <Bell size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
+                <Bell size={16} style={{ color: isPermissions ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.35)' }} />
                 <div className="dot-alert absolute -top-1 -right-1" style={{ width: 8, height: 8 }} />
               </motion.button>
 
@@ -282,9 +280,9 @@ export function AdminDashboard() {
                 className="flex items-center rounded-xl cursor-pointer overflow-hidden"
                 style={{
                   height: 38,
-                  background: 'rgba(255,255,255,0.12)',
+                  background: isPermissions ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.12)',
                   backdropFilter: 'blur(24px) saturate(1.6)',
-                  border: '1px solid rgba(255,255,255,0.25)',
+                  border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}`,
                   boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                 }}
               >
@@ -298,8 +296,8 @@ export function AdminDashboard() {
                 >
                   <div className="flex items-center gap-2">
                     <div>
-                      <p className="text-[#1A1A1E] text-xs font-bold leading-none">Admin UNIFIT</p>
-                      <p style={{ color: 'rgba(0,0,0,0.3)', fontSize: 9 }} className="mt-0.5">Plataforma de Administración</p>
+                      <p className="text-xs font-bold leading-none" style={{ color: isPermissions ? '#FFFFFF' : '#1A1A1E' }}>Admin UNIFIT</p>
+                      <p style={{ color: isPermissions ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)', fontSize: 9 }} className="mt-0.5">Plataforma de Administración</p>
                     </div>
                   </div>
                 </motion.div>
