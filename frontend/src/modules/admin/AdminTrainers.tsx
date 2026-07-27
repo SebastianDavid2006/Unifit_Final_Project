@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { Plus, ChevronRight } from 'lucide-react'
 import trainersImg from '../../assets/illustrations/characters/trainers/trainers_group.webp'
+import permissionsScene from '../../assets/scenes/permmisions_scene.png'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -52,7 +53,11 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
 
   if (selectedTrainer) {
     if (trainerTab && trainerTab !== 'overview') {
-      return <div className="p-8 pt-12 max-w-[1440px] mx-auto" />
+      return (
+        <div className="p-8 pt-12 max-w-[1440px] mx-auto relative min-h-[600px]">
+          <img src={permissionsScene} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" style={{ opacity: 0.15 }} />
+        </div>
+      )
     }
     return (
       <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
