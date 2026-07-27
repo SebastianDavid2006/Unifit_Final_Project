@@ -31,6 +31,8 @@ const initialTrainers: Trainer[] = [
 ]
 
 export default function AdminTrainers({ search }: { search: string }) {
+  const [trainers] = useState(initialTrainers)
+  const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
 
   const filtered = useMemo(() =>
     trainers.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.speciality.toLowerCase().includes(search.toLowerCase())),
@@ -278,7 +280,7 @@ export default function AdminTrainers({ search }: { search: string }) {
             style={{ position: 'absolute', left: 10, bottom: 0, width: 220, zIndex: 20, opacity: 0, animation: 'blur-fade 0.6s 0.3s ease forwards' }}
           >
             <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', width: '85%', height: '45%', background: 'rgba(18,112,183,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
-            <img src={trainersImg} alt="Trainers" className="w-full h-auto drop-shadow-xl relative" style={{ transform: 'translateY(-10%)' }} />
+            <img src={trainersImg} alt="Trainers" className="w-full h-auto drop-shadow-xl relative" style={{ transform: 'translateY(8%)' }} />
           </div>
         </motion.div>
 
