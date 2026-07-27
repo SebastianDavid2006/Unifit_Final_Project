@@ -1,11 +1,19 @@
 import { useState, useMemo } from 'react'
-import { motion } from 'motion/react'
-import { Plus, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'motion/react'
+import { Plus, ChevronRight, Activity, BarChart2, FileText, Edit, Trash2 } from 'lucide-react'
 import trainersImg from '../../assets/illustrations/characters/trainers/trainers_group.webp'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
+
+const TRAINER_TABS = [
+  { id: 'overview', label: 'General', icon: Activity },
+  { id: 'activity', label: 'Actividad', icon: BarChart2 },
+  { id: 'assessment', label: 'Evaluación Física', icon: BarChart2 },
+  { id: 'permissions', label: 'Permisos', icon: FileText },
+  { id: 'documents', label: 'Documentos', icon: FileText },
+]
 
 interface Trainer {
   id: number
@@ -30,9 +38,21 @@ const initialTrainers: Trainer[] = [
   { id: 5, name: 'Roberto Jiménez', email: 'roberto.j@unifit.edu', phone: '+1 555-0105', speciality: 'Rehabilitación Física', students: 12, status: 'active', avatar: 'RJ', rating: 85, joinedAt: '05 May 2024', schedule: 'Lun-Jue 9AM-5PM', certifications: ['Fisioterapia Deportiva', 'Kinesiología'] },
 ]
 
-export default function AdminTrainers({ search }: { search: string }) {
+export default function AdminTrainers({ search, onSelectTrainer }: { search: string; onSelectTrainer?: (open: boolean) => void }) {
   const [trainers] = useState(initialTrainers)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
+  const [trainerTab, setTrainerTab] = useState('overview')
+
+  function handleSelectTrainer(t: Trainer) {
+    setSelectedTrainer(t)
+    setTrainerTab('overview')
+    onSelectTrainer?.(true)
+  }
+
+  function handleBack() {
+    setSelectedTrainer(null)
+    onSelectTrainer?.(false)
+  }
 
   const filtered = useMemo(() =>
     trainers.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.speciality.toLowerCase().includes(search.toLowerCase())),
@@ -47,13 +67,63 @@ export default function AdminTrainers({ search }: { search: string }) {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setSelectedTrainer(null)}
+          onClick={handleBack}
           className="w-10 h-10 rounded-xl flex items-center justify-center mb-5"
           style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(16px) saturate(1.5)', border: '1px solid rgba(255,255,255,0.3)', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}
         >
           <ChevronRight size={18} style={{ color: 'rgba(0,0,0,0.35)', transform: 'rotate(180deg)' }} />
         </motion.button>
 
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
+            background: 'rgba(255,255,255,0.12)',
+            backdropFilter: 'blur(24px) saturate(1.6)',
+            border: '1px solid rgba(255,255,255,0.25)',
+          }}>
+            {TRAINER_TABS.map(t => (
+              <motion.button key={t.id} onClick={() => setTrainerTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                style={{
+                  background: trainerTab === t.id
+                    ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                    : 'transparent',
+                  color: trainerTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                }}
+              >
+                <t.icon size={14} />
+                {t.label}
+              </motion.button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(24px) saturate(1.6)',
+                border: '1px solid rgba(255,255,255,0.25)',
+              }}
+            >
+              <Edit size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(24px) saturate(1.6)',
+                border: '1px solid rgba(255,255,255,0.25)',
+              }}
+            >
+              <Trash2 size={15} style={{ color: 'rgba(0,0,0,0.4)' }} />
+            </motion.button>
+          </div>
+        </div>
+
+        {trainerTab === 'overview' && (
         <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
           <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02]" style={{ gridColumn: '1', gridRow: '1', background: 'rgba(255,255,255,0.5)' }}>
             <div className="flex items-center gap-2.5 mb-3">
@@ -203,6 +273,15 @@ export default function AdminTrainers({ search }: { search: string }) {
             </div>
           </div>
         </div>
+        )}
+
+        {trainerTab !== 'overview' && (
+          <div className="flex items-center justify-center py-20">
+            <p className="text-sm font-medium" style={{ color: 'rgba(0,0,0,0.3)' }}>
+              {trainerTab === 'activity' ? 'Actividad' : trainerTab === 'assessment' ? 'Evaluación Física' : trainerTab === 'permissions' ? 'Permisos' : 'Documentos'} — Próximamente
+            </p>
+          </div>
+        )}
       </div>
     )
   }
@@ -298,7 +377,7 @@ export default function AdminTrainers({ search }: { search: string }) {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03 }}
-              onClick={() => setSelectedTrainer(t)}
+              onClick={() => handleSelectTrainer(t)}
               whileHover={{ y: -3, scale: 1.002, background: 'rgba(255,255,255,0.8)' }}
               className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl cursor-pointer"
               style={{ background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.4)' }}
