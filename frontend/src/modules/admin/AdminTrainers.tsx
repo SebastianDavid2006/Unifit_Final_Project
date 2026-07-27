@@ -52,14 +52,7 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
 
   if (selectedTrainer) {
     if (trainerTab && trainerTab === 'permissions') {
-      const permissions = [
-        { icon: UserCog, label: 'Gestión de Usuarios', desc: 'Crear, editar y eliminar administradores y entrenadores', on: true },
-        { icon: School, label: 'Gestión de Estudiantes', desc: 'Administrar perfiles, progreso y membresías de estudiantes', on: true },
-        { icon: Settings, label: 'Configuración del Sistema', desc: 'Modificar parámetros globales de la plataforma', on: false },
-        { icon: FileText, label: 'Documentación', desc: 'Acceder y gestionar la documentación del sistema', on: true },
-        { icon: BarChart3, label: 'Dashboard y Reportes', desc: 'Visualizar métricas y generar reportes', on: true },
-        { icon: Shield, label: 'Auditoría', desc: 'Revisar registros de actividad y cambios en el sistema', on: false },
-      ]
+      const [globalAdmin, setGlobalAdmin] = useState(true)
 
       return (
         <div className="p-8 pt-12 max-w-[1440px] mx-auto flex items-start justify-center min-h-[calc(100vh-120px)]">
@@ -79,51 +72,52 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
                 <Shield size={20} style={{ color: 'rgba(255,255,255,0.8)' }} />
               </div>
               <div>
-                <h2 className="text-lg font-extrabold" style={{ color: '#FFFFFF' }}>Permisos del Sistema</h2>
-                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Configura los accesos y privilegios de {selectedTrainer.name}</p>
+                <h2 className="text-lg font-extrabold" style={{ color: '#FFFFFF' }}>Permiso Global</h2>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Configura el nivel de acceso de {selectedTrainer.name}</p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              {permissions.map((p, i) => (
+            <motion.div
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.08, duration: 0.3 }}
+              className="flex items-center gap-4 rounded-2xl px-5 py-4"
+              style={{
+                background: globalAdmin ? 'rgba(48,209,88,0.06)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${globalAdmin ? 'rgba(48,209,88,0.15)' : 'rgba(255,255,255,0.06)'}`,
+              }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: globalAdmin ? 'rgba(48,209,88,0.1)' : 'rgba(255,255,255,0.06)' }}>
+                <Shield size={18} style={{ color: globalAdmin ? '#30D158' : 'rgba(255,255,255,0.4)' }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Administrador Global</p>
+                <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                  Acceso completo a todas las funcionalidades del sistema:{' '}
+                  gestión de usuarios, entrenadores y estudiantes, configuración
+                  de la plataforma, dashboard y reportes, documentación y
+                  registros de auditoría.
+                </p>
+              </div>
+              <div
+                onClick={() => setGlobalAdmin(!globalAdmin)}
+                className="relative w-11 h-6 rounded-full flex-shrink-0 cursor-pointer transition-all duration-300"
+                style={{
+                  background: globalAdmin ? 'rgba(48,209,88,0.6)' : 'rgba(255,255,255,0.12)',
+                  boxShadow: globalAdmin ? '0 0 12px rgba(48,209,88,0.25)' : 'none',
+                }}
+              >
                 <motion.div
-                  key={p.label}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.08 + i * 0.04, duration: 0.3 }}
-                  className="flex items-center gap-4 rounded-2xl px-5 py-3.5 cursor-pointer transition-all hover:scale-[1.01]"
+                  animate={{ x: globalAdmin ? 20 : 2 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  className="absolute top-1 w-4 h-4 rounded-full"
                   style={{
-                    background: p.on ? 'rgba(255,255,255,0.06)' : 'transparent',
-                    border: `1px solid ${p.on ? 'rgba(255,255,255,0.08)' : 'transparent'}`,
+                    background: '#FFFFFF',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                   }}
-                >
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                    <p.icon size={16} style={{ color: 'rgba(255,255,255,0.6)' }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold" style={{ color: '#FFFFFF' }}>{p.label}</p>
-                    <p className="text-[11px] mt-0.5 truncate" style={{ color: 'rgba(255,255,255,0.4)' }}>{p.desc}</p>
-                  </div>
-                  <div
-                    className="relative w-11 h-6 rounded-full flex-shrink-0 transition-all duration-300"
-                    style={{
-                      background: p.on ? 'rgba(48,209,88,0.6)' : 'rgba(255,255,255,0.12)',
-                      boxShadow: p.on ? '0 0 12px rgba(48,209,88,0.25)' : 'none',
-                    }}
-                  >
-                    <motion.div
-                      animate={{ x: p.on ? 20 : 2 }}
-                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                      className="absolute top-1 w-4 h-4 rounded-full"
-                      style={{
-                        background: '#FFFFFF',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                      }}
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                />
+              </div>
+            </motion.div>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -146,8 +140,9 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
       return <div className="p-8 pt-12 max-w-[1440px] mx-auto" />
     }
     return (
-      <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
-        <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
+      <div className="p-8 pt-12 max-w-[1440px] mx-auto flex justify-center">
+        <div className="w-full max-w-5xl space-y-6">
+          <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
           <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02]" style={{ gridColumn: '1', gridRow: '1', background: 'rgba(255,255,255,0.5)' }}>
             <div className="flex items-center gap-2.5 mb-3">
               <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: `${RED}30` }} />
@@ -294,6 +289,7 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
                 ))}
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
