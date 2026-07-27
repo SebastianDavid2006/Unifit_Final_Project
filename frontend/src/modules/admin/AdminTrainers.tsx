@@ -30,18 +30,13 @@ const initialTrainers: Trainer[] = [
   { id: 5, name: 'Roberto Jiménez', email: 'roberto.j@unifit.edu', phone: '+1 555-0105', speciality: 'Rehabilitación Física', students: 12, status: 'active', avatar: 'RJ', rating: 85, joinedAt: '05 May 2024', schedule: 'Lun-Jue 9AM-5PM', certifications: ['Fisioterapia Deportiva', 'Kinesiología'] },
 ]
 
-export default function AdminTrainers({ search, onSelectTrainer, onBack }: { search: string; onSelectTrainer?: () => void; onBack?: () => void }) {
+export default function AdminTrainers({ search, onSelectTrainer }: { search: string; onSelectTrainer?: () => void }) {
   const [trainers] = useState(initialTrainers)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
 
   function handleSelectTrainer(t: Trainer) {
     setSelectedTrainer(t)
     onSelectTrainer?.()
-  }
-
-  function handleBack() {
-    setSelectedTrainer(null)
-    onBack?.()
   }
 
   const filtered = useMemo(() =>
