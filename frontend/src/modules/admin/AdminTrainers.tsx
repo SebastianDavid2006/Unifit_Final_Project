@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'motion/react'
-import { Plus, ChevronRight, Shield, UserCog, School, Settings, FileText, BarChart3 } from 'lucide-react'
+import { Plus, ChevronRight, Shield } from 'lucide-react'
 import trainersImg from '../../assets/illustrations/characters/trainers/trainers_group.webp'
 
 const RED = '#F43843'
