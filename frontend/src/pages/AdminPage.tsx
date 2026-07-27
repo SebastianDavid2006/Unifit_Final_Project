@@ -6,6 +6,7 @@ import AdminTrainers from '../modules/admin/AdminTrainers'
 import AdminConfig from '../modules/admin/AdminConfig'
 import AdminDocs from '../modules/admin/AdminDocs'
 import iconRunning from '../assets/icons/animated/icon_running.gif'
+import permissionsScene from '../assets/scenes/permmisions_scene.png'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -159,6 +160,29 @@ export function AdminDashboard() {
       </aside>
 
       <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable' }}>
+        <AnimatePresence>
+          {section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions' && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              className="absolute inset-0 pointer-events-none"
+            >
+              <div className="absolute inset-0" style={{
+                backgroundImage: `url(${permissionsScene})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+              }} />
+              <div className="absolute inset-0" style={{
+                backdropFilter: 'blur(3px) saturate(0.8)',
+                WebkitBackdropFilter: 'blur(3px) saturate(0.8)',
+                background: 'rgba(255,255,255,0.15)',
+              }} />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="sticky top-0 z-30">
           <div className="relative px-7 pt-5 pb-3 flex items-center gap-3">
             {section === 'trainers' && trainerDetailOpen && (
