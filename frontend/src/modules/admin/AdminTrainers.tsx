@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'motion/react'
 import { Plus, ChevronRight, Shield } from 'lucide-react'
 import trainersImg from '../../assets/illustrations/characters/trainers/trainers_group.webp'
@@ -30,13 +30,10 @@ const initialTrainers: Trainer[] = [
   { id: 5, name: 'Roberto Jiménez', email: 'roberto.j@unifit.edu', phone: '+1 555-0105', speciality: 'Rehabilitación Física', students: 12, status: 'active', avatar: 'RJ', rating: 85, joinedAt: '05 May 2024', schedule: 'Lun-Jue 9AM-5PM', certifications: ['Fisioterapia Deportiva', 'Kinesiología'] },
 ]
 
-export default function AdminTrainers({ search, onSelectTrainer, backSignal, trainerTab }: { search: string; onSelectTrainer?: () => void; backSignal?: number; trainerTab?: string }) {
+export default function AdminTrainers({ search, onSelectTrainer, trainerTab }: { search: string; onSelectTrainer?: () => void; trainerTab?: string }) {
   const [trainers] = useState(initialTrainers)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
-
-  useEffect(() => {
-    setSelectedTrainer(null)
-  }, [backSignal])
+  const [globalAdmin, setGlobalAdmin] = useState(true)
 
   function handleSelectTrainer(t: Trainer) {
     setSelectedTrainer(t)
@@ -52,29 +49,25 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
 
   if (selectedTrainer) {
     if (trainerTab && trainerTab === 'permissions') {
-      const [globalAdmin, setGlobalAdmin] = useState(true)
-
       return (
-        <div className="p-8 pt-12 max-w-[1440px] mx-auto flex items-start justify-center min-h-[calc(100vh-120px)]">
+        <div className="p-8 pt-12 max-w-[1440px] mx-auto flex items-center justify-center min-h-[calc(100vh-120px)]">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="w-full max-w-xl rounded-[28px] p-8 backdrop-blur-xl"
+            className="w-full max-w-xl rounded-[28px] p-8"
             style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.15)',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.06)',
+              background: 'rgba(255,255,255,0.5)',
+              border: '1px solid rgba(255,255,255,0.4)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.03)',
             }}
           >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                <Shield size={20} style={{ color: 'rgba(255,255,255,0.8)' }} />
+            <div className="flex flex-col items-center text-center mb-8">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: `${BLUE}15` }}>
+                <Shield size={24} style={{ color: BLUE }} />
               </div>
-              <div>
-                <h2 className="text-lg font-extrabold" style={{ color: '#FFFFFF' }}>Permiso Global</h2>
-                <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Configura el nivel de acceso de {selectedTrainer.name}</p>
-              </div>
+              <h2 className="text-xl font-extrabold" style={{ color: '#0D1B2A' }}>Permiso Global</h2>
+              <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.35)' }}>Configura el nivel de acceso de {selectedTrainer.name}</p>
             </div>
 
             <motion.div
@@ -83,16 +76,13 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
               transition={{ delay: 0.08, duration: 0.3 }}
               className="flex items-center gap-4 rounded-2xl px-5 py-4"
               style={{
-                background: globalAdmin ? 'rgba(48,209,88,0.06)' : 'rgba(255,255,255,0.04)',
-                border: `1px solid ${globalAdmin ? 'rgba(48,209,88,0.15)' : 'rgba(255,255,255,0.06)'}`,
+                background: globalAdmin ? 'rgba(48,209,88,0.06)' : 'rgba(0,0,0,0.02)',
+                border: `1px solid ${globalAdmin ? 'rgba(48,209,88,0.15)' : 'rgba(0,0,0,0.04)'}`,
               }}
             >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: globalAdmin ? 'rgba(48,209,88,0.1)' : 'rgba(255,255,255,0.06)' }}>
-                <Shield size={18} style={{ color: globalAdmin ? '#30D158' : 'rgba(255,255,255,0.4)' }} />
-              </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Administrador Global</p>
-                <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>Administrador Global</p>
+                <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'rgba(0,0,0,0.4)' }}>
                   Acceso completo a todas las funcionalidades del sistema:{' '}
                   gestión de usuarios, entrenadores y estudiantes, configuración
                   de la plataforma, dashboard y reportes, documentación y
@@ -103,8 +93,8 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
                 onClick={() => setGlobalAdmin(!globalAdmin)}
                 className="relative w-11 h-6 rounded-full flex-shrink-0 cursor-pointer transition-all duration-300"
                 style={{
-                  background: globalAdmin ? 'rgba(48,209,88,0.6)' : 'rgba(255,255,255,0.12)',
-                  boxShadow: globalAdmin ? '0 0 12px rgba(48,209,88,0.25)' : 'none',
+                  background: globalAdmin ? '#30D158' : 'rgba(0,0,0,0.08)',
+                  boxShadow: globalAdmin ? '0 0 12px rgba(48,209,88,0.35)' : 'none',
                 }}
               >
                 <motion.div
@@ -124,9 +114,12 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
               whileTap={{ scale: 0.98 }}
               className="w-full mt-6 rounded-2xl py-3.5 text-sm font-bold transition-all"
               style={{
-                background: 'linear-gradient(135deg, rgba(48,209,88,0.2), rgba(48,209,88,0.1))',
-                border: '1px solid rgba(48,209,88,0.2)',
-                color: '#30D158',
+                background: globalAdmin
+                  ? 'linear-gradient(135deg, #30D158, #20A040)'
+                  : 'rgba(0,0,0,0.04)',
+                border: 'none',
+                color: globalAdmin ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
+                boxShadow: globalAdmin ? '0 8px 24px rgba(48,209,88,0.25)' : 'none',
               }}
             >
               Guardar Cambios
