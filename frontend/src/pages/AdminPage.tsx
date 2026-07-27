@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Shield, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Search, Menu } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Search, Menu } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
 import AdminTrainers from '../modules/admin/AdminTrainers'
-import AdminRoles from '../modules/admin/AdminRoles'
 import AdminConfig from '../modules/admin/AdminConfig'
 import AdminDocs from '../modules/admin/AdminDocs'
 
@@ -12,12 +11,11 @@ const BLUE = '#1270B7'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 
-type AdminSection = 'dashboard' | 'trainers' | 'roles' | 'config' | 'docs'
+type AdminSection = 'dashboard' | 'trainers' | 'config' | 'docs'
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'trainers', label: 'Entrenadores', icon: UserPlus },
-  { id: 'roles', label: 'Roles y Permisos', icon: Shield },
   { id: 'config', label: 'Configuración', icon: Settings },
   { id: 'docs', label: 'Documentación', icon: FileText },
 ]
@@ -255,7 +253,6 @@ export function AdminDashboard() {
           >
             {section === 'dashboard' && <AdminDashboardView />}
             {section === 'trainers' && <AdminTrainers search={trainerSearch} />}
-            {section === 'roles' && <AdminRoles />}
             {section === 'config' && <AdminConfig />}
             {section === 'docs' && <AdminDocs />}
           </motion.div>
