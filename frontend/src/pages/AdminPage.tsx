@@ -16,8 +16,8 @@ type AdminSection = 'dashboard' | 'trainers' | 'config' | 'docs'
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'trainers', label: 'Entrenadores', icon: UserPlus },
-  { id: 'config', label: 'Configuración', icon: Settings },
   { id: 'docs', label: 'Documentación', icon: FileText },
+  { id: 'config', label: 'Configuración', icon: Settings },
 ]
 
 export function AdminDashboard() {
