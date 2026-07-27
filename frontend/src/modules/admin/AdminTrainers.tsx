@@ -230,8 +230,8 @@ export default function AdminTrainers({ search, onSelectTrainer, backSignal, tra
             <div className="flex items-center gap-6 ml-56">
               <div className="w-1 h-12 rounded-full" style={{ background: RED_GRAD }} />
               <div>
-                <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Entrenadores</h1>
-                <p className="text-xs text-black/40">Gestión y seguimiento del equipo de trabajo.</p>
+                <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Administradores y Entrenadores</h1>
+                <p className="text-xs text-black/40">Crea y gestiona administradores y entrenadores del sistema.</p>
               </div>
             </div>
 
