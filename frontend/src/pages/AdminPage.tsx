@@ -163,10 +163,10 @@ export function AdminDashboard() {
         <AnimatePresence>
           {section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions' && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
+              initial={{ filter: 'blur(24px)', opacity: 0 }}
+              animate={{ filter: 'blur(0px)', opacity: 1 }}
+              exit={{ filter: 'blur(24px)', opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
               className="absolute inset-0 pointer-events-none"
             >
               <div className="absolute inset-0" style={{
@@ -174,11 +174,15 @@ export function AdminDashboard() {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
+                filter: 'blur(16px)',
               }} />
               <div className="absolute inset-0" style={{
-                backdropFilter: 'blur(3px) saturate(0.8)',
-                WebkitBackdropFilter: 'blur(3px) saturate(0.8)',
-                background: 'rgba(255,255,255,0.15)',
+                backgroundImage: `url(${permissionsScene})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                maskImage: 'radial-gradient(ellipse at center, black 55%, transparent 78%)',
+                WebkitMaskImage: 'radial-gradient(ellipse at center, black 55%, transparent 78%)',
               }} />
             </motion.div>
           )}
