@@ -59,19 +59,19 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: strin
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
-            className="w-full max-w-xl rounded-[28px] p-8"
+            className="w-full max-w-xl rounded-[28px] p-8 backdrop-blur-xl"
             style={{
-              background: 'rgba(255,255,255,0.5)',
-              border: '1px solid rgba(255,255,255,0.4)',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.03)',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.06)',
             }}
           >
             <div className="flex flex-col items-center text-center mb-8">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: `${BLUE}15` }}>
-                <Shield size={24} style={{ color: BLUE }} />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <Shield size={24} style={{ color: 'rgba(255,255,255,0.8)' }} />
               </div>
-              <h2 className="text-xl font-extrabold" style={{ color: '#0D1B2A' }}>Permiso Global</h2>
-              <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.35)' }}>Configura el nivel de acceso de {selectedTrainer.name}</p>
+              <h2 className="text-xl font-extrabold" style={{ color: '#FFFFFF' }}>Permiso Global</h2>
+              <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Configura el nivel de acceso de {selectedTrainer.name}</p>
             </div>
 
             <motion.div
@@ -80,13 +80,13 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: strin
               transition={{ delay: 0.08, duration: 0.3 }}
               className="flex items-center gap-4 rounded-2xl px-5 py-4"
               style={{
-                background: globalAdmin ? 'rgba(48,209,88,0.06)' : 'rgba(0,0,0,0.02)',
-                border: `1px solid ${globalAdmin ? 'rgba(48,209,88,0.15)' : 'rgba(0,0,0,0.04)'}`,
+                background: globalAdmin ? 'rgba(48,209,88,0.06)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${globalAdmin ? 'rgba(48,209,88,0.15)' : 'rgba(255,255,255,0.06)'}`,
               }}
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>Administrador Global</p>
-                <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                <p className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Administrador Global</p>
+                <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
                   Acceso completo a todas las funcionalidades del sistema:{' '}
                   gestión de usuarios, entrenadores y estudiantes, configuración
                   de la plataforma, dashboard y reportes, documentación y
@@ -97,8 +97,8 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: strin
                 onClick={() => setGlobalAdmin(!globalAdmin)}
                 className="relative w-11 h-6 rounded-full flex-shrink-0 cursor-pointer transition-all duration-300"
                 style={{
-                  background: globalAdmin ? '#30D158' : 'rgba(0,0,0,0.08)',
-                  boxShadow: globalAdmin ? '0 0 12px rgba(48,209,88,0.35)' : 'none',
+                  background: globalAdmin ? 'rgba(48,209,88,0.6)' : 'rgba(255,255,255,0.12)',
+                  boxShadow: globalAdmin ? '0 0 12px rgba(48,209,88,0.25)' : 'none',
                 }}
               >
                 <motion.div
@@ -120,9 +120,9 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: strin
               style={{
                 background: globalAdmin
                   ? 'linear-gradient(135deg, #30D158, #20A040)'
-                  : 'rgba(0,0,0,0.04)',
-                border: 'none',
-                color: globalAdmin ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
+                  : 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: globalAdmin ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
                 boxShadow: globalAdmin ? '0 8px 24px rgba(48,209,88,0.25)' : 'none',
               }}
             >
