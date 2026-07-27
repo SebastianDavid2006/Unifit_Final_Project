@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { Search, Plus, ChevronRight } from 'lucide-react'
-import adminImg from '../../assets/illustrations/characters/admin/admin_default.webp'
+import { motion } from 'motion/react'
+import { Plus, ChevronRight } from 'lucide-react'
+import trainersImg from '../../assets/illustrations/characters/trainers/trainers_group.webp'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -30,10 +30,7 @@ const initialTrainers: Trainer[] = [
   { id: 5, name: 'Roberto Jiménez', email: 'roberto.j@unifit.edu', phone: '+1 555-0105', speciality: 'Rehabilitación Física', students: 12, status: 'active', avatar: 'RJ', rating: 85, joinedAt: '05 May 2024', schedule: 'Lun-Jue 9AM-5PM', certifications: ['Fisioterapia Deportiva', 'Kinesiología'] },
 ]
 
-export default function AdminTrainers() {
-  const [trainers] = useState(initialTrainers)
-  const [search, setSearch] = useState('')
-  const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
+export default function AdminTrainers({ search }: { search: string }) {
 
   const filtered = useMemo(() =>
     trainers.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.speciality.toLowerCase().includes(search.toLowerCase())),
@@ -281,17 +278,9 @@ export default function AdminTrainers() {
             style={{ position: 'absolute', left: 10, top: -38, width: 220, zIndex: 20, opacity: 0, animation: 'blur-fade 0.6s 0.3s ease forwards' }}
           >
             <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', width: '85%', height: '45%', background: 'rgba(18,112,183,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
-            <img src={adminImg} alt="Admin" className="w-full h-auto drop-shadow-xl relative" />
+            <img src={trainersImg} alt="Admin" className="w-full h-auto drop-shadow-xl relative" />
           </div>
         </motion.div>
-
-        {/* Search and table */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(0,0,0,0.05)' }}>
-            <Search size={14} style={{ color: 'rgba(0,0,0,0.2)' }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar entrenador..." className="bg-transparent text-sm outline-none w-48" style={{ color: '#1D1D1F' }} />
-          </div>
-        </div>
 
         <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
           {tableHeaders.map((h, i) => (
