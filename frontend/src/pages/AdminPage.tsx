@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2 } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
 import AdminTrainers from '../modules/admin/AdminTrainers'
+import AdminGym from '../modules/admin/AdminGym'
 import AdminConfig from '../modules/admin/AdminConfig'
 import AdminDocs from '../modules/admin/AdminDocs'
 import iconRunning from '../assets/icons/animated/icon_running.gif'
@@ -13,12 +14,13 @@ const BLUE = '#1270B7'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 
-type AdminSection = 'dashboard' | 'trainers' | 'config' | 'docs'
+type AdminSection = 'dashboard' | 'trainers' | 'docs' | 'gym' | 'config'
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'trainers', label: 'Entrenadores', icon: UserPlus },
   { id: 'docs', label: 'Documentación', icon: FileText },
+  { id: 'gym', label: 'Gestión', icon: Building2 },
   { id: 'config', label: 'Configuración', icon: Settings },
 ]
 
@@ -29,6 +31,7 @@ export function AdminDashboard() {
   const [showTrainerFilters, setShowTrainerFilters] = useState(false)
   const [trainerDetailOpen, setTrainerDetailOpen] = useState(false)
   const [trainerTab, setTrainerTab] = useState('overview')
+  const [gymTab, setGymTab] = useState('students')
   const trainerRef = useRef<{ clearSelection: () => void }>(null)
   const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
 
@@ -258,6 +261,52 @@ export function AdminDashboard() {
               </>
             )}
             {section === 'trainers' && !trainerDetailOpen && <div className="flex-1" />}
+            {section === 'gym' && (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
+                  background: 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(24px) saturate(1.6)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                }}>
+                  <motion.button onClick={() => setGymTab('students')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                    style={{
+                      background: gymTab === 'students'
+                        ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                        : 'transparent',
+                      color: gymTab === 'students' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    <Users size={14} />
+                    Estudiantes
+                  </motion.button>
+                  <motion.button onClick={() => setGymTab('equipment')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                    style={{
+                      background: gymTab === 'equipment'
+                        ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                        : 'transparent',
+                      color: gymTab === 'equipment' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    <Dumbbell size={14} />
+                    Equipamiento
+                  </motion.button>
+                  <motion.button onClick={() => setGymTab('schedule')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                    style={{
+                      background: gymTab === 'schedule'
+                        ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                        : 'transparent',
+                      color: gymTab === 'schedule' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    <Calendar size={14} />
+                    Agenda
+                  </motion.button>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-3 ml-auto">
               <motion.button
                 whileHover={{ background: 'rgba(255,255,255,0.28)' }}
@@ -323,6 +372,7 @@ export function AdminDashboard() {
           >
             {section === 'dashboard' && <AdminDashboardView />}
             {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
+            {section === 'gym' && <AdminGym tab={gymTab} />}
             {section === 'config' && <AdminConfig />}
             {section === 'docs' && <AdminDocs />}
           </motion.div>
