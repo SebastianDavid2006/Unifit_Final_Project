@@ -1,19 +1,25 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, Settings, Bell, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Shield, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
-import AdminSettings from '../modules/admin/AdminSettings'
+import AdminTrainers from '../modules/admin/AdminTrainers'
+import AdminRoles from '../modules/admin/AdminRoles'
+import AdminConfig from '../modules/admin/AdminConfig'
+import AdminDocs from '../modules/admin/AdminDocs'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 
-type AdminSection = 'dashboard' | 'settings'
+type AdminSection = 'dashboard' | 'trainers' | 'roles' | 'config' | 'docs'
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'settings', label: 'Ajustes', icon: Settings },
+  { id: 'trainers', label: 'Entrenadores', icon: UserPlus },
+  { id: 'roles', label: 'Roles y Permisos', icon: Shield },
+  { id: 'config', label: 'Configuración', icon: Settings },
+  { id: 'docs', label: 'Documentación', icon: FileText },
 ]
 
 export function AdminDashboard() {
@@ -64,7 +70,7 @@ export function AdminDashboard() {
           </button>
         </div>
 
-        <div className="flex flex-col w-full relative">
+        <div className="flex flex-col w-full relative flex-1">
           <div className="absolute inset-0 flex flex-col pointer-events-none" style={{ filter: 'url(#goo)' }}>
             {sidebarItems.map(item => (
               <div key={item.id} className="overflow-hidden flex-shrink-0" style={{
@@ -206,7 +212,10 @@ export function AdminDashboard() {
             className="size-full"
           >
             {section === 'dashboard' && <AdminDashboardView />}
-            {section === 'settings' && <AdminSettings />}
+            {section === 'trainers' && <AdminTrainers />}
+            {section === 'roles' && <AdminRoles />}
+            {section === 'config' && <AdminConfig />}
+            {section === 'docs' && <AdminDocs />}
           </motion.div>
         </AnimatePresence>
       </div>
