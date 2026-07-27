@@ -28,6 +28,7 @@ export function AdminDashboard() {
   const [showTrainerFilters, setShowTrainerFilters] = useState(false)
   const [trainerDetailOpen, setTrainerDetailOpen] = useState(false)
   const [trainerTab, setTrainerTab] = useState('overview')
+  const [backSignal, setBackSignal] = useState(0)
 
   return (
     <div className="flex size-full overflow-hidden mesh-bg relative">
@@ -165,7 +166,7 @@ export function AdminDashboard() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setTrainerDetailOpen(false)}
+                  onClick={() => { setTrainerDetailOpen(false); setBackSignal(s => s + 1) }}
                   className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{
                     background: 'rgba(255,255,255,0.2)',
@@ -295,7 +296,7 @@ export function AdminDashboard() {
             className="size-full"
           >
             {section === 'dashboard' && <AdminDashboardView />}
-            {section === 'trainers' && <AdminTrainers key={trainerDetailOpen ? 'detail' : 'list'} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} />}
+            {section === 'trainers' && <AdminTrainers search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} backSignal={backSignal} />}
             {section === 'config' && <AdminConfig />}
             {section === 'docs' && <AdminDocs />}
           </motion.div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { Plus, ChevronRight } from 'lucide-react'
 import trainersImg from '../../assets/illustrations/characters/trainers/trainers_group.webp'
@@ -30,9 +30,13 @@ const initialTrainers: Trainer[] = [
   { id: 5, name: 'Roberto Jiménez', email: 'roberto.j@unifit.edu', phone: '+1 555-0105', speciality: 'Rehabilitación Física', students: 12, status: 'active', avatar: 'RJ', rating: 85, joinedAt: '05 May 2024', schedule: 'Lun-Jue 9AM-5PM', certifications: ['Fisioterapia Deportiva', 'Kinesiología'] },
 ]
 
-export default function AdminTrainers({ search, onSelectTrainer }: { search: string; onSelectTrainer?: () => void }) {
+export default function AdminTrainers({ search, onSelectTrainer, backSignal }: { search: string; onSelectTrainer?: () => void; backSignal?: number }) {
   const [trainers] = useState(initialTrainers)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
+
+  useEffect(() => {
+    setSelectedTrainer(null)
+  }, [backSignal])
 
   function handleSelectTrainer(t: Trainer) {
     setSelectedTrainer(t)
