@@ -882,17 +882,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         {(() => {
                           const totalRutinas = 4
                           const ultimaRutina = '15 May 2026'
-                          const estadoMap: Record<string, { label: string; color: string }> = {
-                            high: { label: 'Alto riesgo', color: '#FF3B30' },
-                            medium: { label: 'Riesgo medio', color: '#FF9500' },
-                            low: { label: 'Bajo riesgo', color: '#30D158' },
-                          }
-                          const estado = estadoMap[student.risk] || { label: 'Desconocido', color: 'rgba(0,0,0,0.3)' }
 
                           const items = [
                             { label: 'Total de rutinas', value: `${totalRutinas}`, model: 'list' },
                             { label: 'Última rutina realizada', value: ultimaRutina, model: 'calendar' },
-                            { label: 'Estado del estudiante', value: estado.label, model: 'clock', color: estado.color },
+                            { label: 'Fecha de la próxima valoración', value: '01 Ago 2026', model: 'calendar', highlight: true },
                           ]
                           return items.map((m) => {
                             const iconEl = m.model === 'fire' ? (
@@ -905,24 +899,30 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                               <div style={{ width: 52, height: 52 }}><CalendarView /></div>
                             )
                             return (
-                              <motion.div
-                                key={m.label}
-                                whileHover={{ scale: 1.03 }}
-                                transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
-                                className="relative rounded-2xl p-4 flex flex-col items-center text-center group"
-                                style={cardStyle}
-                              >
+                                <motion.div
+                                  key={m.label}
+                                  whileHover={{ scale: 1.03 }}
+                                  transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
+                                  className="relative rounded-2xl p-4 flex flex-col items-center text-center group"
+                                  style={{
+                                    ...cardStyle,
+                                    ...(m.highlight ? { border: '1px solid rgba(48,209,88,0.15)', boxShadow: '0 8px 32px rgba(48,209,88,0.12), 0 0 40px rgba(48,209,88,0.06)' } : {}),
+                                  }}
+                                >
                                 <div
                                   className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.5] mb-5 flex items-center justify-center"
                                   style={{ transformOrigin: 'bottom center' }}
                                 >
                                   {iconEl}
                                 </div>
-                                <p className="text-gradient-warm" style={{
+                                <p style={{
                                   fontSize: '1.8rem', fontWeight: 700, lineHeight: 1,
-                                }}>{m.value}</p>
+                                  ...(m.highlight
+                                    ? { background: 'linear-gradient(135deg, #30D158, #00C7BE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
+                                    : {}),
+                                }} className={m.highlight ? '' : 'text-gradient-warm'}>{m.value}</p>
                                 <p className="text-sm font-semibold mt-2" style={{
-                                  color: 'rgba(0,0,0,0.5)',
+                                  color: m.highlight ? '#30D158' : 'rgba(0,0,0,0.5)',
                                 }}>{m.label}</p>
                               </motion.div>
                             )

@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, BarChart3, GraduationCap, Clock, ClipboardList } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
 import AdminTrainers from '../modules/admin/AdminTrainers'
 import AdminGym from '../modules/admin/AdminGym'
 import AdminConfig from '../modules/admin/AdminConfig'
 import AdminDocs from '../modules/admin/AdminDocs'
+import AdminStats from '../modules/admin/AdminStats'
 import iconRunning from '../assets/icons/animated/icon_running.gif'
 import permissionsScene from '../assets/scenes/permmisions_scene.png'
 
@@ -14,11 +15,12 @@ const BLUE = '#1270B7'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 
-type AdminSection = 'dashboard' | 'trainers' | 'docs' | 'gym' | 'config'
+type AdminSection = 'dashboard' | 'trainers' | 'stats' | 'docs' | 'gym' | 'config'
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'trainers', label: 'Entrenadores', icon: UserPlus },
+  { id: 'stats', label: 'Estadísticas', icon: BarChart3 },
   { id: 'docs', label: 'Documentación', icon: FileText },
   { id: 'gym', label: 'Gestión', icon: Building2 },
   { id: 'config', label: 'Configuración', icon: Settings },
@@ -32,6 +34,7 @@ export function AdminDashboard() {
   const [trainerDetailOpen, setTrainerDetailOpen] = useState(false)
   const [trainerTab, setTrainerTab] = useState('overview')
   const [gymTab, setGymTab] = useState('students')
+  const [statsTab, setStatsTab] = useState('overview')
   const trainerRef = useRef<{ clearSelection: () => void }>(null)
   const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
 
@@ -307,6 +310,36 @@ export function AdminDashboard() {
                 </div>
               </div>
             )}
+            {section === 'stats' && (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
+                  background: 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(24px) saturate(1.6)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                }}>
+                  {([
+                    { id: 'overview', label: 'Resumen', icon: BarChart3 },
+                    { id: 'students', label: 'Estudiantes', icon: Users },
+                    { id: 'careers', label: 'Carreras', icon: GraduationCap },
+                    { id: 'schedule', label: 'Horarios', icon: Clock },
+                    { id: 'assessments', label: 'Valoraciones', icon: ClipboardList },
+                  ] as const).map(t => (
+                    <motion.button key={t.id} onClick={() => setStatsTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                      style={{
+                        background: statsTab === t.id
+                          ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                          : 'transparent',
+                        color: statsTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      <t.icon size={14} />
+                      {t.label}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-3 ml-auto">
               <motion.button
                 whileHover={{ background: 'rgba(255,255,255,0.28)' }}
@@ -371,6 +404,7 @@ export function AdminDashboard() {
             className="size-full"
           >
             {section === 'dashboard' && <AdminDashboardView />}
+            {section === 'stats' && <AdminStats tab={statsTab} onTabChange={setStatsTab} />}
             {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
             {section === 'gym' && <AdminGym tab={gymTab} />}
             {section === 'config' && <AdminConfig />}
