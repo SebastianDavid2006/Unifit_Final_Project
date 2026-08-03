@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronRight, Plus, X, Activity, Settings, ChevronLeft, Sparkles, Maximize2, Minimize2 } from 'lucide-react'
+import { ChevronRight, Plus, X, ChevronLeft, Sparkles, Maximize2, Minimize2 } from 'lucide-react'
 import calendarImg from '../../assets/illustrations/modules/calendar_module.webp'
 import calendarCardImg from '../../assets/icons/objects/calendar.webp'
 import { meshInputBg, meshInputHover } from '../../data/constants'
@@ -36,7 +36,6 @@ const WEEK_DAYS_6: { key: string; label: string; short: string }[] = [
 export default function AgendaModule() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [showWeekModal, setShowWeekModal] = useState(false)
   const [showApptModal, setShowApptModal] = useState(false)
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month')
   const [hoveredCol, setHoveredCol] = useState<number | null>(null)
@@ -44,7 +43,7 @@ export default function AgendaModule() {
   const [pressedCell, setPressedCell] = useState<{ col: number; row: number } | null>(null)
   const [dayModalDate, setDayModalDate] = useState<string | null>(null)
 
-  const [weeklyTemplate, setWeeklyTemplate] = useState<Record<string, { active: boolean; open: string; close: string }>>({
+  const [weeklyTemplate] = useState<Record<string, { active: boolean; open: string; close: string }>>({
     LUN: { active: true, open: '06:00', close: '22:00' },
     MAR: { active: true, open: '06:00', close: '22:00' },
     MIÉ: { active: true, open: '06:00', close: '22:00' },
@@ -435,31 +434,15 @@ export default function AgendaModule() {
             </div>
           </div>
           <div className="flex items-center gap-3 pr-4">
-            <button onClick={() => setShowWeekModal(true)}
-              className="w-11 h-11 rounded-2xl flex items-center justify-center transition-all hover:bg-black/[0.06]"
-              style={{ background: 'rgba(0,0,0,0.04)', color: BLUE, border: '1px solid rgba(0,0,0,0.05)' }}
-              title="Configurar Semana"
-            ><Settings size={20} /></button>
             <motion.button
-              initial="initial"
-              whileHover="hover"
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
               onClick={openPublishModal}
-              className="flex items-center rounded-2xl overflow-hidden text-white"
-              style={{ height: 44, padding: '0 12px', background: MESH_GRAD }}
+              className="w-12 h-12 rounded-full flex items-center justify-center text-white transition-all"
+              style={{ background: MESH_GRAD, boxShadow: '0 6px 20px rgba(18,112,183,0.3)' }}
+              title="Agendar Semana"
             >
-              <motion.div
-                variants={{
-                  hover: { maxWidth: 80, opacity: 1, marginRight: 6, transition: { delay: 0.12, duration: 0.35, ease: 'easeOut' } },
-                  initial: { maxWidth: 0, opacity: 0, marginRight: 0, transition: { duration: 0.2 } }
-                }}
-                className="overflow-hidden whitespace-nowrap"
-              >
-                <span className="text-xs font-bold">Agendar Semana</span>
-              </motion.div>
-              <div className="flex items-center justify-center flex-shrink-0">
-                <Plus size={18} strokeWidth={3} />
-              </div>
+              <Plus size={20} strokeWidth={3} />
             </motion.button>
           </div>
         </div>
@@ -776,67 +759,6 @@ export default function AgendaModule() {
         )}
       </AnimatePresence>
 
-      {/* Week Template Modal */}
-      <AnimatePresence>
-        {showWeekModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
-            onClick={() => setShowWeekModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="rounded-3xl w-full max-w-lg overflow-hidden"
-              style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between px-6 pt-6 pb-3">
-                <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Horario Semanal Base</h2>
-                <button onClick={() => setShowWeekModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors"><X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
-              </div>
-              <div className="px-6 pb-6 space-y-3">
-                {(['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'] as const).map((dk, i) => {
-                  const t = weeklyTemplate[dk]
-                  return (
-                    <div key={dk} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                      <div onClick={() => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], active: !prev[dk].active } }))}
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold cursor-pointer transition-all flex-shrink-0"
-                        style={{ background: t.active ? MESH_GRAD : 'rgba(0,0,0,0.04)', color: t.active ? '#fff' : 'rgba(0,0,0,0.25)' }}
-                      >{dayLabels[i].charAt(0)}</div>
-                      <div className="flex-1 font-semibold text-sm" style={{ color: '#1A1A1E' }}>{dayLabels[i]}</div>
-                      <input type="time" value={t.open} onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], open: e.target.value } }))} disabled={!t.active}
-                        className="px-2 py-1.5 rounded-lg text-xs font-medium border-none outline-none"
-                        style={{ background: t.active ? meshInputBg : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60, border: t.active ? '1px solid transparent' : 'none' }}
-                        onMouseEnter={e => { if (t.active) enterMesh(e.currentTarget) }}
-                        onMouseLeave={e => { if (t.active) leaveMesh(e.currentTarget) }}
-                        onFocus={e => { if (t.active) focusMesh(e.currentTarget) }}
-                        onBlur={e => { if (t.active) blurMesh(e.currentTarget) }} />
-                      <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>–</span>
-                      <input type="time" value={t.close} onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], close: e.target.value } }))} disabled={!t.active}
-                        className="px-2 py-1.5 rounded-lg text-xs font-medium border-none outline-none"
-                        style={{ background: t.active ? meshInputBg : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60, border: t.active ? '1px solid transparent' : 'none' }}
-                        onMouseEnter={e => { if (t.active) enterMesh(e.currentTarget) }}
-                        onMouseLeave={e => { if (t.active) leaveMesh(e.currentTarget) }}
-                        onFocus={e => { if (t.active) focusMesh(e.currentTarget) }}
-                        onBlur={e => { if (t.active) blurMesh(e.currentTarget) }} />
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="px-6 pb-6 pt-0">
-                <button onClick={() => setShowWeekModal(false)} className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all" style={{ background: MESH_GRAD }}>Guardar Semana Base</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* New Appointment Modal */}
       <AnimatePresence>
         {showApptModal && (
@@ -958,14 +880,35 @@ export default function AgendaModule() {
               style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
               onClick={e => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-6 pt-6 pb-3">
-                <div>
-                  <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Agendar Semana</h2>
-                  <p className="text-[11px] font-bold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>
-                    Paso {publishStep} de 2 · {publishStep === 1 ? 'Fechas y días' : 'Horarios por día'}
-                  </p>
+              <div className="sticky top-0 z-10 flex-shrink-0" style={{ background: 'rgba(255,255,255,0.9)', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                <div className="flex items-center justify-end px-4 pt-4 pb-0">
+                  <motion.button
+                    whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)', color: RED }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={closePublishModal}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors"
+                    style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}
+                  >
+                    <X size={15} />
+                  </motion.button>
                 </div>
-                <button onClick={closePublishModal} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors"><X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+                <div className="flex items-center justify-center gap-1.5" style={{ marginTop: 12, marginBottom: 16 }}>
+                  {[1, 2].map(s => (
+                    <motion.div
+                      key={s}
+                      animate={{
+                        width: s === publishStep ? 16 : 6,
+                        background: s === publishStep ? BLUE_GRAD : 'rgba(0,0,0,0.12)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+                      className="rounded-full"
+                      style={{ height: 6 }}
+                    />
+                  ))}
+                </div>
+                <span className="text-lg font-bold tracking-wide text-center block" style={{ color: '#1A1A1E', marginBottom: 10 }}>
+                  Agendar Semana
+                </span>
               </div>
 
               {publishStep === 1 ? (
