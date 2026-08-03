@@ -435,14 +435,25 @@ export default function AgendaModule() {
           </div>
           <div className="flex items-center gap-3 pr-4">
             <motion.button
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.92 }}
+              initial="initial"
+              whileHover="hover"
+              whileTap={{ scale: 0.95 }}
               onClick={openPublishModal}
-              className="w-12 h-12 rounded-full flex items-center justify-center text-white transition-all"
-              style={{ background: MESH_GRAD, boxShadow: '0 6px 20px rgba(18,112,183,0.3)' }}
-              title="Agendar Semana"
+              className="flex items-center rounded-full overflow-hidden text-white"
+              style={{ height: 44, padding: '0 12px', background: MESH_GRAD }}
             >
-              <Plus size={20} strokeWidth={3} />
+              <motion.div
+                variants={{
+                  hover: { maxWidth: 80, opacity: 1, marginRight: 6, transition: { delay: 0.12, duration: 0.35, ease: 'easeOut' } },
+                  initial: { maxWidth: 0, opacity: 0, marginRight: 0, transition: { duration: 0.2 } }
+                }}
+                className="overflow-hidden whitespace-nowrap"
+              >
+                <span className="text-xs font-bold">Nueva Agenda</span>
+              </motion.div>
+              <div className="flex items-center justify-center flex-shrink-0">
+                <Plus size={18} strokeWidth={3} />
+              </div>
             </motion.button>
           </div>
         </div>
