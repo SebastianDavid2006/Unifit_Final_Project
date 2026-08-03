@@ -8,7 +8,7 @@ import {
 import type { Machine, Exercise, Status } from '../../data/types'
 import {
   BLUE, BLUE_GRAD, GREEN_GRAD, ORANGE_GRAD, RED,
-  muscleIcons, statusConfig, meshInputBg, meshInputHover, muscleToZones,
+  muscleIcons, statusConfig, meshInputBg, meshInputHover, muscleToZones, BODY_GROUPS,
 } from '../../data/constants'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import machineImg from '../../assets/illustrations/modules/equipment_module.webp'
@@ -42,7 +42,6 @@ interface MachineModalProps {
   onFormChange: (form: any) => void
   onStepChange: (step: number) => void
   onConfirmClose: (v: boolean) => void
-  onOpenImageEditor: (dataUrl: string) => void
   onToggleExerciseSelection: (id: number) => void
 }
 
@@ -281,7 +280,7 @@ export function MachineModal(props: MachineModalProps) {
                               if (file) {
                                 const reader = new FileReader()
                                 reader.onload = () => {
-                                  props.onOpenImageEditor(reader.result as string)
+                                  props.onFormChange({ ...props.form, imageDataUrl: reader.result as string })
                                 }
                                 reader.readAsDataURL(file)
                               }
@@ -359,83 +358,137 @@ export function MachineModal(props: MachineModalProps) {
                         <div>
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Grupos musculares</label>
                           <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más grupos musculares que trabaja esta máquina.</p>
-                          <div className="grid grid-cols-4 gap-2">
-                            {[
-                              'Pecho', 'Espalda', 'Hombros', 'Brazos',
-                              'Piernas', 'Abdomen/Core', 'Cardio', 'General',
-                            ].map(label => {
-                              const selected = props.form.muscleGroups.includes(label)
-                              const isGeneral = label === 'General'
-                              const GOLD_GRAD = 'linear-gradient(135deg, #F1C827, #FFE066)'
-                              const defaultBg = 'rgba(0,0,0,0.03)'
-                              const generalSelected = props.form.muscleGroups.includes('General')
-                              const disabled = generalSelected && !isGeneral
-                              const hoverBg = isGeneral ? 'rgba(241,200,39,0.12)' : `${BLUE}12`
-                              const selectedBg = isGeneral ? GOLD_GRAD : BLUE_GRAD
-                              const textColor = selected ? '#FFFFFF' : disabled ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.35)'
-                              const shadow = isGeneral
-                                ? '0 4px 20px rgba(241,200,39,0.25)'
-                                : `0 4px 20px ${BLUE}40`
-                              return (
-                                <motion.button
-                                  key={label}
-                                  whileHover={!disabled ? { scale: 1.06 } : {}}
-                                  whileTap={!disabled ? { scale: 0.95 } : {}}
-                                  onClick={() => {
-                                    if (disabled) return
-                                    if (isGeneral) {
+                          {BODY_GROUPS.some(g => props.form.muscleGroups.includes(g)) ? (
+                            <div className="grid grid-cols-3 gap-2">
+                              {BODY_GROUPS.map(label => {
+                                const selected = props.form.muscleGroups.includes(label)
+                                const isGeneral = label === 'General'
+                                const GOLD_GRAD = 'linear-gradient(135deg, #F1C827, #FFE066)'
+                                const defaultBg = 'rgba(0,0,0,0.03)'
+                                const hoverBg = isGeneral ? 'rgba(241,200,39,0.12)' : `${BLUE}12`
+                                const selectedBg = isGeneral ? GOLD_GRAD : BLUE_GRAD
+                                const textColor = selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)'
+                                const shadow = isGeneral
+                                  ? '0 4px 20px rgba(241,200,39,0.25)'
+                                  : `0 4px 20px ${BLUE}40`
+                                return (
+                                  <motion.button
+                                    key={label}
+                                    whileHover={{ scale: 1.06 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
                                       props.onFormChange({
                                         ...props.form,
-                                        muscleGroups: selected ? [] : ['General']
+                                        muscleGroups: selected ? [] : [label]
                                       })
-                                    } else if (generalSelected) {
-                                      props.onFormChange({
-                                        ...props.form,
-                                        muscleGroups: props.form.muscleGroups.includes(label)
-                                          ? props.form.muscleGroups.filter(g => g !== 'General')
-                                          : [...props.form.muscleGroups.filter(g => g !== 'General'), label]
-                                      })
-                                    } else {
-                                      props.onFormChange({
-                                        ...props.form,
-                                        muscleGroups: props.form.muscleGroups.includes(label)
-                                          ? props.form.muscleGroups.filter(g => g !== label)
-                                          : [...props.form.muscleGroups, label]
-                                      })
-                                    }
-                                  }}
-                                  onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = isGeneral ? '#B8860B' : BLUE } }}
-                                  onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
-                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
-                                  style={{
-                                    background: selected ? selectedBg : defaultBg,
-                                    color: textColor,
-                                    border: '1px solid transparent',
-                                    boxShadow: selected ? shadow : 'none',
-                                    opacity: disabled ? 0.4 : 1,
-                                    filter: disabled ? 'blur(0.6px)' : 'none',
-                                    pointerEvents: disabled ? 'none' : 'auto',
-                                    cursor: disabled ? 'not-allowed' : 'pointer',
-                                  }}
-                                >
-                                  <motion.img
-                                    src={muscleIcons[label]}
-                                    alt=""
-                                    className="mb-0.5"
-                                    animate={{
-                                      width: selected ? 48 : 24,
-                                      height: selected ? 48 : 24,
-                                      marginTop: selected ? -24 : 0,
-                                      filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : disabled ? 'grayscale(0.6) blur(0px)' : 'blur(0px)',
-                                      opacity: disabled ? 0.3 : 1,
                                     }}
-                                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                                  />
-                                  <span>{label}</span>
-                                </motion.button>
-                              )
-                            })}
-                          </div>
+                                    onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = isGeneral ? '#B8860B' : BLUE } }}
+                                    onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                                    className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                    style={{
+                                      background: selected ? selectedBg : defaultBg,
+                                      color: textColor,
+                                      border: '1px solid transparent',
+                                      boxShadow: selected ? shadow : 'none',
+                                    }}
+                                  >
+                                    <motion.img
+                                      src={muscleIcons[label]}
+                                      alt=""
+                                      className="mb-0.5"
+                                      animate={{
+                                        width: selected ? 48 : 24,
+                                        height: selected ? 48 : 24,
+                                        marginTop: selected ? -24 : 0,
+                                        filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
+                                        opacity: 1,
+                                      }}
+                                      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                    />
+                                    <span>{label}</span>
+                                  </motion.button>
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-4 gap-2">
+                              {[
+                                'Pecho', 'Espalda', 'Hombros', 'Brazos',
+                                'Piernas', 'Abdomen/Core', 'Cardio', 'General',
+                              ].map(label => {
+                                const selected = props.form.muscleGroups.includes(label)
+                                const isGeneral = label === 'General'
+                                const GOLD_GRAD = 'linear-gradient(135deg, #F1C827, #FFE066)'
+                                const defaultBg = 'rgba(0,0,0,0.03)'
+                                const generalSelected = props.form.muscleGroups.includes('General')
+                                const disabled = generalSelected && !isGeneral
+                                const hoverBg = isGeneral ? 'rgba(241,200,39,0.12)' : `${BLUE}12`
+                                const selectedBg = isGeneral ? GOLD_GRAD : BLUE_GRAD
+                                const textColor = selected ? '#FFFFFF' : disabled ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.35)'
+                                const shadow = isGeneral
+                                  ? '0 4px 20px rgba(241,200,39,0.25)'
+                                  : `0 4px 20px ${BLUE}40`
+                                return (
+                                  <motion.button
+                                    key={label}
+                                    whileHover={!disabled ? { scale: 1.06 } : {}}
+                                    whileTap={!disabled ? { scale: 0.95 } : {}}
+                                    onClick={() => {
+                                      if (disabled) return
+                                      if (isGeneral) {
+                                        props.onFormChange({
+                                          ...props.form,
+                                          muscleGroups: selected ? [] : ['General']
+                                        })
+                                      } else if (generalSelected) {
+                                        props.onFormChange({
+                                          ...props.form,
+                                          muscleGroups: props.form.muscleGroups.includes(label)
+                                            ? props.form.muscleGroups.filter(g => g !== 'General')
+                                            : [...props.form.muscleGroups.filter(g => g !== 'General'), label]
+                                        })
+                                      } else {
+                                        props.onFormChange({
+                                          ...props.form,
+                                          muscleGroups: props.form.muscleGroups.includes(label)
+                                            ? props.form.muscleGroups.filter(g => g !== label)
+                                            : [...props.form.muscleGroups, label]
+                                        })
+                                      }
+                                    }}
+                                    onMouseEnter={e => { if (!selected && !disabled) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = isGeneral ? '#B8860B' : BLUE } }}
+                                    onMouseLeave={e => { if (!selected && !disabled) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                                    className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                    style={{
+                                      background: selected ? selectedBg : defaultBg,
+                                      color: textColor,
+                                      border: '1px solid transparent',
+                                      boxShadow: selected ? shadow : 'none',
+                                      opacity: disabled ? 0.4 : 1,
+                                      filter: disabled ? 'blur(0.6px)' : 'none',
+                                      pointerEvents: disabled ? 'none' : 'auto',
+                                      cursor: disabled ? 'not-allowed' : 'pointer',
+                                    }}
+                                  >
+                                    <motion.img
+                                      src={muscleIcons[label]}
+                                      alt=""
+                                      className="mb-0.5"
+                                      animate={{
+                                        width: selected ? 48 : 24,
+                                        height: selected ? 48 : 24,
+                                        marginTop: selected ? -24 : 0,
+                                        filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : disabled ? 'grayscale(0.6) blur(0px)' : 'blur(0px)',
+                                        opacity: disabled ? 0.3 : 1,
+                                      }}
+                                      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                    />
+                                    <span>{label}</span>
+                                  </motion.button>
+                                )
+                              })}
+                            </div>
+                          )}
                         </div>
                         <div>
                           <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Nivel Recomendado</label>
@@ -526,6 +579,7 @@ export function MachineModal(props: MachineModalProps) {
                                     'Todos',
                                     ...(['Pecho', 'Espalda', 'Hombros', 'Brazos',
                                       'Piernas', 'Abdomen/Core', 'Cardio', 'General',
+                                      'Tren Superior', 'Tren Inferior',
                                     ] as string[]).filter(g => props.form.muscleGroups.includes(g)),
                                   ].map(label => {
                                     const isActive = activeMuscleFilter === label

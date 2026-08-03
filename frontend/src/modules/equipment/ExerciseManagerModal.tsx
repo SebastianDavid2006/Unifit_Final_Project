@@ -8,7 +8,7 @@ import {
 import type { Exercise, Status } from '../../data/types'
 import {
   BLUE, BLUE_GRAD, GREEN_GRAD, ORANGE_GRAD, RED, ORANGE,
-  muscleIcons, statusConfig, meshInputBg, meshInputHover,
+  muscleIcons, meshInputBg, meshInputHover, BODY_GROUPS,
 } from '../../data/constants'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import coachExerciseSuccessImg from '../../assets/illustrations/characters/coach/coach_exercise_success.webp'
@@ -217,7 +217,15 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
 
                 {/* ── Body ── */}
                 <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
-                  {/* Step 0 — Name, Description, Status */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={props.step}
+                      initial={{ opacity: 0, filter: 'blur(6px)' }}
+                      animate={{ opacity: 1, filter: 'blur(0px)' }}
+                      exit={{ opacity: 0, filter: 'blur(6px)' }}
+                      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                  {/* Step 0 — Name, Description */}
                   {props.step === 0 && (
                     <div className="space-y-4">
                       <div className="flex flex-col gap-1">
@@ -253,35 +261,6 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                           onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
                         />
                       </div>
-                      <div>
-                        <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Estado</label>
-                        <div className="flex gap-2">
-                          {(['active', 'maintenance', 'inactive'] as const).map(s => {
-                            const sel = props.form.status === s
-                            const c = statusConfig[s].color
-                            const grad = `linear-gradient(135deg, ${c}, ${c}cc)`
-                            return (
-                              <motion.button
-                                key={s}
-                                whileHover={{ scale: 1.06 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => props.onFormChange({ ...props.form, status: s })}
-                                onMouseEnter={e => { if (!sel) { e.currentTarget.style.background = `${c}18`; e.currentTarget.style.color = c } }}
-                                onMouseLeave={e => { if (!sel) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.25)' } }}
-                                className="flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all duration-200"
-                                style={{
-                                  background: sel ? grad : 'rgba(0,0,0,0.03)',
-                                  color: sel ? '#FFFFFF' : 'rgba(0,0,0,0.25)',
-                                  border: '1px solid transparent',
-                                  boxShadow: sel ? `0 4px 16px ${c}40` : 'none',
-                                }}
-                              >
-                                {statusConfig[s].label}
-                              </motion.button>
-                            )
-                          })}
-                        </div>
-                      </div>
                     </div>
                   )}
 
@@ -291,6 +270,59 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                       <div>
                         <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Grupos musculares</label>
                         <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más grupos musculares que trabaja este ejercicio.</p>
+                        {BODY_GROUPS.some(g => props.form.muscleGroups.includes(g)) ? (
+                          <div className="grid grid-cols-3 gap-2">
+                            {BODY_GROUPS.map(label => {
+                              const selected = props.form.muscleGroups.includes(label)
+                              const isGeneral = label === 'General'
+                              const GOLD_GRAD = 'linear-gradient(135deg, #F1C827, #FFE066)'
+                              const defaultBg = 'rgba(0,0,0,0.03)'
+                              const hoverBg = isGeneral ? 'rgba(241,200,39,0.12)' : `${BLUE}12`
+                              const selectedBg = isGeneral ? GOLD_GRAD : BLUE_GRAD
+                              const textColor = selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)'
+                              const shadow = isGeneral
+                                ? '0 4px 20px rgba(241,200,39,0.25)'
+                                : `0 4px 20px ${BLUE}40`
+                              return (
+                                <motion.button
+                                  key={label}
+                                  whileHover={{ scale: 1.06 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => {
+                                    props.onFormChange({
+                                      ...props.form,
+                                      muscleGroups: selected ? [] : [label]
+                                    })
+                                  }}
+                                  onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = isGeneral ? '#B8860B' : BLUE } }}
+                                  onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = defaultBg; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                                  className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
+                                  style={{
+                                    background: selected ? selectedBg : defaultBg,
+                                    color: textColor,
+                                    border: '1px solid transparent',
+                                    boxShadow: selected ? shadow : 'none',
+                                  }}
+                                >
+                                  <motion.img
+                                    src={muscleIcons[label]}
+                                    alt=""
+                                    className="mb-0.5"
+                                    animate={{
+                                      width: selected ? 48 : 24,
+                                      height: selected ? 48 : 24,
+                                      marginTop: selected ? -24 : 0,
+                                      filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
+                                      opacity: 1,
+                                    }}
+                                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                  />
+                                  <span>{label}</span>
+                                </motion.button>
+                              )
+                            })}
+                          </div>
+                        ) : (
                         <div className="grid grid-cols-4 gap-2">
                           {[
                             'Pecho', 'Espalda', 'Hombros', 'Brazos',
@@ -368,6 +400,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                             )
                           })}
                         </div>
+                        )}
                       </div>
                       <div>
                         <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Nivel Recomendado</label>
@@ -405,106 +438,58 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
 
                   {/* Step 2 — Visual Content */}
                   {props.step === 2 && (
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Imagen <span style={{ color: 'rgba(0,0,0,0.2)' }}>(Opcional)</span></label>
-                        <motion.div
-                          whileHover={{ scale: 1.03 }}
-                          transition={{ duration: 0.2 }}
-                          className="w-full h-full min-h-[120px] rounded-xl cursor-pointer overflow-hidden relative group"
-                          style={{
-                            background: props.form.imageUrl ? 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(48,209,88,0.08) 0%, transparent 50%), rgba(255,255,255,0.6)' : meshInputBg,
-                            border: `1px solid ${props.form.imageUrl ? 'rgba(48,209,88,0.2)' : 'transparent'}`,
-                          }}
-                          onClick={() => {
-                            if (!props.form.imageUrl) {
-                              const input = document.createElement('input')
-                              input.type = 'file'
-                              input.accept = 'image/*'
-                              input.onchange = e => {
-                                const file = (e.target as HTMLInputElement).files?.[0]
-                                if (file) {
-                                  const reader = new FileReader()
-                                  reader.onload = ev => props.onFormChange({ ...props.form, imageUrl: ev.target?.result as string })
-                                  reader.readAsDataURL(file)
-                                }
+                    <div>
+                      <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Imagen o GIF <span style={{ color: 'rgba(0,0,0,0.2)' }}>(Opcional)</span></label>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ duration: 0.2 }}
+                        className="w-full min-h-[160px] rounded-xl cursor-pointer overflow-hidden relative group"
+                        style={{
+                          background: props.form.imageUrl ? 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(48,209,88,0.08) 0%, transparent 50%), rgba(255,255,255,0.6)' : meshInputBg,
+                          border: `1px solid ${props.form.imageUrl ? 'rgba(48,209,88,0.2)' : 'transparent'}`,
+                        }}
+                        onClick={() => {
+                          if (!props.form.imageUrl) {
+                            const input = document.createElement('input')
+                            input.type = 'file'
+                            input.accept = 'image/*'
+                            input.onchange = e => {
+                              const file = (e.target as HTMLInputElement).files?.[0]
+                              if (file) {
+                                const reader = new FileReader()
+                                reader.onload = ev => props.onFormChange({ ...props.form, imageUrl: ev.target?.result as string })
+                                reader.readAsDataURL(file)
                               }
-                              input.click()
                             }
-                          }}
-                          onMouseEnter={e => { if (!props.form.imageUrl) { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                          onMouseLeave={e => { if (!props.form.imageUrl) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
-                        >
-                          {props.form.imageUrl ? (
-                            <>
-                              <img src={props.form.imageUrl} alt="" className="w-full h-full object-cover" />
-                              <div
-                                onClick={e => { e.stopPropagation(); const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = ev => { const file = (ev.target as HTMLInputElement).files?.[0]; if (file) { const reader = new FileReader(); reader.onload = ev2 => props.onFormChange({ ...props.form, imageUrl: ev2.target?.result as string }); reader.readAsDataURL(file) } }; input.click() }}
-                                className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 cursor-pointer"
-                                style={{ background: 'rgba(0,0,0,0.45)' }}
-                              >
-                                <Camera size={24} className="text-white" />
-                                <span className="text-xs font-semibold text-white">Cambiar imagen</span>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="flex flex-col items-center gap-1.5 py-6">
-                              <Upload size={18} style={{ color: 'rgba(0,0,0,0.2)' }} />
-                              <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir imagen</span>
+                            input.click()
+                          }
+                        }}
+                        onMouseEnter={e => { if (!props.form.imageUrl) { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                        onMouseLeave={e => { if (!props.form.imageUrl) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
+                      >
+                        {props.form.imageUrl ? (
+                          <>
+                            <img src={props.form.imageUrl} alt="" className="w-full h-full object-cover" />
+                            <div
+                              onClick={e => { e.stopPropagation(); const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.onchange = ev => { const file = (ev.target as HTMLInputElement).files?.[0]; if (file) { const reader = new FileReader(); reader.onload = ev2 => props.onFormChange({ ...props.form, imageUrl: ev2.target?.result as string }); reader.readAsDataURL(file) } }; input.click() }}
+                              className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 cursor-pointer"
+                              style={{ background: 'rgba(0,0,0,0.45)' }}
+                            >
+                              <Camera size={24} className="text-white" />
+                              <span className="text-xs font-semibold text-white">Cambiar imagen</span>
                             </div>
-                          )}
-                        </motion.div>
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Video <span style={{ color: 'rgba(0,0,0,0.2)' }}>(Opcional)</span></label>
-                        <motion.div
-                          whileHover={{ scale: 1.03 }}
-                          transition={{ duration: 0.2 }}
-                          className="w-full h-full min-h-[120px] rounded-xl cursor-pointer overflow-hidden relative group"
-                          style={{
-                            background: props.form.videoUrl ? 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(48,209,88,0.08) 0%, transparent 50%), rgba(255,255,255,0.6)' : meshInputBg,
-                            border: `1px solid ${props.form.videoUrl ? 'rgba(48,209,88,0.2)' : 'transparent'}`,
-                          }}
-                          onClick={() => {
-                            if (!props.form.videoUrl) {
-                              const input = document.createElement('input')
-                              input.type = 'file'
-                              input.accept = 'video/*'
-                              input.onchange = e => {
-                                const file = (e.target as HTMLInputElement).files?.[0]
-                                if (file) {
-                                  const url = URL.createObjectURL(file)
-                                  props.onFormChange({ ...props.form, videoUrl: url })
-                                }
-                              }
-                              input.click()
-                            }
-                          }}
-                          onMouseEnter={e => { if (!props.form.videoUrl) { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                          onMouseLeave={e => { if (!props.form.videoUrl) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
-                        >
-                          {props.form.videoUrl ? (
-                            <>
-                              <video src={props.form.videoUrl} className="w-full h-full object-cover" />
-                              <div
-                                onClick={e => { e.stopPropagation(); const input = document.createElement('input'); input.type = 'file'; input.accept = 'video/*'; input.onchange = ev => { const file = (ev.target as HTMLInputElement).files?.[0]; if (file) { props.onFormChange({ ...props.form, videoUrl: URL.createObjectURL(file) }) } }; input.click() }}
-                                className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 cursor-pointer"
-                                style={{ background: 'rgba(0,0,0,0.45)' }}
-                              >
-                                <Camera size={24} className="text-white" />
-                                <span className="text-xs font-semibold text-white">Cambiar video</span>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="flex flex-col items-center gap-1.5 py-6">
-                              <Upload size={18} style={{ color: 'rgba(0,0,0,0.2)' }} />
-                              <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir video</span>
-                            </div>
-                          )}
-                        </motion.div>
-                      </div>
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-1.5 py-10">
+                            <Upload size={20} style={{ color: 'rgba(0,0,0,0.2)' }} />
+                            <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir imagen o GIF</span>
+                          </div>
+                        )}
+                      </motion.div>
                     </div>
                   )}
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
 
                 {/* ── Footer ── */}

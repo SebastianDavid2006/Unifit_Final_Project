@@ -20,7 +20,6 @@ import type { Machine, Exercise, Status } from '../../data/types'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { MachineModal } from './MachineModal'
 import { ExerciseManagerModal } from './ExerciseManagerModal'
-import { ImageEditorModal } from './ImageEditorModal'
 import { MachinePreviewModal } from './MachinePreviewModal'
 import { ExercisePreviewModal } from './ExercisePreviewModal'
 import { useToast } from './hooks/useToast'
@@ -58,14 +57,6 @@ export default function EquipmentModule({
   const [pendingMachineToast, setPendingMachineToast] = useState<{ name: string; edited: boolean } | null>(null)
   const [pendingExerciseToast, setPendingExerciseToast] = useState<{ name: string } | null>(null)
 
-  const [showImageEditor, setShowImageEditor] = useState(false)
-  const [imageToEdit, setImageToEdit] = useState('')
-  const [imageCrop, setImageCrop] = useState({ x: 0, y: 0 })
-  const [imageZoom, setImageZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
-  const [cinematicIntensity, setCinematicIntensity] = useState(0)
-  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 })
-
   const [showMuscleDropdown, setShowMuscleDropdown] = useState(false)
   const muscleDropdownRef = useRef<HTMLButtonElement>(null)
 
@@ -81,7 +72,9 @@ export default function EquipmentModule({
     Brazos: ['Pesas Libres', 'Máquinas'],
     Piernas: ['Pesas Libres', 'Máquinas'],
     'Abdomen/Core': ['Pesas Libres'],
-    'General': zones.filter(z => z !== 'Máquinas'),
+    General: zones.filter(z => z !== 'Máquinas'),
+    'Tren Superior': ['Pesas Libres', 'Máquinas'],
+    'Tren Inferior': ['Pesas Libres'],
   }
 
   const filteredZones = useMemo(() => {
@@ -108,14 +101,6 @@ export default function EquipmentModule({
   }, [machine.step])
 
   useEffect(() => {
-    if (imageToEdit) {
-      const img = new Image()
-      img.onload = () => setNaturalSize({ width: img.width, height: img.height })
-      img.src = imageToEdit
-    }
-  }, [imageToEdit])
-
-  useEffect(() => {
     if (!machine.showModal && pendingMachineToast) {
       const { name, edited } = pendingMachineToast
       if (edited) editToast.trigger(name)
@@ -133,55 +118,6 @@ export default function EquipmentModule({
 
   function getMachineExercises(m: Machine) {
     return ex.exercises.filter(e => m.exerciseIds.includes(e.id))
-  }
-
-  function getCinematicFilter(intensity: number): string {
-    const t = intensity / 100
-    const contrast = 1 + t * 0.35
-    const brightness = 1 - t * 0.1
-    const saturate = 1 - t * 0.25
-    const sepia = t * 0.12
-    const hueRotate = t * 10
-    return `contrast(${contrast}) brightness(${brightness}) saturate(${saturate}) sepia(${sepia}) hue-rotate(${hueRotate}deg)`
-  }
-
-  function createImage(url: string): Promise<HTMLImageElement> {
-    return new Promise((resolve, reject) => {
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-      img.onload = () => resolve(img)
-      img.onerror = reject
-      img.src = url
-    })
-  }
-
-  async function applyCropAndFilter() {
-    if (!imageToEdit || !croppedAreaPixels) return
-    try {
-      const image = await createImage(imageToEdit)
-      const canvas = document.createElement('canvas')
-      const ctx = canvas.getContext('2d')!
-      canvas.width = croppedAreaPixels.width
-      canvas.height = croppedAreaPixels.height
-      ctx.filter = getCinematicFilter(cinematicIntensity)
-      ctx.drawImage(
-        image,
-        croppedAreaPixels.x, croppedAreaPixels.y,
-        croppedAreaPixels.width, croppedAreaPixels.height,
-        0, 0,
-        croppedAreaPixels.width, croppedAreaPixels.height,
-      )
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
-      machine.setForm(f => ({ ...f, imageDataUrl: dataUrl }))
-      setShowImageEditor(false)
-      setImageToEdit('')
-      setCinematicIntensity(0)
-      setImageZoom(1)
-      setImageCrop({ x: 0, y: 0 })
-      setCroppedAreaPixels(null)
-    } catch (e) {
-      console.error('Error applying crop/filter', e)
-    }
   }
 
   function handleSaveMachine() {
@@ -510,31 +446,7 @@ export default function EquipmentModule({
         onFormChange={(f) => machine.setForm(f)}
         onStepChange={(s) => machine.setStep(s)}
         onConfirmClose={(v) => machine.setShowConfirmClose(v)}
-        onOpenImageEditor={(dataUrl) => {
-          setImageToEdit(dataUrl)
-          setImageCrop({ x: 0, y: 0 })
-          setImageZoom(1)
-          setCroppedAreaPixels(null)
-          setShowImageEditor(true)
-        }}
         onToggleExerciseSelection={(id) => machine.toggleExerciseSelection(id)}
-      />
-
-      {/* ── Image Editor Modal ── */}
-      <ImageEditorModal
-        show={showImageEditor}
-        imageToEdit={imageToEdit}
-        crop={imageCrop}
-        zoom={imageZoom}
-        croppedAreaPixels={croppedAreaPixels}
-        cinematicIntensity={cinematicIntensity}
-        naturalSize={naturalSize}
-        onCropChange={setImageCrop}
-        onZoomChange={setImageZoom}
-        onCroppedAreaPixelsChange={setCroppedAreaPixels}
-        onCinematicIntensityChange={setCinematicIntensity}
-        onApply={applyCropAndFilter}
-        onClose={() => setShowImageEditor(false)}
       />
 
       {/* ── Exercise Manager Modal ── */}

@@ -6,6 +6,8 @@ import legIcon from '../assets/icons/anatomy/leg.webp'
 import absIcon from '../assets/icons/anatomy/abs.webp'
 import cardioIcon from '../assets/icons/anatomy/cardio.webp'
 import fullBodyIcon from '../assets/icons/anatomy/full-body.webp'
+import upperBodyIcon from '../assets/icons/anatomy/upper_body.webp'
+import lowerBodyIcon from '../assets/icons/anatomy/lower_body.webp'
 import type { Status } from './types'
 
 export const BLUE = '#1270B7'
@@ -26,6 +28,8 @@ export const muscleIcons: Record<string, string> = {
   'Abdomen/Core': absIcon,
   Cardio: cardioIcon,
   General: fullBodyIcon,
+  'Tren Superior': upperBodyIcon,
+  'Tren Inferior': lowerBodyIcon,
 }
 
 export const muscleToZones: Record<string, string[]> = {
@@ -37,7 +41,11 @@ export const muscleToZones: Record<string, string[]> = {
   Piernas: ['Pesas Libres', 'Máquinas'],
   'Abdomen/Core': ['Pesas Libres'],
   General: [],
+  'Tren Superior': ['Pesas Libres', 'Máquinas'],
+  'Tren Inferior': ['Pesas Libres'],
 }
+
+export const BODY_GROUPS = ['Tren Superior', 'General', 'Tren Inferior']
 
 export const statusConfig: Record<Status, { label: string; color: string; bg: string; border: string }> = {
   active: { label: 'Activo', color: GREEN, bg: 'rgba(48,209,88,0.08)', border: 'rgba(48,209,88,0.15)' },

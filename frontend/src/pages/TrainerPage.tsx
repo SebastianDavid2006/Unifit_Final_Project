@@ -8,8 +8,9 @@ import {
   LayoutDashboard, Users, ClipboardList, Dumbbell, Calendar,
   TrendingUp, Clock, Activity, Target, Award,
   Search, Plus, ArrowUp, Sparkles,
-  CheckCircle, Bell, ChevronLeft, PanelLeftClose, PanelLeftOpen, BarChart3, Settings, Filter, Shield, Menu, GraduationCap,
+  CheckCircle, Bell, ChevronLeft, PanelLeftClose, PanelLeftOpen, Settings, Filter, Shield, Menu, GraduationCap, X, RotateCcw,
 } from 'lucide-react'
+import { INSTITUCIONES, NIVELES_FORMACION, loadPrograms, savePrograms, resetPrograms } from '../data/academicPrograms'
 import { StudentProfile, TABS } from '../modules/students/StudentProfile'
 import StudentsModule from '../modules/students/StudentsModule'
 import iconRunning from '../assets/icons/animated/icon_running.gif'
@@ -115,14 +116,13 @@ function RiskBadge({ risk }: { risk: 'high' | 'medium' | 'low' }) {
   )
 }
 
-type Section = 'dashboard' | 'students' | 'equipment' | 'schedule' | 'stats' | 'configuration'
+type Section = 'dashboard' | 'students' | 'equipment' | 'schedule' | 'configuration'
 
 const sidebarItems: { id: Section; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'students', label: 'Estudiantes', icon: Users },
+  { id: 'students', label: 'Usuarios', icon: Users },
   { id: 'equipment', label: 'Máquinas', icon: Dumbbell },
   { id: 'schedule', label: 'Agenda', icon: Calendar },
-  { id: 'stats', label: 'Estadísticas', icon: BarChart3 },
   { id: 'configuration', label: 'Configuración', icon: Settings },
 ]
 
@@ -156,7 +156,7 @@ export function TrainerDashboard() {
   const [machinesCount, setMachinesCount] = useState('24')
   const [trainersCount, setTrainersCount] = useState('8')
   const [showSavedToast, setShowSavedToast] = useState(false)
-  const [configTab, setConfigTab] = useState<'gym' | 'admin'>('gym')
+  const [configTab, setConfigTab] = useState<'gym' | 'admin' | 'carreras'>('gym')
   const [instagram, setInstagram] = useState('@unifit_gym')
   const [facebook, setFacebook] = useState('UNIFIT Gym')
   const [website, setWebsite] = useState('www.unifit.edu/gimnasio')
@@ -176,6 +176,41 @@ export function TrainerDashboard() {
   const [allowGuestAccess, setAllowGuestAccess] = useState(false)
   const [maxBookingDays, setMaxBookingDays] = useState('7')
   const [minAge, setMinAge] = useState('15')
+
+  // ── Carreras (programas académicos) ──
+  const [programsData, setProgramsData] = useState<Record<string, Record<string, string[]>>>(() => loadPrograms())
+  const [careerInst, setCareerInst] = useState<string>(INSTITUCIONES[0])
+  const [careerLevel, setCareerLevel] = useState<string>(NIVELES_FORMACION[0])
+  const [newCareer, setNewCareer] = useState('')
+
+  const addCareer = () => {
+    const name = newCareer.trim()
+    if (!name) return
+    setProgramsData(prev => {
+      const current = prev[careerInst]?.[careerLevel] ?? []
+      if (current.includes(name)) return prev
+      return { ...prev, [careerInst]: { ...prev[careerInst], [careerLevel]: [...current, name] } }
+    })
+    setNewCareer('')
+  }
+
+  const removeCareer = (name: string) => {
+    setProgramsData(prev => {
+      const current = prev[careerInst]?.[careerLevel] ?? []
+      return { ...prev, [careerInst]: { ...prev[careerInst], [careerLevel]: current.filter(c => c !== name) } }
+    })
+  }
+
+  const saveCareers = () => {
+    savePrograms(programsData)
+    setShowSavedToast(true)
+    setTimeout(() => setShowSavedToast(false), 2500)
+  }
+
+  const restoreCareers = () => {
+    resetPrograms()
+    setProgramsData(loadPrograms())
+  }
 
 
 
@@ -512,9 +547,11 @@ export function TrainerDashboard() {
                   onClick={() => setEquipViewMode('machines')}
                   className="px-4 py-1.5 text-[11px] font-bold cursor-pointer rounded-lg transition-all duration-200"
                   style={{
-                    background: equipViewMode === 'machines' ? BLUE_GRAD : 'transparent',
+                    background: equipViewMode === 'machines'
+                      ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
+                      : 'transparent',
                     color: equipViewMode === 'machines' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-                    boxShadow: equipViewMode === 'machines' ? '0 2px 8px rgba(18,112,183,0.2)' : 'none',
+                    boxShadow: equipViewMode === 'machines' ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
                   }}
                 >
                   Máquinas
@@ -525,9 +562,11 @@ export function TrainerDashboard() {
                   onClick={() => setEquipViewMode('exercises')}
                   className="px-4 py-1.5 text-[11px] font-bold cursor-pointer rounded-lg transition-all duration-200"
                   style={{
-                    background: equipViewMode === 'exercises' ? BLUE_GRAD : 'transparent',
+                    background: equipViewMode === 'exercises'
+                      ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
+                      : 'transparent',
                     color: equipViewMode === 'exercises' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-                    boxShadow: equipViewMode === 'exercises' ? '0 2px 8px rgba(18,112,183,0.2)' : 'none',
+                    boxShadow: equipViewMode === 'exercises' ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
                   }}
                 >
                   Ejercicios
@@ -775,6 +814,7 @@ export function TrainerDashboard() {
         <div className="flex items-center gap-2 mb-6">
           {([
             { id: 'gym' as const, label: 'Gimnasio', icon: Settings },
+            { id: 'carreras' as const, label: 'Carreras', icon: GraduationCap },
             { id: 'admin' as const, label: 'Administrador', icon: Shield },
           ]).map(t => (
             <motion.button
@@ -797,6 +837,138 @@ export function TrainerDashboard() {
 
         {configTab === 'admin' ? (
           <AdminModule />
+        ) : configTab === 'carreras' ? (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 }}
+              className="rounded-2xl p-6 premium-card space-y-5"
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <GraduationCap size={15} style={{ color: BLUE }} />
+                  <span className="text-xs font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>PROGRAMAS ACADÉMICOS</span>
+                </div>
+                <span className="ml-auto text-xs font-bold px-2.5 py-1 rounded-lg" style={{ background: `${BLUE}12`, color: BLUE }}>
+                  {(programsData[careerInst]?.[careerLevel] ?? []).length} carreras
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>Institución</span>
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  {INSTITUCIONES.map(inst => (
+                    <motion.button
+                      key={inst}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setCareerInst(inst)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                      style={{
+                        background: careerInst === inst ? BLUE_GRAD : 'rgba(0,0,0,0.03)',
+                        color: careerInst === inst ? '#FFFFFF' : 'rgba(0,0,0,0.4)',
+                        border: `1px solid ${careerInst === inst ? 'transparent' : 'rgba(0,0,0,0.06)'}`,
+                        boxShadow: careerInst === inst ? '0 2px 8px rgba(18,112,183,0.2)' : 'none',
+                      }}
+                    >
+                      {inst}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>Nivel de formación</span>
+                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  {NIVELES_FORMACION.map(level => (
+                    <motion.button
+                      key={level}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setCareerLevel(level)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                      style={{
+                        background: careerLevel === level ? 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)' : 'rgba(0,0,0,0.03)',
+                        color: careerLevel === level ? '#FFFFFF' : 'rgba(0,0,0,0.4)',
+                        border: `1px solid ${careerLevel === level ? 'transparent' : 'rgba(0,0,0,0.06)'}`,
+                        boxShadow: careerLevel === level ? '0 2px 8px rgba(244,56,67,0.2)' : 'none',
+                      }}
+                    >
+                      {level}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {(programsData[careerInst]?.[careerLevel] ?? []).map(career => (
+                  <div
+                    key={career}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold"
+                    style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)', color: '#1A1A1E' }}
+                  >
+                    {career}
+                    <motion.button
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => removeCareer(career)}
+                      style={{ color: 'rgba(0,0,0,0.3)' }}
+                      title="Eliminar carrera"
+                    >
+                      <X size={13} />
+                    </motion.button>
+                  </div>
+                ))}
+                {(programsData[careerInst]?.[careerLevel] ?? []).length === 0 && (
+                  <p className="w-full text-xs font-medium" style={{ color: 'rgba(0,0,0,0.3)' }}>
+                    No hay carreras para este nivel. Añade una usando el campo de abajo.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  value={newCareer}
+                  onChange={e => setNewCareer(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addCareer()}
+                  placeholder="Nombre de la nueva carrera..."
+                  className="flex-1 px-3.5 py-2.5 rounded-xl text-sm font-medium"
+                  style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }}
+                />
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={addCareer}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+                  style={{ background: BLUE_GRAD }}
+                >
+                  <Plus size={15} /> Añadir
+                </motion.button>
+              </div>
+            </motion.div>
+
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={saveCareers}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white"
+                style={{ background: BLUE_GRAD }}
+              >
+                <CheckCircle size={15} /> Guardar cambios de carreras
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={restoreCareers}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold"
+                style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)', color: 'rgba(0,0,0,0.5)' }}
+              >
+                <RotateCcw size={15} /> Restaurar carreras por defecto
+              </motion.button>
+            </div>
+          </>
         ) : (
           <>
             <div className="grid grid-cols-2 gap-6">
