@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronRight, Plus, X, Activity, Settings, ChevronLeft, Sparkles, Maximize2, Minimize2 } from 'lucide-react'
 import calendarImg from '../../assets/illustrations/modules/calendar_module.webp'
+import calendarCardImg from '../../assets/icons/objects/calendar.webp'
 import { meshInputBg, meshInputHover } from '../../data/constants'
 
 const RED = '#F43843'
@@ -953,7 +954,7 @@ export default function AgendaModule() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="rounded-3xl w-full max-w-md overflow-hidden"
+              className="rounded-3xl w-full max-w-2xl overflow-hidden"
               style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
               onClick={e => e.stopPropagation()}
             >
@@ -993,7 +994,7 @@ export default function AgendaModule() {
                   <div>
                     <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Días de la semana</label>
                     <p className="text-[11px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona los días disponibles.</p>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-6 gap-2">
                       {WEEK_DAYS_6.map(({ key, label }) => {
                         const active = publishDays.includes(key)
                         return (
@@ -1014,7 +1015,7 @@ export default function AgendaModule() {
                             onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
                           >
                             <motion.img
-                              src={calendarImg}
+                              src={calendarCardImg}
                               alt=""
                               className="mb-0.5"
                               animate={{
