@@ -8,7 +8,6 @@ import { StudentsView } from '../../assets/models/ui/users/students/StudentsMode
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarModel'
 import { ListView } from '../../assets/models/ui/objects/list/ListModel'
-import { PriorityBellView } from '../../assets/models/ui/objects/priority_bell/PriorityBellModel'
 import { BLUE, BLUE_GRAD, RED } from '../../data/constants'
 import coachImg from '../../assets/illustrations/characters/coach/coach_default.webp'
 
@@ -259,7 +258,7 @@ export default function DashboardModule() {
       </motion.div>
 
       {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         {cards.map((card, i) => {
           const colors = CARD_COLORS[i]
           const ModelView = card.view
@@ -301,38 +300,6 @@ export default function DashboardModule() {
           )
         })}
 
-        {/* ── Pendientes del día ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 + cards.length * 0.06, ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
-          className="relative rounded-2xl px-5 pb-5 pt-14 group cursor-pointer transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-[1.04]"
-          style={{
-            background: `
-              radial-gradient(ellipse at 20% 10%, #C63C00 0%, #C63C00 35%, #901322 55%, transparent 70%),
-              radial-gradient(ellipse at 75% 25%, #901322 0%, #901322 35%, #8A0000 55%, transparent 70%),
-              radial-gradient(ellipse at 50% 95%, #8A0000 0%, #8A0000 35%, #C63C00 55%, transparent 70%),
-              #1A0000
-            `,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.15), 0 12px 40px rgba(0,0,0,0.12)',
-            borderRadius: 20,
-          }}
-        >
-          <div
-            className="absolute left-1/2 -translate-x-1/2 top-1 w-14 h-14 z-20 pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.6]"
-            style={{ transformOrigin: 'bottom center' }}
-          >
-            <PriorityBellView />
-          </div>
-          <div
-            className="absolute -inset-2 rounded-[24px] pointer-events-none glow-ring z-0"
-            style={{ background: 'linear-gradient(135deg, rgba(198,60,0,0.25), rgba(144,19,34,0.15), rgba(138,0,0,0.1))', filter: 'blur(16px)' }}
-          />
-          <div className="relative z-10 text-center mt-6">
-            <span className="block" style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1, color: '#FFFFFF' }}>8</span>
-            <p className="text-xs mt-1.5 font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>Pendientes del día</p>
-          </div>
-        </motion.div>
       </div>
 
       {/* ── Charts Row ── */}
