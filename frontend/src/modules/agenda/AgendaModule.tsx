@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronRight, Plus, X, Activity, Settings, ChevronLeft, Sparkles, Maximize2, Minimize2 } from 'lucide-react'
 import calendarImg from '../../assets/illustrations/modules/calendar_module.webp'
+import { meshInputBg, meshInputHover } from '../../data/constants'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -19,6 +20,17 @@ const dayKey = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB']
 const dayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const dayLabelsGetDay = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+const DAY_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
+
+const WEEK_DAYS_6: { key: string; label: string; short: string }[] = [
+  { key: 'LUN', label: 'Lunes', short: 'Lun' },
+  { key: 'MAR', label: 'Martes', short: 'Mar' },
+  { key: 'MIÉ', label: 'Miércoles', short: 'Mié' },
+  { key: 'JUE', label: 'Jueves', short: 'Jue' },
+  { key: 'VIE', label: 'Viernes', short: 'Vie' },
+  { key: 'SÁB', label: 'Sábado', short: 'Sáb' },
+]
 
 export default function AgendaModule() {
   const [currentMonth, setCurrentMonth] = useState(new Date())
@@ -70,9 +82,9 @@ export default function AgendaModule() {
   const [publishEnd, setPublishEnd] = useState('')
   const [publishedDates, setPublishedDates] = useState<Set<string>>(new Set())
   const [publishDays, setPublishDays] = useState<string[]>(['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE'])
-  const [publishOpen, setPublishOpen] = useState('06:00')
-  const [publishClose, setPublishClose] = useState('22:00')
-  const [publishDuration, setPublishDuration] = useState('60')
+  const [publishStep, setPublishStep] = useState<1 | 2>(1)
+  const [publishDayConfig, setPublishDayConfig] = useState<Record<string, { duration: string; ranges: { open: string; close: string }[] }>>({})
+  const [rangeConflict, setRangeConflict] = useState<{ day: string; msg: string } | null>(null)
   const [newApptStart, setNewApptStart] = useState('08:00')
   const [newApptEnd, setNewApptEnd] = useState('09:00')
   const [newApptTrainer, setNewApptTrainer] = useState('')
@@ -151,6 +163,96 @@ export default function AgendaModule() {
     setNewApptTrainer('')
     setNewApptStudent('')
     setShowApptModal(true)
+  }
+
+  function getDayConfig(day: string) {
+    return publishDayConfig[day] || { duration: '60', ranges: [{ open: '06:00', close: '22:00' }] }
+  }
+
+  function overlapsRange(open: string, close: string, ranges: { open: string; close: string }[]) {
+    return ranges.some(r => r.open < close && open < r.close)
+  }
+
+  function updateDayDuration(day: string, duration: string) {
+    const cfg = getDayConfig(day)
+    setPublishDayConfig(prev => ({ ...prev, [day]: { ...cfg, duration } }))
+  }
+
+  function updateDayRange(day: string, index: number, field: 'open' | 'close', value: string) {
+    const cfg = getDayConfig(day)
+    const ranges = cfg.ranges.map((r, i) => i === index ? { ...r, [field]: value } : r)
+    const current = ranges[index]
+    if (overlapsRange(current.open, current.close, ranges.slice(0, index))) {
+      setRangeConflict({ day, msg: 'Horas ocupadas por un horario anterior' })
+      return
+    }
+    setRangeConflict(null)
+    setPublishDayConfig(prev => ({ ...prev, [day]: { ...cfg, ranges } }))
+  }
+
+  function addDayRange(day: string) {
+    const cfg = getDayConfig(day)
+    const defaults = [
+      { open: '06:00', close: '08:00' }, { open: '08:00', close: '10:00' },
+      { open: '10:00', close: '12:00' }, { open: '12:00', close: '14:00' },
+      { open: '14:00', close: '16:00' }, { open: '16:00', close: '18:00' },
+      { open: '18:00', close: '20:00' }, { open: '20:00', close: '22:00' },
+    ]
+    const free = defaults.find(d => !overlapsRange(d.open, d.close, cfg.ranges)) || { open: '07:00', close: '09:00' }
+    setRangeConflict(null)
+    setPublishDayConfig(prev => ({ ...prev, [day]: { ...cfg, ranges: [...cfg.ranges, free] } }))
+  }
+
+  function removeDayRange(day: string, index: number) {
+    const cfg = getDayConfig(day)
+    setRangeConflict(null)
+    setPublishDayConfig(prev => ({ ...prev, [day]: { ...cfg, ranges: cfg.ranges.filter((_, i) => i !== index) } }))
+  }
+
+  function handlePublish() {
+    if (!publishStart || !publishEnd) return
+    const start = new Date(publishStart + 'T00:00:00')
+    const end = new Date(publishEnd + 'T00:00:00')
+    const newDates = new Set(publishedDates)
+    const current = new Date(start)
+    while (current <= end) {
+      const ds = fmtDate(current)
+      const dk = dayKey[current.getDay()]
+      if (publishDays.includes(dk)) {
+        if (newDates.has(ds)) newDates.delete(ds)
+        else newDates.add(ds)
+      }
+      current.setDate(current.getDate() + 1)
+    }
+    setPublishedDates(newDates)
+    setRangeConflict(null)
+    setPublishStep(1)
+    setShowPublishModal(false)
+  }
+
+  function openPublishModal() {
+    setPublishStep(1)
+    setRangeConflict(null)
+    setShowPublishModal(true)
+  }
+
+  function closePublishModal() {
+    setRangeConflict(null)
+    setPublishStep(1)
+    setShowPublishModal(false)
+  }
+
+  function enterMesh(el: HTMLElement) {
+    if (el !== document.activeElement) { el.style.background = meshInputHover; el.style.borderColor = 'rgba(0,0,0,0.06)' }
+  }
+  function leaveMesh(el: HTMLElement) {
+    if (el !== document.activeElement) { el.style.background = meshInputBg; el.style.borderColor = 'transparent' }
+  }
+  function focusMesh(el: HTMLElement) {
+    el.style.borderColor = '#1270B7'; el.style.background = meshInputHover; el.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)'
+  }
+  function blurMesh(el: HTMLElement) {
+    el.style.borderColor = 'transparent'; el.style.background = meshInputBg; el.style.boxShadow = 'none'
   }
 
   function renderDayCell(dt: Date | null, idx: number, lastRow?: boolean, mini?: boolean, rowIdx: number = 0, totalRows: number = 1) {
@@ -341,7 +443,7 @@ export default function AgendaModule() {
               initial="initial"
               whileHover="hover"
               whileTap={{ scale: 0.95 }}
-              onClick={() => setShowPublishModal(true)}
+              onClick={openPublishModal}
               className="flex items-center rounded-2xl overflow-hidden text-white"
               style={{ height: 44, padding: '0 12px', background: MESH_GRAD }}
             >
@@ -352,7 +454,7 @@ export default function AgendaModule() {
                 }}
                 className="overflow-hidden whitespace-nowrap"
               >
-                <span className="text-xs font-bold">Nueva Agenda</span>
+                <span className="text-xs font-bold">Agendar Semana</span>
               </motion.div>
               <div className="flex items-center justify-center flex-shrink-0">
                 <Plus size={18} strokeWidth={3} />
@@ -709,11 +811,19 @@ export default function AgendaModule() {
                       <div className="flex-1 font-semibold text-sm" style={{ color: '#1A1A1E' }}>{dayLabels[i]}</div>
                       <input type="time" value={t.open} onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], open: e.target.value } }))} disabled={!t.active}
                         className="px-2 py-1.5 rounded-lg text-xs font-medium border-none outline-none"
-                        style={{ background: t.active ? '#F0F7FF' : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60 }} />
+                        style={{ background: t.active ? meshInputBg : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60, border: t.active ? '1px solid transparent' : 'none' }}
+                        onMouseEnter={e => { if (t.active) enterMesh(e.currentTarget) }}
+                        onMouseLeave={e => { if (t.active) leaveMesh(e.currentTarget) }}
+                        onFocus={e => { if (t.active) focusMesh(e.currentTarget) }}
+                        onBlur={e => { if (t.active) blurMesh(e.currentTarget) }} />
                       <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>–</span>
                       <input type="time" value={t.close} onChange={e => setWeeklyTemplate(prev => ({ ...prev, [dk]: { ...prev[dk], close: e.target.value } }))} disabled={!t.active}
                         className="px-2 py-1.5 rounded-lg text-xs font-medium border-none outline-none"
-                        style={{ background: t.active ? '#F0F7FF' : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60 }} />
+                        style={{ background: t.active ? meshInputBg : 'rgba(0,0,0,0.02)', color: t.active ? '#1A1A1E' : 'rgba(0,0,0,0.15)', width: 60, border: t.active ? '1px solid transparent' : 'none' }}
+                        onMouseEnter={e => { if (t.active) enterMesh(e.currentTarget) }}
+                        onMouseLeave={e => { if (t.active) leaveMesh(e.currentTarget) }}
+                        onFocus={e => { if (t.active) focusMesh(e.currentTarget) }}
+                        onBlur={e => { if (t.active) blurMesh(e.currentTarget) }} />
                     </div>
                   )
                 })}
@@ -766,34 +876,54 @@ export default function AgendaModule() {
                   <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Título</label>
                   <input value={newApptTitle} onChange={e => setNewApptTitle(e.target.value)} placeholder="Nombre de la clase o evento"
                     className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                    style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                    style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                    onMouseEnter={e => enterMesh(e.currentTarget)}
+                    onMouseLeave={e => leaveMesh(e.currentTarget)}
+                    onFocus={e => focusMesh(e.currentTarget)}
+                    onBlur={e => blurMesh(e.currentTarget)} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Inicio</label>
                     <input type="time" value={newApptStart} onChange={e => setNewApptStart(e.target.value)}
                       className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                      style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                      style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                      onMouseEnter={e => enterMesh(e.currentTarget)}
+                      onMouseLeave={e => leaveMesh(e.currentTarget)}
+                      onFocus={e => focusMesh(e.currentTarget)}
+                      onBlur={e => blurMesh(e.currentTarget)} />
                   </div>
                   <div>
                     <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Hora Fin</label>
                     <input type="time" value={newApptEnd} onChange={e => setNewApptEnd(e.target.value)}
                       className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                      style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                      style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                      onMouseEnter={e => enterMesh(e.currentTarget)}
+                      onMouseLeave={e => leaveMesh(e.currentTarget)}
+                      onFocus={e => focusMesh(e.currentTarget)}
+                      onBlur={e => blurMesh(e.currentTarget)} />
                   </div>
                 </div>
                 <div>
                   <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Entrenador</label>
                   <input value={newApptTrainer} onChange={e => setNewApptTrainer(e.target.value)} placeholder="Nombre del entrenador"
                     className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                    style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                    style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                    onMouseEnter={e => enterMesh(e.currentTarget)}
+                    onMouseLeave={e => leaveMesh(e.currentTarget)}
+                    onFocus={e => focusMesh(e.currentTarget)}
+                    onBlur={e => blurMesh(e.currentTarget)} />
                 </div>
                 {newApptType !== 'class' && newApptType !== 'event' && (
                   <div>
                     <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Estudiante</label>
                     <input value={newApptStudent} onChange={e => setNewApptStudent(e.target.value)} placeholder="Nombre del estudiante"
                       className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                      style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
+                      style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                      onMouseEnter={e => enterMesh(e.currentTarget)}
+                      onMouseLeave={e => leaveMesh(e.currentTarget)}
+                      onFocus={e => focusMesh(e.currentTarget)}
+                      onBlur={e => blurMesh(e.currentTarget)} />
                   </div>
                 )}
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
@@ -816,103 +946,175 @@ export default function AgendaModule() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
             style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(8px)' }}
-            onClick={() => setShowPublishModal(false)}
+            onClick={closePublishModal}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="rounded-3xl w-full max-w-sm overflow-hidden"
+              className="rounded-3xl w-full max-w-md overflow-hidden"
               style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between px-6 pt-6 pb-3">
-                <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Publicar Cupos</h2>
-                <button onClick={() => setShowPublishModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors"><X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
+                <div>
+                  <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Agendar Semana</h2>
+                  <p className="text-[11px] font-bold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>
+                    Paso {publishStep} de 2 · {publishStep === 1 ? 'Fechas y días' : 'Horarios por día'}
+                  </p>
+                </div>
+                <button onClick={closePublishModal} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors"><X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
               </div>
-              <div className="px-6 pb-6 space-y-4">
-                <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>Configura los cupos que deseas publicar</p>
 
-                <div>
-                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Días disponibles</label>
-                  <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                    {(['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'] as const).map((dk, i) => {
-                      const active = publishDays.includes(dk)
-                      return (
-                        <button key={dk} onClick={() => setPublishDays(prev => active ? prev.filter(d => d !== dk) : [...prev, dk])}
-                          className="px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all"
-                          style={{
-                            background: active ? MESH_GRAD : 'rgba(0,0,0,0.04)',
-                            color: active ? '#fff' : 'rgba(0,0,0,0.35)',
-                          }}
-                        >{['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][i]}</button>
-                      )
-                    })}
+              {publishStep === 1 ? (
+                <div className="px-6 pb-6 space-y-5">
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Rango de fechas</label>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <input type="date" value={publishStart} onChange={e => setPublishStart(e.target.value)}
+                        className="flex-1 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                        style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                        onMouseEnter={e => enterMesh(e.currentTarget)}
+                        onMouseLeave={e => leaveMesh(e.currentTarget)}
+                        onFocus={e => focusMesh(e.currentTarget)}
+                        onBlur={e => blurMesh(e.currentTarget)} />
+                      <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>—</span>
+                      <input type="date" value={publishEnd} onChange={e => setPublishEnd(e.target.value)}
+                        className="flex-1 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                        style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                        onMouseEnter={e => enterMesh(e.currentTarget)}
+                        onMouseLeave={e => leaveMesh(e.currentTarget)}
+                        onFocus={e => focusMesh(e.currentTarget)}
+                        onBlur={e => blurMesh(e.currentTarget)} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Días de la semana</label>
+                    <p className="text-[11px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona los días disponibles.</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {WEEK_DAYS_6.map(({ key, label }) => {
+                        const active = publishDays.includes(key)
+                        return (
+                          <motion.button
+                            key={key}
+                            type="button"
+                            whileHover={!active ? { scale: 1.05 } : {}}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setPublishDays(prev => active ? prev.filter(d => d !== key) : [...prev, key])}
+                            className="flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
+                            style={{
+                              background: active ? DAY_GRAD : 'rgba(0,0,0,0.03)',
+                              color: active ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                              border: '1px solid transparent',
+                              boxShadow: active ? '0 4px 20px rgba(18,112,183,0.25)' : 'none',
+                            }}
+                            onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
+                            onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                          >
+                            <motion.img
+                              src={calendarImg}
+                              alt=""
+                              className="mb-0.5"
+                              animate={{
+                                width: active ? 48 : 24,
+                                height: active ? 48 : 24,
+                                marginTop: active ? -24 : 0,
+                                filter: active ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
+                              }}
+                              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                            />
+                            <span className="text-sm leading-none text-center">{label}</span>
+                          </motion.button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => setPublishStep(2)}
+                    disabled={!publishStart || !publishEnd || publishDays.length === 0}
+                    className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                    style={{ background: publishStart && publishEnd && publishDays.length > 0 ? MESH_GRAD : 'rgba(0,0,0,0.1)' }}
+                  >Continuar</motion.button>
+                </div>
+              ) : (
+                <div className="px-6 pb-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                  {publishDays.map((dk) => {
+                    const cfg = getDayConfig(dk)
+                    const dayLabel = WEEK_DAYS_6.find(w => w.key === dk)
+                    return (
+                      <div key={dk} className="rounded-2xl p-4 space-y-3" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ background: MESH_GRAD }}>{dayLabel?.short || ''}</div>
+                          <span className="text-sm font-bold" style={{ color: '#1A1A1E' }}>{dayLabel?.label || dk}</span>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración de la sesión</label>
+                          <select value={cfg.duration} onChange={e => updateDayDuration(dk, e.target.value)}
+                            className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                            style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                            onMouseEnter={e => enterMesh(e.currentTarget)}
+                            onMouseLeave={e => leaveMesh(e.currentTarget)}
+                            onFocus={e => focusMesh(e.currentTarget)}
+                            onBlur={e => blurMesh(e.currentTarget)}
+                          >
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60">60 min</option>
+                            <option value="90">90 min</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Horario de atención</label>
+                          <div className="space-y-2 mt-1.5">
+                            {cfg.ranges.map((r, ri) => (
+                              <div key={ri} className="flex items-center gap-2">
+                                <input type="time" value={r.open} onChange={e => updateDayRange(dk, ri, 'open', e.target.value)}
+                                  className="flex-1 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                                  style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                                  onMouseEnter={e => enterMesh(e.currentTarget)}
+                                  onMouseLeave={e => leaveMesh(e.currentTarget)}
+                                  onFocus={e => focusMesh(e.currentTarget)}
+                                  onBlur={e => blurMesh(e.currentTarget)} />
+                                <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>—</span>
+                                <input type="time" value={r.close} onChange={e => updateDayRange(dk, ri, 'close', e.target.value)}
+                                  className="flex-1 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                                  style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                                  onMouseEnter={e => enterMesh(e.currentTarget)}
+                                  onMouseLeave={e => leaveMesh(e.currentTarget)}
+                                  onFocus={e => focusMesh(e.currentTarget)}
+                                  onBlur={e => blurMesh(e.currentTarget)} />
+                                {cfg.ranges.length > 1 && (
+                                  <button onClick={() => removeDayRange(dk, ri)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-black/[0.05] transition-colors flex-shrink-0">
+                                    <X size={14} style={{ color: 'rgba(0,0,0,0.35)' }} />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                            {rangeConflict?.day === dk && (
+                              <p className="text-[10px] font-bold" style={{ color: RED }}>{rangeConflict.msg}</p>
+                            )}
+                          </div>
+                          <button onClick={() => addDayRange(dk)}
+                            className="mt-2 flex items-center gap-1 text-[11px] font-bold transition-all hover:opacity-70"
+                            style={{ color: BLUE }}
+                          ><Plus size={12} strokeWidth={3} /> Agregar horario</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={() => setPublishStep(1)} className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all" style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.5)' }}>Volver</button>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      onClick={handlePublish}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                      style={{ background: MESH_GRAD }}
+                    >Publicar Cupos</motion.button>
                   </div>
                 </div>
-
-                <div>
-                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Horario de atención</label>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <input type="time" value={publishOpen} onChange={e => setPublishOpen(e.target.value)}
-                      className="flex-1 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                      style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-                    <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>—</span>
-                    <input type="time" value={publishClose} onChange={e => setPublishClose(e.target.value)}
-                      className="flex-1 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                      style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración de las citas</label>
-                  <select value={publishDuration} onChange={e => setPublishDuration(e.target.value)}
-                    className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                    style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }}>
-                    <option value="30">30 min</option>
-                    <option value="45">45 min</option>
-                    <option value="60">60 min</option>
-                    <option value="90">90 min</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Rango de fechas</label>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <input type="date" value={publishStart} onChange={e => setPublishStart(e.target.value)}
-                      className="flex-1 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                      style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-                    <span className="text-xs" style={{ color: 'rgba(0,0,0,0.2)' }}>—</span>
-                    <input type="date" value={publishEnd} onChange={e => setPublishEnd(e.target.value)}
-                      className="flex-1 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                      style={{ background: '#F0F7FF', border: '1px solid rgba(0,0,0,0.04)', color: '#1A1A1E' }} />
-                  </div>
-                </div>
-
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    if (!publishStart || !publishEnd) return
-                    const start = new Date(publishStart + 'T00:00:00')
-                    const end = new Date(publishEnd + 'T00:00:00')
-                    const newDates = new Set(publishedDates)
-                    const current = new Date(start)
-                    while (current <= end) {
-                      const ds = fmtDate(current)
-                      const dk = dayKey[current.getDay()]
-                      if (publishDays.includes(dk)) {
-                        if (newDates.has(ds)) newDates.delete(ds)
-                        else newDates.add(ds)
-                      }
-                      current.setDate(current.getDate() + 1)
-                    }
-                    setPublishedDates(newDates)
-                    setShowPublishModal(false)
-                  }}
-                  className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                  style={{ background: publishStart && publishEnd ? MESH_GRAD : 'rgba(0,0,0,0.1)' }}
-                >{publishStart && publishEnd ? 'Publicar Cupos' : 'Selecciona ambas fechas'}</motion.button>
-              </div>
+              )}
             </motion.div>
           </motion.div>
         )}
