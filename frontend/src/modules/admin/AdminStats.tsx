@@ -111,9 +111,6 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
   const topAttendance = [...visibleCareers].sort((a, b) => b.attendance - a.attendance)[0] ?? empty
   const lowestAttendance = [...visibleCareers].sort((a, b) => a.attendance - b.attendance)[0] ?? empty
   const lowestRegistered = [...visibleCareers].sort((a, b) => a.registered - b.registered)[0] ?? empty
-  const emptyStates: Record<string, { icon: typeof Users; title: string; desc: string }> = {
-    schedule: { icon: Clock, title: 'Horarios', desc: 'Análisis de horarios próximamente' },
-  }
 
   return (
     <div className="p-8 space-y-6 w-full relative">
@@ -726,26 +723,110 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
             </>
           )}
 
-          {tab !== 'overview' && tab !== 'careers' && tab !== 'students' && (
-            <div className="flex flex-col items-center justify-center min-h-[400px]">
-              {(() => {
-                const es = emptyStates[tab]
-                const Icon = es.icon
-                return (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center gap-4"
-                  >
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: `${BLUE}10` }}>
-                      <Icon size={30} style={{ color: BLUE, opacity: 0.5 }} />
+          {tab === 'schedule' && (
+            <>
+              <div className="grid grid-cols-4 gap-4 mb-8">
+                {[
+                  { label: 'Clases por Semana', value: '45', sub: 'Sesiones programadas', color: '#1270B7', view: CalendarView },
+                  { label: 'Entrenadores Activos', value: '12', sub: 'Instructores en planta', color: '#30D158', view: StudentsView },
+                  { label: 'Ocupación Promedio', value: '78%', sub: 'Aforo por sesión', color: '#BF5AF2', view: StudentCardView },
+                  { label: 'Horas Programadas', value: '68h', sub: 'Actividad semanal', color: '#FF9F0A', view: ListView },
+                ].map((card, i) => {
+                  const ModelView = card.view
+                  return (
+                    <motion.div key={card.label}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                      className="relative rounded-2xl p-4 group cursor-pointer transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                      style={{
+                        background: '#FFFFFF',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
+                      }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-14 h-14 flex-shrink-0 z-20 pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
+                        >
+                          <ModelView />
+                        </div>
+                        <div className="relative z-10 min-w-0">
+                          <span className="stat-value block transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.2, color: card.color }}>{card.value}</span>
+                          <p className="text-[10px] mt-1 font-bold truncate" style={{ color: '#1A1A1E' }}>{card.label}</p>
+                          <p className="text-[10px] mt-0.5 font-medium truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{card.sub}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  whileHover={{ scale: 1.01 }}
+                  className="rounded-2xl p-6 premium-card"
+                >
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
+                      <Clock size={14} style={{ color: BLUE }} />
                     </div>
-                    <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>{es.title}</p>
-                    <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.15)' }}>{es.desc}</p>
-                  </motion.div>
-                )
-              })()}
-            </div>
+                    <span className="text-xs font-bold tracking-wide" style={{ color: '#1A1A1E' }}>CLASES POR DÍA</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={scheduleWeekly} margin={{ left: 0, right: 16, top: 0, bottom: 0 }} barCategoryGap="26%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} width={30} />
+                      <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
+                      <defs>
+                        <linearGradient id="scheduleDayGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#1270B7" />
+                          <stop offset="100%" stopColor="#FFFFFF" />
+                        </linearGradient>
+                      </defs>
+                      <Bar dataKey="clases" fill="url(#scheduleDayGrad)" radius={[8, 8, 0, 0]}>
+                        <LabelList dataKey="clases" position="top" style={{ fontSize: 10, fontWeight: 700, fill: '#1270B7' }} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  whileHover={{ scale: 1.01 }}
+                  className="rounded-2xl p-6 premium-card"
+                >
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
+                      <Activity size={14} style={{ color: BLUE }} />
+                    </div>
+                    <span className="text-xs font-bold tracking-wide" style={{ color: '#1A1A1E' }}>ASISTENCIA POR HORA</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={scheduleHours} margin={{ left: 0, right: 16, top: 0, bottom: 0 }} barCategoryGap="26%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                      <XAxis dataKey="hora" tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} width={30} />
+                      <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
+                      <defs>
+                        <linearGradient id="scheduleHourGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#30D158" />
+                          <stop offset="100%" stopColor="#FFFFFF" />
+                        </linearGradient>
+                      </defs>
+                      <Bar dataKey="asistencia" fill="url(#scheduleHourGrad)" radius={[8, 8, 0, 0]}>
+                        <LabelList dataKey="asistencia" position="top" style={{ fontSize: 10, fontWeight: 700, fill: '#30D158' }} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </motion.div>
+              </div>
+            </>
           )}
         </motion.div>
       </AnimatePresence>
