@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "UniFit",
+    "slug": "unifit-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "splash": { "backgroundColor": "#0a0a0a" },
+    "ios": { "supportsTablet": false },
+    "android": { "adaptiveIcon": { "backgroundColor": "#0a0a0a" } }
+  }
+}
