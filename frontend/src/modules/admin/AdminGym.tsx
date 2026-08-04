@@ -47,7 +47,7 @@ export default function AdminGym({ tab }: { tab: string }) {
   }
 
   if (tab === 'schedule') {
-    return <AgendaModule />
+    return <AgendaModule students={MOCK_STUDENTS} />
   }
 
   return null

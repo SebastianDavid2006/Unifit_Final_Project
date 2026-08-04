@@ -11,6 +11,7 @@ import {
   Flame, Shield, BarChart2, Maximize2, X,
   Check, CheckCircle, XCircle, Clock, Eye,
   MoreVertical, Download, Trash2, Upload,
+  Sparkles, Loader2,
 } from 'lucide-react'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '../../assets/models/ui/objects/telephone/TelephoneModel'
@@ -34,6 +35,7 @@ import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_
 import calendarImg from '../../assets/icons/objects/calendar.webp'
 import physicalAssessmentImg from '../../assets/illustrations/modules/physical_assessment.webp'
 import { GREEN_GRAD } from '../../data/constants'
+import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine, RoutineRow } from './aiRoutine'
 import musculoIcon from '../../assets/icons/anatomy/musculoskeletal.webp'
 import lungsIcon from '../../assets/icons/anatomy/lungs.webp'
 import brainIcon from '../../assets/icons/anatomy/brain.webp'
@@ -198,6 +200,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [routineForm, setRoutineForm] = useState({
     name: '', description: '', duration: '', frequency: '', level: 'Intermedio',
   })
+  const [currentRoutine, setCurrentRoutine] = useState<AiRoutine | null>(null)
+  const [routineRows, setRoutineRows] = useState<RoutineRow[]>([])
+  const [selectedRoutineDay, setSelectedRoutineDay] = useState<string | null>(null)
+  const [viewRoutineDay, setViewRoutineDay] = useState<string | null>(null)
+  const [aiGenerating, setAiGenerating] = useState(false)
+  const [aiGenStep, setAiGenStep] = useState(0)
+  const [aiGeneratedRoutine, setAiGeneratedRoutine] = useState<AiRoutine | null>(null)
   const [showNewValuationModal, setShowNewValuationModal] = useState(false)
   const [valuationSuccess, setValuationSuccess] = useState(false)
   const [valuationStep, setValuationStep] = useState(1)
@@ -236,6 +245,87 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
+
+  const startAiRoutine = () => {
+    setAiGenerating(true)
+    setAiGenStep(0)
+    let step = 0
+    const interval = window.setInterval(() => {
+      step += 1
+      if (step >= AI_GENERATION_STEPS.length) {
+        window.clearInterval(interval)
+        const routine = buildAiRoutine({
+          nivelActividad: valuationForm.nivelActividad,
+          objetivoTarjetas: valuationForm.objetivoTarjetas,
+          objetivoDetalle: valuationForm.objetivoDetalle,
+          peso: valuationForm.peso,
+          estatura: valuationForm.estatura,
+          imc: valuationForm.imc,
+          grasaCorporal: valuationForm.grasaCorporal,
+          masaMuscular: valuationForm.masaMuscular,
+          presionArterial: valuationForm.presionArterial,
+          resistenciaMuscular: valuationForm.resistenciaMuscular,
+          antecedentesSalud: valuationForm.antecedentesSalud,
+          observacionesEntrenador: valuationForm.observacionesEntrenador,
+          diasDisponibles: valuationForm.diasDisponibles,
+          observacionesFinales: valuationForm.observacionesFinales,
+          studentName: student.firstName,
+        })
+        setAiGeneratedRoutine(routine)
+        setRoutineForm({
+          name: routine.name,
+          description: routine.description,
+          duration: routine.duration,
+          frequency: routine.frequency,
+          level: routine.level,
+        })
+        setRoutineRows(routine.rows)
+        setSelectedRoutineDay(routine.rows.length ? routine.rows[0].dia : null)
+        setRoutineStep(1)
+        setTimeout(() => {
+          setAiGenerating(false)
+          setShowNewRoutineModal(true)
+        }, 600)
+        return
+      }
+      setAiGenStep(step)
+    }, 450)
+  }
+
+  const updateRoutineRow = (id: string, patch: Partial<RoutineRow>) =>
+    setRoutineRows(prev => prev.map(r => (r.id === id ? { ...r, ...patch } : r)))
+
+  const removeRoutineRow = (id: string) =>
+    setRoutineRows(prev => prev.filter(r => r.id !== id))
+
+  const routineDays = [...new Set(routineRows.map(r => r.dia))]
+
+  const renderRoutineDayCard = (day: string, selected: boolean, done: boolean, onClick: () => void) => (
+    <motion.button
+      type="button"
+      whileHover={!selected ? { scale: 1.04 } : {}}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      className="relative flex flex-col items-center gap-1 px-2 py-3 rounded-xl font-bold transition-all duration-200"
+      style={{
+        background: selected ? 'linear-gradient(135deg, #30D158, #1A8A3F)' : 'rgba(0,0,0,0.03)',
+        color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.4)',
+        border: '1px solid transparent',
+        boxShadow: selected ? '0 6px 20px rgba(48,209,88,0.35)' : 'none',
+      }}
+      onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(48,209,88,0.12)'; e.currentTarget.style.color = '#1A8A3F' } }}
+      onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.4)' } }}
+    >
+      <span className="text-sm leading-none">{day}</span>
+      <span className="text-[10px] font-semibold opacity-70 leading-none">{done ? 'Listo' : 'Editar'}</span>
+      {done && (
+        <span className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.9)' }}>
+          <Check size={9} color="#1A8A3F" strokeWidth={3.5} />
+        </span>
+      )}
+    </motion.button>
+  )
+
 
   const renderValuationSuccess = () => (
     <motion.div
@@ -303,15 +393,71 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
       >
         Los datos de la valoración han sido guardados en el sistema.
       </motion.p>
+      {aiGenerating ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md mt-8 mb-4 rounded-2xl p-5"
+          style={{ background: 'rgba(48,209,88,0.06)', border: '1px solid rgba(48,209,88,0.2)' }}
+        >
+          <div className="flex items-center gap-2.5 mb-4">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, #30D158, #00C7BE)' }}
+            >
+              <Sparkles size={14} color="#FFFFFF" />
+            </motion.div>
+            <div>
+              <p className="text-xs font-bold" style={{ color: '#0D1B2A' }}>Generando rutina con IA...</p>
+              <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>Analizando la valoración de {student.firstName}</p>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            {AI_GENERATION_STEPS.map((s, i) => (
+              <motion.div key={s} className="flex items-center gap-2.5"
+                animate={{ opacity: i <= aiGenStep ? 1 : 0.4 }}
+              >
+                <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{
+                  background: i < aiGenStep ? '#30D158' : i === aiGenStep ? 'rgba(48,209,88,0.15)' : 'rgba(0,0,0,0.06)',
+                }}>
+                  {i < aiGenStep
+                    ? <Check size={9} color="#fff" strokeWidth={3.5} />
+                    : i === aiGenStep
+                      ? <Loader2 size={9} color="#1A8A3F" className="animate-spin" />
+                      : <span style={{ width: 9, height: 9, borderRadius: 99, background: 'rgba(0,0,0,0.15)' }} />}
+                </div>
+                <p className="text-[11px]" style={{
+                  color: i <= aiGenStep ? '#0D1B2A' : 'rgba(0,0,0,0.3)',
+                  fontWeight: i === aiGenStep ? 700 : 500,
+                }}>{s}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      ) : (
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
+          whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }}
+          whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }}
+          onClick={startAiRoutine}
+          className="mt-8 mb-2 px-8 py-3.5 rounded-2xl text-xs font-bold text-white cursor-pointer flex items-center gap-2"
+          style={{ background: 'linear-gradient(135deg, #30D158, #00C7BE)' }}
+        >
+          <Sparkles size={14} />
+          Generar rutina con IA
+        </motion.button>
+      )}
       <motion.button
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.3 }}
-        whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }}
-        whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }}
+        transition={{ delay: 0.55, duration: 0.3 }}
         onClick={() => { setShowNewValuationModal(false); setValuationSuccess(false); setValuationStep(1) }}
-        className="mt-8 mb-10 px-8 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
-        style={{ background: GREEN_GRAD }}
+        className="mb-10 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all"
+        style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.5)' }}
       >
         Cerrar
       </motion.button>
@@ -2137,7 +2283,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 exit={{ opacity: 0, scale: 0.95, y: 12 }}
                 transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
-                className="w-full max-w-2xl rounded-3xl p-6"
+                className="w-full max-w-3xl rounded-3xl p-6 flex flex-col"
                 style={{
                   background: '#FFFFFF',
                   border: '1px solid rgba(0,0,0,0.06)',
@@ -2150,7 +2296,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       <Dumbbell size={20} style={{ color: '#30D158' }} />
                     </div>
                     <div>
-                      <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>{selectedAssessment.routine}</h3>
+                      <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>{currentRoutine?.name ?? selectedAssessment.routine}</h3>
                       <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{selectedAssessment.date} · Asociada a la valoración</p>
                     </div>
                   </div>
@@ -2160,34 +2306,78 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </motion.button>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="grid gap-3 px-1 mb-2" style={{ gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr' }}>
-                    {['Ejercicio', 'Series', 'Repeticiones', 'Peso', 'Calorías'].map(h => (
-                      <div key={h} className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{h}</div>
+                {currentRoutine && currentRoutine.rows.length > 0 ? (
+                  (() => {
+                    const viewDays = [...new Set(currentRoutine.rows.map(r => r.dia))]
+                    const activeDay = viewRoutineDay && viewDays.includes(viewRoutineDay) ? viewRoutineDay : viewDays[0]
+                    const selDayRows = currentRoutine.rows.filter(r => r.dia === activeDay)
+                    return (
+                      <div className="flex flex-col min-h-0 flex-1">
+                        <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `repeat(${viewDays.length}, minmax(0, 1fr))` }}>
+                          {viewDays.map(day => renderRoutineDayCard(
+                            day,
+                            day === activeDay,
+                            currentRoutine.rows.some(r => r.dia === day),
+                            () => setViewRoutineDay(day),
+                          ))}
+                        </div>
+                        <div className="rounded-2xl p-4 space-y-2 overflow-y-auto min-h-[180px]" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', maxHeight: 340, scrollbarWidth: 'thin' }}>
+                          {selDayRows.length === 0 ? (
+                            <p className="text-xs text-center py-4" style={{ color: 'rgba(0,0,0,0.4)' }}>Sin ejercicios para este día.</p>
+                          ) : selDayRows.map((ex, i) => (
+                            <motion.div
+                              key={ex.id}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: i * 0.03 }}
+                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                              style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.85)' : 'transparent' }}
+                            >
+                              <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ background: 'rgba(48,209,88,0.15)', color: '#1A8A3F' }}>{i + 1}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold truncate" style={{ color: '#0D1B2A' }}>{ex.name}</p>
+                                <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{ex.muscle}</p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{ex.sets} × {ex.reps}</p>
+                                <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>Descanso {ex.rest}</p>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()
+                ) : (
+                  <div className="space-y-2">
+                    <div className="grid gap-3 px-1 mb-2" style={{ gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr' }}>
+                      {['Ejercicio', 'Series', 'Repeticiones', 'Peso', 'Calorías'].map(h => (
+                        <div key={h} className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{h}</div>
+                      ))}
+                    </div>
+                    {routineExercises.map((ex, i) => (
+                      <motion.div
+                        key={ex.name}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.04 }}
+                        className="grid gap-3 items-center px-3 py-2.5 rounded-xl"
+                        style={{
+                          gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr',
+                          background: i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
+                        }}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.name}</span>
+                        </div>
+                        <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{ex.sets}</span>
+                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.reps}</span>
+                        <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.weight}</span>
+                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.calories}</span>
+                      </motion.div>
                     ))}
                   </div>
-                  {routineExercises.map((ex, i) => (
-                    <motion.div
-                      key={ex.name}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="grid gap-3 items-center px-3 py-2.5 rounded-xl"
-                      style={{
-                        gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr',
-                        background: i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
-                      }}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.name}</span>
-                      </div>
-                      <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{ex.sets}</span>
-                      <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.reps}</span>
-                      <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.weight}</span>
-                      <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.calories}</span>
-                    </motion.div>
-                  ))}
-                </div>
+                )}
 
                 <div className="mt-5 pt-4 flex justify-end" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                   <button
@@ -2220,7 +2410,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 exit={{ opacity: 0, scale: 0.95, y: 12 }}
                 transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
-                className="w-full max-w-lg rounded-3xl p-6"
+                className="w-full max-w-4xl rounded-3xl p-6 flex flex-col max-h-[86vh]"
                 style={{
                   background: '#FFFFFF',
                   border: '1px solid rgba(0,0,0,0.06)',
@@ -2229,18 +2419,26 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               >
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(48,209,88,0.12)' }}>
-                      <Dumbbell size={20} style={{ color: '#30D158' }} />
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'rgba(48,209,88,0.12)' }}>
+                      <Dumbbell size={22} style={{ color: '#30D158' }} />
                     </div>
                     <div>
-                      <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Nueva Rutina</h3>
+                      <h3 className="text-lg font-bold" style={{ color: '#0D1B2A' }}>Nueva Rutina</h3>
                       <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Paso {routineStep} de 2</p>
                     </div>
                   </div>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowNewRoutineModal(false)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                  </motion.button>
+                  <div className="flex items-center gap-3">
+                    {aiGeneratedRoutine && (
+                      <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'rgba(48,209,88,0.08)', border: '1px solid rgba(48,209,88,0.15)' }}>
+                        <Sparkles size={12} style={{ color: '#1A8A3F' }} />
+                        <span className="text-[11px] font-bold" style={{ color: '#1A8A3F' }}>Generada por IA</span>
+                      </div>
+                    )}
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowNewRoutineModal(false)}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                      <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                    </motion.button>
+                  </div>
                 </div>
 
                 <div className="flex gap-1.5 mb-6">
@@ -2252,41 +2450,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 </div>
 
                 {routineStep === 1 && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre de la rutina *</label>
-                      <input
-                        value={routineForm.name}
-                        onChange={e => setRoutineForm(p => ({ ...p, name: e.target.value }))}
-                        placeholder="Ej: Rutina Hipertrofia Enero"
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                        style={{
-                          background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
-                          color: '#1A1A1E',
-                          border: '1px solid transparent',
-                        }}
-                        onFocus={e => { e.currentTarget.style.borderColor = '#1270B7'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.12)' }}
-                        onBlur={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = 'none' }}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Descripción</label>
-                      <textarea
-                        value={routineForm.description}
-                        onChange={e => setRoutineForm(p => ({ ...p, description: e.target.value }))}
-                        placeholder="Objetivos y notas de la rutina"
-                        rows={3}
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none"
-                        style={{
-                          background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
-                          color: '#1A1A1E',
-                          border: '1px solid transparent',
-                        }}
-                        onFocus={e => { e.currentTarget.style.borderColor = '#1270B7'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.12)' }}
-                        onBlur={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = 'none' }}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-5 px-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                    <p className="text-sm font-semibold" style={{ color: 'rgba(0,0,0,0.55)' }}>
+                      {aiGeneratedRoutine
+                        ? 'Ajusta los parámetros generales de la rutina (prellenados según la valoración).'
+                        : 'Configura los parámetros generales de la rutina.'}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración</label>
                         <select
@@ -2325,24 +2495,38 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           <option value="6 días/semana">6 días/semana</option>
                         </select>
                       </div>
+                      <div>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nivel</label>
+                        <select
+                          value={routineForm.level}
+                          onChange={e => setRoutineForm(p => ({ ...p, level: e.target.value }))}
+                          className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
+                          style={{
+                            background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                            color: '#1A1A1E',
+                            border: '1px solid transparent',
+                          }}
+                        >
+                          <option value="Principiante">Principiante</option>
+                          <option value="Intermedio">Intermedio</option>
+                          <option value="Avanzado">Avanzado</option>
+                        </select>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nivel</label>
-                      <select
-                        value={routineForm.level}
-                        onChange={e => setRoutineForm(p => ({ ...p, level: e.target.value }))}
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
-                        style={{
-                          background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
-                          color: '#1A1A1E',
-                          border: '1px solid transparent',
-                        }}
+                    {aiGeneratedRoutine && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-2xl p-4"
+                        style={{ background: 'rgba(48,209,88,0.05)', border: '1px solid rgba(48,209,88,0.15)' }}
                       >
-                        <option value="Principiante">Principiante</option>
-                        <option value="Intermedio">Intermedio</option>
-                        <option value="Avanzado">Avanzado</option>
-                      </select>
-                    </div>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Sparkles size={13} style={{ color: '#1A8A3F' }} />
+                          <p className="text-xs font-bold" style={{ color: '#0D1B2A' }}>{aiGeneratedRoutine.name}</p>
+                        </div>
+                        <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.5)' }}>{aiGeneratedRoutine.description}</p>
+                      </motion.div>
+                    )}
                   </div>
                 )}
 

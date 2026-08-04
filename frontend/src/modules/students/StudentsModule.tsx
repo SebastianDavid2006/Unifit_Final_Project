@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Search, Plus, ClipboardList, ChevronRight } from 'lucide-react'
+import { Search, Plus, ClipboardList, ChevronRight, ChevronLeft } from 'lucide-react'
 import studentsImg from '../../assets/illustrations/characters/students/students_group.webp'
 import NewStudentModal from './NewStudentModal'
 
@@ -16,6 +16,7 @@ interface Student {
   risk: 'high' | 'medium' | 'low'
   status: 'active' | 'inactive' | 'process'
   lastVisit: string
+  nextAssessment: string
   avatar: string
   goal: string
   sessions: number
@@ -44,6 +45,8 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
   const [filterSearch, setFilterSearch] = useState('')
   const [showNewStudent, setShowNewStudent] = useState(false)
+  const [page, setPage] = useState(1)
+  const pageSize = 7
 
   const filterLabels: Record<string, string> = {
     eps: 'EPS', gender: 'Género', institution: 'Institución',
@@ -70,7 +73,33 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
     [students, search, riskFilter, filterSelections]
   )
 
-  const tableHeaders = ['Nombre', 'Documento', 'Carrera', 'Último Ingreso', 'Valoraciones', 'Estado']
+  const tableHeaders = ['Nombre', 'Carrera', 'Último Ingreso', 'Próxima Valoración', 'Valoraciones', 'Estado']
+
+  const statusMap: Record<Student['status'], { label: string; color: string; bg: string }> = {
+    active: { label: 'Activo', color: '#1E8E3E', bg: 'rgba(34,197,94,0.13)' },
+    inactive: { label: 'Inactivo', color: '#E31B23', bg: 'rgba(244,67,54,0.12)' },
+    process: { label: 'En proceso', color: '#0E6FBF', bg: 'rgba(18,112,183,0.12)' },
+  }
+
+  useEffect(() => { setPage(1) }, [search, riskFilter, filterSelections])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+
+  const pageNumbers: (number | '…')[] = useMemo(() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
+    const set = new Set<number>([1, totalPages, currentPage - 1, currentPage, currentPage + 1])
+    const sorted = [...set].filter(p => p >= 1 && p <= totalPages).sort((a, b) => a - b)
+    const out: (number | '…')[] = []
+    let prev = 0
+    sorted.forEach(p => {
+      if (p - prev > 1) out.push('…')
+      out.push(p)
+      prev = p
+    })
+    return out
+  }, [totalPages, currentPage])
 
   return (
     <>
@@ -342,7 +371,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
 
         {/* Student list — blurred when filters are open */}
         <motion.div layout transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} style={{ filter: showFilters ? 'blur(4px)' : 'none', opacity: showFilters ? 0.5 : 1, transition: 'filter 0.3s ease, opacity 0.3s ease', pointerEvents: showFilters ? 'none' : 'auto' }}>
-          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
+          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
             {tableHeaders.map((h, i) => (
               <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
             ))}
@@ -350,27 +379,88 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
           </div>
 
           <div className="space-y-2">
-            {filtered.map((s, i) => (
-              <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => onSelectStudent(s)} whileHover={{ y: -3, scale: 1.002, background: 'rgba(255,255,255,0.8)' }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
-                <div className="flex items-center gap-4">
+            {paged.map((s, i) => (
+              <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => onSelectStudent(s)} whileHover={{ y: -3, scale: 1.002, background: 'rgba(255,255,255,0.8)' }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
+                <div className="flex items-center gap-4 min-w-0">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
                   <div className="min-w-0">
                     <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
+                    <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: 'rgba(0,0,0,0.35)' }}>CC 1098{s.id}76{s.id}</p>
                   </div>
                 </div>
-                <p className="text-xs font-mono font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>1098{s.id}76{s.id}</p>
                 <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.faculty}</p>
                 <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{s.lastVisit}</p>
+                <p className="text-xs font-bold" style={{ color: s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A' }}>{s.nextAssessment}</p>
                 <div className="flex items-center gap-1.5">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.06)' }}>
                     <ClipboardList size={14} style={{ color: BLUE }} />
                   </div>
                   <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal opacity-40">registros</span></p>
                 </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: statusMap[s.status].bg, color: statusMap[s.status].color }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusMap[s.status].color }} />
+                  {statusMap[s.status].label}
+                </span>
                 <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
               </motion.div>
             ))}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-1.5 pt-4">
+              <motion.button
+                whileHover={currentPage > 1 ? { scale: 1.1 } : {}}
+                whileTap={currentPage > 1 ? { scale: 0.92 } : {}}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                style={{
+                  background: currentPage === 1 ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)',
+                  color: currentPage === 1 ? 'rgba(0,0,0,0.2)' : '#111111',
+                  cursor: currentPage === 1 ? 'default' : 'pointer',
+                }}
+              >
+                <ChevronLeft size={15} />
+              </motion.button>
+
+              {pageNumbers.map((p, i) =>
+                p === '…' ? (
+                  <span key={`e${i}`} className="w-8 h-8 flex items-center justify-center text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.3)' }}>…</span>
+                ) : (
+                  <motion.button
+                    key={p}
+                    whileHover={p !== currentPage ? { scale: 1.1 } : {}}
+                    whileTap={{ scale: 0.92 }}
+                    onClick={() => setPage(p)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold transition-all"
+                    style={{
+                      background: p === currentPage ? '#111111' : 'rgba(0,0,0,0.05)',
+                      color: p === currentPage ? '#FFFFFF' : '#111111',
+                      boxShadow: p === currentPage ? '0 4px 12px rgba(0,0,0,0.25)' : 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {p}
+                  </motion.button>
+                )
+              )}
+
+              <motion.button
+                whileHover={currentPage < totalPages ? { scale: 1.1 } : {}}
+                whileTap={currentPage < totalPages ? { scale: 0.92 } : {}}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                style={{
+                  background: currentPage === totalPages ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)',
+                  color: currentPage === totalPages ? 'rgba(0,0,0,0.2)' : '#111111',
+                  cursor: currentPage === totalPages ? 'default' : 'pointer',
+                }}
+              >
+                <ChevronRight size={15} />
+              </motion.button>
+            </div>
+          )}
         </motion.div>
       </div>
       <NewStudentModal open={showNewStudent} onClose={() => setShowNewStudent(false)} />

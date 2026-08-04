@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronRight, Plus, X, ChevronLeft, Sparkles, Maximize2, Minimize2, Check, AlertTriangle } from 'lucide-react'
 import calendarImg from '../../assets/illustrations/modules/calendar_module.webp'
 import calendarCardImg from '../../assets/icons/objects/calendar.webp'
 import coachCalendarSuccessImg from '../../assets/illustrations/characters/coach/coach_calendar_success.webp'
 import { meshInputBg, meshInputHover, GREEN_GRAD } from '../../data/constants'
+import { initialTrainers } from '../../data/trainers'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -74,13 +75,14 @@ function DayCard({ label, selected, done, onClick }: { label: string; selected: 
   )
 }
 
-export default function AgendaModule() {
+export default function AgendaModule({ students = [] }: { students?: { name: string; carnetId?: string; program?: string; faculty?: string; avatar?: string }[] }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [showApptModal, setShowApptModal] = useState(false)
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month')
   const [hoveredCol, setHoveredCol] = useState<number | null>(null)
   const [hoveredRow, setHoveredRow] = useState<number | null>(null)
+  const [hoveredHour, setHoveredHour] = useState<string | null>(null)
   const [pressedCell, setPressedCell] = useState<{ col: number; row: number } | null>(null)
   const [dayModalDate, setDayModalDate] = useState<string | null>(null)
 
@@ -131,7 +133,21 @@ export default function AgendaModule() {
   const [newApptStart, setNewApptStart] = useState('08:00')
   const [newApptEnd, setNewApptEnd] = useState('09:00')
   const [newApptTrainer, setNewApptTrainer] = useState('')
+  const [trainerListOpen, setTrainerListOpen] = useState(false)
   const [newApptStudent, setNewApptStudent] = useState('')
+  const [studentListOpen, setStudentListOpen] = useState(false)
+
+  const studentMatches = useMemo(() => {
+    const q = newApptStudent.trim().toLowerCase()
+    if (!q) return []
+    return students.filter(s => s.name.toLowerCase().includes(q))
+  }, [students, newApptStudent])
+
+  const trainerMatches = useMemo(() => {
+    const q = newApptTrainer.trim().toLowerCase()
+    if (!q) return []
+    return initialTrainers.filter(t => t.name.toLowerCase().includes(q))
+  }, [newApptTrainer])
 
   function fmtDate(d: Date) {
     const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0')
@@ -722,25 +738,31 @@ export default function AgendaModule() {
                     const ds = fmtDate(dt)
                     const isT = ds === todayStr
                     const isPublished = publishedDates.has(ds)
+                    const hovered = hoveredCol === i
                     return (
-                      <div key={i} className="text-center py-2 relative" style={{ background: 'transparent' }}>
-                        <div className="text-[10px] font-bold" style={{ color: isT ? BLUE : 'rgba(0,0,0,0.4)' }}>{dayLabels[i]}</div>
-                        <div className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>{dt.getDate()}</div>
-                        {isPublished && <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: GOLD_GRAD }} />}
+                      <div key={i} className="text-center py-2 relative rounded-xl transition-colors duration-200"
+                        style={{ background: hovered ? BLUE_GRAD : 'transparent' }}
+                        onMouseEnter={() => setHoveredCol(i)}
+                        onMouseLeave={() => setHoveredCol(null)}>
+                        <div className="text-[10px] font-bold transition-colors duration-200" style={{ color: isT ? (hovered ? '#fff' : BLUE) : hovered ? '#fff' : 'rgba(0,0,0,0.4)' }}>{dayLabels[i]}</div>
+                        <div className="text-sm font-extrabold transition-colors duration-200" style={{ color: hovered ? '#fff' : '#1A1A1E' }}>{dt.getDate()}</div>
+                        {isPublished && <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: GOLD_GRAD, opacity: hovered ? 0.9 : 1 }} />}
                       </div>
                     )
                   })}
               </div>
-              <div style={{ maxHeight: '52vh', overflowY: 'auto' }}>
-                {TIME_SLOTS_WEEK.map(t => (
-                  <div key={t} className="grid grid-cols-8" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                    <div className="w-14 text-[9px] font-bold leading-none text-right pr-2 py-1.5" style={{ color: 'rgba(0,0,0,0.2)' }}>{t}</div>
-                    {weekDates.map((dt, di) => {
-                      const ds = fmtDate(dt)
-                      const appts = getApptsForDate(ds).filter(a => a.startTime <= t && a.endTime > t)
-                      return (
-                        <div key={di} className="px-0.5 cursor-pointer" style={{ minHeight: 30 }}
-                          onClick={() => { if (appts.length === 0) handleSlotClick(ds, t) }}>
+                      <div style={{ maxHeight: '52vh', overflowY: 'auto' }}>
+                        {TIME_SLOTS_WEEK.map(t => (
+                          <div key={t} className="grid grid-cols-8 transition-colors duration-200" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)', background: hoveredHour === t ? 'rgba(18,112,183,0.03)' : 'transparent' }}>
+                            <div className="w-14 text-[11px] font-bold leading-none text-right pr-2 py-1.5 rounded-xl transition-colors duration-200" style={{ color: hoveredHour === t ? '#fff' : 'rgba(0,0,0,0.55)', background: hoveredHour === t ? BLUE_GRAD : 'transparent' }}>{t}</div>
+                            {weekDates.map((dt, di) => {
+                              const ds = fmtDate(dt)
+                              const appts = getApptsForDate(ds).filter(a => a.startTime <= t && a.endTime > t)
+                              return (
+                                <div key={di} className="px-0.5 cursor-pointer transition-colors duration-200" style={{ minHeight: 30, background: hoveredCol === di ? 'rgba(18,112,183,0.08)' : 'transparent' }}
+                                  onMouseEnter={() => { setHoveredCol(di); setHoveredHour(t) }}
+                                  onMouseLeave={() => { setHoveredCol(null); setHoveredHour(null) }}
+                                  onClick={() => { if (appts.length === 0) handleSlotClick(ds, t) }}>
                           {appts.map(a => (
                             <div key={a.id} className="rounded px-1 py-0.5 text-[8px] font-bold truncate leading-tight"
                               style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `2px solid ${typeColors[a.type]}` }}
@@ -999,13 +1021,35 @@ export default function AgendaModule() {
                 </div>
                 <div>
                   <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Entrenador</label>
-                  <input value={newApptTrainer} onChange={e => setNewApptTrainer(e.target.value)} placeholder="Nombre del entrenador"
+                  <input value={newApptTrainer} onChange={e => { setNewApptTrainer(e.target.value); setTrainerListOpen(true) }}
+                    onFocus={e => { setTrainerListOpen(true); focusMesh(e.currentTarget) }}
+                    onBlur={e => { setTimeout(() => setTrainerListOpen(false), 120); blurMesh(e.currentTarget) }}
+                    placeholder="Escribe el nombre del entrenador…"
                     className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
                     style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
                     onMouseEnter={e => enterMesh(e.currentTarget)}
-                    onMouseLeave={e => leaveMesh(e.currentTarget)}
-                    onFocus={e => focusMesh(e.currentTarget)}
-                    onBlur={e => blurMesh(e.currentTarget)} />
+                    onMouseLeave={e => leaveMesh(e.currentTarget)} />
+                  {trainerListOpen && trainerMatches.length > 0 && (
+                    <div className="mt-1.5 rounded-xl overflow-hidden" style={{ background: '#fff', border: '1px solid rgba(18,112,183,0.15)', boxShadow: '0 8px 24px rgba(18,112,183,0.12)' }}>
+                      {trainerMatches.slice(0, 6).map((t, i) => (
+                        <button
+                          key={i} type="button"
+                          onMouseDown={e => e.preventDefault()}
+                          onClick={() => { setNewApptTrainer(t.name); setTrainerListOpen(false) }}
+                          className="w-full text-left px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2.5 border-b last:border-b-0"
+                          style={{ color: '#1A1A1E', borderColor: 'rgba(0,0,0,0.04)' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(18,112,183,0.08)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <span className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ background: BLUE_GRAD }}>{t.avatar || t.name.slice(0, 2).toUpperCase()}</span>
+                          <span className="min-w-0">
+                            <span className="block font-semibold truncate">{t.name}</span>
+                            <span className="block text-[11px] truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{t.speciality}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <AnimatePresence initial={false}>
                   {newApptType !== 'event' && (
@@ -1019,13 +1063,35 @@ export default function AgendaModule() {
                     >
                       <div>
                         <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Estudiante</label>
-                        <input value={newApptStudent} onChange={e => setNewApptStudent(e.target.value)} placeholder="Nombre del estudiante"
+                        <input value={newApptStudent} onChange={e => { setNewApptStudent(e.target.value); setStudentListOpen(true) }}
+                          onFocus={e => { setStudentListOpen(true); focusMesh(e.currentTarget) }}
+                          onBlur={e => { setTimeout(() => setStudentListOpen(false), 120); blurMesh(e.currentTarget) }}
+                          placeholder="Escribe el nombre del estudiante…"
                           className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
                           style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
                           onMouseEnter={e => enterMesh(e.currentTarget)}
-                          onMouseLeave={e => leaveMesh(e.currentTarget)}
-                          onFocus={e => focusMesh(e.currentTarget)}
-                          onBlur={e => blurMesh(e.currentTarget)} />
+                          onMouseLeave={e => leaveMesh(e.currentTarget)} />
+                        {studentListOpen && studentMatches.length > 0 && (
+                          <div className="mt-1.5 rounded-xl overflow-hidden" style={{ background: '#fff', border: '1px solid rgba(18,112,183,0.15)', boxShadow: '0 8px 24px rgba(18,112,183,0.12)' }}>
+                            {studentMatches.slice(0, 6).map((s, i) => (
+                              <button
+                                key={i} type="button"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => { setNewApptStudent(s.name); setStudentListOpen(false) }}
+                                className="w-full text-left px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2.5 border-b last:border-b-0"
+                                style={{ color: '#1A1A1E', borderColor: 'rgba(0,0,0,0.04)' }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(18,112,183,0.08)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                              >
+                                <span className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ background: BLUE_GRAD }}>{s.avatar || s.name.slice(0, 2).toUpperCase()}</span>
+                                <span className="min-w-0">
+                                  <span className="block font-semibold truncate">{s.name}</span>
+                                  <span className="block text-[11px] truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{[s.carnetId, s.program, s.faculty].filter(Boolean).join(' · ')}</span>
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -1405,11 +1471,15 @@ export default function AgendaModule() {
                         <div className="w-14" />
                         {weekDates.map((dt, i) => {
                           const ds = fmtDate(dt); const isT = ds === todayStr; const isPublished = publishedDates.has(ds)
+                          const hovered = hoveredCol === i
                           return (
-                            <div key={i} className="text-center py-2 relative" style={{ background: 'transparent' }}>
-                              <div className="text-[10px] font-bold" style={{ color: isT ? BLUE : 'rgba(0,0,0,0.4)' }}>{dayLabels[i]}</div>
-                              <div className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>{dt.getDate()}</div>
-                              {isPublished && <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: GOLD_GRAD }} />}
+                            <div key={i} className="text-center py-2 relative rounded-xl transition-colors duration-200"
+                              style={{ background: hovered ? BLUE_GRAD : 'transparent' }}
+                              onMouseEnter={() => setHoveredCol(i)}
+                              onMouseLeave={() => setHoveredCol(null)}>
+                              <div className="text-[10px] font-bold transition-colors duration-200" style={{ color: isT ? (hovered ? '#fff' : BLUE) : hovered ? '#fff' : 'rgba(0,0,0,0.4)' }}>{dayLabels[i]}</div>
+                              <div className="text-sm font-extrabold transition-colors duration-200" style={{ color: hovered ? '#fff' : '#1A1A1E' }}>{dt.getDate()}</div>
+                              {isPublished && <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: GOLD_GRAD, opacity: hovered ? 0.9 : 1 }} />}
                             </div>
                           )
                         })}
@@ -1417,12 +1487,14 @@ export default function AgendaModule() {
                       <div>
                         {TIME_SLOTS_WEEK.map(t => (
                           <div key={t} className="grid grid-cols-8" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                            <div className="w-14 text-[9px] font-bold leading-none text-right pr-2 py-1.5" style={{ color: 'rgba(0,0,0,0.2)' }}>{t}</div>
+                            <div className="w-14 text-[11px] font-bold leading-none text-right pr-2 py-1.5" style={{ color: 'rgba(0,0,0,0.55)' }}>{t}</div>
                             {weekDates.map((dt, di) => {
                               const ds = fmtDate(dt)
                               const appts = getApptsForDate(ds).filter(a => a.startTime <= t && a.endTime > t)
                               return (
-                                <div key={di} className="px-0.5 cursor-pointer" style={{ minHeight: 30 }}
+                                <div key={di} className="px-0.5 cursor-pointer transition-colors duration-200" style={{ minHeight: 30, background: hoveredCol === di ? 'rgba(18,112,183,0.05)' : 'transparent' }}
+                                  onMouseEnter={() => setHoveredCol(di)}
+                                  onMouseLeave={() => setHoveredCol(null)}
                                   onClick={() => { if (appts.length === 0) handleSlotClick(ds, t) }}>
                                   {appts.map(a => (
                                     <div key={a.id} className="rounded px-1 py-0.5 text-[8px] font-bold truncate leading-tight"

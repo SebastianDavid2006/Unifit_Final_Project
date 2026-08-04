@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, BarChart3, GraduationCap, Clock, ClipboardList } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Clock } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
 import AdminTrainers from '../modules/admin/AdminTrainers'
 import AdminGym from '../modules/admin/AdminGym'
@@ -35,6 +35,22 @@ export function AdminDashboard() {
   const [trainerTab, setTrainerTab] = useState('overview')
   const [gymTab, setGymTab] = useState('students')
   const [statsTab, setStatsTab] = useState('overview')
+  const [showCareerFilter, setShowCareerFilter] = useState(false)
+  const [showStatsCalendar, setShowStatsCalendar] = useState(false)
+  const [statsRange, setStatsRange] = useState({ start: '', end: '' })
+  const [calendarPos, setCalendarPos] = useState({ top: 0, right: 0 })
+  const calendarBtnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (showStatsCalendar && calendarBtnRef.current) {
+      const r = calendarBtnRef.current.getBoundingClientRect()
+      setCalendarPos({ top: r.bottom + 8, right: Math.round(window.innerWidth - r.right) })
+    }
+  }, [showStatsCalendar])
+
+  useEffect(() => {
+    setShowStatsCalendar(false)
+  }, [section])
   const trainerRef = useRef<{ clearSelection: () => void }>(null)
   const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
 
@@ -311,7 +327,25 @@ export function AdminDashboard() {
               </div>
             )}
             {section === 'stats' && (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowCareerFilter(!showCareerFilter)}
+                  title="Filtro de carreras"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: showCareerFilter
+                      ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.3) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.35) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(18,112,183,0.85)'
+                      : 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(16px) saturate(1.5)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    boxShadow: showCareerFilter ? '0 4px 20px rgba(18,112,183,0.35)' : '0 4px 16px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <Menu size={18} style={{ color: showCareerFilter ? '#FFFFFF' : '#1270B7' }} />
+                </motion.button>
+
                 <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
                   background: 'rgba(255,255,255,0.12)',
                   backdropFilter: 'blur(24px) saturate(1.6)',
@@ -322,7 +356,6 @@ export function AdminDashboard() {
                     { id: 'students', label: 'Estudiantes', icon: Users },
                     { id: 'careers', label: 'Carreras', icon: GraduationCap },
                     { id: 'schedule', label: 'Horarios', icon: Clock },
-                    { id: 'assessments', label: 'Valoraciones', icon: ClipboardList },
                   ] as const).map(t => (
                     <motion.button key={t.id} onClick={() => setStatsTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
@@ -338,6 +371,25 @@ export function AdminDashboard() {
                     </motion.button>
                   ))}
                 </div>
+
+                <motion.button
+                  ref={calendarBtnRef}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowStatsCalendar(!showStatsCalendar)}
+                  title="Rango de fechas"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: showStatsCalendar
+                      ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.3) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.35) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(18,112,183,0.85)'
+                      : 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(16px) saturate(1.5)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    boxShadow: showStatsCalendar ? '0 4px 20px rgba(18,112,183,0.35)' : '0 4px 16px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <Calendar size={18} style={{ color: showStatsCalendar ? '#FFFFFF' : '#1270B7' }} />
+                </motion.button>
               </div>
             )}
             <div className="flex items-center gap-3 ml-auto">
@@ -401,10 +453,11 @@ export function AdminDashboard() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
+            style={{ filter: showStatsCalendar ? 'blur(10px)' : 'none', transition: 'filter 0.25s ease' }}
             className="size-full"
           >
             {section === 'dashboard' && <AdminDashboardView />}
-            {section === 'stats' && <AdminStats tab={statsTab} onTabChange={setStatsTab} />}
+            {section === 'stats' && <AdminStats tab={statsTab} onTabChange={setStatsTab} showCareerFilter={showCareerFilter} onToggleCareerFilter={() => setShowCareerFilter(!showCareerFilter)} />}
             {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
             {section === 'gym' && <AdminGym tab={gymTab} />}
             {section === 'config' && <AdminConfig />}
@@ -412,6 +465,75 @@ export function AdminDashboard() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {section === 'stats' && showStatsCalendar && (
+        <>
+          <div className="fixed inset-0 z-[45]" onClick={() => setShowStatsCalendar(false)} />
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+            className="fixed z-[50] w-72 rounded-2xl p-5"
+            style={{ top: calendarPos.top, right: calendarPos.right, background: '#FFFFFF', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>Rango de fechas</p>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowStatsCalendar(false)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ background: 'rgba(0,0,0,0.05)' }}
+              >
+                <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round" /></svg>
+              </motion.button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-bold tracking-wide mb-1" style={{ color: 'rgba(0,0,0,0.4)' }}>INICIO</label>
+                <input
+                  type="date"
+                  value={statsRange.start}
+                  onChange={e => setStatsRange(prev => ({ ...prev, start: e.target.value }))}
+                  className="w-full rounded-xl px-3 py-2 text-xs font-semibold outline-none"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: '#1A1A1E', border: '1px solid rgba(0,0,0,0.06)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold tracking-wide mb-1" style={{ color: 'rgba(0,0,0,0.4)' }}>FIN</label>
+                <input
+                  type="date"
+                  value={statsRange.end}
+                  onChange={e => setStatsRange(prev => ({ ...prev, end: e.target.value }))}
+                  className="w-full rounded-xl px-3 py-2 text-xs font-semibold outline-none"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: '#1A1A1E', border: '1px solid rgba(0,0,0,0.06)' }}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setStatsRange({ start: '', end: '' })}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold"
+                style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.4)' }}
+              >
+                Limpiar
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowStatsCalendar(false)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold"
+                style={{ background: BLUE_GRAD, color: '#fff', boxShadow: '0 4px 16px rgba(18,112,183,0.3)' }}
+              >
+                Aplicar
+              </motion.button>
+            </div>
+          </motion.div>
+        </>
+      )}
     </div>
   )
 }

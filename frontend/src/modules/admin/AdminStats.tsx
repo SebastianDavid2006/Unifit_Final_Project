@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip as ReTooltip, ResponsiveContainer, Cell, PieChart, Pie,
+  Tooltip as ReTooltip, ResponsiveContainer, Cell, PieChart, Pie, LabelList,
 } from 'recharts'
 import {
   Users, Activity, Target, Clock, Award, Sparkles,
-  TrendingUp, BarChart3, GraduationCap, ClipboardList, ArrowUp, Building2,
+  TrendingUp, BarChart3, GraduationCap, ArrowUp, Building2, Search, X,
 } from 'lucide-react'
 import trophyImg from '../../assets/images/trophy.png'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
@@ -27,13 +27,20 @@ const weeklyData = [
   { day: 'Dom', asistentes: 12, objetivo: 60 },
 ]
 
-export default function AdminStats({ tab, onTabChange }: { tab: string; onTabChange: (t: string) => void }) {
+export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggleCareerFilter }: {
+  tab: string
+  onTabChange: (t: string) => void
+  showCareerFilter: boolean
+  onToggleCareerFilter: () => void
+}) {
   const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month')
   const [careersModal, setCareersModal] = useState<'registered' | 'attendance' | null>(null)
+  const [selectedCareer, setSelectedCareer] = useState<string | null>(null)
+  const [careerQuery, setCareerQuery] = useState('')
 
   const kpiData = [
-    { label: 'Estudiantes Activos', value: '847', change: '+12%', color: BLUE, icon: Users },
-    { label: 'Asistencia Promedio', value: '94%', change: '+3%', color: '#30D158', icon: Activity },
+    { label: 'Total Usuarios', value: '847', change: '+12%', color: BLUE, icon: Users },
+    { label: 'Promedio de Asistencia', value: '94%', change: '+3%', color: '#30D158', icon: Activity },
     { label: 'Retención Mensual', value: '91%', change: '+5%', color: '#BF5AF2', icon: Target },
   ]
   const miniStats = [
@@ -43,58 +50,54 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
     { label: 'Nuevos Este Mes', value: '67', color: '#BF5AF2', icon: Sparkles },
   ]
   const careerData = [
-    { faculty: 'Ingeniería', registered: 42, attendance: 38, color: '#1270B7' },
-    { faculty: 'Medicina', registered: 38, attendance: 28, color: '#30D158' },
-    { faculty: 'Derecho', registered: 29, attendance: 18, color: '#FF9F0A' },
-    { faculty: 'Administración', registered: 35, attendance: 27, color: '#BF5AF2' },
-    { faculty: 'Arte', registered: 18, attendance: 10, color: '#F43843' },
-    { faculty: 'Ciencias', registered: 22, attendance: 15, color: '#5E5CE6' },
-    { faculty: 'Arquitectura', registered: 31, attendance: 24, color: '#FF6482' },
-    { faculty: 'Economía', registered: 27, attendance: 19, color: '#00C7BE' },
-    { faculty: 'Psicología', registered: 33, attendance: 26, color: '#FF9F0A' },
-    { faculty: 'Comunicación', registered: 20, attendance: 12, color: '#64D2FF' },
+    { faculty: 'Administración de Empresas', registered: 48, attendance: 42, color: '#1270B7', cat: 'profesional' },
+    { faculty: 'Ingeniería de Software', registered: 45, attendance: 40, color: '#30D158', cat: 'profesional' },
+    { faculty: 'Auxiliar en Enfermería', registered: 44, attendance: 38, color: '#FF9F0A', cat: 'técnico' },
+    { faculty: 'Contaduría Pública', registered: 42, attendance: 36, color: '#BF5AF2', cat: 'profesional' },
+    { faculty: 'Auxiliar Administrativo', registered: 41, attendance: 35, color: '#F43843', cat: 'técnico' },
+    { faculty: 'Ingeniería de Sistemas', registered: 40, attendance: 34, color: '#5E5CE6', cat: 'profesional' },
+    { faculty: 'Diseño Gráfico', registered: 39, attendance: 33, color: '#FF6482', cat: 'técnico' },
+    { faculty: 'Ingeniería Industrial', registered: 38, attendance: 31, color: '#00C7BE', cat: 'profesional' },
+    { faculty: 'Derecho', registered: 37, attendance: 30, color: '#64D2FF', cat: 'profesional' },
+    { faculty: 'Operaciones de Software y Redes de Cómputo', registered: 36, attendance: 30, color: '#1270B7', cat: 'técnico' },
+    { faculty: 'Cocina Nacional e Internacional', registered: 35, attendance: 29, color: '#30D158', cat: 'técnico' },
+    { faculty: 'Medicina Veterinaria y Zootecnia', registered: 34, attendance: 27, color: '#FF9F0A', cat: 'profesional' },
+    { faculty: 'Conocimientos Académicos en Inglés y Francés', registered: 33, attendance: 26, color: '#BF5AF2', cat: 'técnico' },
+    { faculty: 'Psicología', registered: 32, attendance: 26, color: '#F43843', cat: 'profesional' },
+    { faculty: 'Auxiliar Contable y Financiero', registered: 31, attendance: 25, color: '#5E5CE6', cat: 'técnico' },
+    { faculty: 'Seguridad Ocupacional', registered: 30, attendance: 24, color: '#FF6482', cat: 'técnico' },
+    { faculty: 'Arquitectura', registered: 29, attendance: 23, color: '#00C7BE', cat: 'profesional' },
+    { faculty: 'Auxiliar en Clínica Veterinaria', registered: 28, attendance: 22, color: '#64D2FF', cat: 'técnico' },
+    { faculty: 'Auxiliar de Talento Humano', registered: 27, attendance: 21, color: '#1270B7', cat: 'técnico' },
+    { faculty: 'Investigadores Criminalísticos y Judiciales', registered: 26, attendance: 19, color: '#30D158', cat: 'técnico' },
+    { faculty: 'Diseño, Confección y Mercadeo de Modas', registered: 25, attendance: 18, color: '#FF9F0A', cat: 'técnico' },
+    { faculty: 'Animación 2D y 3D', registered: 24, attendance: 18, color: '#BF5AF2', cat: 'técnico' },
+    { faculty: 'Gerencia de Empresas', registered: 22, attendance: 17, color: '#F43843', cat: 'especialización' },
+    { faculty: 'Auxiliar en Productos Interactivos y Digitales', registered: 21, attendance: 15, color: '#5E5CE6', cat: 'técnico' },
+    { faculty: 'Derecho Penal y Criminalística', registered: 20, attendance: 15, color: '#FF6482', cat: 'especialización' },
+    { faculty: 'Derecho Administrativo y Contractual', registered: 18, attendance: 14, color: '#00C7BE', cat: 'especialización' },
+    { faculty: 'Gerencia del Talento Humano', registered: 16, attendance: 12, color: '#64D2FF', cat: 'especialización' },
   ]
-  const allCareers = [
-    ...careerData,
-    { faculty: 'Biología Marina', registered: 16, attendance: 11, color: '#30D158' },
-    { faculty: 'Física', registered: 14, attendance: 9, color: '#1270B7' },
-    { faculty: 'Química', registered: 19, attendance: 13, color: '#BF5AF2' },
-    { faculty: 'Matemáticas', registered: 12, attendance: 8, color: '#FF9F0A' },
-    { faculty: 'Filosofía', registered: 8, attendance: 5, color: '#F43843' },
-    { faculty: 'Historia', registered: 11, attendance: 7, color: '#5E5CE6' },
-    { faculty: 'Literatura', registered: 15, attendance: 10, color: '#FF6482' },
-    { faculty: 'Sociología', registered: 10, attendance: 6, color: '#00C7BE' },
-    { faculty: 'Trabajo Social', registered: 17, attendance: 12, color: '#64D2FF' },
-    { faculty: 'Enfermería', registered: 25, attendance: 20, color: '#30D158' },
-    { faculty: 'Odontología', registered: 21, attendance: 16, color: '#1270B7' },
-    { faculty: 'Veterinaria', registered: 23, attendance: 17, color: '#FF9F0A' },
-    { faculty: 'Nutrición', registered: 28, attendance: 22, color: '#BF5AF2' },
-    { faculty: 'Terapia Física', registered: 19, attendance: 14, color: '#F43843' },
-    { faculty: 'Ing. Civil', registered: 30, attendance: 23, color: '#5E5CE6' },
-    { faculty: 'Ing. Eléctrica', registered: 24, attendance: 18, color: '#00C7BE' },
-    { faculty: 'Ing. Mecánica', registered: 26, attendance: 20, color: '#FF6482' },
-    { faculty: 'Ing. Química', registered: 18, attendance: 13, color: '#64D2FF' },
-    { faculty: 'Ing. Sistemas', registered: 34, attendance: 27, color: '#1270B7' },
-    { faculty: 'Ing. Ambiental', registered: 20, attendance: 15, color: '#30D158' },
-    { faculty: 'Ing. Industrial', registered: 29, attendance: 22, color: '#BF5AF2' },
-    { faculty: 'Música', registered: 13, attendance: 8, color: '#FF9F0A' },
-    { faculty: 'Danza', registered: 9, attendance: 6, color: '#F43843' },
-    { faculty: 'Teatro', registered: 7, attendance: 4, color: '#5E5CE6' },
-    { faculty: 'Cinematografía', registered: 11, attendance: 7, color: '#00C7BE' },
-    { faculty: 'Diseño Gráfico', registered: 22, attendance: 16, color: '#FF6482' },
-    { faculty: 'Diseño Industrial', registered: 18, attendance: 12, color: '#64D2FF' },
-    { faculty: 'Publicidad', registered: 16, attendance: 11, color: '#1270B7' },
-    { faculty: 'Mercadeo', registered: 20, attendance: 15, color: '#30D158' },
-    { faculty: 'Contaduría', registered: 24, attendance: 18, color: '#BF5AF2' },
+  const allCareers = careerData
+  const careerCategories: { id: string; label: string }[] = [
+    { id: 'técnico', label: 'Técnicos' },
+    { id: 'profesional', label: 'Profesionales' },
+    { id: 'especialización', label: 'Especializaciones' },
   ]
-  const totalCareers = careerData.length
-  const topRegistered = [...careerData].sort((a, b) => b.registered - a.registered)[0]
-  const topAttendance = [...careerData].sort((a, b) => b.attendance - a.attendance)[0]
-  const lowestAttendance = [...careerData].sort((a, b) => a.attendance - b.attendance)[0]
-  const lowestRegistered = [...careerData].sort((a, b) => a.registered - b.registered)[0]
+  const careerQueryNorm = careerQuery.trim().toLowerCase()
+  const baseCareers = careerQueryNorm ? careerData.filter(c => c.faculty.toLowerCase().includes(careerQueryNorm)) : careerData
+  const visibleCareers = baseCareers
+  const modalCareers = careerQueryNorm ? allCareers.filter(c => c.faculty.toLowerCase().includes(careerQueryNorm)) : allCareers
+  const careerChart = [...baseCareers].sort((a, b) => b.registered - a.registered).slice(0, 10)
+  const attendanceChart = [...baseCareers].sort((a, b) => b.attendance - a.attendance).slice(0, 10)
+  const empty = { faculty: '—', registered: 0, attendance: 0, color: BLUE }
+  const totalCareers = visibleCareers.length
+  const topRegistered = [...visibleCareers].sort((a, b) => b.registered - a.registered)[0] ?? empty
+  const topAttendance = [...visibleCareers].sort((a, b) => b.attendance - a.attendance)[0] ?? empty
+  const lowestAttendance = [...visibleCareers].sort((a, b) => a.attendance - b.attendance)[0] ?? empty
+  const lowestRegistered = [...visibleCareers].sort((a, b) => a.registered - b.registered)[0] ?? empty
   const emptyStates: Record<string, { icon: typeof Users; title: string; desc: string }> = {
     schedule: { icon: Clock, title: 'Horarios', desc: 'Análisis de horarios próximamente' },
-    assessments: { icon: ClipboardList, title: 'Valoraciones', desc: 'Reporte de valoraciones próximamente' },
   }
 
   return (
@@ -214,19 +217,19 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
                       <TrendingUp size={14} style={{ color: BLUE }} />
                     </div>
-                    <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>TENDENCIA DE CRECIMIENTO</span>
+                    <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>EVOLUCIÓN DE USUARIOS</span>
                   </div>
                   <ResponsiveContainer width="100%" height={220}>
                     <AreaChart data={[
-                      { mes: 'Ene', estudiantes: 520 }, { mes: 'Feb', estudiantes: 580 },
-                      { mes: 'Mar', estudiantes: 610 }, { mes: 'Abr', estudiantes: 680 },
-                      { mes: 'May', estudiantes: 740 }, { mes: 'Jun', estudiantes: 847 },
+                      { mes: 'Ene', usuarios: 520 }, { mes: 'Feb', usuarios: 580 },
+                      { mes: 'Mar', usuarios: 610 }, { mes: 'Abr', usuarios: 680 },
+                      { mes: 'May', usuarios: 740 }, { mes: 'Jun', usuarios: 847 },
                     ]}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
                       <XAxis dataKey="mes" tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
                       <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                      <Area type="monotone" dataKey="estudiantes" stroke={BLUE} fill="url(#areaGrad)" strokeWidth={2.5} />
+                      <Area type="monotone" dataKey="usuarios" stroke={BLUE} fill="url(#areaGrad)" strokeWidth={2.5} />
                       <defs>
                         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={BLUE} stopOpacity={0.25} />
@@ -264,6 +267,30 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
 
           {tab === 'careers' && (
             <>
+              {showCareerFilter && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="relative mb-6"
+                >
+                  <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)' }}>
+                    <Search size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                    <input
+                      value={careerQuery}
+                      onChange={e => setCareerQuery(e.target.value)}
+                      placeholder="Buscar carrera por nombre..."
+                      className="flex-1 bg-transparent text-sm font-semibold outline-none"
+                      style={{ color: '#1A1A1E' }}
+                    />
+                    {careerQuery && (
+                      <button onClick={() => setCareerQuery('')} className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)' }}>
+                        <X size={12} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
               <div className="grid grid-cols-4 gap-4 mb-8">
                 {[
                   { label: 'Carreras Activas', value: String(totalCareers), sub: 'Facultades en el programa', color: '#BF5AF2', view: ListView },
@@ -315,15 +342,19 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
                     <span className="text-xs font-bold tracking-wide" style={{ color: '#1A1A1E' }}>ESTUDIANTES REGISTRADOS POR CARRERA</span>
                   </div>
                   <ResponsiveContainer width="100%" height={360}>
-                    <BarChart data={careerData} layout="vertical" margin={{ left: 0, right: 16, top: 0, bottom: 0 }}>
+                    <BarChart data={careerChart} layout="vertical" margin={{ left: 0, right: 40, top: 0, bottom: 0 }} barCategoryGap="22%">
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 11, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} />
-                      <YAxis type="category" dataKey="faculty" tick={{ fontSize: 11, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} width={110} />
+                      <XAxis type="number" tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="faculty" tick={{ fontSize: 10, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} width={150} />
                       <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                      <Bar dataKey="registered" radius={[0, 8, 8, 0]}>
-                        {careerData.map((entry, i) => (
-                          <Cell key={i} fill={entry.faculty === topRegistered.faculty ? '#30D158' : entry.faculty === lowestRegistered.faculty ? '#9B59B6' : '#1270B7'} />
-                        ))}
+                      <defs>
+                        <linearGradient id="careerRegGrad" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#FFFFFF" />
+                          <stop offset="100%" stopColor="#1270B7" />
+                        </linearGradient>
+                      </defs>
+                      <Bar dataKey="registered" fill="url(#careerRegGrad)" radius={[0, 8, 8, 0]}>
+                        <LabelList dataKey="registered" position="right" style={{ fontSize: 11, fontWeight: 700, fill: '#1270B7' }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -352,15 +383,19 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
                     <span className="text-xs font-bold tracking-wide" style={{ color: '#1A1A1E' }}>ASISTENCIA DE ESTUDIANTES POR CARRERA</span>
                   </div>
                   <ResponsiveContainer width="100%" height={360}>
-                    <BarChart data={careerData} layout="vertical" margin={{ left: 0, right: 16, top: 0, bottom: 0 }}>
+                    <BarChart data={attendanceChart} layout="vertical" margin={{ left: 0, right: 40, top: 0, bottom: 0 }} barCategoryGap="22%">
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 11, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} />
-                      <YAxis type="category" dataKey="faculty" tick={{ fontSize: 11, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} width={110} />
+                      <XAxis type="number" tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="faculty" tick={{ fontSize: 10, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} width={150} />
                       <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                      <Bar dataKey="attendance" radius={[0, 8, 8, 0]}>
-                        {careerData.map((entry, i) => (
-                          <Cell key={i} fill={entry.faculty === topAttendance.faculty ? '#30D158' : entry.faculty === lowestAttendance.faculty ? '#9B59B6' : '#1270B7'} />
-                        ))}
+                      <defs>
+                        <linearGradient id="careerAttGrad" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#FFFFFF" />
+                          <stop offset="100%" stopColor="#1270B7" />
+                        </linearGradient>
+                      </defs>
+                      <Bar dataKey="attendance" fill="url(#careerAttGrad)" radius={[0, 8, 8, 0]}>
+                        <LabelList dataKey="attendance" position="right" style={{ fontSize: 11, fontWeight: 700, fill: '#1270B7' }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -400,7 +435,7 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
                           {careersModal === 'registered' ? <Users size={16} style={{ color: BLUE }} /> : <Activity size={16} style={{ color: BLUE }} />}
                         </div>
                         <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>
-                          {careersModal === 'registered' ? 'Estudiantes Registrados' : 'Asistencia de Estudiantes'} — 40 Carreras
+                          {careersModal === 'registered' ? 'Estudiantes Registrados' : 'Asistencia de Estudiantes'} — {allCareers.length} Carreras
                         </h2>
                       </div>
                       <motion.button
@@ -414,15 +449,19 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
                       </motion.button>
                     </div>
                     <ResponsiveContainer width="100%" height={700}>
-                      <BarChart data={allCareers} layout="vertical" margin={{ left: 0, right: 16, top: 8, bottom: 0 }}>
+                      <BarChart data={modalCareers} layout="vertical" margin={{ left: 0, right: 40, top: 8, bottom: 0 }} barCategoryGap="25%">
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} />
-                        <YAxis type="category" dataKey="faculty" tick={{ fontSize: 10, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} width={120} />
+                        <XAxis type="number" tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} />
+                        <YAxis type="category" dataKey="faculty" tick={{ fontSize: 10, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} width={240} />
                         <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                        <Bar dataKey={careersModal === 'registered' ? 'registered' : 'attendance'} radius={[0, 6, 6, 0]}>
-                          {allCareers.map((entry, i) => (
-                            <Cell key={i} fill={entry.color} />
-                          ))}
+                        <defs>
+                          <linearGradient id="careerModalGrad" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#FFFFFF" />
+                            <stop offset="100%" stopColor="#1270B7" />
+                          </linearGradient>
+                        </defs>
+                        <Bar dataKey={careersModal === 'registered' ? 'registered' : 'attendance'} fill="url(#careerModalGrad)" radius={[0, 6, 6, 0]}>
+                          <LabelList dataKey={careersModal === 'registered' ? 'registered' : 'attendance'} position="right" style={{ fontSize: 11, fontWeight: 700, fill: '#1270B7' }} />
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
@@ -580,7 +619,7 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
                 </motion.div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <motion.div
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -600,16 +639,19 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
                       { cargo: 'Egresado', cantidad: 85 },
                       { cargo: 'Docente', cantidad: 25 },
                       { cargo: 'Administrativo', cantidad: 17 },
-                    ]} margin={{ left: 0, right: 16, top: 0, bottom: 0 }}>
+                    ]} margin={{ left: 0, right: 16, top: 0, bottom: 0 }} barCategoryGap="18%">
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
                       <XAxis dataKey="cargo" tick={{ fontSize: 10, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} />
                       <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                      <Bar dataKey="cantidad" radius={[8, 8, 0, 0]}>
-                        <Cell fill="#1270B7" />
-                        <Cell fill="#30D158" />
-                        <Cell fill="#FF9F0A" />
-                        <Cell fill="#BF5AF2" />
+                      <defs>
+                        <linearGradient id="barCargoGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#2563EB" />
+                          <stop offset="100%" stopColor="#93C5FD" />
+                        </linearGradient>
+                      </defs>
+                      <Bar dataKey="cantidad" fill="url(#barCargoGrad)" radius={[12, 12, 0, 0]}>
+                        <LabelList dataKey="cantidad" position="top" style={{ fontSize: 11, fontWeight: 700, fill: '#2563EB' }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -636,18 +678,19 @@ export default function AdminStats({ tab, onTabChange }: { tab: string; onTabCha
                       { area: 'Arte', cantidad: 127 },
                       { area: 'Administración', cantidad: 102 },
                       { area: 'Otras', cantidad: 85 },
-                    ]} margin={{ left: 0, right: 16, top: 0, bottom: 0 }}>
+                    ]} margin={{ left: 0, right: 16, top: 0, bottom: 0 }} barCategoryGap="18%">
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
                       <XAxis dataKey="area" tick={{ fontSize: 10, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize: 11, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} />
                       <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                      <Bar dataKey="cantidad" radius={[8, 8, 0, 0]}>
-                        <Cell fill="#1270B7" />
-                        <Cell fill="#30D158" />
-                        <Cell fill="#FF9F0A" />
-                        <Cell fill="#BF5AF2" />
-                        <Cell fill="#F43843" />
-                        <Cell fill="#00C7BE" />
+                      <defs>
+                        <linearGradient id="barAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#2563EB" />
+                          <stop offset="100%" stopColor="#93C5FD" />
+                        </linearGradient>
+                      </defs>
+                      <Bar dataKey="cantidad" fill="url(#barAreaGrad)" radius={[12, 12, 0, 0]}>
+                        <LabelList dataKey="cantidad" position="top" style={{ fontSize: 11, fontWeight: 700, fill: '#2563EB' }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>

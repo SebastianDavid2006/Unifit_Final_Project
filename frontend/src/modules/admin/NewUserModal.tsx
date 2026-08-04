@@ -1,18 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  X, Check, Pen, FileText, User,
-  ChevronLeft, ChevronRight, RefreshCw, ScanLine
+  X, Upload, Check, FileText, User,
+  ChevronLeft, ChevronRight, RefreshCw, ScanLine, Shield, GraduationCap
 } from 'lucide-react'
-import SignatureCanvas from 'react-signature-canvas'
 import confetti from 'canvas-confetti'
 import lectorHuellaImg from '../../assets/illustrations/actions/fingerprint.webp'
 import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
 import checkSuccessImg from '../../assets/illustrations/actions/feedback/success_check.webp'
-import studentRoleImg from '../../assets/icons/users/student.webp'
-import teacherRoleImg from '../../assets/icons/users/teacher.webp'
-import adminRoleImg from '../../assets/icons/users/administrator.webp'
-import { INSTITUCIONES, NIVELES_FORMACION, getPrograms } from '../../data/academicPrograms'
+import permissionsScene from '../../assets/scenes/permmisions_scene.png'
 
 const BLUE = '#1270B7'
 const RED = '#F43843'
@@ -20,77 +16,57 @@ const GREEN = '#22C55E'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN_GRAD = 'linear-gradient(135deg, #00fb64, #009b95)'
 const BRAND_GRADIENT = 'linear-gradient(135deg, #F5A623, #1270B7, #F43843)'
-const MESH_ACTIVE = `
-  radial-gradient(circle at 30% 20%, rgba(244,56,67,0.95) 0%, transparent 50%),
-  radial-gradient(circle at 70% 25%, rgba(18,112,183,0.65) 0%, transparent 50%),
-  radial-gradient(circle at 50% 75%, rgba(245,166,35,0.55) 0%, transparent 50%),
-  #F43843
-`
-const MESH_BUTTON = `
-  radial-gradient(circle at 25% 25%, rgba(18,112,183,0.95) 0%, transparent 50%),
-  radial-gradient(circle at 75% 30%, rgba(244,56,67,0.45) 0%, transparent 50%),
-  radial-gradient(circle at 50% 75%, rgba(245,166,35,0.35) 0%, transparent 50%),
-  #1270B7
-`
 
 const TIPO_DOC = ['CC', 'CE', 'Pasaporte', 'NIT']
 const GENEROS = ['Masculino', 'Femenino', 'Otro']
 const GRUPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 const MODALIDADES = ['Presencial', 'Virtual']
 const JORNADAS = ['Mañana', 'Tarde', 'Noche', 'Completa']
-const ESTADOS = ['Egresado', 'No egresado']
 
 const STEPS = [
   { num: 1, label: 'Información personal', icon: User },
   { num: 2, label: 'Tratamiento de datos', icon: FileText },
   { num: 3, label: 'Contrato', icon: FileText },
-  { num: 4, label: 'Firma', icon: Pen },
+  { num: 4, label: 'Rol del usuario', icon: Shield },
   { num: 5, label: 'Huella digital', icon: ScanLine },
 ]
 
-interface NewStudentModalProps {
+interface NewUserModalProps {
   open: boolean
   onClose: () => void
+  onSuccess?: (user: { name: string; email: string; phone: string; role: string }) => void
 }
 
 type FingerprintStatus = 'idle' | 'scanning' | 'captured'
-
-type TipoUsuario = 'estudiante' | 'profesor' | 'administrador'
-
-const TIPOS_USUARIO: { id: TipoUsuario; label: string; img: string; gradient: string; accent: string }[] = [
-  { id: 'estudiante', label: 'Estudiante', img: studentRoleImg, gradient: 'linear-gradient(135deg, #1270B7, #7ec8e3)', accent: BLUE },
-  { id: 'profesor', label: 'Profesor', img: teacherRoleImg, gradient: 'linear-gradient(135deg, #00A36C, #22C55E)', accent: GREEN },
-  { id: 'administrador', label: 'Administrador', img: adminRoleImg, gradient: 'linear-gradient(135deg, #F5A623, #FFC247)', accent: '#F5A623' },
-]
 
 const INITIAL_FORM = {
   primerNombre: '', segundoNombre: '', primerApellido: '', segundoApellido: '',
   tipoDoc: 'CC', numDoc: '', fechaNac: '', genero: 'Masculino',
   eps: '', grupoSanguineo: 'O+', email: '', telefono: '',
-  nombreContacto: '', telefonoContacto: '', numCarnet: '',
-  programa: '', institucion: '', nivelFormacion: '', semestre: '', modalidad: 'Presencial',
-  jornada: 'Mañana', estado: 'Activo', cargo: '', area: '',
+  nombreContacto: '', telefonoContacto: '', parentesco: '',
 }
 
-export default function NewStudentModal({ open, onClose }: NewStudentModalProps) {
+export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalProps) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({ ...INITIAL_FORM })
-  const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
+  const [certificado, setCertificado] = useState<File | null>(null)
   const [aceptaDatos, setAceptaDatos] = useState(false)
   const [aceptaContrato, setAceptaContrato] = useState(false)
+  const [role, setRole] = useState<'trainer' | 'admin'>('trainer')
   const [fingerprintStatus, setFingerprintStatus] = useState<FingerprintStatus>('idle')
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
-  const sigRef = useRef<SignatureCanvas>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (open) {
       setStep(1)
       setForm({ ...INITIAL_FORM })
-      setTipoUsuario(null)
+      setCertificado(null)
       setAceptaDatos(false)
       setAceptaContrato(false)
+      setRole('trainer')
       setFingerprintStatus('idle')
       setSuccess(false)
       setShake(false)
@@ -108,16 +84,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const set = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }))
 
-  const toggleTipoUsuario = (tipo: TipoUsuario) => {
-    setTipoUsuario(prev => (prev === tipo ? null : tipo))
-    setForm(prev => ({
-      ...prev,
-      numCarnet: '', estado: 'Activo', institucion: '',
-      nivelFormacion: '', programa: '', semestre: '',
-      modalidad: 'Presencial', jornada: 'Mañana', cargo: '', area: '',
-    }))
-  }
-
   const triggerShake = () => {
     setShake(true)
     setTimeout(() => setShake(false), 500)
@@ -125,11 +91,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const canGoNext = (): boolean => {
     if (step === 1) {
-      return !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc)
+      return !!(form.primerNombre && form.primerApellido && form.numDoc)
     }
     if (step === 2) return aceptaDatos
     if (step === 3) return aceptaContrato
-    if (step === 4) return !(sigRef.current?.isEmpty() ?? true)
+    if (step === 4) return true
     if (step === 5) return fingerprintStatus === 'captured'
     return true
   }
@@ -151,16 +117,17 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   }
 
   const submitForm = () => {
-    const signatureData = sigRef.current?.toDataURL()
     const payload = {
       ...form,
-      tipoUsuario,
+      certificado: certificado?.name ?? null,
       aceptaDatos,
       aceptaContrato,
-      firma: signatureData ?? null,
+      role,
       huella: fingerprintStatus === 'captured' ? 'capturada' : null,
     }
-    console.log('Nuevo estudiante:', payload)
+    console.log('Nuevo usuario:', payload)
+    const nombreCompleto = `${form.primerNombre} ${form.segundoNombre} ${form.primerApellido} ${form.segundoApellido}`.replace(/\s+/g, ' ').trim()
+    onSuccess?.({ name: nombreCompleto, email: form.email, phone: form.telefono, role })
     setSuccess(true)
     confetti({
       particleCount: 120,
@@ -177,8 +144,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       setFingerprintStatus('captured')
     }, 5000)
   }
-
-  // ── Helpers ──────────────────────────────────────────────────
 
   const meshInputBg = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'
   const meshInputHover = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'
@@ -240,8 +205,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     </div>
   )
 
-  // ── Step renders ─────────────────────────────────────────────
-
   const sectionTitle = (title: string) => (
     <div className="flex items-center gap-2 pt-2 pb-1">
       <div className="w-0.5 h-5 rounded-full" style={{ background: BLUE_GRAD }} />
@@ -280,128 +243,25 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         {field('EPS', 'eps')}
         {select('Grupo sanguíneo', 'grupoSanguineo', GRUPOS_SANGRE)}
       </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Certificado EPS</label>
+        <button type="button" onClick={() => fileRef.current?.click()}
+          className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-medium cursor-pointer"
+          style={{ background: 'rgba(18,112,183,0.06)', color: BLUE, border: '1px dashed rgba(18,112,183,0.2)' }}
+        >
+          <Upload size={14} />
+          {certificado ? certificado.name : 'Subir certificado'}
+        </button>
+        <input ref={fileRef} type="file" accept=".pdf,.jpg,.png" className="hidden"
+          onChange={e => setCertificado(e.target.files?.[0] ?? null)} />
+      </div>
 
       {sectionTitle('Contacto de emergencia')}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         {field('Nombre contacto', 'nombreContacto')}
         {field('Teléfono contacto', 'telefonoContacto')}
+        {field('Parentesco', 'parentesco')}
       </div>
-
-      {sectionTitle('Tipo de usuario')}
-      <div className="grid grid-cols-3 gap-2">
-        {TIPOS_USUARIO.map((opt, i) => {
-          const selected = tipoUsuario === opt.id
-          return (
-            <motion.button
-              key={opt.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 + i * 0.06 }}
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => toggleTipoUsuario(opt.id)}
-              onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = `${opt.accent}12`; e.currentTarget.style.color = opt.accent } }}
-              onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
-              className="flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-xs font-bold transition-all duration-200"
-              style={{
-                background: selected ? opt.gradient : 'rgba(0,0,0,0.03)',
-                color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-                border: '1px solid transparent',
-                boxShadow: selected ? `0 4px 20px ${opt.accent}40` : 'none',
-              }}
-            >
-              <motion.img
-                src={opt.img}
-                alt={opt.label}
-                className="mb-0.5"
-                animate={{
-                  width: selected ? 48 : 24,
-                  height: selected ? 48 : 24,
-                  marginTop: selected ? -24 : 0,
-                  filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
-                  opacity: 1,
-                }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              />
-              <span>{opt.label}</span>
-            </motion.button>
-          )
-        })}
-      </div>
-
-      {tipoUsuario === 'estudiante' && (
-        <>
-          {sectionTitle('Información académica')}
-          <div className="grid grid-cols-2 gap-4">
-            {field('Número carnet', 'numCarnet')}
-            {select('Estado', 'estado', ESTADOS)}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {select('Institución', 'institucion', INSTITUCIONES)}
-            {select('Nivel de formación', 'nivelFormacion', NIVELES_FORMACION)}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1 group">
-              <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.6)' }}>
-                Carrera <span style={{ color: RED }}>*</span>
-              </label>
-              <div className="relative">
-                <select
-                  value={form.programa}
-                  onChange={e => set('programa', e.target.value)}
-                  disabled={!form.institucion || !form.nivelFormacion}
-                  className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full appearance-none transition-all duration-200 cursor-pointer"
-                  style={{
-                    background: meshInputBg,
-                    color: form.programa ? '#1A1A1E' : 'rgba(0,0,0,0.35)',
-                    border: '1px solid transparent',
-                    paddingRight: 32,
-                  }}
-                  onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                  onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
-                  onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-                  onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
-                >
-                  <option value="" disabled>
-                    {form.institucion && form.nivelFormacion ? 'Selecciona la carrera' : 'Primero selecciona institución y nivel'}
-                  </option>
-                  {getPrograms(form.institucion, form.nivelFormacion).map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 group-hover:opacity-60" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            {select('Modalidad', 'modalidad', MODALIDADES)}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {select('Semestre', 'semestre', ['1', '2', '3', '4', '5', '6', '7', '8', '9'])}
-            {select('Jornada', 'jornada', JORNADAS)}
-          </div>
-        </>
-      )}
-
-      {(tipoUsuario === 'profesor' || tipoUsuario === 'administrador') && (
-        <>
-          {sectionTitle('Información laboral')}
-          <div className="grid grid-cols-2 gap-4">
-            {field('Cargo', 'cargo', { required: true })}
-            {field('Área', 'area', { required: true })}
-          </div>
-        </>
-      )}
-
-      {!tipoUsuario && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: 'rgba(245,166,35,0.07)', border: '1px dashed rgba(245,166,35,0.3)' }}>
-          <span className="text-[11px] font-semibold" style={{ color: '#1A1A1E' }}>
-            Selecciona el tipo de usuario para completar su información.
-          </span>
-        </div>
-      )}
     </div>
   )
 
@@ -506,44 +366,98 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   )
 
   const renderStep4 = () => (
-    <div className="space-y-5">
-      <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>
-        Dibuja tu firma en el recuadro utilizando el mouse o tu dedo (si usas pantalla táctil).
-      </p>
-      <div
-        className="relative rounded-2xl p-4 overflow-hidden"
-        style={{
-          background: '#FFFFFF',
-          border: '1px solid rgba(0,0,0,0.04)',
-        }}
-      >
+    <div className="relative min-h-[400px] flex flex-col overflow-hidden rounded-2xl">
+      <div className="absolute inset-0" style={{
+        backgroundImage: `url(${permissionsScene})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }} />
+      <div className="absolute inset-0" style={{
+        backdropFilter: 'blur(2px)',
+        WebkitBackdropFilter: 'blur(2px)',
+      }} />
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-8 py-10 gap-8">
         <motion.div
-          className="absolute top-0 left-0 right-0 h-0.5 pointer-events-none z-10"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
-          animate={{ x: ['-100%', '100%'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        />
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-0.5 pointer-events-none z-10"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
-          animate={{ x: ['100%', '-100%'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        />
-        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 rounded-tl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 rounded-tr pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
-          <SignatureCanvas
-            ref={sigRef}
-            penColor="#1A1A1E"
-            minWidth={1}
-            maxWidth={2.5}
-            canvasProps={{
-              className: 'w-full',
-              style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },
-            }}
-          />
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="flex flex-col items-center text-center"
+        >
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.15)' }}>
+            <Shield size={28} style={{ color: '#FFFFFF' }} />
+          </div>
+          <h2 className="text-xl font-extrabold" style={{ color: '#FFFFFF' }}>Selecciona el rol</h2>
+          <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Define qué tipo de acceso tendrá este usuario en el sistema
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
+          {[
+            {
+              id: 'trainer' as const,
+              label: 'Entrenador',
+              desc: 'Gestión de estudiantes, rutinas, valoraciones y agenda.',
+              icon: GraduationCap,
+              gradient: 'linear-gradient(135deg, #1270B7, #0E5D9E)',
+              accent: BLUE,
+            },
+            {
+              id: 'admin' as const,
+              label: 'Administrador',
+              desc: 'Control total del sistema: usuarios, planes, configuración y reportes.',
+              icon: Shield,
+              gradient: 'linear-gradient(135deg, #F43843, #CC0033)',
+              accent: RED,
+            },
+          ].map((opt, i) => (
+            <motion.button
+              key={opt.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 + i * 0.1 }}
+              whileHover={{ scale: 1.03, y: -4 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setRole(opt.id)}
+              className="relative flex flex-col items-center text-center p-6 rounded-2xl overflow-hidden cursor-pointer"
+              style={{
+                background: role === opt.id
+                  ? opt.gradient
+                  : 'rgba(255,255,255,0.06)',
+                border: role === opt.id
+                  ? '1px solid rgba(255,255,255,0.2)'
+                  : '1px solid rgba(255,255,255,0.1)',
+                boxShadow: role === opt.id
+                  ? `0 8px 32px ${opt.accent}40`
+                  : '0 4px 16px rgba(0,0,0,0.1)',
+              }}
+            >
+              {role === opt.id && (
+                <motion.div
+                  layoutId="roleCheck"
+                  className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(255,255,255,0.25)' }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                >
+                  <Check size={13} color="#FFFFFF" strokeWidth={3} />
+                </motion.div>
+              )}
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{
+                background: role === opt.id
+                  ? 'rgba(255,255,255,0.15)'
+                  : 'rgba(255,255,255,0.08)',
+              }}>
+                <opt.icon size={22} style={{ color: role === opt.id ? '#FFFFFF' : 'rgba(255,255,255,0.6)' }} />
+              </div>
+              <p className="text-sm font-bold" style={{ color: '#FFFFFF' }}>{opt.label}</p>
+              <p className="text-[10px] mt-1.5 leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                {opt.desc}
+              </p>
+            </motion.button>
+          ))}
         </div>
       </div>
     </div>
@@ -793,7 +707,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         className="text-lg font-bold text-center"
         style={{ color: '#1A1A1E' }}
       >
-        ¡Estudiante registrado exitosamente!
+        ¡Usuario registrado exitosamente!
       </motion.p>
       <motion.p
         initial={{ opacity: 0, y: 10 }}
@@ -802,7 +716,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         className="text-xs font-medium mt-1 text-center"
         style={{ color: 'rgba(0,0,0,0.35)' }}
       >
-        Los datos del estudiante han sido guardados en el sistema.
+        Los datos del usuario han sido guardados en el sistema.
       </motion.p>
       <motion.button
         initial={{ opacity: 0, y: 10 }}
@@ -818,8 +732,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       </motion.button>
     </motion.div>
   )
-
-  // ── Main render ──────────────────────────────────────────────
 
   return (
     <AnimatePresence>
@@ -937,19 +849,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                       </div>
 
                       <div className="flex-1 flex justify-center gap-3">
-                        {step === 4 && (
-                          <motion.button
-                            type="button"
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => sigRef.current?.clear()}
-                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
-                            style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.4)' }}
-                          >
-                            <RefreshCw size={12} />
-                            Limpiar firma
-                          </motion.button>
-                        )}
                         {step === 5 && fingerprintStatus === 'idle' && (
                           <motion.button
                             type="button"
