@@ -36,6 +36,8 @@ import calendarImg from '../../assets/icons/objects/calendar.webp'
 import physicalAssessmentImg from '../../assets/illustrations/modules/physical_assessment.webp'
 import { GREEN_GRAD } from '../../data/constants'
 import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine, RoutineRow } from './aiRoutine'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import routineGenLottie from '../../assets/icons/animated/ai/routine_generation.lottie?url'
 import musculoIcon from '../../assets/icons/anatomy/musculoskeletal.webp'
 import lungsIcon from '../../assets/icons/anatomy/lungs.webp'
 import brainIcon from '../../assets/icons/anatomy/brain.webp'
@@ -393,50 +395,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
       >
         Los datos de la valoración han sido guardados en el sistema.
       </motion.p>
-      {aiGenerating ? (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md mt-8 mb-4 rounded-2xl p-5"
-          style={{ background: 'rgba(48,209,88,0.06)', border: '1px solid rgba(48,209,88,0.2)' }}
-        >
-          <div className="flex items-center gap-2.5 mb-4">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
-              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #30D158, #00C7BE)' }}
-            >
-              <Sparkles size={14} color="#FFFFFF" />
-            </motion.div>
-            <div>
-              <p className="text-xs font-bold" style={{ color: '#0D1B2A' }}>Generando rutina con IA...</p>
-              <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>Analizando la valoración de {student.firstName}</p>
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            {AI_GENERATION_STEPS.map((s, i) => (
-              <motion.div key={s} className="flex items-center gap-2.5"
-                animate={{ opacity: i <= aiGenStep ? 1 : 0.4 }}
-              >
-                <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{
-                  background: i < aiGenStep ? '#30D158' : i === aiGenStep ? 'rgba(48,209,88,0.15)' : 'rgba(0,0,0,0.06)',
-                }}>
-                  {i < aiGenStep
-                    ? <Check size={9} color="#fff" strokeWidth={3.5} />
-                    : i === aiGenStep
-                      ? <Loader2 size={9} color="#1A8A3F" className="animate-spin" />
-                      : <span style={{ width: 9, height: 9, borderRadius: 99, background: 'rgba(0,0,0,0.15)' }} />}
-                </div>
-                <p className="text-[11px]" style={{
-                  color: i <= aiGenStep ? '#0D1B2A' : 'rgba(0,0,0,0.3)',
-                  fontWeight: i === aiGenStep ? 700 : 500,
-                }}>{s}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      ) : (
+      {aiGenerating ? null : (
         <motion.button
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -2590,6 +2549,87 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   >
                     {routineStep === 2 ? 'Crear Rutina' : 'Siguiente'}
                   </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal generando rutina con IA */}
+        <AnimatePresence>
+          {aiGenerating && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-md rounded-3xl p-8 pt-2 flex flex-col items-center"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                }}
+              >
+                <div className="w-44 h-44 -mt-14 flex items-center justify-center pointer-events-none">
+                  <DotLottieReact
+                    src={routineGenLottie}
+                    loop
+                    autoplay
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </div>
+                <div className="flex items-center gap-2.5 mb-1">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg, #30D158, #00C7BE)' }}
+                  >
+                    <Sparkles size={14} color="#FFFFFF" />
+                  </motion.div>
+                  <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Generando rutina con IA...</h3>
+                </div>
+                <p className="text-xs text-center mt-1" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                  Analizando la valoración de {student.firstName}
+                </p>
+
+                <div className="w-full mt-5 space-y-1.5">
+                  {AI_GENERATION_STEPS.map((s, i) => (
+                    <motion.div key={s} className="flex items-center gap-2.5"
+                      animate={{ opacity: i <= aiGenStep ? 1 : 0.4 }}
+                    >
+                      <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{
+                        background: i < aiGenStep ? '#30D158' : i === aiGenStep ? 'rgba(48,209,88,0.15)' : 'rgba(0,0,0,0.06)',
+                      }}>
+                        {i < aiGenStep
+                          ? <Check size={9} color="#fff" strokeWidth={3.5} />
+                          : i === aiGenStep
+                            ? <Loader2 size={9} color="#1A8A3F" className="animate-spin" />
+                            : <span style={{ width: 9, height: 9, borderRadius: 99, background: 'rgba(0,0,0,0.15)' }} />}
+                      </div>
+                      <p className="text-[11px]" style={{
+                        color: i <= aiGenStep ? '#0D1B2A' : 'rgba(0,0,0,0.3)',
+                        fontWeight: i === aiGenStep ? 700 : 500,
+                      }}>{s}</p>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="w-full mt-5 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: 'linear-gradient(90deg, #30D158, #00C7BE)' }}
+                    animate={{ width: `${((aiGenStep + 1) / AI_GENERATION_STEPS.length) * 100}%` }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                  />
                 </div>
               </motion.div>
             </motion.div>

@@ -5,8 +5,8 @@ import {
   Tooltip as ReTooltip, ResponsiveContainer, Cell, PieChart, Pie, LabelList,
 } from 'recharts'
 import {
-  Users, Activity, Target, Clock, Award, Sparkles,
-  TrendingUp, BarChart3, GraduationCap, ArrowUp, Building2, Search, X,
+  Users, Activity, Clock,
+  TrendingUp, BarChart3, Building2, Search, X,
 } from 'lucide-react'
 import trophyImg from '../../assets/images/trophy.png'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
@@ -16,6 +16,12 @@ import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarMo
 
 const BLUE = '#1270B7'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
+
+const CAT_COLORS: Record<string, string> = {
+  técnico: '#1270B7',
+  profesional: '#30D158',
+  especialización: '#BF5AF2',
+}
 
 const weeklyData = [
   { day: 'Lun', asistentes: 45, objetivo: 60 },
@@ -27,6 +33,27 @@ const weeklyData = [
   { day: 'Dom', asistentes: 12, objetivo: 60 },
 ]
 
+const scheduleWeekly = [
+  { day: 'Lun', clases: 8, asistencia: 112 },
+  { day: 'Mar', clases: 7, asistencia: 96 },
+  { day: 'Mié', clases: 9, asistencia: 124 },
+  { day: 'Jue', clases: 6, asistencia: 88 },
+  { day: 'Vie', clases: 8, asistencia: 118 },
+  { day: 'Sáb', clases: 5, asistencia: 74 },
+  { day: 'Dom', clases: 2, asistencia: 26 },
+]
+
+const scheduleHours = [
+  { hora: '6am', asistencia: 34 },
+  { hora: '8am', asistencia: 82 },
+  { hora: '10am', asistencia: 96 },
+  { hora: '12pm', asistencia: 68 },
+  { hora: '2pm', asistencia: 54 },
+  { hora: '4pm', asistencia: 76 },
+  { hora: '6pm', asistencia: 112 },
+  { hora: '8pm', asistencia: 88 },
+]
+
 export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggleCareerFilter }: {
   tab: string
   onTabChange: (t: string) => void
@@ -35,20 +62,8 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
 }) {
   const [statsPeriod, setStatsPeriod] = useState<'week' | 'month' | 'year'>('month')
   const [careersModal, setCareersModal] = useState<'registered' | 'attendance' | null>(null)
-  const [selectedCareer, setSelectedCareer] = useState<string | null>(null)
   const [careerQuery, setCareerQuery] = useState('')
 
-  const kpiData = [
-    { label: 'Total Usuarios', value: '847', change: '+12%', color: BLUE, icon: Users },
-    { label: 'Promedio de Asistencia', value: '94%', change: '+3%', color: '#30D158', icon: Activity },
-    { label: 'Retención Mensual', value: '91%', change: '+5%', color: '#BF5AF2', icon: Target },
-  ]
-  const miniStats = [
-    { label: 'H/M', value: '58% / 42%', color: BLUE, icon: Users },
-    { label: 'Edad Promedio', value: '22 años', color: '#30D158', icon: Clock },
-    { label: 'Top Facultad', value: 'Ingeniería', color: '#FF9F0A', icon: Award },
-    { label: 'Nuevos Este Mes', value: '67', color: '#BF5AF2', icon: Sparkles },
-  ]
   const careerData = [
     { faculty: 'Administración de Empresas', registered: 48, attendance: 42, color: '#1270B7', cat: 'profesional' },
     { faculty: 'Ingeniería de Software', registered: 45, attendance: 40, color: '#30D158', cat: 'profesional' },
@@ -147,31 +162,37 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
                 </div>
               </motion.div>
 
-              <div className="grid grid-cols-3 gap-4">
-                {kpiData.map((kpi, i) => {
-                  const Icon = kpi.icon
+              <div className="grid grid-cols-4 gap-4 mb-8">
+                {[
+                  { label: 'Total Usuarios', value: '847', sub: 'Registrados en el sistema', color: '#1270B7', view: StudentsView },
+                  { label: 'Promedio Asistencia', value: '94%', sub: '+3% respecto al mes anterior', color: '#30D158', view: StudentCardView },
+                  { label: 'Retención Mensual', value: '91%', sub: 'Alta adherencia general', color: '#BF5AF2', view: CalendarView },
+                  { label: 'Nuevos Este Mes', value: '67', sub: 'Registros acumulados', color: '#FF9F0A', view: ListView },
+                ].map((card, i) => {
+                  const ModelView = card.view
                   return (
-                    <motion.div
-                      key={kpi.label}
+                    <motion.div key={card.label}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 + i * 0.06 }}
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      className="rounded-2xl p-6 premium-card relative overflow-hidden cursor-default"
+                      transition={{ delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                      className="relative rounded-2xl p-4 group cursor-pointer transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                      style={{
+                        background: '#FFFFFF',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
+                      }}
                     >
-                      <div className="absolute top-0 right-0 w-24 h-24 rounded-full translate-x-8 -translate-y-8 opacity-[0.06]" style={{ background: kpi.color }} />
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${kpi.color}12` }}>
-                          <Icon size={17} style={{ color: kpi.color }} />
+                      <div className="flex items-center gap-4">
+                        <div
+                          className="w-14 h-14 flex-shrink-0 z-20 pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
+                        >
+                          <ModelView />
                         </div>
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ background: `${kpi.color}10` }}>
-                          <ArrowUp size={10} style={{ color: kpi.color }} />
-                          <span className="text-[10px] font-bold" style={{ color: kpi.color }}>{kpi.change}</span>
+                        <div className="relative z-10 min-w-0">
+                          <span className="stat-value block transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.2, color: card.color }}>{card.value}</span>
+                          <p className="text-[10px] mt-1 font-bold truncate" style={{ color: '#1A1A1E' }}>{card.label}</p>
+                          <p className="text-[10px] mt-0.5 font-medium truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{card.sub}</p>
                         </div>
                       </div>
-                      <p className="text-[11px] font-semibold" style={{ color: 'rgba(0,0,0,0.4)' }}>{kpi.label}</p>
-                      <p className="text-3xl font-extrabold mt-1" style={{ color: '#1A1A1E' }}>{kpi.value}</p>
-                      <p className="text-[10px] mt-1.5" style={{ color: 'rgba(0,0,0,0.2)' }}>vs. período anterior</p>
                     </motion.div>
                   )
                 })}
@@ -189,18 +210,22 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
                       <BarChart3 size={14} style={{ color: BLUE }} />
                     </div>
-                    <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>ASISTENCIA SEMANAL</span>
+                    <span className="text-xs font-bold tracking-wide" style={{ color: '#1A1A1E' }}>ASISTENCIA SEMANAL</span>
                   </div>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={weeklyData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
-                      <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={weeklyData} margin={{ left: 0, right: 16, top: 0, bottom: 0 }} barCategoryGap="26%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} width={30} />
                       <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                      <Bar dataKey="asistentes" radius={[8, 8, 0, 0]}>
-                        {weeklyData.map((_, i) => (
-                          <Cell key={i} fill={i === 2 || i === 4 ? BLUE : 'rgba(18,112,183,0.15)'} />
-                        ))}
+                      <defs>
+                        <linearGradient id="overviewWeekGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#1270B7" />
+                          <stop offset="100%" stopColor="#FFFFFF" />
+                        </linearGradient>
+                      </defs>
+                      <Bar dataKey="asistentes" fill="url(#overviewWeekGrad)" radius={[8, 8, 0, 0]}>
+                        <LabelList dataKey="asistentes" position="top" style={{ fontSize: 10, fontWeight: 700, fill: '#1270B7' }} />
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
@@ -217,50 +242,30 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
                       <TrendingUp size={14} style={{ color: BLUE }} />
                     </div>
-                    <span className="text-[11px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>EVOLUCIÓN DE USUARIOS</span>
+                    <span className="text-xs font-bold tracking-wide" style={{ color: '#1A1A1E' }}>EVOLUCIÓN DE USUARIOS</span>
                   </div>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <AreaChart data={[
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={[
                       { mes: 'Ene', usuarios: 520 }, { mes: 'Feb', usuarios: 580 },
                       { mes: 'Mar', usuarios: 610 }, { mes: 'Abr', usuarios: 680 },
                       { mes: 'May', usuarios: 740 }, { mes: 'Jun', usuarios: 847 },
-                    ]}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.04)" />
-                      <XAxis dataKey="mes" tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.3)' }} axisLine={false} tickLine={false} />
+                    ]} margin={{ left: 0, right: 16, top: 0, bottom: 0 }} barCategoryGap="26%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                      <XAxis dataKey="mes" tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} width={30} />
                       <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                      <Area type="monotone" dataKey="usuarios" stroke={BLUE} fill="url(#areaGrad)" strokeWidth={2.5} />
                       <defs>
-                        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={BLUE} stopOpacity={0.25} />
-                          <stop offset="100%" stopColor={BLUE} stopOpacity={0} />
+                        <linearGradient id="overviewEvoGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#1270B7" />
+                          <stop offset="100%" stopColor="#FFFFFF" />
                         </linearGradient>
                       </defs>
-                    </AreaChart>
+                      <Bar dataKey="usuarios" fill="url(#overviewEvoGrad)" radius={[8, 8, 0, 0]}>
+                        <LabelList dataKey="usuarios" position="top" style={{ fontSize: 10, fontWeight: 700, fill: '#1270B7' }} />
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </motion.div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-3">
-                {miniStats.map((s, i) => {
-                  const Icon = s.icon
-                  return (
-                    <motion.div
-                      key={s.label}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.35 + i * 0.04 }}
-                      whileHover={{ scale: 1.03, y: -2 }}
-                      className="rounded-xl p-4 premium-card text-center cursor-default"
-                    >
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center mx-auto mb-2" style={{ background: `${s.color}10` }}>
-                        <Icon size={13} style={{ color: s.color }} />
-                      </div>
-                      <p className="text-[10px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.3)' }}>{s.label}</p>
-                      <p className="text-base font-extrabold mt-1" style={{ color: s.color }}>{s.value}</p>
-                    </motion.div>
-                  )
-                })}
               </div>
             </>
           )}
@@ -318,7 +323,7 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
                         </div>
                         <div className="relative z-10 min-w-0">
                           <span className="stat-value block transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ fontSize: '1.4rem', fontWeight: 800, lineHeight: 1.2, color: card.color }}>{card.value}</span>
-                          <p className="text-xs mt-1 font-bold truncate" style={{ color: '#1A1A1E' }}>{card.label}</p>
+                          <p className="text-[10px] mt-1 font-bold truncate" style={{ color: '#1A1A1E' }}>{card.label}</p>
                           <p className="text-[10px] mt-0.5 font-medium truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{card.sub}</p>
                         </div>
                       </div>
@@ -425,11 +430,11 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
                     transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-                    className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl p-8"
+                    className="relative w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-3xl p-6"
                     style={{ background: '#FFFFFF', boxShadow: '0 24px 80px rgba(0,0,0,0.15)' }}
                     onClick={e => e.stopPropagation()}
                   >
-                    <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${BLUE}10` }}>
                           {careersModal === 'registered' ? <Users size={16} style={{ color: BLUE }} /> : <Activity size={16} style={{ color: BLUE }} />}
@@ -448,20 +453,42 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="rgba(0,0,0,0.3)" strokeWidth="2" strokeLinecap="round"/></svg>
                       </motion.button>
                     </div>
-                    <ResponsiveContainer width="100%" height={700}>
-                      <BarChart data={modalCareers} layout="vertical" margin={{ left: 0, right: 40, top: 8, bottom: 0 }} barCategoryGap="25%">
+                    <div className="flex items-center gap-4 mb-4 flex-wrap">
+                      <div className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}>
+                        <Search size={14} style={{ color: 'rgba(0,0,0,0.3)' }} />
+                        <input
+                          value={careerQuery}
+                          onChange={e => setCareerQuery(e.target.value)}
+                          placeholder="Buscar carrera..."
+                          className="bg-transparent text-xs font-semibold outline-none"
+                          style={{ color: '#1A1A1E' }}
+                        />
+                        {careerQuery && (
+                          <button onClick={() => setCareerQuery('')} className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)' }}>
+                            <X size={12} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 ml-auto">
+                        {careerCategories.map(cat => (
+                          <span key={cat.id} className="flex items-center gap-1.5 text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ background: CAT_COLORS[cat.id] }} />
+                            {cat.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <ResponsiveContainer width="100%" height={Math.max(420, modalCareers.length * 34)}>
+                      <BarChart data={modalCareers} layout="vertical" margin={{ left: 0, right: 40, top: 0, bottom: 0 }} barCategoryGap="28%">
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" horizontal={false} />
                         <XAxis type="number" tick={{ fontSize: 10, fill: 'rgba(0,0,0,0.35)', fontWeight: 500 }} axisLine={false} tickLine={false} />
-                        <YAxis type="category" dataKey="faculty" tick={{ fontSize: 10, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} width={240} />
+                        <YAxis type="category" dataKey="faculty" tick={{ fontSize: 11, fill: '#1A1A1E', fontWeight: 500 }} axisLine={false} tickLine={false} width={250} interval={0} />
                         <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                        <defs>
-                          <linearGradient id="careerModalGrad" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stopColor="#FFFFFF" />
-                            <stop offset="100%" stopColor="#1270B7" />
-                          </linearGradient>
-                        </defs>
-                        <Bar dataKey={careersModal === 'registered' ? 'registered' : 'attendance'} fill="url(#careerModalGrad)" radius={[0, 6, 6, 0]}>
-                          <LabelList dataKey={careersModal === 'registered' ? 'registered' : 'attendance'} position="right" style={{ fontSize: 11, fontWeight: 700, fill: '#1270B7' }} />
+                        <Bar dataKey={careersModal === 'registered' ? 'registered' : 'attendance'} radius={[0, 6, 6, 0]}>
+                          {modalCareers.map((c, i) => (
+                            <Cell key={i} fill={CAT_COLORS[c.cat] ?? BLUE} />
+                          ))}
+                          <LabelList dataKey={careersModal === 'registered' ? 'registered' : 'attendance'} position="right" style={{ fontSize: 11, fontWeight: 700, fill: 'rgba(0,0,0,0.5)' }} />
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>

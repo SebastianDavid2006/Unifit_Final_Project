@@ -6,17 +6,15 @@ import {
 } from 'recharts'
 import {
   LayoutDashboard, Users, ClipboardList, Dumbbell, Calendar,
-  TrendingUp, Clock, Activity, Target, Award,
-  Search, Plus, ArrowUp, Sparkles,
-  CheckCircle, Bell, ChevronLeft, PanelLeftClose, PanelLeftOpen, Settings, Filter, Shield, Menu, GraduationCap, X, RotateCcw,
+  TrendingUp, Clock,
+  Search, ArrowUp, Sparkles,
+  Bell, ChevronLeft, PanelLeftClose, PanelLeftOpen, Filter, Menu,
 } from 'lucide-react'
-import { INSTITUCIONES, NIVELES_FORMACION, loadPrograms, savePrograms, resetPrograms } from '../data/academicPrograms'
 import { StudentProfile, TABS } from '../modules/students/StudentProfile'
 import StudentsModule from '../modules/students/StudentsModule'
 import iconRunning from '../assets/icons/animated/icon_running.gif'
 import AgendaModule from '../modules/agenda/AgendaModule'
 import EquipmentPage from './EquipmentPage'
-import AdminModule from '../modules/admin/AdminModule'
 import DashboardModule from '../modules/dashboard/DashboardModule'
 import trophyImg from '../assets/images/trophy.png'
 
@@ -117,14 +115,13 @@ function RiskBadge({ risk }: { risk: 'high' | 'medium' | 'low' }) {
   )
 }
 
-type Section = 'dashboard' | 'students' | 'equipment' | 'schedule' | 'configuration'
+type Section = 'dashboard' | 'students' | 'equipment' | 'schedule'
 
 const sidebarItems: { id: Section; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'students', label: 'Usuarios', icon: Users },
   { id: 'equipment', label: 'Máquinas', icon: Dumbbell },
   { id: 'schedule', label: 'Agenda', icon: Calendar },
-  { id: 'configuration', label: 'Configuración', icon: Settings },
 ]
 
 export function TrainerDashboard() {
@@ -144,76 +141,6 @@ export function TrainerDashboard() {
   const [equipViewMode, setEquipViewMode] = useState<'machines' | 'exercises'>('machines')
   const [equipSearchHovered, setEquipSearchHovered] = useState(false)
   const [showStudentsFilters, setShowStudentsFilters] = useState(false)
-
-
-  // ── Gym Configuration ──
-  const [gymName, setGymName] = useState('Gimnasio Universitario UNIFIT')
-  const [gymAddress, setGymAddress] = useState('Av. Universidad 123, Campus Central')
-  const [gymPhone, setGymPhone] = useState('+1 (555) 123-4567')
-  const [gymEmail, setGymEmail] = useState('contacto@gimnasio.universidad.edu')
-  const [openTime, setOpenTime] = useState('06:00')
-  const [closeTime, setCloseTime] = useState('22:00')
-  const [maxCapacity, setMaxCapacity] = useState('150')
-  const [machinesCount, setMachinesCount] = useState('24')
-  const [trainersCount, setTrainersCount] = useState('8')
-  const [showSavedToast, setShowSavedToast] = useState(false)
-  const [configTab, setConfigTab] = useState<'gym' | 'admin' | 'carreras'>('gym')
-  const [instagram, setInstagram] = useState('@unifit_gym')
-  const [facebook, setFacebook] = useState('UNIFIT Gym')
-  const [website, setWebsite] = useState('www.unifit.edu/gimnasio')
-  const [planBasic, setPlanBasic] = useState('$200/mes')
-  const [planPremium, setPlanPremium] = useState('$350/mes')
-  const [planVip, setPlanVip] = useState('$500/mes')
-  const [openWeekends, setOpenWeekends] = useState(true)
-  const [towelService, setTowelService] = useState(true)
-  const [lockerService, setLockerService] = useState(true)
-  const [checkInRequired, setCheckInRequired] = useState(true)
-  const [emergencyContact, setEmergencyContact] = useState('+1 (555) 999-8888')
-  const [emergencyName, setEmergencyName] = useState('Dr. Roberto Méndez')
-  const [taxId, setTaxId] = useState('GIM-UNI-2024-001')
-  const [businessName, setBusinessName] = useState('Universidad Nacional - Depto. Deportes')
-  const [wifiSsid, setWifiSsid] = useState('UNIFIT-GYM')
-  const [wifiPass, setWifiPass] = useState('unifit2024')
-  const [allowGuestAccess, setAllowGuestAccess] = useState(false)
-  const [maxBookingDays, setMaxBookingDays] = useState('7')
-  const [minAge, setMinAge] = useState('15')
-
-  // ── Carreras (programas académicos) ──
-  const [programsData, setProgramsData] = useState<Record<string, Record<string, string[]>>>(() => loadPrograms())
-  const [careerInst, setCareerInst] = useState<string>(INSTITUCIONES[0])
-  const [careerLevel, setCareerLevel] = useState<string>(NIVELES_FORMACION[0])
-  const [newCareer, setNewCareer] = useState('')
-
-  const addCareer = () => {
-    const name = newCareer.trim()
-    if (!name) return
-    setProgramsData(prev => {
-      const current = prev[careerInst]?.[careerLevel] ?? []
-      if (current.includes(name)) return prev
-      return { ...prev, [careerInst]: { ...prev[careerInst], [careerLevel]: [...current, name] } }
-    })
-    setNewCareer('')
-  }
-
-  const removeCareer = (name: string) => {
-    setProgramsData(prev => {
-      const current = prev[careerInst]?.[careerLevel] ?? []
-      return { ...prev, [careerInst]: { ...prev[careerInst], [careerLevel]: current.filter(c => c !== name) } }
-    })
-  }
-
-  const saveCareers = () => {
-    savePrograms(programsData)
-    setShowSavedToast(true)
-    setTimeout(() => setShowSavedToast(false), 2500)
-  }
-
-  const restoreCareers = () => {
-    resetPrograms()
-    setProgramsData(loadPrograms())
-  }
-
-
 
   // ── RENDERERS ──
 
@@ -264,8 +191,8 @@ export function TrainerDashboard() {
         <div className="flex flex-col w-full relative">
           {/* Gooey layer */}
           <div className="absolute inset-0 flex flex-col pointer-events-none" style={{ filter: 'url(#goo)' }}>
-            {sidebarItems.filter(i => i.id !== 'configuration').flatMap((item, i, arr) => {
-              const groups = [[arr[0]], [arr[1], arr[2]], [arr[3], arr[4]], [arr[5]], [arr[6]]]
+            {sidebarItems.flatMap((item, i, arr) => {
+              const groups = [[arr[0]], [arr[1], arr[2]], [arr[3]]]
               const groupIdx = groups.findIndex(g => g.includes(item))
               const isFirstInGroup = groups[groupIdx]?.[0] === item
               return [
@@ -298,8 +225,8 @@ export function TrainerDashboard() {
             )}
           </div>
           {/* Buttons layer */}
-          {sidebarItems.filter(i => i.id !== 'configuration').flatMap((item, i, arr) => {
-            const groups = [[arr[0]], [arr[1], arr[2]], [arr[3], arr[4]], [arr[5]], [arr[6]]]
+          {sidebarItems.flatMap((item, i, arr) => {
+            const groups = [[arr[0]], [arr[1], arr[2]], [arr[3]]]
             const groupIdx = groups.findIndex(g => g.includes(item))
             const isFirstInGroup = groups[groupIdx]?.[0] === item
             return [
@@ -354,50 +281,6 @@ export function TrainerDashboard() {
               </button>
             )
           )}
-        </div>
-
-        <div className="w-full mt-auto pt-3 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
-          <div className="flex flex-col relative">
-            {sidebarItems.filter(i => i.id === 'configuration').map(item => (
-              <button
-                key={item.id}
-                onClick={() => setSection(item.id)}
-                title={item.label}
-                className="relative flex items-center flex-shrink-0 overflow-hidden"
-                style={{
-                  height: 44,
-                  width: expanded ? '100%' : 68,
-                  paddingLeft: 0,
-                  borderRadius: expanded ? 10 : 0,
-                  background: 'transparent',
-                  color: section === item.id ? '#fff' : 'rgba(255,255,255,0.2)',
-                  transition: 'width 0.45s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s ease, color 0.3s ease',
-                }}
-              >
-                {/* Resplandor izquierdo vibrante */}
-                {section === item.id && (
-                  <div className="absolute top-0 bottom-0 pointer-events-none" style={{
-                    left: -16,
-                    width: expanded ? 'calc(100% + 200px)' : 'calc(100% + 140px)',
-                    background: 'linear-gradient(90deg, rgba(228,35,50,0.35) 0%, rgba(43,44,138,0.18) 22%, rgba(239,187,41,0.06) 42%, transparent 58%)',
-                    filter: 'blur(8px)',
-                  }} />
-                )}
-                <div className="flex items-center justify-center flex-shrink-0" style={{ width: 68, height: 44 }}>
-                  <item.icon size={19} />
-                </div>
-                <span style={{
-                  opacity: expanded ? 1 : 0,
-                  transition: 'opacity 0.3s ease 0.05s',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap',
-                }}>
-                  {item.label}
-                </span>
-              </button>
-            ))}
-          </div>
         </div>
       </aside>
 
@@ -748,7 +631,6 @@ export function TrainerDashboard() {
               )}
               {section === 'equipment' && renderEquipment()}
               {section === 'schedule' && <AgendaModule students={students} />}
-              {section === 'configuration' && renderConfiguration()}
             </motion.div>
           </AnimatePresence>
         )}

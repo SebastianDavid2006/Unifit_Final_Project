@@ -1,6 +1,13 @@
 export const INSTITUCIONES = ['Universitaria de Colombia', 'Universitaria de Bogotá']
 
-export const NIVELES_FORMACION = ['Técnicos', 'Profesionales', 'Especializaciones']
+export const NIVELES_FORMACION = ['Técnicos', 'Profesionales', 'Especializaciones', 'Pregrado']
+
+export function getNiveles(institution: string): string[] {
+  if (institution === 'Universitaria de Bogotá') {
+    return ['Pregrado']
+  }
+  return ['Técnicos', 'Profesionales', 'Especializaciones']
+}
 
 const DEFAULT_PROGRAMS: Record<string, Record<string, string[]>> = {
   'Universitaria de Colombia': {
@@ -39,7 +46,7 @@ const DEFAULT_PROGRAMS: Record<string, Record<string, string[]>> = {
     ],
   },
   'Universitaria de Bogotá': {
-    'Profesionales': [
+    'Pregrado': [
       'Ingeniería Agropecuaria',
       'Ingeniería en Inteligencia Artificial y Ciencia de Datos',
       'Ingeniería en Ciberseguridad y Gestión de Riesgos Digitales',
@@ -58,7 +65,7 @@ export function loadPrograms(): Record<string, Record<string, string[]>> {
       const merged: Record<string, Record<string, string[]>> = {}
       INSTITUCIONES.forEach(inst => {
         merged[inst] = {}
-        NIVELES_FORMACION.forEach(level => {
+        getNiveles(inst).forEach(level => {
           merged[inst][level] = Array.isArray(parsed[inst]?.[level]) ? parsed[inst][level] : DEFAULT_PROGRAMS[inst]?.[level] ?? []
         })
       })

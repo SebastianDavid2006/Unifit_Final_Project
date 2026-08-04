@@ -12,7 +12,7 @@ import checkSuccessImg from '../../assets/illustrations/actions/feedback/success
 import studentRoleImg from '../../assets/icons/users/student.webp'
 import teacherRoleImg from '../../assets/icons/users/teacher.webp'
 import adminRoleImg from '../../assets/icons/users/administrator.webp'
-import { INSTITUCIONES, NIVELES_FORMACION, getPrograms } from '../../data/academicPrograms'
+import { INSTITUCIONES, getNiveles, getPrograms } from '../../data/academicPrograms'
 
 const BLUE = '#1270B7'
 const RED = '#F43843'
@@ -37,7 +37,7 @@ const TIPO_DOC = ['CC', 'CE', 'Pasaporte', 'NIT']
 const GENEROS = ['Masculino', 'Femenino', 'Otro']
 const GRUPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 const MODALIDADES = ['Presencial', 'Virtual']
-const JORNADAS = ['Mañana', 'Tarde', 'Noche', 'Completa']
+const JORNADAS = ['Mañana', 'Noche', 'Fin de semana']
 const ESTADOS = ['Egresado', 'No egresado']
 
 const STEPS = [
@@ -68,7 +68,10 @@ const INITIAL_FORM = {
   tipoDoc: 'CC', numDoc: '', fechaNac: '', genero: 'Masculino',
   eps: '', grupoSanguineo: 'O+', email: '', telefono: '',
   nombreContacto: '', telefonoContacto: '', numCarnet: '',
-  programa: '', institucion: '', nivelFormacion: '', semestre: '', modalidad: 'Presencial',
+  institucion: 'Universitaria de Colombia',
+  nivelFormacion: 'Técnicos',
+  programa: 'Auxiliar Administrativo',
+  semestre: '1', modalidad: 'Presencial',
   jornada: 'Mañana', estado: 'Activo', cargo: '', area: '',
 }
 
@@ -110,11 +113,15 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const toggleTipoUsuario = (tipo: TipoUsuario) => {
     setTipoUsuario(prev => (prev === tipo ? null : tipo))
+    const inst = 'Universitaria de Colombia'
+    const level = getNiveles(inst)[0]
+    const prog = getPrograms(inst, level)[0] ?? ''
     setForm(prev => ({
       ...prev,
-      numCarnet: '', estado: 'Activo', institucion: '',
-      nivelFormacion: '', programa: '', semestre: '',
-      modalidad: 'Presencial', jornada: 'Mañana', cargo: '', area: '',
+      numCarnet: '', estado: 'Activo',
+      institucion: inst, nivelFormacion: level, programa: prog,
+      semestre: '1', modalidad: 'Presencial', jornada: 'Mañana',
+      cargo: '', area: '',
     }))
   }
 
@@ -207,7 +214,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     </div>
   )
 
-  const select = (label: string, key: string, options: string[], opts?: { required?: boolean }) => (
+  const select = (label: string, key: string, options: string[], opts?: { required?: boolean; onChange?: (value: string) => void }) => (
     <div className="flex flex-col gap-1 relative group">
       <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.6)' }}>
         {label}{opts?.required && <span className="ml-0.5" style={{ color: RED }}>*</span>}
@@ -215,7 +222,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       <div className="relative">
         <select
           value={(form as any)[key] ?? ''}
-          onChange={e => set(key, e.target.value)}
+          onChange={e => { set(key, e.target.value); opts?.onChange?.(e.target.value) }}
           className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full appearance-none transition-all duration-200 cursor-pointer"
           style={{
             background: meshInputBg,
@@ -337,46 +344,24 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
             {select('Estado', 'estado', ESTADOS)}
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {select('Institución', 'institucion', INSTITUCIONES)}
-            {select('Nivel de formación', 'nivelFormacion', NIVELES_FORMACION)}
+            {select('Institución', 'institucion', INSTITUCIONES, {
+              onChange: (inst) => {
+                const levels = getNiveles(inst)
+                const level = levels[0]
+                const prog = getPrograms(inst, level)[0] ?? ''
+                setForm(prev => ({ ...prev, institucion: inst, nivelFormacion: level, programa: prog }))
+              }
+            })}
+            {select('Modalidad', 'modalidad', MODALIDADES)}
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1 group">
-              <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.6)' }}>
-                Carrera <span style={{ color: RED }}>*</span>
-              </label>
-              <div className="relative">
-                <select
-                  value={form.programa}
-                  onChange={e => set('programa', e.target.value)}
-                  disabled={!form.institucion || !form.nivelFormacion}
-                  className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full appearance-none transition-all duration-200 cursor-pointer"
-                  style={{
-                    background: meshInputBg,
-                    color: form.programa ? '#1A1A1E' : 'rgba(0,0,0,0.35)',
-                    border: '1px solid transparent',
-                    paddingRight: 32,
-                  }}
-                  onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                  onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
-                  onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-                  onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
-                >
-                  <option value="" disabled>
-                    {form.institucion && form.nivelFormacion ? 'Selecciona la carrera' : 'Primero selecciona institución y nivel'}
-                  </option>
-                  {getPrograms(form.institucion, form.nivelFormacion).map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 group-hover:opacity-60" style={{ color: 'rgba(0,0,0,0.2)' }}>
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            {select('Modalidad', 'modalidad', MODALIDADES)}
+            {select('Nivel de formación', 'nivelFormacion', getNiveles(form.institucion), {
+              onChange: (level) => {
+                const prog = getPrograms(form.institucion, level)[0] ?? ''
+                setForm(prev => ({ ...prev, nivelFormacion: level, programa: prog }))
+              }
+            })}
+            {select('Carrera', 'programa', getPrograms(form.institucion, form.nivelFormacion), { required: true })}
           </div>
           <div className="grid grid-cols-2 gap-4">
             {select('Semestre', 'semestre', ['1', '2', '3', '4', '5', '6', '7', '8', '9'])}
