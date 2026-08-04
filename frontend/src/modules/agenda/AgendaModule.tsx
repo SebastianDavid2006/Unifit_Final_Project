@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronRight, Plus, X, ChevronLeft, Sparkles, Maximize2, Minimize2, Check } from 'lucide-react'
+import { ChevronRight, Plus, X, ChevronLeft, Sparkles, Maximize2, Minimize2, Check, AlertTriangle } from 'lucide-react'
 import calendarImg from '../../assets/illustrations/modules/calendar_module.webp'
 import calendarCardImg from '../../assets/icons/objects/calendar.webp'
-import { meshInputBg, meshInputHover } from '../../data/constants'
+import coachCalendarSuccessImg from '../../assets/illustrations/characters/coach/coach_calendar_success.webp'
+import { meshInputBg, meshInputHover, GREEN_GRAD } from '../../data/constants'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -114,8 +115,7 @@ export default function AgendaModule() {
     { id: '16', date: '2026-06-20', startTime: '08:00', endTime: '09:00', type: 'registration', title: 'Registro Nuevo Ingreso', studentName: 'Jorge Torres' },
   ])
 
-  const [newApptType, setNewApptType] = useState<'class' | 'initial_assessment' | 'physical_assessment' | 'registration' | 'event'>('class')
-  const [newApptTitle, setNewApptTitle] = useState('')
+  const [newApptType, setNewApptType] = useState<'class' | 'initial_assessment' | 'physical_assessment' | 'registration' | 'event'>('initial_assessment')
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [publishStart, setPublishStart] = useState('')
@@ -124,6 +124,8 @@ export default function AgendaModule() {
   const [publishDays, setPublishDays] = useState<string[]>(['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE'])
   const [publishStep, setPublishStep] = useState<1 | 2>(1)
   const [publishSelectedDay, setPublishSelectedDay] = useState<string | null>(null)
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false)
+  const [showPublishSuccess, setShowPublishSuccess] = useState(false)
   const [publishDayConfig, setPublishDayConfig] = useState<Record<string, { duration: string; ranges: { open: string; close: string }[] }>>({})
   const [rangeConflict, setRangeConflict] = useState<{ day: string; msg: string } | null>(null)
   const [newApptStart, setNewApptStart] = useState('08:00')
@@ -182,15 +184,15 @@ export default function AgendaModule() {
   }
 
   function handleAddAppointment() {
-    if (!selectedDate || !newApptTitle) return
+    if (!selectedDate) return
     const newId = String(Date.now())
     setAppointments(prev => [...prev, {
       id: newId, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
-      type: newApptType, title: newApptTitle, trainer: newApptTrainer || undefined,
+      type: newApptType, title: typeLabels[newApptType] || 'Cita', trainer: newApptTrainer || undefined,
       studentName: newApptStudent || undefined,
     }])
     setShowApptModal(false)
-    setNewApptTitle(''); setNewApptStudent(''); setNewApptTrainer('')
+    setNewApptStudent(''); setNewApptTrainer('')
   }
 
   function handleSlotClick(dateStr: string, timeStr: string) {
@@ -199,8 +201,7 @@ export default function AgendaModule() {
     const normalized = `${String(Number(h)).padStart(2, '0')}:${m.padStart(2, '0')}`
     setNewApptStart(normalized)
     setNewApptEnd(`${String(Number(h) + 1).padStart(2, '0')}:${m.padStart(2, '0')}`)
-    setNewApptType('class')
-    setNewApptTitle('')
+    setNewApptType('initial_assessment')
     setNewApptTrainer('')
     setNewApptStudent('')
     setShowApptModal(true)
@@ -267,14 +268,16 @@ export default function AgendaModule() {
     }
     setPublishedDates(newDates)
     setRangeConflict(null)
-    setPublishStep(1)
-    setShowPublishModal(false)
+    setShowPublishConfirm(false)
+    setShowPublishSuccess(true)
   }
 
   function openPublishModal() {
     setPublishStep(1)
     setRangeConflict(null)
     setPublishSelectedDay(null)
+    setShowPublishConfirm(false)
+    setShowPublishSuccess(false)
     setShowPublishModal(true)
   }
 
@@ -282,6 +285,8 @@ export default function AgendaModule() {
     setRangeConflict(null)
     setPublishStep(1)
     setPublishSelectedDay(null)
+    setShowPublishConfirm(false)
+    setShowPublishSuccess(false)
     setShowPublishModal(false)
   }
 
@@ -292,6 +297,103 @@ export default function AgendaModule() {
 
   const allDaysComplete = publishDays.length > 0 && publishDays.every(dayIsComplete)
   const selDay = publishStep === 2 ? (publishSelectedDay && publishDays.includes(publishSelectedDay) ? publishSelectedDay : (publishDays[0] ?? null)) : null
+
+  function fmtShortDate(ds: string) {
+    if (!ds) return ''
+    const d = new Date(ds + 'T00:00:00')
+    return `${d.getDate()} ${monthNames[d.getMonth()].slice(0, 3)}`
+  }
+
+  function renderPublishSuccess() {
+    const activeLabels = publishDays.map(dk => WEEK_DAYS_6.find(w => w.key === dk)?.label).filter(Boolean) as string[]
+    const activeStr = activeLabels.length > 1
+      ? activeLabels.slice(0, -1).join(', ') + ' y ' + activeLabels[activeLabels.length - 1]
+      : activeLabels[0] || ''
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="flex flex-col items-center px-6 pb-8 relative"
+        style={{ overflow: 'visible' }}
+      >
+        <div className="relative flex items-center justify-center z-10" style={{ marginTop: '-120px', marginBottom: '1.5rem' }}>
+          {[...Array(24)].map((_, i) => {
+            const angle = (i / 24) * 360
+            const rad = (angle * Math.PI) / 180
+            return (
+              <motion.span
+                key={i}
+                className="absolute pointer-events-none text-lg select-none"
+                style={{ color: '#4ADE80' }}
+                animate={{
+                  x: [0, Math.cos(rad) * (110 + (i % 6) * 20)],
+                  y: [0, Math.sin(rad) * (110 + (i % 6) * 20)],
+                  opacity: [0, 1, 0],
+                  scale: [0, 1.4, 0],
+                }}
+                transition={{
+                  duration: 2.5 + (i % 4) * 0.3,
+                  repeat: Infinity,
+                  delay: i * 0.07,
+                  ease: 'easeOut',
+                }}
+              >
+                ✦
+              </motion.span>
+            )
+          })}
+          <div className="relative flex items-center justify-center">
+            <motion.img
+              src={coachCalendarSuccessImg}
+              alt="felicitaciones"
+              className="w-72 h-auto object-contain relative z-10"
+              style={{ filter: 'drop-shadow(0 0 30px rgba(34,197,94,0.15))' }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+            />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-48 pointer-events-none z-20" style={{
+              background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 15%, rgba(255,255,255,0) 55%)',
+            }} />
+          </div>
+        </div>
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+          className="text-3xl font-bold text-center z-10"
+          style={{ color: '#1A1A1E' }}
+        >
+          ¡Cupos publicados!
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+          className="text-sm text-center mt-1.5 mb-8 z-10"
+          style={{ color: 'rgba(0,0,0,0.7)' }}
+        >
+          <span style={{ background: 'linear-gradient(135deg, #30D158, #0A84FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 700 }}>Tu agenda</span> quedó lista en el calendario.<br />
+          <span className="text-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>
+            {fmtShortDate(publishStart)} – {fmtShortDate(publishEnd)} · {activeStr}
+          </span>
+        </motion.p>
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={closePublishModal}
+          className="px-8 py-2.5 rounded-2xl text-xs font-bold text-white cursor-pointer"
+          style={{ background: GREEN_GRAD }}
+        >
+          Cerrar
+        </motion.button>
+      </motion.div>
+    )
+  }
 
   function enterMesh(el: HTMLElement) {
     if (el !== document.activeElement) { el.style.background = meshInputHover; el.style.borderColor = 'rgba(0,0,0,0.06)' }
@@ -411,7 +513,7 @@ export default function AgendaModule() {
   const weekDates = getWeekDates(currentMonth)
 
   const typeColors: Record<string, string> = { class: BLUE, initial_assessment: '#FF6B35', physical_assessment: '#30D158', registration: '#AF52DE', event: '#FF9F0A' }
-  const typeLabels: Record<string, string> = { class: 'Clase', initial_assessment: 'Val. Inicial', physical_assessment: 'Val. Física', registration: 'Registro', event: 'Evento' }
+  const typeLabels: Record<string, string> = { class: 'Clase', initial_assessment: 'Valoración Inicial', physical_assessment: 'Seguimiento', registration: 'Registro', event: 'Otro' }
 
   const handlePrevView = () => {
     if (viewMode === 'day') {
@@ -528,7 +630,7 @@ export default function AgendaModule() {
                 className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
               ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
               <div className="ml-auto flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                {(['day', 'week', 'month', 'year'] as const).map(mode => (
+                {(['week', 'month', 'year'] as const).map(mode => (
                   <button key={mode} onClick={() => setViewMode(mode)}
                     className="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
                     style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
@@ -602,7 +704,7 @@ export default function AgendaModule() {
                   className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
                 ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
                 <div className="ml-auto flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                  {(['day', 'week', 'month', 'year'] as const).map(mode => (
+                  {(['week', 'month', 'year'] as const).map(mode => (
                     <button key={mode} onClick={() => setViewMode(mode)}
                       className="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
                       style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
@@ -669,7 +771,7 @@ export default function AgendaModule() {
                   className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
                 ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
                 <div className="ml-auto flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                  {(['day', 'week', 'month', 'year'] as const).map(mode => (
+                  {(['week', 'month', 'year'] as const).map(mode => (
                     <button key={mode} onClick={() => setViewMode(mode)}
                       className="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
                       style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
@@ -724,7 +826,7 @@ export default function AgendaModule() {
                   className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
                 ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
                 <div className="ml-auto flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                  {(['day', 'week', 'month', 'year'] as const).map(mode => (
+                  {(['week', 'month', 'year'] as const).map(mode => (
                     <button key={mode} onClick={() => setViewMode(mode)}
                       className="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
                       style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
@@ -811,7 +913,7 @@ export default function AgendaModule() {
                     ))
                   )}
                 </div>
-                <button onClick={() => { setDayModalDate(null); setNewApptType('class'); setNewApptTitle(''); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
+                <button onClick={() => { setDayModalDate(null); setNewApptType('initial_assessment'); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
                   className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
                   style={{ background: MESH_GRAD }}
                 ><Plus size={13} /> Agregar Cita</button>
@@ -848,24 +950,30 @@ export default function AgendaModule() {
               <div className="px-6 pb-6 space-y-4">
                 <div>
                   <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Tipo</label>
-                  <div className="flex gap-2 mt-1.5">
-                    {(['class', 'initial_assessment', 'physical_assessment', 'registration', 'event'] as const).map(t => (
-                      <button key={t} onClick={() => setNewApptType(t)}
-                        className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
-                        style={{ background: newApptType === t ? `${typeColors[t]}15` : 'rgba(0,0,0,0.03)', color: newApptType === t ? typeColors[t] : 'rgba(0,0,0,0.3)', border: `1px solid ${newApptType === t ? typeColors[t] : 'transparent'}` }}
-                      >{typeLabels[t]}</button>
-                    ))}
+                  <div className="grid grid-cols-4 gap-2 mt-1.5">
+                    {(['initial_assessment', 'registration', 'physical_assessment', 'event'] as const).map(t => {
+                      const sel = newApptType === t
+                      const c = typeColors[t]
+                      const grad = `linear-gradient(135deg, ${c}, ${c}cc)`
+                      return (
+                        <motion.button
+                          key={t}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setNewApptType(t)}
+                          onMouseEnter={e => { if (!sel) { e.currentTarget.style.background = `${c}18`; e.currentTarget.style.color = c } }}
+                          onMouseLeave={e => { if (!sel) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                          className="flex items-center justify-center px-1 py-2.5 rounded-xl text-[11px] font-bold text-center transition-all duration-200"
+                          style={{
+                            background: sel ? grad : 'rgba(0,0,0,0.03)',
+                            color: sel ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                            border: '1px solid transparent',
+                            boxShadow: sel ? `0 4px 16px ${c}40` : 'none',
+                          }}
+                        >{typeLabels[t]}</motion.button>
+                      )
+                    })}
                   </div>
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Título</label>
-                  <input value={newApptTitle} onChange={e => setNewApptTitle(e.target.value)} placeholder="Nombre de la clase o evento"
-                    className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                    style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
-                    onMouseEnter={e => enterMesh(e.currentTarget)}
-                    onMouseLeave={e => leaveMesh(e.currentTarget)}
-                    onFocus={e => focusMesh(e.currentTarget)}
-                    onBlur={e => blurMesh(e.currentTarget)} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -899,22 +1007,33 @@ export default function AgendaModule() {
                     onFocus={e => focusMesh(e.currentTarget)}
                     onBlur={e => blurMesh(e.currentTarget)} />
                 </div>
-                {newApptType !== 'class' && newApptType !== 'event' && (
-                  <div>
-                    <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Estudiante</label>
-                    <input value={newApptStudent} onChange={e => setNewApptStudent(e.target.value)} placeholder="Nombre del estudiante"
-                      className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                      style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
-                      onMouseEnter={e => enterMesh(e.currentTarget)}
-                      onMouseLeave={e => leaveMesh(e.currentTarget)}
-                      onFocus={e => focusMesh(e.currentTarget)}
-                      onBlur={e => blurMesh(e.currentTarget)} />
-                  </div>
-                )}
+                <AnimatePresence initial={false}>
+                  {newApptType !== 'event' && (
+                    <motion.div
+                      key="student-field"
+                      initial={{ opacity: 0, filter: 'blur(8px)', height: 0 }}
+                      animate={{ opacity: 1, filter: 'blur(0px)', height: 'auto' }}
+                      exit={{ opacity: 0, filter: 'blur(8px)', height: 0 }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      style={{ overflow: 'hidden' }}
+                    >
+                      <div>
+                        <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Estudiante</label>
+                        <input value={newApptStudent} onChange={e => setNewApptStudent(e.target.value)} placeholder="Nombre del estudiante"
+                          className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
+                          style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                          onMouseEnter={e => enterMesh(e.currentTarget)}
+                          onMouseLeave={e => leaveMesh(e.currentTarget)}
+                          onFocus={e => focusMesh(e.currentTarget)}
+                          onBlur={e => blurMesh(e.currentTarget)} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  onClick={handleAddAppointment} disabled={!newApptTitle}
+                  onClick={handleAddAppointment}
                   className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                  style={{ background: newApptTitle ? MESH_GRAD : 'rgba(0,0,0,0.1)' }}
+                  style={{ background: MESH_GRAD }}
                 >Agendar Cita</motion.button>
               </div>
             </motion.div>
@@ -938,11 +1057,13 @@ export default function AgendaModule() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="rounded-3xl w-full max-w-2xl overflow-hidden"
+              className={`relative rounded-3xl w-full max-w-2xl ${showPublishSuccess ? 'overflow-visible' : 'overflow-hidden'}`}
               style={{ background: '#fff', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
               onClick={e => e.stopPropagation()}
             >
-              <div className="sticky top-0 z-10 flex-shrink-0" style={{ background: 'rgba(255,255,255,0.9)', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+              {showPublishSuccess ? renderPublishSuccess() : (
+                <>
+                  <div className="sticky top-0 z-10 flex-shrink-0" style={{ background: 'rgba(255,255,255,0.9)', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
                 <div className="flex items-center justify-end px-4 pt-4 pb-0">
                   <motion.button
                     whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)', color: RED }}
@@ -1015,8 +1136,8 @@ export default function AgendaModule() {
                   >Continuar</motion.button>
                 </div>
               ) : (
-                <div className="px-6 pb-6 space-y-4 max-h-[60vh] overflow-y-auto">
-                  <div className="grid grid-cols-6 gap-2">
+                <div className="px-6 pt-3 pb-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${publishDays.length}, minmax(0, 1fr))` }}>
                     {WEEK_DAYS_6.map(({ key, label }) => {
                       if (!publishDays.includes(key)) return null
                       return <DayCard key={key} label={label} selected={selDay === key} done={dayIsComplete(key)} onClick={() => setPublishSelectedDay(key)} />
@@ -1025,17 +1146,8 @@ export default function AgendaModule() {
                   {selDay && (() => {
                     const dk = selDay
                     const cfg = getDayConfig(dk)
-                    const dayLabel = WEEK_DAYS_6.find(w => w.key === dk)
                     return (
                       <div className="rounded-2xl p-4 space-y-3" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ background: MESH_GRAD }}>{dayLabel?.short || ''}</div>
-                          <span className="text-sm font-bold" style={{ color: '#1A1A1E' }}>{dayLabel?.label || dk}</span>
-                          <span className="ml-auto text-[11px] font-bold flex items-center gap-1" style={{ color: dayIsComplete(dk) ? '#30D158' : 'rgba(0,0,0,0.35)' }}>
-                            {dayIsComplete(dk) ? <Check size={12} strokeWidth={3} /> : null}
-                            {dayIsComplete(dk) ? 'Listo' : 'Pendiente'}
-                          </span>
-                        </div>
                         <div>
                           <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración de la sesión</label>
                           <select value={cfg.duration} onChange={e => updateDayDuration(dk, e.target.value)}
@@ -1094,7 +1206,7 @@ export default function AgendaModule() {
                   <div className="flex gap-2 pt-1">
                     <button onClick={() => setPublishStep(1)} className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all" style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.5)' }}>Volver</button>
                     <motion.button whileHover={allDaysComplete ? { scale: 1.02 } : {}} whileTap={allDaysComplete ? { scale: 0.98 } : {}}
-                      onClick={handlePublish}
+                      onClick={() => setShowPublishConfirm(true)}
                       disabled={!allDaysComplete}
                       className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
                       style={{ background: allDaysComplete ? MESH_GRAD : 'rgba(0,0,0,0.1)' }}
@@ -1102,6 +1214,75 @@ export default function AgendaModule() {
                   </div>
                 </div>
               )}
+
+              <AnimatePresence>
+                {showPublishConfirm && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 z-20 flex items-center justify-center"
+                    style={{ background: 'rgba(0,0,0,0.2)' }}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.92, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.92, y: 8 }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex flex-col gap-4 p-6 rounded-2xl w-[340px] text-center"
+                      style={{
+                        background: '#FFFFFF',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                        border: '1px solid rgba(0,0,0,0.04)',
+                      }}
+                    >
+                      <div className="w-10 h-10 mx-auto rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,149,0,0.12)' }}>
+                        <AlertTriangle size={18} color="#FF9500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>¿Publicar cupos?</p>
+                        <p className="text-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.45)' }}>
+                          Antes de continuar, revisa bien los tiempos de cada día y asegúrate de que todo quedó configurado.
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-start gap-1.5 text-left">
+                        {[
+                          'Verifica las horas de apertura y cierre de cada día.',
+                          'Asegúrate de que los horarios no se crucen entre sí.',
+                          'Se publicarán los días activos dentro del rango seleccionado.',
+                        ].map((w, i) => (
+                          <div key={i} className="flex items-start gap-1.5 text-[11px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.55)' }}>
+                            <span className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: '#FF9500' }} />
+                            {w}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2.5 w-full">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setShowPublishConfirm(false)}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+                          style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                        >
+                          Cancelar
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handlePublish}
+                          className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                          style={{ background: MESH_GRAD }}
+                        >
+                          Sí, publicar
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>)}
             </motion.div>
           </motion.div>
         )}
@@ -1139,7 +1320,7 @@ export default function AgendaModule() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
                       ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
                       <div className="ml-auto flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                        {(['day', 'week', 'month', 'year'] as const).map(mode => (
+                        {(['week', 'month', 'year'] as const).map(mode => (
                           <button key={mode} onClick={() => setViewMode(mode)}
                             className="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
                             style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
@@ -1207,7 +1388,7 @@ export default function AgendaModule() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
                       ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
                       <div className="ml-auto flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                        {(['day', 'week', 'month', 'year'] as const).map(mode => (
+                        {(['week', 'month', 'year'] as const).map(mode => (
                           <button key={mode} onClick={() => setViewMode(mode)}
                             className="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
                             style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
@@ -1268,7 +1449,7 @@ export default function AgendaModule() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
                       ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
                       <div className="ml-auto flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                        {(['day', 'week', 'month', 'year'] as const).map(mode => (
+                        {(['week', 'month', 'year'] as const).map(mode => (
                           <button key={mode} onClick={() => setViewMode(mode)}
                             className="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
                             style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
@@ -1317,7 +1498,7 @@ export default function AgendaModule() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/[0.04] transition-colors"
                       ><ChevronRight size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
                       <div className="ml-auto flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                        {(['day', 'week', 'month', 'year'] as const).map(mode => (
+                        {(['week', 'month', 'year'] as const).map(mode => (
                           <button key={mode} onClick={() => setViewMode(mode)}
                             className="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
                             style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
