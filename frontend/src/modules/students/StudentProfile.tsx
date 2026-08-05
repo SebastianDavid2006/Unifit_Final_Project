@@ -11,7 +11,7 @@ import {
   Flame, Shield, BarChart2, Maximize2, X,
   Check, CheckCircle, XCircle, Clock, Eye,
   MoreVertical, Download, Trash2, Upload,
-  Sparkles, Loader2,
+  Sparkles, Loader2, ChevronDown, List,
 } from 'lucide-react'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '../../assets/models/ui/objects/telephone/TelephoneModel'
@@ -34,8 +34,9 @@ import otroIcon from '../../assets/icons/ui/star.webp'
 import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
 import calendarImg from '../../assets/icons/objects/calendar.webp'
 import physicalAssessmentImg from '../../assets/illustrations/modules/physical_assessment.webp'
-import { GREEN_GRAD } from '../../data/constants'
+import { GREEN_GRAD, meshInputBg, meshInputHover, muscleIcons } from '../../data/constants'
 import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine, RoutineRow } from './aiRoutine'
+import { exerciseCatalog } from '../../data/exercises'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import routineGenLottie from '../../assets/icons/animated/ai/routine_generation.lottie?url'
 import musculoIcon from '../../assets/icons/anatomy/musculoskeletal.webp'
@@ -44,6 +45,22 @@ import brainIcon from '../../assets/icons/anatomy/brain.webp'
 import cardioHealthIcon from '../../assets/icons/anatomy/cardio.webp'
 import liverIcon from '../../assets/icons/anatomy/liver.webp'
 import mindIcon from '../../assets/icons/health/mind.webp'
+
+const ROUTINE_CATEGORIES = ['Pecho', 'Espalda', 'Hombros', 'Brazos', 'Piernas', 'Abdomen/Core', 'Cardio', 'General', 'Tren Superior', 'Tren Inferior']
+
+const ROUTINE_MUSCLE_TO_CAT: Record<string, string> = {
+  Pecho: 'Pecho',
+  Espalda: 'Espalda',
+  Hombros: 'Hombros',
+  Bíceps: 'Brazos',
+  Tríceps: 'Brazos',
+  Cuádriceps: 'Piernas',
+  Glúteos: 'Piernas',
+  Isquiotibiales: 'Piernas',
+  Pantorrilla: 'Piernas',
+  Core: 'Abdomen/Core',
+}
+
 
 interface Student {
   id: number
@@ -206,6 +223,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [routineRows, setRoutineRows] = useState<RoutineRow[]>([])
   const [selectedRoutineDay, setSelectedRoutineDay] = useState<string | null>(null)
   const [viewRoutineDay, setViewRoutineDay] = useState<string | null>(null)
+  const [routineDropdown, setRoutineDropdown] = useState<{ id: string; field: 'muscle' | 'exercise' } | null>(null)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [aiGenStep, setAiGenStep] = useState(0)
   const [aiGeneratedRoutine, setAiGeneratedRoutine] = useState<AiRoutine | null>(null)
@@ -287,11 +305,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         setTimeout(() => {
           setAiGenerating(false)
           setShowNewRoutineModal(true)
-        }, 600)
+        }, 900)
         return
       }
       setAiGenStep(step)
-    }, 450)
+    }, 900)
   }
 
   const updateRoutineRow = (id: string, patch: Partial<RoutineRow>) =>
@@ -300,33 +318,246 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const removeRoutineRow = (id: string) =>
     setRoutineRows(prev => prev.filter(r => r.id !== id))
 
+  const addRoutineRow = (day?: string) => {
+    const d = day || routineDays[0] || 'Lunes'
+    setRoutineRows(prev => [...prev, {
+      id: `r-${Date.now()}`,
+      dia: d,
+      muscle: '',
+      name: '',
+      sets: '3',
+      reps: '10-12',
+      rest: '60 s',
+      weight: '',
+    }])
+  }
+
+  function enterMesh(el: HTMLElement) {
+    if (el !== document.activeElement) { el.style.background = meshInputHover; el.style.borderColor = 'rgba(0,0,0,0.06)' }
+  }
+  function leaveMesh(el: HTMLElement) {
+    if (el !== document.activeElement) { el.style.background = meshInputBg; el.style.borderColor = 'transparent' }
+  }
+  function focusMesh(el: HTMLElement) {
+    el.style.borderColor = '#1270B7'; el.style.background = meshInputHover; el.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)'
+  }
+  function blurMesh(el: HTMLElement) {
+    el.style.borderColor = 'transparent'; el.style.background = meshInputBg; el.style.boxShadow = 'none'
+  }
+
   const routineDays = [...new Set(routineRows.map(r => r.dia))]
+
+  const ROUTINE_DAY_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 
   const renderRoutineDayCard = (day: string, selected: boolean, done: boolean, onClick: () => void) => (
     <motion.button
       type="button"
-      whileHover={!selected ? { scale: 1.04 } : {}}
+      whileHover={!selected ? { scale: 1.05 } : {}}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className="relative flex flex-col items-center gap-1 px-2 py-3 rounded-xl font-bold transition-all duration-200"
+      className="relative flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
       style={{
-        background: selected ? 'linear-gradient(135deg, #30D158, #1A8A3F)' : 'rgba(0,0,0,0.03)',
-        color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.4)',
+        background: selected ? ROUTINE_DAY_GRAD : 'rgba(0,0,0,0.03)',
+        color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
         border: '1px solid transparent',
-        boxShadow: selected ? '0 6px 20px rgba(48,209,88,0.35)' : 'none',
+        boxShadow: selected ? '0 4px 20px rgba(18,112,183,0.25)' : 'none',
       }}
-      onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(48,209,88,0.12)'; e.currentTarget.style.color = '#1A8A3F' } }}
-      onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.4)' } }}
+      onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
+      onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
     >
-      <span className="text-sm leading-none">{day}</span>
-      <span className="text-[10px] font-semibold opacity-70 leading-none">{done ? 'Listo' : 'Editar'}</span>
-      {done && (
-        <span className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.9)' }}>
-          <Check size={9} color="#1A8A3F" strokeWidth={3.5} />
-        </span>
-      )}
+      <motion.img
+        src={calendarImg}
+        alt=""
+        className="mb-0.5"
+        animate={{
+          width: selected ? 48 : 24,
+          height: selected ? 48 : 24,
+          marginTop: selected ? -24 : 0,
+          filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
+        }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      />
+      <span className="text-sm leading-none text-center">{day}</span>
+      <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
+        style={{ background: done ? '#30D158' : 'rgba(0,0,0,0.1)' }}>
+        <Check size={10} color="#fff" strokeWidth={3.5} />
+      </span>
     </motion.button>
   )
+
+  const ROUTINE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
+
+  const renderRoutineCategorySelect = (row: RoutineRow) => {
+    const open = routineDropdown?.id === row.id && routineDropdown.field === 'muscle'
+    const category = ROUTINE_MUSCLE_TO_CAT[row.muscle] || row.muscle
+    const icon = category && muscleIcons[category]
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setRoutineDropdown(open ? null : { id: row.id, field: 'muscle' })}
+          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold outline-none cursor-pointer transition-all duration-200"
+          style={{ background: meshInputBg, border: '1px solid transparent', color: row.muscle ? '#0D1B2A' : 'rgba(0,0,0,0.35)' }}
+          onMouseEnter={e => enterMesh(e.currentTarget)}
+          onMouseLeave={e => leaveMesh(e.currentTarget)}
+          onFocus={e => focusMesh(e.currentTarget)}
+          onBlur={e => blurMesh(e.currentTarget)}
+        >
+          {icon ? (
+            <img src={icon} alt="" className="w-4 h-4 flex-shrink-0" />
+          ) : (
+            <div className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.12)' }}>
+              <List size={11} style={{ color: '#1270B7' }} />
+            </div>
+          )}
+          <span className="flex-1 truncate text-left">{category || 'Categoría'}</span>
+          <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
+            <ChevronDown size={13} />
+          </motion.div>
+        </button>
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl max-h-44 overflow-y-auto"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)' }}
+            >
+              {ROUTINE_CATEGORIES.map(m => {
+                const isActive = category === m
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => {
+                      const nameInNewCat = exerciseCatalog.some(x => (ROUTINE_MUSCLE_TO_CAT[x.muscle] || x.muscle) === m && x.name === row.name)
+                      updateRoutineRow(row.id, {
+                        muscle: m,
+                        name: nameInNewCat ? row.name : '',
+                        sets: nameInNewCat ? row.sets : '3',
+                        reps: nameInNewCat ? row.reps : '10-12',
+                      })
+                      setRoutineDropdown(null)
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors relative"
+                    style={{
+                      color: isActive ? '#FFFFFF' : 'rgba(0,0,0,0.6)',
+                      background: isActive ? ROUTINE_GRAD : 'transparent',
+                      borderBottom: '1px solid rgba(0,0,0,0.03)',
+                    }}
+                    onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = '#1270B7' } }}
+                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(0,0,0,0.6)' } }}
+                  >
+                    {muscleIcons[m] && (
+                      <img src={muscleIcons[m]} alt="" className="w-4 h-4 flex-shrink-0" style={{ filter: isActive ? 'brightness(10)' : 'none' }} />
+                    )}
+                    <span>{m}</span>
+                    {isActive && <Check size={12} className="ml-auto text-white" />}
+                  </button>
+                )
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  }
+
+  const renderRoutineExerciseSelect = (row: RoutineRow) => {
+    const open = routineDropdown?.id === row.id && routineDropdown.field === 'exercise'
+    const category = ROUTINE_MUSCLE_TO_CAT[row.muscle] || row.muscle
+    const catExercises = exerciseCatalog.filter(e => (ROUTINE_MUSCLE_TO_CAT[e.muscle] || e.muscle) === category)
+    const hasCustom = row.name && !catExercises.some(e => e.name === row.name)
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          disabled={!row.muscle}
+          onClick={() => setRoutineDropdown(open ? null : { id: row.id, field: 'exercise' })}
+          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold outline-none cursor-pointer transition-all duration-200"
+          style={{
+            background: row.muscle ? meshInputBg : 'rgba(0,0,0,0.03)',
+            border: '1px solid transparent',
+            color: row.name ? '#0D1B2A' : 'rgba(0,0,0,0.35)',
+            opacity: row.muscle ? 1 : 0.6,
+          }}
+          onMouseEnter={e => enterMesh(e.currentTarget)}
+          onMouseLeave={e => leaveMesh(e.currentTarget)}
+          onFocus={e => focusMesh(e.currentTarget)}
+          onBlur={e => blurMesh(e.currentTarget)}
+        >
+          <Dumbbell size={13} style={{ color: row.name ? '#1270B7' : 'rgba(0,0,0,0.3)' }} className="flex-shrink-0" />
+          <span className="flex-1 truncate text-left">{row.name || 'Ejercicio'}</span>
+          <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
+            <ChevronDown size={13} />
+          </motion.div>
+        </button>
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl max-h-44 overflow-y-auto"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)' }}
+            >
+              {catExercises.length === 0 && !hasCustom ? (
+                <p className="text-[11px] py-3 text-center" style={{ color: 'rgba(0,0,0,0.3)' }}>
+                  No hay ejercicios en esta categoría
+                </p>
+              ) : (
+                catExercises.map(ex => {
+                  const isActive = row.name === ex.name
+                  return (
+                    <button
+                      key={ex.id}
+                      type="button"
+                      onClick={() => {
+                        updateRoutineRow(row.id, {
+                          name: ex.name,
+                          muscle: ex.muscle,
+                          sets: String(ex.sets),
+                          reps: ex.reps,
+                        })
+                        setRoutineDropdown(null)
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors relative"
+                      style={{
+                        color: isActive ? '#FFFFFF' : 'rgba(0,0,0,0.6)',
+                        background: isActive ? ROUTINE_GRAD : 'transparent',
+                        borderBottom: '1px solid rgba(0,0,0,0.03)',
+                      }}
+                      onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = '#1270B7' } }}
+                      onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(0,0,0,0.6)' } }}
+                    >
+                      <Dumbbell size={12} style={{ color: isActive ? '#fff' : 'rgba(0,0,0,0.4)' }} className="flex-shrink-0" />
+                      <span>{ex.name}</span>
+                      {isActive && <Check size={12} className="ml-auto text-white" />}
+                    </button>
+                  )
+                })
+              )}
+              {hasCustom && (
+                <button
+                  type="button"
+                  onClick={() => setRoutineDropdown(null)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors"
+                  style={{ color: '#1270B7', background: 'rgba(18,112,183,0.06)', borderBottom: '1px solid rgba(0,0,0,0.03)' }}
+                >
+                  <Sparkles size={12} className="flex-shrink-0" />
+                  <span className="truncate">{row.name} (personalizado)</span>
+                  <Check size={12} className="ml-auto" />
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  }
 
 
   const renderValuationSuccess = () => (
@@ -400,11 +631,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.3 }}
-          whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }}
-          whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }}
+          whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(124,58,237,0.35)', transition: { duration: 0.15 } }}
+          whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(124,58,237,0.2)', transition: { duration: 0.1 } }}
           onClick={startAiRoutine}
           className="mt-8 mb-2 px-8 py-3.5 rounded-2xl text-xs font-bold text-white cursor-pointer flex items-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #30D158, #00C7BE)' }}
+          style={{ background: 'linear-gradient(135deg, #BF5AF2, #7C3AED)' }}
         >
           <Sparkles size={14} />
           Generar rutina con IA
@@ -2091,10 +2322,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               onClick={() => setShowAssessmentOptions(false)}
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.92, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.92, y: 20 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, filter: 'blur(6px)' }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
               >
                 <div className="flex gap-6">
@@ -2155,10 +2386,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               onClick={() => setShowValuationModal(false)}
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, filter: 'blur(6px)' }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
                 className="w-full max-w-lg rounded-3xl p-6"
                 style={{
@@ -2237,10 +2468,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               onClick={() => setShowRoutineViewModal(false)}
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, filter: 'blur(6px)' }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
                 className="w-full max-w-3xl rounded-3xl p-6 flex flex-col"
                 style={{
@@ -2364,10 +2595,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               onClick={() => setShowNewRoutineModal(false)}
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, filter: 'blur(6px)' }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
                 className="w-full max-w-4xl rounded-3xl p-6 flex flex-col max-h-[86vh]"
                 style={{
@@ -2376,23 +2607,14 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
                 }}
               >
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'rgba(48,209,88,0.12)' }}>
                       <Dumbbell size={22} style={{ color: '#30D158' }} />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold" style={{ color: '#0D1B2A' }}>Nueva Rutina</h3>
-                      <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Paso {routineStep} de 2</p>
-                    </div>
+                    <h3 className="text-lg font-bold" style={{ color: '#0D1B2A' }}>Nueva Rutina</h3>
                   </div>
                   <div className="flex items-center gap-3">
-                    {aiGeneratedRoutine && (
-                      <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'rgba(48,209,88,0.08)', border: '1px solid rgba(48,209,88,0.15)' }}>
-                        <Sparkles size={12} style={{ color: '#1A8A3F' }} />
-                        <span className="text-[11px] font-bold" style={{ color: '#1A8A3F' }}>Generada por IA</span>
-                      </div>
-                    )}
                     <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowNewRoutineModal(false)}
                       className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
                       <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
@@ -2400,13 +2622,23 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </div>
                 </div>
 
-                <div className="flex gap-1.5 mb-6">
+                <div className="flex items-center justify-center gap-1.5 mb-4">
                   {[1, 2].map(s => (
-                    <div key={s} className="flex-1 h-1.5 rounded-full transition-all" style={{
-                      background: s <= routineStep ? 'linear-gradient(90deg, #30D158, #00C7BE)' : 'rgba(0,0,0,0.06)',
-                    }} />
+                    <motion.div
+                      key={s}
+                      animate={{
+                        width: s === routineStep ? 16 : 6,
+                        background: s === routineStep ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : 'rgba(0,0,0,0.12)',
+                      }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+                      className="rounded-full"
+                      style={{ height: 6 }}
+                    />
                   ))}
                 </div>
+                <span className="text-lg font-bold tracking-wide text-center block mb-4" style={{ color: '#1A1A1E' }}>
+                  {routineStep === 1 ? 'Información general' : 'Ejercicios por día'}
+                </span>
 
                 {routineStep === 1 && (
                   <div className="space-y-5 px-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
@@ -2490,33 +2722,129 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 )}
 
                 {routineStep === 2 && (
-                  <div className="space-y-3">
-                    <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>Selecciona los ejercicios para esta rutina</p>
-                    {routineExercises.map((ex, i) => (
-                      <motion.div
-                        key={ex.name}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer"
-                        style={{
-                          background: i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
-                          border: '1px solid rgba(0,0,0,0.04)',
-                        }}
-                      >
-                        <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{
-                          background: 'rgba(48,209,88,0.15)',
-                          color: '#30D158',
-                        }}>
-                          <Check size={12} />
+                  <div className="flex flex-col min-h-0 flex-1">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>
+                        Configura los ejercicios de cada día de la semana
+                      </p>
+                    </div>
+
+                    {routineDays.length > 0 && (
+                      <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `repeat(${Math.min(routineDays.length, 6)}, minmax(0, 1fr))` }}>
+                        {routineDays.map(day => renderRoutineDayCard(
+                          day,
+                          day === (selectedRoutineDay ?? routineDays[0]),
+                          routineRows.some(r => r.dia === day),
+                          () => setSelectedRoutineDay(day),
+                        ))}
+                      </div>
+                    )}
+
+                    {(() => {
+                      const activeDay = selectedRoutineDay && routineDays.includes(selectedRoutineDay) ? selectedRoutineDay : (routineDays[0] ?? null)
+                      if (!activeDay) {
+                        return (
+                          <p className="text-xs text-center py-8 px-4 rounded-2xl" style={{ color: 'rgba(0,0,0,0.4)', background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}>
+                            La IA aún no ha generado ejercicios. Vuelve al paso 1 o agrega uno manualmente.
+                          </p>
+                        )
+                      }
+                      const dayRows = routineRows.filter(r => r.dia === activeDay)
+                      return (
+                        <div className="rounded-2xl p-4 space-y-2.5 overflow-y-auto flex-1 min-h-0"
+                          style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)', maxHeight: 'calc(86vh - 320px)', minHeight: 200, scrollbarWidth: 'thin' }}>
+                          <div className="flex items-center justify-between sticky top-0 pt-0.5 pb-1" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                            <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{dayRows.length} ejercicio{dayRows.length !== 1 ? 's' : ''}</span>
+                            <button onClick={() => addRoutineRow(activeDay)}
+                              className="flex items-center gap-1 text-[11px] font-bold transition-all hover:opacity-70 cursor-pointer"
+                              style={{ color: '#1270B7' }}
+                            ><Plus size={13} strokeWidth={3} /> Agregar ejercicio</button>
+                          </div>
+
+                          {dayRows.length === 0 ? (
+                            <p className="text-xs text-center py-6" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                              Sin ejercicios. Agrega uno.
+                            </p>
+                          ) : dayRows.map((row, i) => (
+                            <motion.div
+                              key={row.id}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: Math.min(i * 0.04, 0.3) }}
+                              className="rounded-xl px-3 py-2.5"
+                              style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.9)' : 'transparent', border: '1px solid rgba(0,0,0,0.04)' }}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ background: 'rgba(18,112,183,0.12)', color: '#1270B7' }}>{i + 1}</span>
+                                <div className="flex-1 min-w-0 grid grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Categoría</label>
+                                    {renderRoutineCategorySelect(row)}
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Ejercicio</label>
+                                    {renderRoutineExerciseSelect(row)}
+                                  </div>
+                                </div>
+                                <motion.button
+                                  whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)' }}
+                                  whileTap={{ scale: 0.9 }}
+                                  onClick={() => removeRoutineRow(row.id)}
+                                  className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer flex-shrink-0 mt-4"
+                                  style={{ background: 'rgba(0,0,0,0.04)' }}
+                                >
+                                  <Trash2 size={13} style={{ color: 'rgba(244,56,67,0.8)' }} />
+                                </motion.button>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2 mt-2" style={{ paddingLeft: 34 }}>
+                                <div>
+                                  <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Series</label>
+                                  <input
+                                    value={row.sets}
+                                    onChange={e => updateRoutineRow(row.id, { sets: e.target.value })}
+                                    placeholder="Series"
+                                    onMouseEnter={e => enterMesh(e.currentTarget)}
+                                    onMouseLeave={e => leaveMesh(e.currentTarget)}
+                                    onFocus={e => focusMesh(e.currentTarget)}
+                                    onBlur={e => blurMesh(e.currentTarget)}
+                                    className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+                                    style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Reps</label>
+                                  <input
+                                    value={row.reps}
+                                    onChange={e => updateRoutineRow(row.id, { reps: e.target.value })}
+                                    placeholder="Reps"
+                                    onMouseEnter={e => enterMesh(e.currentTarget)}
+                                    onMouseLeave={e => leaveMesh(e.currentTarget)}
+                                    onFocus={e => focusMesh(e.currentTarget)}
+                                    onBlur={e => blurMesh(e.currentTarget)}
+                                    className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+                                    style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Descanso</label>
+                                  <input
+                                    value={row.rest}
+                                    onChange={e => updateRoutineRow(row.id, { rest: e.target.value })}
+                                    placeholder="Descanso"
+                                    onMouseEnter={e => enterMesh(e.currentTarget)}
+                                    onMouseLeave={e => leaveMesh(e.currentTarget)}
+                                    onFocus={e => focusMesh(e.currentTarget)}
+                                    onBlur={e => blurMesh(e.currentTarget)}
+                                    className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+                                    style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
+                                  />
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))}
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.name}</p>
-                          <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{ex.muscle} · {ex.difficulty}</p>
-                        </div>
-                        <span className="text-sm font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{ex.sets}×{ex.reps}</span>
-                      </motion.div>
-                    ))}
+                      )
+                    })()}
                   </div>
                 )}
 
@@ -2542,10 +2870,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     }}
                     className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
                     style={{
-                      background: routineStep === 2 && !routineForm.name ? 'rgba(48,209,88,0.3)' : 'linear-gradient(135deg, #30D158, #1A8A3F)',
+                      background: routineStep === 2 && routineRows.length === 0 ? 'rgba(48,209,88,0.3)' : 'linear-gradient(135deg, #30D158, #1A8A3F)',
                       color: '#FFFFFF',
                     }}
-                    disabled={routineStep === 1 && !routineForm.name}
+                    disabled={(routineStep === 1 && !routineForm.name) || (routineStep === 2 && routineRows.length === 0)}
                   >
                     {routineStep === 2 ? 'Crear Rutina' : 'Siguiente'}
                   </button>
@@ -2566,67 +2894,87 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, filter: 'blur(6px)' }}
+                animate={{ opacity: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, filter: 'blur(6px)' }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
-                className="w-full max-w-md rounded-3xl p-8 pt-2 flex flex-col items-center"
+                className="w-full max-w-lg rounded-3xl p-8 pt-6 flex flex-col items-center relative"
                 style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                  background: 'linear-gradient(180deg, #F3E8FF 0%, #FFFFFF 100%)',
+                  border: '1px solid rgba(191,90,242,0.12)',
+                  boxShadow: '0 24px 80px rgba(124,58,237,0.18)',
                 }}
               >
-                <div className="w-44 h-44 -mt-14 flex items-center justify-center pointer-events-none">
-                  <DotLottieReact
-                    src={routineGenLottie}
-                    loop
-                    autoplay
-                    style={{ width: '100%', height: '100%' }}
-                  />
+                <div className="relative flex-shrink-0 w-56 h-56 flex items-center justify-center pointer-events-none">
+                  {[...Array(24)].map((_, i) => {
+                    const angle = (i / 24) * 360
+                    const rad = (angle * Math.PI) / 180
+                    return (
+                      <motion.span
+                        key={i}
+                        className="absolute pointer-events-none text-lg select-none"
+                        style={{ color: '#BF5AF2' }}
+                        animate={{
+                          x: [0, Math.cos(rad) * (120 + (i % 6) * 20)],
+                          y: [0, Math.sin(rad) * (120 + (i % 6) * 20)],
+                          opacity: [0, 1, 0],
+                          scale: [0, 1.4, 0],
+                        }}
+                        transition={{
+                          duration: 2.5 + (i % 4) * 0.3,
+                          repeat: Infinity,
+                          delay: i * 0.07,
+                          ease: 'easeOut',
+                        }}
+                      >
+                        ✦
+                      </motion.span>
+                    )
+                  })}
+                  <div className="relative z-10 w-56 h-56 flex items-center justify-center">
+                    <DotLottieReact
+                      src={routineGenLottie}
+                      loop
+                      autoplay
+                      style={{ width: '100%', height: '100%' }}
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2.5 mb-1">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #30D158, #00C7BE)' }}
-                  >
-                    <Sparkles size={14} color="#FFFFFF" />
-                  </motion.div>
-                  <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Generando rutina con IA...</h3>
-                </div>
-                <p className="text-xs text-center mt-1" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                <h3
+                  className="text-[2rem] leading-[1.1] font-extrabold tracking-tight text-center mt-2"
+                  style={{
+                    background: 'linear-gradient(135deg, #BF5AF2, #F472B6)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  Cargando rutina con IA
+                </h3>
+                <p className="text-xs font-medium text-center mt-1.5" style={{ color: '#8B5CF6' }}>
                   Analizando la valoración de {student.firstName}
                 </p>
-
-                <div className="w-full mt-5 space-y-1.5">
-                  {AI_GENERATION_STEPS.map((s, i) => (
-                    <motion.div key={s} className="flex items-center gap-2.5"
-                      animate={{ opacity: i <= aiGenStep ? 1 : 0.4 }}
+                <div className="flex items-center justify-center gap-2 mt-3 min-h-5">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={aiGenStep}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                      className="flex items-center gap-2"
                     >
-                      <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{
-                        background: i < aiGenStep ? '#30D158' : i === aiGenStep ? 'rgba(48,209,88,0.15)' : 'rgba(0,0,0,0.06)',
-                      }}>
-                        {i < aiGenStep
-                          ? <Check size={9} color="#fff" strokeWidth={3.5} />
-                          : i === aiGenStep
-                            ? <Loader2 size={9} color="#1A8A3F" className="animate-spin" />
-                            : <span style={{ width: 9, height: 9, borderRadius: 99, background: 'rgba(0,0,0,0.15)' }} />}
-                      </div>
-                      <p className="text-[11px]" style={{
-                        color: i <= aiGenStep ? '#0D1B2A' : 'rgba(0,0,0,0.3)',
-                        fontWeight: i === aiGenStep ? 700 : 500,
-                      }}>{s}</p>
+                      <Loader2 size={13} color="#7C3AED" className="animate-spin flex-shrink-0" />
+                      <p className="text-xs font-bold" style={{ color: '#6D28D9' }}>{AI_GENERATION_STEPS[aiGenStep]}</p>
                     </motion.div>
-                  ))}
+                  </AnimatePresence>
                 </div>
 
-                <div className="w-full mt-5 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+                <div className="w-full mt-6 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(191,90,242,0.12)' }}>
                   <motion.div
                     className="h-full rounded-full"
-                    style={{ background: 'linear-gradient(90deg, #30D158, #00C7BE)' }}
+                    style={{ background: 'linear-gradient(90deg, #C084FC, #F472B6)' }}
                     animate={{ width: `${((aiGenStep + 1) / AI_GENERATION_STEPS.length) * 100}%` }}
                     transition={{ duration: 0.4, ease: 'easeOut' }}
                   />
