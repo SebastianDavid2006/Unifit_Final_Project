@@ -32,6 +32,7 @@ import healthIcon from '../../assets/icons/health/health.webp'
 import trophyIcon from '../../assets/icons/objects/trophy.webp'
 import otroIcon from '../../assets/icons/ui/star.webp'
 import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
+import coachMagicImg from '../../assets/illustrations/characters/coach/coach_magic.png'
 import calendarImg from '../../assets/icons/objects/calendar.webp'
 import physicalAssessmentImg from '../../assets/illustrations/modules/physical_assessment.webp'
 import { GREEN_GRAD, meshInputBg, meshInputHover, muscleIcons } from '../../data/constants'
@@ -215,6 +216,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [showValuationModal, setShowValuationModal] = useState(false)
   const [showRoutineViewModal, setShowRoutineViewModal] = useState(false)
   const [showNewRoutineModal, setShowNewRoutineModal] = useState(false)
+  const [routineSuccess, setRoutineSuccess] = useState(false)
   const [routineStep, setRoutineStep] = useState(1)
   const [routineForm, setRoutineForm] = useState({
     name: '', description: '', duration: '', frequency: '', level: 'Intermedio',
@@ -267,6 +269,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const imcNum = parseFloat(imc)
 
   const startAiRoutine = () => {
+    setShowNewValuationModal(false)
+    setValuationSuccess(false)
     setAiGenerating(true)
     setAiGenStep(0)
     let step = 0
@@ -631,13 +635,16 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.3 }}
-          whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(124,58,237,0.35)', transition: { duration: 0.15 } }}
-          whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(124,58,237,0.2)', transition: { duration: 0.1 } }}
+          whileHover={{ scale: 1.05, boxShadow: '0 12px 32px rgba(124,58,237,0.45)', transition: { duration: 0.15 } }}
+          whileTap={{ scale: 0.94, boxShadow: '0 2px 8px rgba(124,58,237,0.2)', transition: { duration: 0.1 } }}
           onClick={startAiRoutine}
-          className="mt-8 mb-2 px-8 py-3.5 rounded-2xl text-xs font-bold text-white cursor-pointer flex items-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #BF5AF2, #7C3AED)' }}
+          className="mt-8 mb-3 px-10 py-4 rounded-2xl text-sm font-extrabold text-white cursor-pointer flex items-center gap-2.5 shadow-lg"
+          style={{
+            background: 'linear-gradient(135deg, #BF5AF2, #7C3AED)',
+            boxShadow: '0 10px 28px rgba(124,58,237,0.35)',
+          }}
         >
-          <Sparkles size={14} />
+          <Sparkles size={16} />
           Generar rutina con IA
         </motion.button>
       )}
@@ -645,11 +652,23 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.55, duration: 0.3 }}
-        onClick={() => { setShowNewValuationModal(false); setValuationSuccess(false); setValuationStep(1) }}
-        className="mb-10 px-6 py-2.5 rounded-2xl text-xs font-bold transition-all"
-        style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.5)' }}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => {
+          setShowNewValuationModal(false)
+          setValuationSuccess(false)
+          setValuationStep(1)
+          setRoutineStep(1)
+          setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+          setRoutineRows([])
+          setSelectedRoutineDay(null)
+          setAiGeneratedRoutine(null)
+          setShowNewRoutineModal(true)
+        }}
+        className="mb-10 px-6 py-2 text-xs font-semibold cursor-pointer bg-transparent"
+        style={{ color: 'rgba(18,112,183,0.85)', textDecoration: 'underline' }}
       >
-        Cerrar
+        Crear rutina manualmente
       </motion.button>
     </motion.div>
   )
@@ -2607,19 +2626,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
                 }}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'rgba(48,209,88,0.12)' }}>
-                      <Dumbbell size={22} style={{ color: '#30D158' }} />
-                    </div>
-                    <h3 className="text-lg font-bold" style={{ color: '#0D1B2A' }}>Nueva Rutina</h3>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowNewRoutineModal(false)}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                      <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                    </motion.button>
-                  </div>
+                <div className="flex items-center justify-end mb-4">
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowNewRoutineModal(false)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                  </motion.button>
                 </div>
 
                 <div className="flex items-center justify-center gap-1.5 mb-4">
@@ -2637,7 +2648,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   ))}
                 </div>
                 <span className="text-lg font-bold tracking-wide text-center block mb-4" style={{ color: '#1A1A1E' }}>
-                  {routineStep === 1 ? 'Información general' : 'Ejercicios por día'}
+                  Nueva Rutina
                 </span>
 
                 {routineStep === 1 && (
@@ -2647,7 +2658,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         ? 'Ajusta los parámetros generales de la rutina (prellenados según la valoración).'
                         : 'Configura los parámetros generales de la rutina.'}
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración</label>
                         <select
@@ -2668,25 +2679,6 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Frecuencia</label>
-                        <select
-                          value={routineForm.frequency}
-                          onChange={e => setRoutineForm(p => ({ ...p, frequency: e.target.value }))}
-                          className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
-                          style={{
-                            background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
-                            color: '#1A1A1E',
-                            border: '1px solid transparent',
-                          }}
-                        >
-                          <option value="">Seleccionar</option>
-                          <option value="3 días/semana">3 días/semana</option>
-                          <option value="4 días/semana">4 días/semana</option>
-                          <option value="5 días/semana">5 días/semana</option>
-                          <option value="6 días/semana">6 días/semana</option>
-                        </select>
-                      </div>
-                      <div>
                         <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nivel</label>
                         <select
                           value={routineForm.level}
@@ -2704,20 +2696,6 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         </select>
                       </div>
                     </div>
-                    {aiGeneratedRoutine && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="rounded-2xl p-4"
-                        style={{ background: 'rgba(48,209,88,0.05)', border: '1px solid rgba(48,209,88,0.15)' }}
-                      >
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <Sparkles size={13} style={{ color: '#1A8A3F' }} />
-                          <p className="text-xs font-bold" style={{ color: '#0D1B2A' }}>{aiGeneratedRoutine.name}</p>
-                        </div>
-                        <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.5)' }}>{aiGeneratedRoutine.description}</p>
-                      </motion.div>
-                    )}
                   </div>
                 )}
 
@@ -2866,6 +2844,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         setShowNewRoutineModal(false)
                         setRoutineStep(1)
                         setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+                        setRoutineRows([])
+                        setSelectedRoutineDay(null)
+                        setAiGeneratedRoutine(null)
+                        setRoutineSuccess(true)
                       }
                     }}
                     className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
@@ -2883,6 +2865,113 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
           )}
         </AnimatePresence>
 
+        {/* Modal éxito rutina generada */}
+        <AnimatePresence>
+          {routineSuccess && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[90] flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setRoutineSuccess(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97, y: 8 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-lg rounded-3xl flex flex-col relative"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(34,197,94,0.15)',
+                  boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
+                }}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col items-center pt-8 px-6"
+                >
+                  <div className="relative flex items-center justify-center -mt-28 mb-6">
+                    {[...Array(24)].map((_, i) => {
+                      const angle = (i / 24) * 360
+                      const rad = (angle * Math.PI) / 180
+                      return (
+                        <motion.span
+                          key={i}
+                          className="absolute pointer-events-none text-lg select-none"
+                          style={{ color: '#4ADE80' }}
+                          animate={{
+                            x: [0, Math.cos(rad) * (110 + (i % 6) * 20)],
+                            y: [0, Math.sin(rad) * (110 + (i % 6) * 20)],
+                            opacity: [0, 1, 0],
+                            scale: [0, 1.4, 0],
+                          }}
+                          transition={{
+                            duration: 2.5 + (i % 4) * 0.3,
+                            repeat: Infinity,
+                            delay: i * 0.07,
+                            ease: 'easeOut',
+                          }}
+                        >
+                          ✦
+                        </motion.span>
+                      )
+                    })}
+                    <div className="relative flex items-center justify-center">
+                      <motion.img
+                        src={coachMagicImg}
+                        alt="rutina generada"
+                        className="w-72 h-auto object-contain relative z-10"
+                        style={{ filter: 'drop-shadow(0 0 30px rgba(34,197,94,0.15))' }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
+                      />
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-24 pointer-events-none z-20" style={{
+                        background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, transparent 60%)',
+                      }} />
+                    </div>
+                  </div>
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.4 }}
+                    className="text-lg font-bold text-center"
+                    style={{ color: '#1A1A1E' }}
+                  >
+                    ¡Se generó la rutina!
+                  </motion.p>
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45, duration: 0.4 }}
+                    className="text-sm font-medium mt-1 text-center"
+                    style={{ color: 'rgba(0,0,0,0.35)' }}
+                  >
+                    La rutina fue creada y asignada correctamente al plan de {student.firstName}.
+                  </motion.p>
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.3 }}
+                    whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(34,197,94,0.35)', transition: { duration: 0.15 } }}
+                    whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(34,197,94,0.2)', transition: { duration: 0.1 } }}
+                    onClick={() => setRoutineSuccess(false)}
+                    className="mt-7 mb-10 px-8 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
+                    style={{ background: 'linear-gradient(135deg, #30D158, #1A8A3F)' }}
+                  >
+                    Perfecto
+                  </motion.button>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Modal generando rutina con IA */}
         <AnimatePresence>
           {aiGenerating && (
@@ -2890,7 +2979,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-6"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-6"
               style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
             >
               <motion.div
