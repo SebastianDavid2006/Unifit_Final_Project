@@ -35,6 +35,7 @@ export function AdminDashboard() {
   const [trainerTab, setTrainerTab] = useState('overview')
   const [gymTab, setGymTab] = useState('students')
   const [statsTab, setStatsTab] = useState('overview')
+  const [configTab, setConfigTab] = useState('config')
   const [showCareerFilter, setShowCareerFilter] = useState(false)
   const [showStatsCalendar, setShowStatsCalendar] = useState(false)
   const [statsRange, setStatsRange] = useState({ start: '', end: '' })
@@ -326,6 +327,33 @@ export function AdminDashboard() {
                 </div>
               </div>
             )}
+            {section === 'config' && (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
+                  background: 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(24px) saturate(1.6)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                }}>
+                  {([
+                    { id: 'config', label: 'Configuración', icon: Settings },
+                    { id: 'docs', label: 'Documentos', icon: FileText },
+                  ] as const).map(t => (
+                    <motion.button key={t.id} onClick={() => setConfigTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                      style={{
+                        background: configTab === t.id
+                          ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                          : 'transparent',
+                        color: configTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      <t.icon size={14} />
+                      {t.label}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            )}
             {section === 'stats' && (
               <div className="flex-1 flex items-center justify-center gap-2">
                 <motion.button
@@ -457,10 +485,10 @@ export function AdminDashboard() {
             className="size-full"
           >
             {section === 'dashboard' && <AdminDashboardView />}
-            {section === 'stats' && <AdminStats tab={statsTab} onTabChange={setStatsTab} showCareerFilter={showCareerFilter} onToggleCareerFilter={() => setShowCareerFilter(!showCareerFilter)} />}
+            {section === 'stats' && <AdminStats tab={statsTab} onTabChange={setStatsTab} showCareerFilter={showCareerFilter} onToggleCareerFilter={() => setShowCareerFilter(!showCareerFilter)} statsRange={statsRange} />}
             {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
             {section === 'gym' && <AdminGym tab={gymTab} />}
-            {section === 'config' && <AdminConfig />}
+            {section === 'config' && <AdminConfig tab={configTab} onTabChange={setConfigTab} />}
             {section === 'docs' && <AdminDocs />}
           </motion.div>
         </AnimatePresence>
