@@ -1,17 +1,43 @@
-import { useState, useMemo, forwardRef, useImperativeHandle } from 'react'
+import { useState, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { motion } from 'motion/react'
-import { Plus, ChevronRight, Shield } from 'lucide-react'
+import { Plus, ChevronRight, ChevronLeft, Shield, GraduationCap } from 'lucide-react'
 import trainersImg from '../../assets/illustrations/characters/trainers/trainers_group.webp'
 import { Trainer, initialTrainers } from '../../data/trainers'
+import NewUserModal from './NewUserModal'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 
-const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: string; onSelectTrainer?: () => void; trainerTab?: string }>(({ search, onSelectTrainer, trainerTab }, ref) => {
-  const [trainers] = useState(initialTrainers)
+const PAGE_SIZE = 6
+
+type RoleFilter = 'all' | 'trainer' | 'admin'
+
+const roleMeta: Record<'trainer' | 'admin', { label: string; icon: typeof Shield; color: string; bg: string; border: string }> = {
+  trainer: { label: 'Entrenador', icon: GraduationCap, color: BLUE, bg: 'rgba(18,112,183,0.1)', border: 'rgba(18,112,183,0.18)' },
+  admin: { label: 'Administrador', icon: Shield, color: RED, bg: 'rgba(244,56,67,0.1)', border: 'rgba(244,56,67,0.18)' },
+}
+
+const statusMeta = {
+  active: { label: 'Activo', color: '#1E8E3E', bg: 'rgba(34,197,94,0.13)' },
+  inactive: { label: 'Inactivo', color: '#E31B23', bg: 'rgba(244,67,54,0.12)' },
+}
+
+interface AdminTrainersProps {
+  search: string
+  onSelectTrainer?: () => void
+  trainerTab?: string
+  roleFilter?: RoleFilter
+  showFilters?: boolean
+  onToggleFilters?: () => void
+}
+
+const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersProps>(({ search, onSelectTrainer, trainerTab, roleFilter, showFilters, onToggleFilters }, ref) => {
+  const [trainers, setTrainers] = useState(initialTrainers)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
   const [globalAdmin, setGlobalAdmin] = useState(true)
+  const [page, setPage] = useState(1)
+  const [showNewUser, setShowNewUser] = useState(false)
 
   useImperativeHandle(ref, () => ({
     clearSelection: () => setSelectedTrainer(null)
@@ -22,12 +48,63 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: strin
     onSelectTrainer?.()
   }
 
-  const filtered = useMemo(() =>
-    trainers.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.speciality.toLowerCase().includes(search.toLowerCase())),
-    [trainers, search]
-  )
+  const filtered = useMemo(() => {
+    const q = (search ?? '').trim().toLowerCase()
+    const role = roleFilter ?? 'all'
+    return trainers.filter(t => {
+      const matchRole = role === 'all' || t.role === role
+      const roleLabel = t.role === 'trainer' ? 'entrenador' : 'administrador'
+      const matchSearch = !q ||
+        t.name.toLowerCase().includes(q) ||
+        t.email.toLowerCase().includes(q) ||
+        t.speciality.toLowerCase().includes(q) ||
+        roleLabel.includes(q)
+      return matchRole && matchSearch
+    })
+  }, [trainers, search, roleFilter])
 
-  const tableHeaders = ['Nombre', 'Especialidad', 'Estudiantes', 'Estado', '']
+  useEffect(() => { setPage(1) }, [search, roleFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  const pageNumbers: (number | '…')[] = useMemo(() => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
+    const set = new Set<number>([1, totalPages, currentPage - 1, currentPage, currentPage + 1])
+    const sorted = [...set].filter(p => p >= 1 && p <= totalPages).sort((a, b) => a - b)
+    const out: (number | '…')[] = []
+    let prev = 0
+    sorted.forEach(p => {
+      if (p - prev > 1) out.push('…')
+      out.push(p)
+      prev = p
+    })
+    return out
+  }, [totalPages, currentPage])
+
+  const tableHeaders = ['Nombre', 'Cargo', 'Estudiantes', 'Estado']
+
+  function handleNewUserSuccess(user: { name: string; email: string; phone: string; role: string }) {
+    const initials = user.name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    const newTrainer: Trainer = {
+      id: Math.max(0, ...trainers.map(t => t.id)) + 1,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      document: `CC ${1000000000 + Math.max(0, ...trainers.map(t => t.id)) + 1}`,
+      speciality: user.role === 'admin' ? 'Administración del Sistema' : 'Entrenamiento General',
+      role: user.role === 'admin' ? 'admin' : 'trainer',
+      students: 0,
+      status: 'active',
+      avatar: initials || 'NU',
+      rating: 80,
+      joinedAt: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }),
+      schedule: 'Lun-Vie 8AM-4PM',
+      certifications: user.role === 'admin' ? ['Gestión de Plataforma'] : ['Entrenamiento Funcional'],
+    }
+    setTrainers(prev => [newTrainer, ...prev])
+  }
 
   if (selectedTrainer) {
     if (trainerTab && trainerTab === 'permissions') {
@@ -126,6 +203,7 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: strin
             <div className="flex flex-col">
               {[
                 { label: 'ID', value: `#${selectedTrainer.id}` },
+                { label: 'Cargo', value: selectedTrainer.role === 'admin' ? 'Administrador' : 'Entrenador' },
                 { label: 'Estado', value: selectedTrainer.status === 'active' ? 'Activo' : 'Inactivo' },
                 { label: 'Ingresó', value: selectedTrainer.joinedAt },
               ].map((field, fi, arr) => (
@@ -302,6 +380,7 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: strin
                 initial="initial"
                 whileHover="hover"
                 whileTap={{ scale: 0.9, boxShadow: '0 0 40px rgba(244,56,67,0.6), 0 0 80px rgba(18,112,183,0.4), 0 0 120px rgba(241,200,39,0.2)', transition: { duration: 0.15 } }}
+                onClick={() => setShowNewUser(true)}
                 className="flex items-center rounded-full overflow-hidden relative text-white"
                 style={{
                   height: 44,
@@ -328,7 +407,7 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: strin
                   whileTap={{ opacity: 0.35, transition: { duration: 0.12 } }}
                   className="overflow-hidden whitespace-nowrap"
                 >
-                  <span className="text-xs font-bold">Nuevo Entrenador</span>
+                  <span className="text-xs font-bold">Nuevo Usuario</span>
                 </motion.div>
                 <motion.div
                   whileTap={{ scale: 0.85, opacity: 0.35, transition: { duration: 0.12 } }}
@@ -348,46 +427,119 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, { search: strin
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
+        {/* User list — blurred when filters are open */}
+        <motion.div layout transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} style={{ filter: showFilters ? 'blur(4px)' : 'none', opacity: showFilters ? 0.5 : 1, transition: 'filter 0.3s ease, opacity 0.3s ease', pointerEvents: showFilters ? 'none' : 'auto' }}>
+        <div className="grid grid-cols-[1.9fr_1.1fr_0.8fr_1.3fr_auto] gap-4 px-4 mb-3">
           {tableHeaders.map((h, i) => (
             <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
           ))}
-          <div className="w-5" />
+          <div className="w-[15px]" />
         </div>
 
         <div className="space-y-2">
-          {filtered.map((t, i) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.03 }}
-              onClick={() => handleSelectTrainer(t)}
-              whileHover={{ y: -3, scale: 1.002, background: 'rgba(255,255,255,0.8)' }}
-              className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl cursor-pointer"
-              style={{ background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.4)' }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: t.status === 'active' ? 'linear-gradient(135deg, #30D158, #20A040)' : 'linear-gradient(135deg, #8E8E93, #636366)', fontSize: 13 }}>{t.avatar}</div>
-                <div className="min-w-0">
-                  <p className="text-[#1A1A1E] text-sm font-bold truncate">{t.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.3)' }}>{t.email}</p>
+          {paged.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-sm font-semibold" style={{ color: 'rgba(0,0,0,0.4)' }}>No se encontraron usuarios</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(0,0,0,0.25)' }}>Prueba con otra búsqueda o filtro.</p>
+            </div>
+          ) : paged.map((t, i) => {
+            const rm = roleMeta[t.role]
+            const st = statusMeta[t.status]
+            const RoleIcon = rm.icon
+            return (
+              <motion.div
+                key={t.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03 }}
+                onClick={() => handleSelectTrainer(t)}
+                whileHover={{ y: -3, scale: 1.002 }}
+                className="grid grid-cols-[1.9fr_1.1fr_0.8fr_1.3fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer"
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: t.status === 'active' ? 'linear-gradient(135deg, #30D158, #20A040)' : 'linear-gradient(135deg, #8E8E93, #636366)', fontSize: 13 }}>{t.avatar}</div>
+                  <div className="min-w-0">
+                    <p className="text-[#1A1A1E] text-sm font-bold truncate">{t.name}</p>
+                    <p className="text-xs mt-0.5 font-mono font-semibold truncate" style={{ color: 'rgba(0,0,0,0.6)' }}>{t.document}</p>
+                  </div>
                 </div>
-              </div>
-              <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{t.speciality}</p>
-              <p className="text-xs font-bold" style={{ color: '#1D1D1F' }}>{t.students}</p>
-              <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold" style={{
-                background: t.status === 'active' ? 'rgba(48,209,88,0.08)' : 'rgba(142,142,147,0.08)',
-                color: t.status === 'active' ? '#30D158' : '#8E8E93',
-                border: `1px solid ${t.status === 'active' ? 'rgba(48,209,88,0.15)' : 'rgba(142,142,147,0.15)'}`,
-              }}>
-                {t.status === 'active' ? 'Activo' : 'Inactivo'}
-              </span>
-              <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
-            </motion.div>
-          ))}
+
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: rm.bg, color: rm.color, border: `1px solid ${rm.border}` }}>
+                  <RoleIcon size={11} />
+                  {rm.label}
+                </span>
+
+                <p className="text-xs font-bold" style={{ color: '#1D1D1F' }}>{t.students}</p>
+
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit ml-6" style={{ background: st.bg, color: st.color }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: st.color }} />
+                  {st.label}
+                </span>
+
+                <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
+              </motion.div>
+            )
+          })}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-1.5 pt-4">
+            <motion.button
+              whileHover={currentPage > 1 ? { scale: 1.1 } : {}}
+              whileTap={currentPage > 1 ? { scale: 0.92 } : {}}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+              style={{
+                background: currentPage === 1 ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)',
+                color: currentPage === 1 ? 'rgba(0,0,0,0.2)' : '#111111',
+                cursor: currentPage === 1 ? 'default' : 'pointer',
+              }}
+            >
+              <ChevronLeft size={15} />
+            </motion.button>
+
+            {pageNumbers.map((p, i) =>
+              p === '…' ? (
+                <span key={`e${i}`} className="w-8 h-8 flex items-center justify-center text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.3)' }}>…</span>
+              ) : (
+                <motion.button
+                  key={p}
+                  whileHover={p !== currentPage ? { scale: 1.1 } : {}}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setPage(p)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold transition-all"
+                  style={{
+                    background: p === currentPage ? '#111111' : 'rgba(0,0,0,0.05)',
+                    color: p === currentPage ? '#FFFFFF' : '#111111',
+                    boxShadow: p === currentPage ? '0 4px 12px rgba(0,0,0,0.25)' : 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {p}
+                </motion.button>
+              )
+            )}
+
+            <motion.button
+              whileHover={currentPage < totalPages ? { scale: 1.1 } : {}}
+              whileTap={currentPage < totalPages ? { scale: 0.92 } : {}}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+              style={{
+                background: currentPage === totalPages ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)',
+                color: currentPage === totalPages ? 'rgba(0,0,0,0.2)' : '#111111',
+                cursor: currentPage === totalPages ? 'default' : 'pointer',
+              }}
+            >
+              <ChevronRight size={15} />
+            </motion.button>
+          </div>
+        )}
+        </motion.div>
       </div>
+      <NewUserModal open={showNewUser} onClose={() => setShowNewUser(false)} onSuccess={handleNewUserSuccess} />
     </>
   )
 })

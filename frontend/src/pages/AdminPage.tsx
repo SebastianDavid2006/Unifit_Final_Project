@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Clock } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Clock, Briefcase, Search, Shield } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
 import AdminTrainers from '../modules/admin/AdminTrainers'
 import AdminGym from '../modules/admin/AdminGym'
 import AdminConfig from '../modules/admin/AdminConfig'
-import AdminDocs from '../modules/admin/AdminDocs'
 import AdminStats from '../modules/admin/AdminStats'
 import iconRunning from '../assets/icons/animated/icon_running.gif'
 import permissionsScene from '../assets/scenes/permmisions_scene.png'
@@ -15,13 +14,12 @@ const BLUE = '#1270B7'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 
-type AdminSection = 'dashboard' | 'trainers' | 'stats' | 'docs' | 'gym' | 'config'
+type AdminSection = 'dashboard' | 'trainers' | 'stats' | 'gym' | 'config'
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'trainers', label: 'Entrenadores', icon: UserPlus },
   { id: 'stats', label: 'Estadísticas', icon: BarChart3 },
-  { id: 'docs', label: 'Documentación', icon: FileText },
   { id: 'gym', label: 'Gestión', icon: Building2 },
   { id: 'config', label: 'Configuración', icon: Settings },
 ]
@@ -30,12 +28,14 @@ export function AdminDashboard() {
   const [section, setSection] = useState<AdminSection>('dashboard')
   const [expanded, setExpanded] = useState(false)
   const [trainerSearch, setTrainerSearch] = useState('')
+  const [trainerSearchFocused, setTrainerSearchFocused] = useState(false)
   const [showTrainerFilters, setShowTrainerFilters] = useState(false)
+  const [trainerRoleFilter, setTrainerRoleFilter] = useState<'all' | 'trainer' | 'admin'>('all')
   const [trainerDetailOpen, setTrainerDetailOpen] = useState(false)
   const [trainerTab, setTrainerTab] = useState('overview')
   const [gymTab, setGymTab] = useState('students')
   const [statsTab, setStatsTab] = useState('overview')
-  const [configTab, setConfigTab] = useState('config')
+  const [configTab, setConfigTab] = useState('carreras')
   const [showCareerFilter, setShowCareerFilter] = useState(false)
   const [showStatsCalendar, setShowStatsCalendar] = useState(false)
   const [statsRange, setStatsRange] = useState({ start: '', end: '' })
@@ -51,6 +51,7 @@ export function AdminDashboard() {
 
   useEffect(() => {
     setShowStatsCalendar(false)
+    setShowTrainerFilters(false)
   }, [section])
   const trainerRef = useRef<{ clearSelection: () => void }>(null)
   const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
@@ -280,7 +281,90 @@ export function AdminDashboard() {
                 </div>
               </>
             )}
-            {section === 'trainers' && !trainerDetailOpen && <div className="flex-1" />}
+            {section === 'trainers' && !trainerDetailOpen && (
+              <div className="flex-1 flex justify-center relative">
+                <div className="flex items-center gap-2 max-w-md w-full">
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0, scaleX: trainerSearchFocused ? 1.04 : 1 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    className="flex items-center gap-3 px-4 py-2 rounded-2xl flex-1 min-w-0"
+                    style={{
+                      background: trainerSearchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                      backdropFilter: 'blur(24px) saturate(1.6)',
+                      border: trainerSearchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                      boxShadow: trainerSearchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
+                      transformOrigin: 'center',
+                    }}
+                  >
+                    <Search size={16} style={{ color: trainerSearchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
+                    <input
+                      value={trainerSearch}
+                      onChange={e => setTrainerSearch(e.target.value)}
+                      onFocus={() => setTrainerSearchFocused(true)}
+                      onBlur={() => setTrainerSearchFocused(false)}
+                      placeholder="Buscar por nombre, cargo o especialidad..."
+                      className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
+                    />
+                  </motion.div>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowTrainerFilters(!showTrainerFilters)}
+                    className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                    style={{
+                      marginLeft: trainerSearchFocused ? 6 : 0,
+                      background: showTrainerFilters ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)',
+                      backdropFilter: 'blur(24px) saturate(1.6)',
+                      border: showTrainerFilters ? '1px solid rgba(255,255,255,0.6)' : '1px solid rgba(255,255,255,0.25)',
+                      boxShadow: showTrainerFilters ? '0 4px 24px rgba(0,0,0,0.08)' : '0 4px 16px rgba(0,0,0,0.03)',
+                      color: showTrainerFilters ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    <Menu size={18} />
+                  </motion.button>
+                </div>
+                <AnimatePresence>
+                  {showTrainerFilters && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
+                      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                      exit={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
+                      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 flex gap-1.5 p-2 rounded-xl"
+                      style={{
+                        background: 'rgba(255,255,255,0.9)',
+                        backdropFilter: 'blur(24px) saturate(1.6)',
+                        border: '1px solid rgba(255,255,255,0.5)',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                      }}
+                    >
+                      {([['all', 'Todos'], ['trainer', 'Entrenadores'], ['admin', 'Administradores']] as const).map(([id, label]) => {
+                        const color = id === 'admin' ? RED : id === 'trainer' ? BLUE : BLUE
+                        return (
+                          <motion.button
+                            key={id}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => { setTrainerRoleFilter(id); setShowTrainerFilters(false) }}
+                            className="px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide whitespace-nowrap transition-all flex items-center gap-1.5"
+                            style={{
+                              background: trainerRoleFilter === id ? `${color}15` : 'transparent',
+                              color: trainerRoleFilter === id ? color : 'rgba(0,0,0,0.3)',
+                              border: `1px solid ${trainerRoleFilter === id ? `${color}30` : 'transparent'}`,
+                            }}
+                          >
+                            {id === 'trainer' && <GraduationCap size={13} />}
+                            {id === 'admin' && <Shield size={13} />}
+                            {label}
+                          </motion.button>
+                        )
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
             {section === 'gym' && (
               <div className="flex-1 flex items-center justify-center">
                 <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
@@ -335,8 +419,10 @@ export function AdminDashboard() {
                   border: '1px solid rgba(255,255,255,0.25)',
                 }}>
                   {([
-                    { id: 'config', label: 'Configuración', icon: Settings },
-                    { id: 'docs', label: 'Documentos', icon: FileText },
+                    { id: 'carreras', label: 'Carreras', icon: GraduationCap },
+                    { id: 'areas', label: 'Áreas', icon: Building2 },
+                    { id: 'cargos', label: 'Cargos', icon: Briefcase },
+                    { id: 'documentos', label: 'Documentos', icon: FileText },
                   ] as const).map(t => (
                     <motion.button key={t.id} onClick={() => setConfigTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
@@ -486,10 +572,9 @@ export function AdminDashboard() {
           >
             {section === 'dashboard' && <AdminDashboardView />}
             {section === 'stats' && <AdminStats tab={statsTab} onTabChange={setStatsTab} showCareerFilter={showCareerFilter} onToggleCareerFilter={() => setShowCareerFilter(!showCareerFilter)} statsRange={statsRange} />}
-            {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
+            {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} roleFilter={trainerRoleFilter} showFilters={showTrainerFilters} onToggleFilters={() => setShowTrainerFilters(!showTrainerFilters)} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
             {section === 'gym' && <AdminGym tab={gymTab} />}
             {section === 'config' && <AdminConfig tab={configTab} onTabChange={setConfigTab} />}
-            {section === 'docs' && <AdminDocs />}
           </motion.div>
         </AnimatePresence>
       </div>

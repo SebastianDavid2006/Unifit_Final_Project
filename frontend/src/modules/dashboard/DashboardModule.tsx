@@ -3,12 +3,14 @@ import {
   BarChart, Bar, Cell, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
 } from 'recharts'
-import { Users, Clock, Sparkles, AlertTriangle, Target } from 'lucide-react'
+import { BarChart, Bar, Cell, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
+} from 'recharts'
 import { StudentsView } from '../../assets/models/ui/users/students/StudentsModel'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarModel'
 import { ListView } from '../../assets/models/ui/objects/list/ListModel'
-import { BLUE, BLUE_GRAD, RED } from '../../data/constants'
+import { BLUE_GRAD } from '../../data/constants'
 import coachImg from '../../assets/illustrations/characters/coach/coach_default.webp'
 
 const CARD_COLORS = [
@@ -18,78 +20,9 @@ const CARD_COLORS = [
   { bg: 'rgba(241,200,39,0.08)', icon: 'rgba(241,200,39,0.15)', text: '#F1C827' },
 ]
 
-const dayRecommendations = [
-  { // Lun
-    title: 'Planificación semanal',
-    tips: [
-      { icon: Target, text: 'Revisa los objetivos de adherencia de la semana pasada y ajusta metas individuales.', color: '#30D158' },
-      { icon: Users, text: 'Tienes 12 estudiantes inactivos desde el viernes. Un mensaje de texto hoy puede recuperar el 40%.', color: RED },
-      { icon: Clock, text: 'El horario más demandado será 5PM-7PM. Asegura disponibilidad de equipos.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: '3 alumnos nuevos necesitan evaluación inicial antes del miércoles.', color: '#FF9500' },
-    ],
-  },
-  { // Mar
-    title: 'Seguimiento de rutinas',
-    tips: [
-      { icon: Target, text: 'Martes suele tener 15% más asistencia que lunes. Aprovecha para retar a los inactivos.', color: '#30D158' },
-      { icon: Users, text: 'Los estudiantes de Ingeniería tienen 92% adherencia este mes. Mantén ese grupo motivado.', color: '#1270B7' },
-      { icon: Clock, text: 'La franja 4PM-6PM tendrá alta ocupación. Considera agregar un turno extra.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: '2 estudiantes han bajado su rendimiento un 30% esta semana. Revisa sus planes.', color: '#FF3B30' },
-    ],
-  },
-  { // Mié
-    title: 'Día clave de mitad de semana',
-    tips: [
-      { icon: Target, text: 'El miércoles es el día con mayor abandono. Envía recordatorios personalizados a los ausentes del lunes.', color: '#FF3B30' },
-      { icon: Users, text: '7 estudiantes tienen citas pendientes de reprogramar. Agenda antes de que se desestimen.', color: '#1270B7' },
-      { icon: Clock, text: 'El pico de asistencia será 5PM-8PM. Optimiza la distribución de estaciones.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: 'Un grupo de 5 personas no ha registrado asistencia en 5 días consecutivos.', color: '#FF9500' },
-    ],
-  },
-  { // Jue
-    title: 'Ajuste y motivación',
-    tips: [
-      { icon: Target, text: 'Estás al 68% de la meta semanal de asistencia. Un esfuerzo extra hoy puede marcar la diferencia.', color: '#30D158' },
-      { icon: Users, text: 'Los estudiantes de Diseño tienen la mayor caída esta semana. Considera una actividad grupal.', color: '#FF9500' },
-      { icon: Clock, text: 'La ocupación máxima será a las 6PM. Prepara el espacio con anticipación.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: '3 citas de hoy fueron confirmadas hace más de 48h. Envía un recordatorio 1h antes.', color: '#FF3B30' },
-    ],
-  },
-  { // Vie
-    title: 'Cierre de semana',
-    tips: [
-      { icon: Target, text: 'Último día hábil para alcanzar la meta semanal. Prioriza a los estudiantes más comprometidos.', color: '#30D158' },
-      { icon: Users, text: 'Viernes tiene 20% menos asistencia que martes. Un incentivo puede mejorar la concurrencia.', color: '#1270B7' },
-      { icon: Clock, text: 'El cierre temprano (3PM-5PM) es ideal para evaluaciones individuales.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: 'Prepara el reporte semanal: 847 registrados, 12 asistencias hoy proyectadas.', color: '#FF9500' },
-    ],
-  },
-  { // Sáb
-    title: 'Actividad ligera',
-    tips: [
-      { icon: Target, text: 'Los sábados tienen 60% menos carga. Úsalo para organizar el espacio y revisar equipos.', color: '#30D158' },
-      { icon: Users, text: 'Solo 34 asistencias esperadas. Enfócate en calidad de atención más que en cantidad.', color: '#1270B7' },
-      { icon: Clock, text: 'Horario reducido: 9AM-1PM. Aprovecha la mañana para tareas administrativas.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: 'Revisa el inventario: 2 equipos necesitan mantenimiento antes del lunes.', color: '#FF9500' },
-    ],
-  },
-  { // Dom
-    title: 'Descanso y preparación',
-    tips: [
-      { icon: Target, text: 'Domingo de recuperación. Revisa los datos de la semana desde tu celular.', color: '#30D158' },
-      { icon: Users, text: 'Prepara la lista de prioridades para lunes: 14 revisiones pendientes.', color: '#1270B7' },
-      { icon: Clock, text: 'El centro está cerrado. Usa este tiempo para planificar la semana siguiente.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: '2 estudiantes enviaron mensajes fuera de horario. Respóndelos mañana temprano.', color: '#FF9500' },
-    ],
-  },
-]
-
 const today = new Date()
 const monday = new Date(today)
 monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
-
-const dayIndex = (today.getDay() + 6) % 7 // 0=Lun ... 6=Dom
-const todayRecommendations = dayRecommendations[dayIndex]
 
 const cards = [
   { label: 'Estudiantes Registrados', value: '847', view: StudentCardView },
@@ -190,51 +123,15 @@ export default function DashboardModule() {
             }}
           />
         </div>
-        <div className="relative z-10 p-8">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
-              <div>
-                <p className="text-[10px] font-bold tracking-[0.18em] uppercase" style={{ color: 'rgba(0,0,0,0.25)' }}>{today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                <h1 className="mt-0.5" style={{ color: '#1A1A1E', fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.04em' }}>
-                  Buenos días, <span className="text-gradient-warm">Sebastián.</span>
-                </h1>
-              </div>
+        <div className="relative z-10 p-8 flex items-center justify-center min-h-[240px]">
+          <div className="flex items-center gap-4">
+            <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.18em] uppercase" style={{ color: 'rgba(0,0,0,0.25)' }}>{today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <h1 className="mt-0.5 text-center" style={{ color: '#1A1A1E', fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.04em' }}>
+                Buenos días, <span className="text-gradient-warm">Sebastián.</span>
+              </h1>
             </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="col-span-2 rounded-2xl p-6"
-              style={{
-                background: 'rgba(255,255,255,0.6)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.4)',
-              }}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles size={15} style={{ color: BLUE }} />
-                <span className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: 'rgba(0,0,0,0.3)' }}>Recomendaciones IA · {todayRecommendations.title}</span>
-                <div className="ml-auto flex items-center gap-1.5">
-                  <div className="dot-live" style={{ width: 5, height: 5 }} />
-                  <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.25)' }}>Generado para hoy</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {todayRecommendations.tips.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl nested-card">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}0A` }}>
-                      <item.icon size={14} style={{ color: item.color }} />
-                    </div>
-                    <div>
-                      <p className="text-xs leading-snug" style={{ color: 'rgba(0,0,0,0.6)', lineHeight: 1.5 }}>{item.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
           </div>
         </div>
         <motion.div

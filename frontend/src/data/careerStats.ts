@@ -1,0 +1,33 @@
+export const CAREER_STATS = [
+  { faculty: 'Administración de Empresas', registered: 48, attendance: 42, color: '#1270B7', cat: 'profesional' },
+  { faculty: 'Ingeniería de Software', registered: 45, attendance: 40, color: '#30D158', cat: 'profesional' },
+  { faculty: 'Auxiliar en Enfermería', registered: 44, attendance: 38, color: '#FF9F0A', cat: 'técnico' },
+  { faculty: 'Contaduría Pública', registered: 42, attendance: 36, color: '#BF5AF2', cat: 'profesional' },
+  { faculty: 'Auxiliar Administrativo', registered: 41, attendance: 35, color: '#F43843', cat: 'técnico' },
+  { faculty: 'Ingeniería de Sistemas', registered: 40, attendance: 34, color: '#5E5CE6', cat: 'profesional' },
+  { faculty: 'Diseño Gráfico', registered: 39, attendance: 33, color: '#FF6482', cat: 'técnico' },
+  { faculty: 'Ingeniería Industrial', registered: 38, attendance: 31, color: '#00C7BE', cat: 'profesional' },
+  { faculty: 'Derecho', registered: 37, attendance: 30, color: '#64D2FF', cat: 'profesional' },
+  { faculty: 'Operaciones de Software y Redes de Cómputo', registered: 36, attendance: 30, color: '#1270B7', cat: 'técnico' },
+  { faculty: 'Cocina Nacional e Internacional', registered: 35, attendance: 29, color: '#30D158', cat: 'técnico' },
+  { faculty: 'Medicina Veterinaria y Zootecnia', registered: 34, attendance: 27, color: '#FF9F0A', cat: 'profesional' },
+  { faculty: 'Conocimientos Académicos en Inglés y Francés', registered: 33, attendance: 26, color: '#BF5AF2', cat: 'técnico' },
+  { faculty: 'Psicología', registered: 32, attendance: 26, color: '#F43843', cat: 'profesional' },
+  { faculty: 'Auxiliar Contable y Financiero', registered: 31, attendance: 25, color: '#5E5CE6', cat: 'técnico' },
+  { faculty: 'Seguridad Ocupacional', registered: 30, attendance: 24, color: '#FF6482', cat: 'técnico' },
+  { faculty: 'Arquitectura', registered: 29, attendance: 23, color: '#00C7BE', cat: 'profesional' },
+  { faculty: 'Auxiliar en Clínica Veterinaria', registered: 28, attendance: 22, color: '#64D2FF', cat: 'técnico' },
+  { faculty: 'Auxiliar de Talento Humano', registered: 27, attendance: 21, color: '#1270B7', cat: 'técnico' },
+  { faculty: 'Investigadores Criminalísticos y Judiciales', registered: 26, attendance: 19, color: '#30D158', cat: 'técnico' },
+  { faculty: 'Diseño, Confección y Mercadeo de Modas', registered: 25, attendance: 18, color: '#FF9F0A', cat: 'técnico' },
+  { faculty: 'Animación 2D y 3D', registered: 24, attendance: 18, color: '#BF5AF2', cat: 'técnico' },
+  { faculty: 'Gerencia de Empresas', registered: 22, attendance: 17, color: '#F43843', cat: 'especialización' },
+  { faculty: 'Auxiliar en Productos Interactivos y Digitales', registered: 21, attendance: 15, color: '#5E5CE6', cat: 'técnico' },
+  { faculty: 'Derecho Penal y Criminalística', registered: 20, attendance: 15, color: '#FF6482', cat: 'especialización' },
+  { faculty: 'Derecho Administrativo y Contractual', registered: 18, attendance: 14, color: '#00C7BE', cat: 'especialización' },
+  { faculty: 'Gerencia del Talento Humano', registered: 16, attendance: 12, color: '#64D2FF', cat: 'especialización' },
+] as const
+
+export const CAREER_REGISTERED: Record<string, number> = Object.fromEntries(
+  CAREER_STATS.map(c => [c.faculty, c.registered]),
+)

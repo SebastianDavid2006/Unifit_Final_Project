@@ -34,3 +34,24 @@ export function resetConfigItems(key: ConfigKey) {
     localStorage.removeItem(STORAGE_KEYS[key])
   } catch { /* storage unavailable */ }
 }
+
+type InactiveMap = Record<string, string[]>
+
+const INACTIVE_CAREERS_KEY = 'unifit_config_carreras_inactivas_v1'
+
+export function loadInactiveCareers(): InactiveMap {
+  try {
+    const raw = localStorage.getItem(INACTIVE_CAREERS_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed
+    }
+  } catch { /* fallback to empty */ }
+  return {}
+}
+
+export function saveInactiveCareers(map: InactiveMap) {
+  try {
+    localStorage.setItem(INACTIVE_CAREERS_KEY, JSON.stringify(map))
+  } catch { /* storage unavailable */ }
+}

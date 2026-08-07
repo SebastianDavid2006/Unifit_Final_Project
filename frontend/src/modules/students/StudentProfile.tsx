@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
@@ -11,7 +11,7 @@ import {
   Flame, Shield, BarChart2, Maximize2, X,
   Check, CheckCircle, XCircle, Clock, Eye,
   MoreVertical, Download, Trash2, Upload,
-  Sparkles, Loader2, ChevronDown, List,
+  Sparkles, Loader2, ChevronDown, ChevronLeft, ChevronRight, List,
 } from 'lucide-react'
 import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '../../assets/models/ui/objects/telephone/TelephoneModel'
@@ -34,6 +34,9 @@ import otroIcon from '../../assets/icons/ui/star.webp'
 import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
 import coachMagicImg from '../../assets/illustrations/characters/coach/coach_magic.png'
 import calendarImg from '../../assets/icons/objects/calendar.webp'
+import listImg from '../../assets/icons/objects/list.webp'
+import assessmentSceneImg from '../../assets/scenes/physical_assessment.webp'
+import routineSceneImg from '../../assets/scenes/physical_routine.webp'
 import physicalAssessmentImg from '../../assets/illustrations/modules/physical_assessment.webp'
 import { GREEN_GRAD, meshInputBg, meshInputHover, muscleIcons } from '../../data/constants'
 import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine, RoutineRow } from './aiRoutine'
@@ -226,8 +229,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [selectedRoutineDay, setSelectedRoutineDay] = useState<string | null>(null)
   const [viewRoutineDay, setViewRoutineDay] = useState<string | null>(null)
   const [routineDropdown, setRoutineDropdown] = useState<{ id: string; field: 'muscle' | 'exercise' } | null>(null)
+  const [routineDayPage, setRoutineDayPage] = useState(1)
+  const [assessmentPage, setAssessmentPage] = useState(1)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [aiGenStep, setAiGenStep] = useState(0)
+  const [confirmCancel, setConfirmCancel] = useState<'valuation' | 'routine' | 'ai' | null>(null)
+  const aiIntervalRef = useRef<number | null>(null)
   const [aiGeneratedRoutine, setAiGeneratedRoutine] = useState<AiRoutine | null>(null)
   const [showNewValuationModal, setShowNewValuationModal] = useState(false)
   const [valuationSuccess, setValuationSuccess] = useState(false)
@@ -241,6 +248,14 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
     antecedentesSalud: [] as string[], observacionesEntrenador: '',
     diasDisponibles: [] as string[], observacionesFinales: '',
   })
+  const emptyValuationForm = {
+    nivelActividad: '', objetivoTarjetas: [] as string[], objetivoDetalle: '',
+    peso: '', estatura: '', imc: '', grasaCorporal: '',
+    masaMuscular: '', masaMagra: '', grasaVisceral: '',
+    presionArterial: '', edadMetabolica: '', aguaCorporal: '', resistenciaMuscular: '',
+    antecedentesSalud: [] as string[], observacionesEntrenador: '',
+    diasDisponibles: [] as string[], observacionesFinales: '',
+  }
   const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
   const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   const getWeekStart = (d: Date) => { const r = new Date(d); const day = r.getDay(); r.setDate(r.getDate() - (day === 0 ? 6 : day - 1)); return r }
@@ -278,6 +293,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
       step += 1
       if (step >= AI_GENERATION_STEPS.length) {
         window.clearInterval(interval)
+        aiIntervalRef.current = null
         const routine = buildAiRoutine({
           nivelActividad: valuationForm.nivelActividad,
           objetivoTarjetas: valuationForm.objetivoTarjetas,
@@ -305,6 +321,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         })
         setRoutineRows(routine.rows)
         setSelectedRoutineDay(routine.rows.length ? routine.rows[0].dia : null)
+        setRoutineDayPage(1)
         setRoutineStep(1)
         setTimeout(() => {
           setAiGenerating(false)
@@ -314,6 +331,35 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
       }
       setAiGenStep(step)
     }, 900)
+    aiIntervalRef.current = interval
+  }
+
+  const cancelAiRoutine = () => {
+    if (aiIntervalRef.current !== null) {
+      window.clearInterval(aiIntervalRef.current)
+      aiIntervalRef.current = null
+    }
+    setConfirmCancel(null)
+    setAiGenerating(false)
+  }
+
+  const handleConfirmCancel = () => {
+    if (confirmCancel === 'ai') {
+      cancelAiRoutine()
+    } else if (confirmCancel === 'valuation') {
+      setShowNewValuationModal(false)
+      setValuationSuccess(false)
+      setValuationStep(1)
+    } else if (confirmCancel === 'routine') {
+      setShowNewRoutineModal(false)
+      setRoutineStep(1)
+      setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+      setRoutineRows([])
+      setSelectedRoutineDay(null)
+      setRoutineDayPage(1)
+      setAiGeneratedRoutine(null)
+    }
+    setConfirmCancel(null)
   }
 
   const updateRoutineRow = (id: string, patch: Partial<RoutineRow>) =>
@@ -323,7 +369,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
     setRoutineRows(prev => prev.filter(r => r.id !== id))
 
   const addRoutineRow = (day?: string) => {
-    const d = day || routineDays[0] || 'Lunes'
+    const d = day || defaultRoutineDay() || 'Lunes'
     setRoutineRows(prev => [...prev, {
       id: `r-${Date.now()}`,
       dia: d,
@@ -349,7 +395,32 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
     el.style.borderColor = 'transparent'; el.style.background = meshInputBg; el.style.boxShadow = 'none'
   }
 
-  const routineDays = [...new Set(routineRows.map(r => r.dia))]
+  const WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+  const assessmentItems = [
+    { num: 1, date: '15 May 2026', next: '01 Ago 2026' },
+    { num: 2, date: '20 Feb 2026', next: null },
+    { num: 3, date: '10 Nov 2025', next: null },
+    { num: 4, date: '05 Jun 2025', next: null },
+    { num: 5, date: '12 Dic 2024', next: null },
+    { num: 6, date: '20 Jul 2024', next: null },
+    { num: 7, date: '15 Mar 2024', next: null },
+    { num: 8, date: '08 Oct 2023', next: null },
+  ]
+  const ASSESSMENT_PAGE_SIZE = 6
+  const assessmentTotalPages = Math.max(1, Math.ceil(assessmentItems.length / ASSESSMENT_PAGE_SIZE))
+  const assessmentCurrentPage = Math.min(assessmentPage, assessmentTotalPages)
+  const pagedAssessments = assessmentItems.slice((assessmentCurrentPage - 1) * ASSESSMENT_PAGE_SIZE, assessmentCurrentPage * ASSESSMENT_PAGE_SIZE)
+  const assessmentPageNumbers = Array.from({ length: assessmentTotalPages }, (_, i) => i + 1)
+  const sourceDays = valuationForm.diasDisponibles.length > 0 ? valuationForm.diasDisponibles : routineRows.map(r => r.dia)
+  const routineDayList = [...new Set(
+    WEEK_DAYS.filter(d => sourceDays.includes(d) || routineRows.some(r => r.dia === d))
+  )]
+  const ROUTINE_DAY_PAGE_SIZE = 6
+  const routineDayTotalPages = Math.max(1, Math.ceil(routineDayList.length / ROUTINE_DAY_PAGE_SIZE))
+  const routineDayCurrentPage = Math.min(routineDayPage, routineDayTotalPages)
+  const pagedRoutineDays = routineDayList.slice((routineDayCurrentPage - 1) * ROUTINE_DAY_PAGE_SIZE, routineDayCurrentPage * ROUTINE_DAY_PAGE_SIZE)
+  const routineDayPageNumbers = Array.from({ length: routineDayTotalPages }, (_, i) => i + 1)
+  const defaultRoutineDay = () => routineDayList.find(d => routineRows.some(r => r.dia === d)) ?? routineDayList[0]
 
   const ROUTINE_DAY_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 
@@ -374,18 +445,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         alt=""
         className="mb-0.5"
         animate={{
-          width: selected ? 48 : 24,
-          height: selected ? 48 : 24,
-          marginTop: selected ? -24 : 0,
-          filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
+          width: 32,
+          height: 32,
+          filter: selected ? 'blur(0px) drop-shadow(0 6px 16px rgba(0,0,0,0.15))' : 'blur(2px)',
         }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       />
       <span className="text-sm leading-none text-center">{day}</span>
-      <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
-        style={{ background: done ? '#30D158' : 'rgba(0,0,0,0.1)' }}>
-        <Check size={10} color="#fff" strokeWidth={3.5} />
-      </span>
     </motion.button>
   )
 
@@ -662,11 +728,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
           setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
           setRoutineRows([])
           setSelectedRoutineDay(null)
+          setRoutineDayPage(1)
           setAiGeneratedRoutine(null)
           setShowNewRoutineModal(true)
         }}
         className="mb-10 px-6 py-2 text-xs font-semibold cursor-pointer bg-transparent"
-        style={{ color: 'rgba(18,112,183,0.85)', textDecoration: 'underline' }}
+        style={{ color: 'rgba(0,0,0,0.45)' }}
       >
         Crear rutina manualmente
       </motion.button>
@@ -1295,7 +1362,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             animation: 'mesh-shift 15s ease-in-out infinite',
                             boxShadow: '0 8px 32px rgba(230,57,70,0.12), 0 2px 8px rgba(230,57,70,0.06)',
                           }}
-                          onClick={() => setShowNewValuationModal(true)}
+                          onClick={() => { setValuationStep(1); setValuationSuccess(false); setValuationForm(emptyValuationForm); setShowNewValuationModal(true) }}
                         >
                           <div className="w-full flex flex-col items-center relative z-10">
                             <div
@@ -1320,68 +1387,138 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         </motion.div>
                       </div>
 
-                      {([
-                        { date: '15 May 2026' },
-                        { date: '20 Feb 2026' },
-                        { date: '10 Nov 2025' },
-                        { date: '05 Jun 2025' },
-                      ] as const).map((v, i, arr) => {
-                        const isFirst = i === 0
-                        const isLast = i === arr.length - 1
-                        const status = isFirst ? 'Actual' : isLast ? 'Inicial' : 'Seguimiento'
-                        const statusColor = isFirst ? '#1270B7' : isLast ? '#E63946' : '#FF9500'
-                        const statusBg = isFirst ? 'rgba(18,112,183,0.12)' : isLast ? 'rgba(230,57,70,0.12)' : 'rgba(255,149,0,0.12)'
-                        return (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.08, ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
-                            className="rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer"
-                            style={{
-                              background: isFirst ? 'linear-gradient(135deg, rgba(18,112,183,0.04), #FFFFFF)' : '#FFFFFF',
-                              border: isFirst ? '2px solid rgba(18,112,183,0.2)' : '1px solid rgba(0,0,0,0.04)',
-                              borderRadius: 20,
-                              boxShadow: isFirst ? '0 8px 32px rgba(18,112,183,0.12), 0 2px 8px rgba(18,112,183,0.06)' : '0 2px 12px rgba(0,0,0,0.03)',
-                            }}
-                            onClick={() => { setSelectedAssessment(v); setShowAssessmentOptions(true) }}
-                            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isFirst ? '0 12px 40px rgba(18,112,183,0.2)' : '0 12px 40px rgba(0,0,0,0.08)' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0px)'; e.currentTarget.style.boxShadow = isFirst ? '0 8px 32px rgba(18,112,183,0.12), 0 2px 8px rgba(18,112,183,0.06)' : '0 2px 12px rgba(0,0,0,0.03)' }}
-                          >
-                            <div className="flex gap-0">
-                              <div className="w-1.5 flex-shrink-0" style={{ background: statusColor, borderRadius: '20px 0 0 20px' }} />
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between px-6 py-4" style={{
-                                  background: isFirst ? 'linear-gradient(135deg, rgba(18,112,183,0.06), rgba(18,112,183,0.02))' : 'transparent',
-                                  borderBottom: '1px solid rgba(0,0,0,0.04)',
-                                }}>
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: statusBg }}>
-                                      <BarChart2 size={20} style={{ color: statusColor }} />
-                                    </div>
-                                    <div>
-                                      <div className="flex items-center gap-2.5">
-                                        <p className="text-base font-bold" style={{ color: '#0D1B2A' }}>{v.date}</p>
-                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md" style={{ background: statusBg, color: statusColor }}>
-                                          {status}
-                                        </span>
-                                      </div>
+                      <div className="flex flex-col">
+                        <div className="grid grid-cols-[1.5fr_1fr_1fr_auto] items-center gap-4 px-4 mb-2">
+                          <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>Valoración</p>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-center" style={{ color: 'rgba(0,0,0,0.25)' }}>Fecha</p>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-center" style={{ color: 'rgba(0,0,0,0.25)' }}>Próxima fecha</p>
+                          <div className="w-8" />
+                        </div>
+                        <div className="space-y-2">
+                          {pagedAssessments.map((v, i) => {
+                            const isFirst = v.num === 1
+                            const isLast = v.num === assessmentItems.length
+                            const status = isFirst ? 'Actual' : isLast ? 'Inicial' : 'Seguimiento'
+                            const statusColor = isFirst ? '#1270B7' : isLast ? '#E63946' : '#FF9500'
+                            const statusBg = isFirst ? 'rgba(18,112,183,0.12)' : isLast ? 'rgba(230,57,70,0.12)' : 'rgba(255,149,0,0.12)'
+                            const name = `Valoración ${v.num}`
+                            return (
+                              <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.08, ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
+                                className="relative grid grid-cols-[1.5fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden"
+                                style={{
+                                  background: isFirst ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : '#FFFFFF',
+                                  border: isFirst ? 'none' : '1px solid rgba(0,0,0,0.04)',
+                                  borderRadius: 20,
+                                  boxShadow: isFirst ? '0 8px 32px rgba(18,112,183,0.28), 0 2px 8px rgba(18,112,183,0.15)' : '0 2px 12px rgba(0,0,0,0.03)',
+                                }}
+                                onClick={() => { setSelectedAssessment(v); setShowAssessmentOptions(true) }}
+                                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = isFirst ? '0 12px 40px rgba(18,112,183,0.35)' : '0 12px 40px rgba(0,0,0,0.08)' }}
+                                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0px)'; e.currentTarget.style.boxShadow = isFirst ? '0 8px 32px rgba(18,112,183,0.28), 0 2px 8px rgba(18,112,183,0.15)' : '0 2px 12px rgba(0,0,0,0.03)' }}
+                              >
+                                {isFirst && (
+                                  <motion.div aria-hidden className="absolute inset-0 pointer-events-none rounded-[20px]" style={{ overflow: 'hidden' }}>
+                                    <motion.div
+                                      className="absolute top-0 left-0 h-full w-2/5"
+                                      style={{
+                                        background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                                      }}
+                                      animate={{ x: ['-120%', '340%'] }}
+                                      transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut', repeatDelay: 1.3 }}
+                                    />
+                                  </motion.div>
+                                )}
+
+                                <div className="flex items-center gap-4 min-w-0">
+                                  <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: isFirst ? 'rgba(255,255,255,0.22)' : statusBg }}>
+                                    <img src={listImg} alt="" className="w-5 h-5" style={{ filter: isFirst ? 'brightness(0) invert(1)' : 'none', opacity: 0.9 }} />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-bold truncate" style={{ color: isFirst ? '#FFFFFF' : '#0D1B2A' }}>{name}</p>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <span className="text-[10px] font-bold" style={{ color: isFirst ? 'rgba(255,255,255,0.85)' : statusColor }}>{status}</span>
                                       {isFirst && (
-                                        <p className="text-[10px] mt-0.5 font-semibold" style={{ color: '#1270B7' }}>Última valoración</p>
+                                        <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>· Última valoración</span>
                                       )}
                                     </div>
                                   </div>
-                                  {isFirst && (
-                                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: 'linear-gradient(135deg, #1270B7, #7ec8e3)', boxShadow: '0 4px 12px rgba(18,112,183,0.3)' }}>
-                                      <span className="text-[10px] font-bold text-white">Más reciente</span>
-                                    </div>
-                                  )}
                                 </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )
-                      })}
+
+                                <p className="text-xs font-semibold text-center" style={{ color: isFirst ? '#FFFFFF' : 'rgba(0,0,0,0.5)' }}>{v.date}</p>
+
+                                {v.next ? (
+                                  <p className="text-xs font-bold text-center" style={{ color: isFirst ? '#FFFFFF' : '#1270B7' }}>{v.next}</p>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit justify-self-center" style={{ background: 'rgba(34,197,94,0.13)', color: '#1E8E3E' }}>
+                                    <Check size={11} strokeWidth={3} /> Concluida
+                                  </span>
+                                )}
+
+                                {isFirst ? (
+                                  <ChevronRight size={15} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                                ) : (
+                                  <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
+                                )}
+                              </motion.div>
+                            )
+                          })}
+                        </div>
+
+                        {assessmentTotalPages > 1 && (
+                          <div className="flex items-center justify-center gap-1.5 mt-4">
+                            <motion.button
+                              whileHover={assessmentCurrentPage > 1 ? { scale: 1.1 } : {}}
+                              whileTap={assessmentCurrentPage > 1 ? { scale: 0.92 } : {}}
+                              onClick={() => setAssessmentPage(p => Math.max(1, p - 1))}
+                              disabled={assessmentCurrentPage === 1}
+                              className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                              style={{
+                                background: assessmentCurrentPage === 1 ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)',
+                                color: assessmentCurrentPage === 1 ? 'rgba(0,0,0,0.2)' : '#111111',
+                                cursor: assessmentCurrentPage === 1 ? 'default' : 'pointer',
+                              }}
+                            >
+                              <ChevronLeft size={15} />
+                            </motion.button>
+
+                            {assessmentPageNumbers.map(p => (
+                              <motion.button
+                                key={p}
+                                whileHover={p !== assessmentCurrentPage ? { scale: 1.1 } : {}}
+                                whileTap={{ scale: 0.92 }}
+                                onClick={() => setAssessmentPage(p)}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold transition-all"
+                                style={{
+                                  background: p === assessmentCurrentPage ? '#111111' : 'rgba(0,0,0,0.05)',
+                                  color: p === assessmentCurrentPage ? '#FFFFFF' : '#111111',
+                                  boxShadow: p === assessmentCurrentPage ? '0 4px 12px rgba(0,0,0,0.25)' : 'none',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {p}
+                              </motion.button>
+                            ))}
+
+                            <motion.button
+                              whileHover={assessmentCurrentPage < assessmentTotalPages ? { scale: 1.1 } : {}}
+                              whileTap={assessmentCurrentPage < assessmentTotalPages ? { scale: 0.92 } : {}}
+                              onClick={() => setAssessmentPage(p => Math.min(assessmentTotalPages, p + 1))}
+                              disabled={assessmentCurrentPage === assessmentTotalPages}
+                              className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                              style={{
+                                background: assessmentCurrentPage === assessmentTotalPages ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)',
+                                color: assessmentCurrentPage === assessmentTotalPages ? 'rgba(0,0,0,0.2)' : '#111111',
+                                cursor: assessmentCurrentPage === assessmentTotalPages ? 'default' : 'pointer',
+                              }}
+                            >
+                              <ChevronRight size={15} />
+                            </motion.button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                   {currentTab === 'documents' && (
@@ -1812,7 +1949,15 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 flex items-center justify-center"
               style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
-              onClick={() => { setShowNewValuationModal(false); setValuationSuccess(false); setValuationStep(1) }}
+              onClick={() => {
+                if (valuationSuccess) {
+                  setShowNewValuationModal(false)
+                  setValuationSuccess(false)
+                  setValuationStep(1)
+                } else {
+                  setConfirmCancel('valuation')
+                }
+              }}
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -1840,7 +1985,15 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         hover: { scale: 1.15, background: 'rgba(244,56,67,0.1)', color: '#F43843' },
                         tap: { scale: 0.9 },
                       }}
-                      onClick={() => { setShowNewValuationModal(false); setValuationSuccess(false); setValuationStep(1) }}
+                      onClick={() => {
+                        if (valuationSuccess) {
+                          setShowNewValuationModal(false)
+                          setValuationSuccess(false)
+                          setValuationStep(1)
+                        } else {
+                          setConfirmCancel('valuation')
+                        }
+                      }}
                       className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer transition-colors"
                     >
                       <X size={15} />
@@ -2362,7 +2515,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       background: `linear-gradient(to top, ${selectedAssessment.color} 0%, ${selectedAssessment.color}dd 50%, rgba(0,0,0,0.5) 100%)`,
                     }} />
                     <div className="relative z-10 flex flex-col items-center">
-                      <BarChart2 size={40} className="text-white mb-3" />
+                      <img src={assessmentSceneImg} alt="" className="w-44 h-44 object-contain mb-3 drop-shadow-2xl" />
                       <span className="text-xl font-extrabold text-white tracking-tight">Ver Valoración</span>
                       <span className="text-[11px] text-white/60 mt-1">Detalles de la evaluación</span>
                     </div>
@@ -2382,7 +2535,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       background: 'linear-gradient(to top, rgba(26,138,63,0.95) 0%, rgba(48,209,88,0.6) 50%, rgba(0,0,0,0.5) 100%)',
                     }} />
                     <div className="relative z-10 flex flex-col items-center">
-                      <Dumbbell size={40} className="text-white mb-3" />
+                      <img src={routineSceneImg} alt="" className="w-44 h-44 object-contain mb-3 drop-shadow-2xl" />
                       <span className="text-xl font-extrabold text-white tracking-tight">Ver Rutina</span>
                       <span className="text-[11px] text-white/60 mt-1">Ejercicios y series asignados</span>
                     </div>
@@ -2611,7 +2764,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-6"
               style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
-              onClick={() => setShowNewRoutineModal(false)}
+              onClick={() => setConfirmCancel('routine')}
             >
               <motion.div
                 initial={{ opacity: 0, filter: 'blur(6px)' }}
@@ -2627,7 +2780,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 }}
               >
                 <div className="flex items-center justify-end mb-4">
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowNewRoutineModal(false)}
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setConfirmCancel('routine')}
                     className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
                     <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
                   </motion.button>
@@ -2658,6 +2811,21 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         ? 'Ajusta los parámetros generales de la rutina (prellenados según la valoración).'
                         : 'Configura los parámetros generales de la rutina.'}
                     </p>
+                    <div>
+                      <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre de la rutina</label>
+                      <input
+                        type="text"
+                        value={routineForm.name}
+                        onChange={e => setRoutineForm(p => ({ ...p, name: e.target.value }))}
+                        placeholder="Ej. Rutina de fuerza"
+                        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                        style={{
+                          background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)',
+                          color: '#1A1A1E',
+                          border: '1px solid transparent',
+                        }}
+                      />
+                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración</label>
@@ -2707,19 +2875,73 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       </p>
                     </div>
 
-                    {routineDays.length > 0 && (
-                      <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `repeat(${Math.min(routineDays.length, 6)}, minmax(0, 1fr))` }}>
-                        {routineDays.map(day => renderRoutineDayCard(
-                          day,
-                          day === (selectedRoutineDay ?? routineDays[0]),
-                          routineRows.some(r => r.dia === day),
-                          () => setSelectedRoutineDay(day),
-                        ))}
+                    {pagedRoutineDays.length > 0 && (
+                      <div className="flex flex-col mb-3">
+                        <div className="grid gap-2 mb-3" style={{ gridTemplateColumns: `repeat(6, minmax(0, 1fr))` }}>
+                          {pagedRoutineDays.map(day => renderRoutineDayCard(
+                            day,
+                            day === (selectedRoutineDay ?? defaultRoutineDay()),
+                            routineRows.some(r => r.dia === day),
+                            () => setSelectedRoutineDay(day),
+                          ))}
+                        </div>
+
+                        {routineDayTotalPages > 1 && (
+                          <div className="flex items-center justify-center gap-1.5 mb-3">
+                            <motion.button
+                              whileHover={routineDayCurrentPage > 1 ? { scale: 1.1 } : {}}
+                              whileTap={routineDayCurrentPage > 1 ? { scale: 0.92 } : {}}
+                              onClick={() => setRoutineDayPage(p => Math.max(1, p - 1))}
+                              disabled={routineDayCurrentPage === 1}
+                              className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
+                              style={{
+                                background: routineDayCurrentPage === 1 ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)',
+                                color: routineDayCurrentPage === 1 ? 'rgba(0,0,0,0.2)' : '#111111',
+                                cursor: routineDayCurrentPage === 1 ? 'default' : 'pointer',
+                              }}
+                            >
+                              <ChevronLeft size={13} />
+                            </motion.button>
+
+                            {routineDayPageNumbers.map(p => (
+                              <motion.button
+                                key={p}
+                                whileHover={p !== routineDayCurrentPage ? { scale: 1.1 } : {}}
+                                whileTap={{ scale: 0.92 }}
+                                onClick={() => setRoutineDayPage(p)}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold transition-all"
+                                style={{
+                                  background: p === routineDayCurrentPage ? '#111111' : 'rgba(0,0,0,0.05)',
+                                  color: p === routineDayCurrentPage ? '#FFFFFF' : '#111111',
+                                  boxShadow: p === routineDayCurrentPage ? '0 4px 12px rgba(0,0,0,0.25)' : 'none',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {p}
+                              </motion.button>
+                            ))}
+
+                            <motion.button
+                              whileHover={routineDayCurrentPage < routineDayTotalPages ? { scale: 1.1 } : {}}
+                              whileTap={routineDayCurrentPage < routineDayTotalPages ? { scale: 0.92 } : {}}
+                              onClick={() => setRoutineDayPage(p => Math.min(routineDayTotalPages, p + 1))}
+                              disabled={routineDayCurrentPage === routineDayTotalPages}
+                              className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
+                              style={{
+                                background: routineDayCurrentPage === routineDayTotalPages ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)',
+                                color: routineDayCurrentPage === routineDayTotalPages ? 'rgba(0,0,0,0.2)' : '#111111',
+                                cursor: routineDayCurrentPage === routineDayTotalPages ? 'default' : 'pointer',
+                              }}
+                            >
+                              <ChevronRight size={13} />
+                            </motion.button>
+                          </div>
+                        )}
                       </div>
                     )}
 
                     {(() => {
-                      const activeDay = selectedRoutineDay && routineDays.includes(selectedRoutineDay) ? selectedRoutineDay : (routineDays[0] ?? null)
+                      const activeDay = selectedRoutineDay && routineDayList.includes(selectedRoutineDay) ? selectedRoutineDay : defaultRoutineDay()
                       if (!activeDay) {
                         return (
                           <p className="text-xs text-center py-8 px-4 rounded-2xl" style={{ color: 'rgba(0,0,0,0.4)', background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}>
@@ -2846,6 +3068,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
                         setRoutineRows([])
                         setSelectedRoutineDay(null)
+                        setRoutineDayPage(1)
                         setAiGeneratedRoutine(null)
                         setRoutineSuccess(true)
                       }
@@ -2855,7 +3078,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       background: routineStep === 2 && routineRows.length === 0 ? 'rgba(48,209,88,0.3)' : 'linear-gradient(135deg, #30D158, #1A8A3F)',
                       color: '#FFFFFF',
                     }}
-                    disabled={(routineStep === 1 && !routineForm.name) || (routineStep === 2 && routineRows.length === 0)}
+                    disabled={(routineStep === 2 && routineRows.length === 0)}
                   >
                     {routineStep === 2 ? 'Crear Rutina' : 'Siguiente'}
                   </button>
@@ -2882,11 +3105,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 exit={{ opacity: 0, scale: 0.97, y: 8 }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
-                className="w-full max-w-lg rounded-3xl flex flex-col relative"
+                className="w-full max-w-2xl rounded-3xl flex flex-col relative"
                 style={{
                   background: '#FFFFFF',
-                  border: '1px solid rgba(34,197,94,0.15)',
-                  boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
+                  border: '1px solid rgba(191,90,242,0.15)',
+                  boxShadow: '0 25px 60px rgba(124,58,237,0.18)',
                 }}
               >
                 <motion.div
@@ -2903,7 +3126,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         <motion.span
                           key={i}
                           className="absolute pointer-events-none text-lg select-none"
-                          style={{ color: '#4ADE80' }}
+                          style={{ color: '#C084FC' }}
                           animate={{
                             x: [0, Math.cos(rad) * (110 + (i % 6) * 20)],
                             y: [0, Math.sin(rad) * (110 + (i % 6) * 20)],
@@ -2925,13 +3148,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       <motion.img
                         src={coachMagicImg}
                         alt="rutina generada"
-                        className="w-72 h-auto object-contain relative z-10"
-                        style={{ filter: 'drop-shadow(0 0 30px rgba(34,197,94,0.15))' }}
+                        className="w-96 h-auto object-contain relative z-10"
+                        style={{ filter: 'drop-shadow(0 0 30px rgba(124,58,237,0.2))' }}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
                       />
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-24 pointer-events-none z-20" style={{
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-96 h-24 pointer-events-none z-20" style={{
                         background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, transparent 60%)',
                       }} />
                     </div>
@@ -2958,13 +3181,16 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.3 }}
-                    whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(34,197,94,0.35)', transition: { duration: 0.15 } }}
-                    whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(34,197,94,0.2)', transition: { duration: 0.1 } }}
+                    whileHover={{ scale: 1.05, boxShadow: '0 10px 28px rgba(124,58,237,0.4)', transition: { duration: 0.15 } }}
+                    whileTap={{ scale: 0.93, boxShadow: '0 2px 8px rgba(124,58,237,0.2)', transition: { duration: 0.1 } }}
                     onClick={() => setRoutineSuccess(false)}
-                    className="mt-7 mb-10 px-8 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
-                    style={{ background: 'linear-gradient(135deg, #30D158, #1A8A3F)' }}
+                    className="mt-7 mb-10 px-10 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer shadow-lg"
+                    style={{
+                      background: 'linear-gradient(135deg, #BF5AF2, #F472B6)',
+                      boxShadow: '0 10px 26px rgba(191,90,242,0.35)',
+                    }}
                   >
-                    Perfecto
+                    Cerrar
                   </motion.button>
                 </motion.div>
               </motion.div>
@@ -2995,6 +3221,17 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   boxShadow: '0 24px 80px rgba(124,58,237,0.18)',
                 }}
               >
+                <div className="absolute top-4 right-4">
+                  <motion.button
+                    whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setConfirmCancel('ai')}
+                    className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                    style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}
+                  >
+                    <X size={16} />
+                  </motion.button>
+                </div>
                 <div className="relative flex-shrink-0 w-56 h-56 flex items-center justify-center pointer-events-none">
                   {[...Array(24)].map((_, i) => {
                     const angle = (i / 24) * 360
@@ -3067,6 +3304,63 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     animate={{ width: `${((aiGenStep + 1) / AI_GENERATION_STEPS.length) * 100}%` }}
                     transition={{ duration: 0.4, ease: 'easeOut' }}
                   />
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Confirmación cancelar proceso */}
+        <AnimatePresence>
+          {confirmCancel && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[110] flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)' }}
+              onClick={() => setConfirmCancel(null)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 10 }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-sm rounded-3xl p-7 flex flex-col items-center text-center relative"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(124,58,237,0.12)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
+                }}
+              >
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
+                  style={{ background: 'rgba(244,56,67,0.1)' }}>
+                  <AlertTriangle size={22} color="#F43843" />
+                </div>
+                <p className="text-base font-bold" style={{ color: '#1A1A1E' }}>
+                  ¿Seguro que deseas cancelar el proceso?
+                </p>
+                <p className="text-xs font-medium mt-1.5" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                  {confirmCancel === 'ai'
+                    ? 'La rutina generada hasta ahora no se guardará.'
+                    : 'Los datos ingresados no se guardarán.'}
+                </p>
+                <div className="flex items-center gap-2.5 mt-6 w-full">
+                  <button
+                    onClick={() => setConfirmCancel(null)}
+                    className="flex-1 px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
+                    style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.6)' }}
+                  >
+                    Seguir
+                  </button>
+                  <button
+                    onClick={handleConfirmCancel}
+                    className="flex-1 px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
+                    style={{ background: 'linear-gradient(135deg, #FF6B6B, #E63946)' }}
+                  >
+                    Sí, cancelar
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
