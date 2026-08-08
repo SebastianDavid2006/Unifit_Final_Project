@@ -55,3 +55,30 @@ export function saveInactiveCareers(map: InactiveMap) {
     localStorage.setItem(INACTIVE_CAREERS_KEY, JSON.stringify(map))
   } catch { /* storage unavailable */ }
 }
+
+type InactiveFlatMap = Record<ConfigKey, string[]>
+
+const INACTIVE_FLAT_KEY = 'unifit_config_flat_inactivos_v1'
+
+export function loadInactiveFlat(): InactiveFlatMap {
+  const empty: InactiveFlatMap = { areas: [], cargos: [] }
+  try {
+    const raw = localStorage.getItem(INACTIVE_FLAT_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return {
+          areas: Array.isArray(parsed.areas) ? parsed.areas.filter(i => typeof i === 'string') : [],
+          cargos: Array.isArray(parsed.cargos) ? parsed.cargos.filter(i => typeof i === 'string') : [],
+        }
+      }
+    }
+  } catch { /* fallback to empty */ }
+  return empty
+}
+
+export function saveInactiveFlat(map: InactiveFlatMap) {
+  try {
+    localStorage.setItem(INACTIVE_FLAT_KEY, JSON.stringify(map))
+  } catch { /* storage unavailable */ }
+}

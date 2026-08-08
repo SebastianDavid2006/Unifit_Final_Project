@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   X, Check, Pen, FileText, User,
-  ChevronLeft, ChevronRight, RefreshCw, ScanLine
+  ChevronLeft, ChevronRight, RefreshCw, ScanLine, ClipboardCheck, ExternalLink
 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import confetti from 'canvas-confetti'
@@ -13,6 +13,11 @@ import studentRoleImg from '../../assets/icons/users/student.webp'
 import teacherRoleImg from '../../assets/icons/users/teacher.webp'
 import adminRoleImg from '../../assets/icons/users/administrator.webp'
 import { INSTITUCIONES, getNiveles, getPrograms } from '../../data/academicPrograms'
+import { loadDocs, type StoredDocs } from '../../data/documents'
+import {
+  PARQ_GENERAL, PARQ_BLOCKS, PARQ_RECOMMENDATIONS, PARQ_DELAY, PARQ_DECLARATION_TEXT,
+  getParqQuestion, buildParqSequence, parqPendingCount, type YesNo,
+} from '../../data/parq'
 
 const BLUE = '#1270B7'
 const RED = '#F43843'
@@ -44,8 +49,9 @@ const STEPS = [
   { num: 1, label: 'Información personal', icon: User },
   { num: 2, label: 'Tratamiento de datos', icon: FileText },
   { num: 3, label: 'Contrato', icon: FileText },
-  { num: 4, label: 'Firma', icon: Pen },
-  { num: 5, label: 'Huella digital', icon: ScanLine },
+  { num: 4, label: 'PAR-Q', icon: ClipboardCheck },
+  { num: 5, label: 'Firma', icon: Pen },
+  { num: 6, label: 'Huella digital', icon: ScanLine },
 ]
 
 interface NewStudentModalProps {
@@ -81,6 +87,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
   const [aceptaDatos, setAceptaDatos] = useState(false)
   const [aceptaContrato, setAceptaContrato] = useState(false)
+  const [parqAnswers, setParqAnswers] = useState<Record<string, YesNo>>({})
+  const [parqDetails, setParqDetails] = useState<Record<string, string>>({})
+  const [parqPos, setParqPos] = useState(0)
+  const [aceptaParq, setAceptaParq] = useState(false)
+  const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
   const [fingerprintStatus, setFingerprintStatus] = useState<FingerprintStatus>('idle')
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
@@ -94,6 +105,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       setTipoUsuario(null)
       setAceptaDatos(false)
       setAceptaContrato(false)
+      setParqAnswers({})
+      setParqDetails({})
+      setParqPos(0)
+      setAceptaParq(false)
+      setDocs(loadDocs())
       setFingerprintStatus('idle')
       setSuccess(false)
       setShake(false)
@@ -136,8 +152,9 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     }
     if (step === 2) return aceptaDatos
     if (step === 3) return aceptaContrato
-    if (step === 4) return !(sigRef.current?.isEmpty() ?? true)
-    if (step === 5) return fingerprintStatus === 'captured'
+    if (step === 4) return parqComplete
+    if (step === 5) return !(sigRef.current?.isEmpty() ?? true)
+    if (step === 6) return fingerprintStatus === 'captured'
     return true
   }
 
@@ -146,7 +163,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       triggerShake()
       return
     }
-    if (step === 5) {
+    if (step === 6) {
       submitForm()
       return
     }
@@ -157,6 +174,20 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     if (step > 1) setStep(p => p - 1)
   }
 
+  const stepDoc = step === 2 ? docs.tratamiento : step === 3 ? docs.contrato : step === 4 ? docs.parq : null
+
+  const parqSequence = useMemo(() => buildParqSequence(parqAnswers), [parqAnswers])
+  const parqPending = useMemo(
+    () => parqPendingCount(parqAnswers, parqDetails, parqSequence),
+    [parqAnswers, parqDetails, parqSequence],
+  )
+  const parqComplete = parqPending === 0 && aceptaParq
+  const parqCurrentIndex = Math.min(parqPos, Math.max(0, parqSequence.length - 1))
+  const parqCurrent = parqSequence[parqCurrentIndex]
+  const parqQCount = parqSequence.filter(s => s.kind === 'general' || s.kind === 'gate' || s.kind === 'sub').length
+  const parqDone = Math.max(0, parqQCount - parqPending)
+  const stepLocked = (step === 6 && fingerprintStatus !== 'captured') || (step === 4 && !parqComplete)
+
   const submitForm = () => {
     const signatureData = sigRef.current?.toDataURL()
     const payload = {
@@ -164,6 +195,12 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       tipoUsuario,
       aceptaDatos,
       aceptaContrato,
+      parq: {
+        respuestas: parqAnswers,
+        detalles: parqDetails,
+        acepta: aceptaParq,
+        fecha: new Date().toISOString(),
+      },
       firma: signatureData ?? null,
       huella: fingerprintStatus === 'captured' ? 'capturada' : null,
     }
@@ -392,6 +429,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const renderStep2 = () => (
     <div className="space-y-5">
+      {docs.tratamiento.dataUrl ? (
+        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
+          <iframe src={docs.tratamiento.dataUrl} title="Tratamiento de datos" className="w-full h-[280px] bg-white" />
+        </div>
+      ) : (
       <div className="rounded-2xl p-5 text-xs leading-relaxed max-h-[280px] overflow-y-auto" style={{ background: 'rgba(0,0,0,0.02)', color: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,0,0,0.04)' }}>
         <p className="font-bold text-sm mb-3" style={{ color: '#1A1A1E' }}>Autorización para el tratamiento de datos personales</p>
         <p className="mb-3">
@@ -404,6 +446,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
           La no autorización implica la imposibilidad de completar el proceso de registro como estudiante de UniFit.
         </p>
       </div>
+      )}
       <label className="flex items-start gap-3 cursor-pointer group">
         <div
           onClick={() => setAceptaDatos(!aceptaDatos)}
@@ -436,6 +479,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const renderStep3 = () => (
     <div className="space-y-5">
+      {docs.contrato.dataUrl ? (
+        <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
+          <iframe src={docs.contrato.dataUrl} title="Contrato" className="w-full h-[340px] bg-white" />
+        </div>
+      ) : (
       <div className="rounded-2xl p-5 text-xs leading-relaxed max-h-[280px] overflow-y-auto" style={{ background: 'rgba(0,0,0,0.02)', color: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,0,0,0.04)' }}>
         <p className="font-bold text-sm mb-3" style={{ color: '#1A1A1E' }}>Contrato de prestación de servicios estudiantiles</p>
         <p className="mb-3">
@@ -460,6 +508,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
           <strong>CLÁUSULA SEXTA – ACEPTACIÓN:</strong> Las partes aceptan el presente contrato y se obligan a su cumplimiento en todos sus términos.
         </p>
       </div>
+      )}
       <label className="flex items-start gap-3 cursor-pointer group">
         <div
           onClick={() => setAceptaContrato(!aceptaContrato)}
@@ -489,6 +538,256 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       </label>
     </div>
   )
+
+  const parqBlockFor = (id: string) => {
+    const idx = PARQ_BLOCKS.findIndex(b => b.gate.id === id || b.subs.some(s => s.id === id))
+    return idx >= 0 ? { block: PARQ_BLOCKS[idx], number: idx + 1 } : null
+  }
+
+  const renderParqDetail = (q: NonNullable<ReturnType<typeof getParqQuestion>>) => {
+    if (!q.detail || parqAnswers[q.id] !== 'si') return null
+    const d = q.detail
+    return (
+      <motion.div
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        transition={{ duration: 0.25 }}
+        className="overflow-hidden"
+      >
+        <p className="text-[10px] font-bold mb-1.5 mt-3" style={{ color: RED }}>{d.label}</p>
+        <textarea
+          value={parqDetails[d.id] ?? ''}
+          onChange={e => setParqDetails(prev => ({ ...prev, [d.id]: e.target.value }))}
+          placeholder={d.placeholder}
+          rows={2}
+          className="w-full rounded-xl px-3 py-2.5 text-xs outline-none resize-none"
+          style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)', color: '#1A1A1E' }}
+        />
+      </motion.div>
+    )
+  }
+
+  const renderParqQuestion = (q: NonNullable<ReturnType<typeof getParqQuestion>>) => {
+    const value = parqAnswers[q.id]
+    let chip = { text: '', color: BLUE }
+    if (q.kind === 'general') {
+      const n = PARQ_GENERAL.findIndex(g => g.id === q.id) + 1
+      chip = { text: `Pregunta general ${n} de 7`, color: BLUE }
+    } else {
+      const found = parqBlockFor(q.id)
+      if (found) {
+        chip = {
+          text: q.kind === 'gate' ? `Bloque ${found.number} · ${found.block.title}` : `Seguimiento · ${found.block.title}`,
+          color: '#7C3AED',
+        }
+      }
+    }
+    return (
+      <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(0,0,0,0.04)', background: '#FFFFFF' }}>
+        <span
+          className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide"
+          style={{ background: `${chip.color}0F`, color: chip.color }}
+        >
+          {chip.text}
+        </span>
+        <p className="text-sm font-semibold leading-relaxed mt-3" style={{ color: '#1A1A1E' }}>
+          {q.kind === 'sub' ? `${q.id}) ` : ''}{q.text}
+        </p>
+        {q.note && (
+          <p className="text-[11px] leading-relaxed mt-2" style={{ color: 'rgba(0,0,0,0.45)' }}>
+            {q.note}
+          </p>
+        )}
+        <div className="flex gap-2.5 mt-4">
+          {(['si', 'no'] as const).map(opt => (
+            <motion.button
+              key={opt}
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setParqAnswers(prev => ({ ...prev, [q.id]: opt }))}
+              className="px-4 py-2 rounded-xl text-[11px] font-bold uppercase cursor-pointer transition-all duration-200"
+              style={{
+                background: value === opt ? (opt === 'si' ? '#F43843' : '#22C55E') : 'rgba(0,0,0,0.04)',
+                color: value === opt ? '#FFFFFF' : 'rgba(0,0,0,0.4)',
+                boxShadow: value === opt ? `0 4px 12px ${opt === 'si' ? 'rgba(244,56,67,0.3)' : 'rgba(34,197,94,0.3)'}` : 'none',
+              }}
+            >
+              {opt === 'si' ? 'Sí' : 'No'}
+            </motion.button>
+          ))}
+        </div>
+        {renderParqDetail(q)}
+      </div>
+    )
+  }
+
+  const renderParqInfo = (kind: string) => {
+    if (kind === 'info-rec') {
+      return (
+        <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(34,197,94,0.15)', background: '#FFFFFF' }}>
+          <span
+            className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide"
+            style={{ background: 'rgba(34,197,94,0.1)', color: GREEN }}
+          >
+            Recomendaciones
+          </span>
+          <p className="text-xs leading-relaxed mt-3 font-medium" style={{ color: 'rgba(0,0,0,0.6)' }}>
+            Si usted contestó NO a todas las preguntas de SEGUIMIENTO (páginas 2-3) sobre trastornos médicos, está en condiciones de volverse más activo físicamente. Firme la DECLARACIÓN DEL PARTICIPANTE a continuación:
+          </p>
+          <div className="space-y-2.5 mt-4">
+            {PARQ_RECOMMENDATIONS.map((r, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <span
+                  className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ background: 'rgba(34,197,94,0.12)' }}
+                >
+                  <Check size={9} color={GREEN} strokeWidth={3} />
+                </span>
+                <p className="text-[11px] leading-relaxed font-medium" style={{ color: 'rgba(0,0,0,0.6)' }}>{r}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+    if (kind === 'info-delay') {
+      return (
+        <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(245,166,35,0.3)', background: 'rgba(245,166,35,0.04)' }}>
+          <span
+            className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide"
+            style={{ background: 'rgba(245,166,35,0.12)', color: '#C77700' }}
+          >
+            Retarde el inicio de la actividad física si:
+          </span>
+          <div className="space-y-2.5 mt-3">
+            {PARQ_DELAY.map((r, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <span className="text-[10px] font-bold flex-shrink-0 mt-0.5" style={{ color: '#C77700' }}>•</span>
+                <p className="text-[11px] leading-relaxed font-medium" style={{ color: 'rgba(0,0,0,0.6)' }}>{r}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+    const nombre = `${form.primerNombre ?? ''} ${form.primerApellido ?? ''}`.trim()
+    const fecha = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(18,112,183,0.12)', background: '#FFFFFF' }}>
+          <span
+            className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide"
+            style={{ background: `${BLUE}0F`, color: BLUE }}
+          >
+            Declaración del participante
+          </span>
+          <p className="text-[11px] leading-relaxed mt-3 font-medium" style={{ color: 'rgba(0,0,0,0.55)' }}>
+            Todo aquel que haya completado el PAR-Q+ debe leer y firmar la declaración que sigue a continuación.
+          </p>
+          <div className="rounded-xl px-4 py-3.5 mt-3" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)' }}>
+            <p className="text-[11px] leading-relaxed italic" style={{ color: 'rgba(0,0,0,0.6)' }}>{PARQ_DECLARATION_TEXT}</p>
+          </div>
+          <p className="text-[10px] leading-relaxed mt-2 font-medium" style={{ color: '#C77700' }}>
+            Si es usted menor de edad, la persona responsable por usted también debe firmar la declaración.
+          </p>
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div>
+              <p className="text-[9px] font-bold uppercase mb-1" style={{ color: 'rgba(0,0,0,0.4)' }}>Nombre</p>
+              <div className="rounded-xl px-3 py-2.5 text-xs font-semibold" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)', color: '#1A1A1E' }}>
+                {nombre || '—'}
+              </div>
+            </div>
+            <div>
+              <p className="text-[9px] font-bold uppercase mb-1" style={{ color: 'rgba(0,0,0,0.4)' }}>Fecha</p>
+              <div className="rounded-xl px-3 py-2.5 text-xs font-semibold" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)', color: '#1A1A1E' }}>
+                {fecha}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <label className="flex items-start gap-3 cursor-pointer group">
+          <div
+            onClick={() => setAceptaParq(!aceptaParq)}
+            className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
+            style={{
+              background: aceptaParq ? BLUE_GRAD : 'transparent',
+              border: `1.5px solid ${aceptaParq ? BLUE : 'rgba(0,0,0,0.06)'}`,
+            }}
+          >
+            {aceptaParq && (
+              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
+                <Check size={12} color="white" strokeWidth={3} />
+              </motion.span>
+            )}
+          </div>
+          <span style={{
+            fontSize: 12,
+            fontWeight: 500,
+            lineHeight: 1.6,
+            color: aceptaParq ? 'transparent' : 'rgba(0,0,0,0.55)',
+            background: aceptaParq ? BLUE_GRAD : 'none',
+            backgroundClip: aceptaParq ? 'text' : 'none',
+            WebkitBackgroundClip: aceptaParq ? 'text' : 'none',
+          }}>
+            Declaro haber leído y comprendido el cuestionario PAR-Q+ y acepto la declaración del participante.
+          </span>
+        </label>
+      </div>
+    )
+  }
+
+  const renderStepParq = () => {
+    const q = parqCurrent ? getParqQuestion(parqCurrent.id) : undefined
+    const progressPct = parqQCount > 0 ? (parqDone / parqQCount) * 100 : 0
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: `${BLUE}0A`, border: '1px solid rgba(18,112,183,0.12)' }}>
+          <ClipboardCheck size={15} style={{ color: BLUE }} />
+          <p className="text-[11px] font-semibold" style={{ color: 'rgba(0,0,0,0.55)' }}>
+            PAR-Q+ · El cuestionario indicará si es necesario consultar a su médico o profesional de la salud antes de volverse más activo físicamente.
+          </p>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.4)' }}>
+              Progreso del PAR-Q+
+            </span>
+            <span className="text-[10px] font-bold tabular-nums" style={{ color: parqQCount > 0 && parqDone < parqQCount ? '#C77700' : GREEN }}>
+              {parqQCount > 0 ? `${parqDone}/${parqQCount}` : '0/0'} preguntas
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: parqQCount > 0 && parqDone < parqQCount ? BLUE_GRAD : GREEN_GRAD }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+            />
+          </div>
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={parqCurrent?.id ?? 'none'}
+            initial={{ opacity: 0, x: 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -28 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {q ? renderParqQuestion(q) : renderParqInfo(parqCurrent?.kind ?? 'info-rec')}
+          </motion.div>
+        </AnimatePresence>
+
+        {parqPending > 0 && (
+          <p className="text-[10px] font-semibold text-center" style={{ color: RED }}>
+            Faltan {parqPending} pregunta{parqPending !== 1 ? 's' : ''} por responder para poder continuar
+          </p>
+        )}
+      </div>
+    )
+  }
 
   const renderStep4 = () => (
     <div className="space-y-5">
@@ -823,7 +1122,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className={`rounded-3xl w-full max-w-2xl flex flex-col mx-4 relative ${success ? 'overflow-visible' : 'overflow-hidden'} ${success ? '' : step === 1 ? 'h-[90vh] max-h-[700px]' : step === 5 ? 'min-h-[520px] max-h-[660px] h-auto' : 'min-h-[480px] max-h-[600px] h-auto'}`}
+            className={`rounded-3xl w-full max-w-2xl flex flex-col mx-4 relative ${success ? 'overflow-visible' : 'overflow-hidden'} ${success ? '' : step === 1 ? 'h-[90vh] max-h-[700px]' : step === 6 ? 'min-h-[520px] max-h-[660px] h-auto' : 'min-h-[480px] max-h-[600px] h-auto'}`}
             style={{
               background: '#FFFFFF',
               border: '1px solid rgba(0,0,0,0.04)',
@@ -895,8 +1194,9 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                       {step === 1 && renderStep1()}
                       {step === 2 && renderStep2()}
                       {step === 3 && renderStep3()}
-                      {step === 4 && renderStep4()}
-                      {step === 5 && renderStep5()}
+                      {step === 4 && renderStepParq()}
+                      {step === 5 && renderStep4()}
+                      {step === 6 && renderStep5()}
                     </motion.div>
                   </div>
 
@@ -923,6 +1223,52 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
                       <div className="flex-1 flex justify-center gap-3">
                         {step === 4 && (
+                          <div className="flex items-center gap-1.5">
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setParqPos(p => Math.max(0, p - 1))}
+                              disabled={parqCurrentIndex <= 0}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+                              style={{
+                                background: parqCurrentIndex > 0 ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.02)',
+                                color: parqCurrentIndex > 0 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.15)',
+                              }}
+                            >
+                              <ChevronLeft size={16} />
+                            </motion.button>
+                            <span className="text-[10px] font-bold tabular-nums min-w-[56px] text-center" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                              {parqCurrentIndex + 1} de {parqSequence.length}
+                            </span>
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setParqPos(p => Math.min(Math.max(0, parqSequence.length - 1), p + 1))}
+                              disabled={parqCurrentIndex >= parqSequence.length - 1}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+                              style={{
+                                background: parqCurrentIndex < parqSequence.length - 1 ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.02)',
+                                color: parqCurrentIndex < parqSequence.length - 1 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.15)',
+                              }}
+                            >
+                              <ChevronRight size={16} />
+                            </motion.button>
+                          </div>
+                        )}
+                        {stepDoc?.dataUrl && (
+                          <motion.button
+                            type="button"
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => window.open(stepDoc.dataUrl, '_blank')}
+                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+                            style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                          >
+                            <ExternalLink size={12} />
+                            Abrir documento
+                          </motion.button>
+                        )}
+                        {step === 5 && (
                           <motion.button
                             type="button"
                             whileHover={{ scale: 1.03 }}
@@ -935,7 +1281,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             Limpiar firma
                           </motion.button>
                         )}
-                        {step === 5 && fingerprintStatus === 'idle' && (
+                        {step === 6 && fingerprintStatus === 'idle' && (
                           <motion.button
                             type="button"
                             whileHover={{ scale: 1.03 }}
@@ -955,28 +1301,28 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                           type="button"
                           variants={{
                             rest: { scale: 1, boxShadow: '0 4px 15px rgba(18,112,183,0)' },
-                            hover: step === 5 && fingerprintStatus !== 'captured' ? {} : {
+                            hover: stepLocked ? {} : {
                               scale: 1.06,
-                              boxShadow: step === 5
+                              boxShadow: step === 6
                                 ? '0 8px 30px rgba(0,251,100,0.35), 0 0 60px rgba(0,155,149,0.15)'
                                 : '0 8px 30px rgba(18,112,183,0.35), 0 0 60px rgba(18,112,183,0.1)',
                               transition: { type: 'spring', stiffness: 400, damping: 12 },
                             },
-                            tap: step === 5 && fingerprintStatus !== 'captured' ? {} : {
+                            tap: stepLocked ? {} : {
                               scale: 0.92,
                               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                               transition: { type: 'spring', stiffness: 500, damping: 10 },
                             },
                           }}
                           initial="rest"
-                          whileHover={step === 5 && fingerprintStatus !== 'captured' ? undefined : "hover"}
-                          whileTap={step === 5 && fingerprintStatus !== 'captured' ? undefined : "tap"}
+                          whileHover={stepLocked ? undefined : "hover"}
+                          whileTap={stepLocked ? undefined : "tap"}
                           onClick={handleNext}
-                          disabled={step === 5 && fingerprintStatus !== 'captured'}
+                          disabled={stepLocked}
                           className="relative flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white overflow-hidden cursor-pointer"
                           style={{
-                            background: step === 5 && fingerprintStatus !== 'captured' ? 'rgba(0,0,0,0.15)' : step === 5 ? GREEN_GRAD : BLUE_GRAD,
-                            cursor: step === 5 && fingerprintStatus !== 'captured' ? 'not-allowed' : 'pointer',
+                            background: stepLocked ? 'rgba(0,0,0,0.15)' : step === 6 ? GREEN_GRAD : BLUE_GRAD,
+                            cursor: stepLocked ? 'not-allowed' : 'pointer',
                           }}
                         >
                           <motion.span
@@ -990,13 +1336,13 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             style={{ background: 'rgba(255,255,255,0.2)' }}
                           />
                           <motion.span
-                            animate={step === 5 ? {} : { x: [0, 3, 0] }}
+                            animate={step === 6 ? {} : { x: [0, 3, 0] }}
                             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                             className="relative z-10"
                           >
-                            {step === 5 ? 'Finalizar' : 'Siguiente'}
+                            {step === 6 ? 'Finalizar' : 'Siguiente'}
                           </motion.span>
-                          {step < 5 && (
+                          {step < 6 && (
                             <motion.span
                               animate={{ x: [0, 2, 0] }}
                               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}

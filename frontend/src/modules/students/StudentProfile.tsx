@@ -25,6 +25,8 @@ import { StethoscopeView } from '../../assets/models/ui/objects/stethoscope/Stet
 import { KitView } from '../../assets/models/ui/objects/kit/KitModel'
 import { TrashView } from '../../assets/models/ui/actions/trash/TrashModel'
 import fireGif from '../../assets/icons/animated/fire.gif'
+import editGif from '../../assets/icons/animated/actions/edit.gif'
+import viewGif from '../../assets/icons/animated/actions/view.gif'
 import weightLossIcon from '../../assets/icons/objects/metric_belt.webp'
 import armIcon2 from '../../assets/icons/objects/dumbbel.webp'
 import shoesIcon from '../../assets/icons/objects/shoes.webp'
@@ -237,6 +239,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const aiIntervalRef = useRef<number | null>(null)
   const [aiGeneratedRoutine, setAiGeneratedRoutine] = useState<AiRoutine | null>(null)
   const [showNewValuationModal, setShowNewValuationModal] = useState(false)
+  const [valuationViewMode, setValuationViewMode] = useState(false)
+  const [routineViewMode, setRoutineViewMode] = useState(false)
+  const [routineFromAssessment, setRoutineFromAssessment] = useState(false)
+  const [routineSnapshot, setRoutineSnapshot] = useState('')
   const [valuationSuccess, setValuationSuccess] = useState(false)
   const [valuationStep, setValuationStep] = useState(1)
   const [lastValuationObjectives, setLastValuationObjectives] = useState(0)
@@ -286,6 +292,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const startAiRoutine = () => {
     setShowNewValuationModal(false)
     setValuationSuccess(false)
+    setValuationViewMode(false)
+    setRoutineViewMode(false)
+    setRoutineFromAssessment(false)
+    setRoutineSnapshot('')
     setAiGenerating(true)
     setAiGenStep(0)
     let step = 0
@@ -350,6 +360,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
       setShowNewValuationModal(false)
       setValuationSuccess(false)
       setValuationStep(1)
+      setValuationViewMode(false)
     } else if (confirmCancel === 'routine') {
       setShowNewRoutineModal(false)
       setRoutineStep(1)
@@ -358,6 +369,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
       setSelectedRoutineDay(null)
       setRoutineDayPage(1)
       setAiGeneratedRoutine(null)
+      setRoutineViewMode(false)
     }
     setConfirmCancel(null)
   }
@@ -397,24 +409,86 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
 
   const WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
   const assessmentItems = [
-    { num: 1, date: '15 May 2026', next: '01 Ago 2026' },
-    { num: 2, date: '20 Feb 2026', next: null },
-    { num: 3, date: '10 Nov 2025', next: null },
-    { num: 4, date: '05 Jun 2025', next: null },
-    { num: 5, date: '12 Dic 2024', next: null },
-    { num: 6, date: '20 Jul 2024', next: null },
-    { num: 7, date: '15 Mar 2024', next: null },
-    { num: 8, date: '08 Oct 2023', next: null },
+    { num: 1, date: '15 May 2026', next: '01 Ago 2026', color: '#1270B7', type: 'Actual', evaluator: 'Carlos Ruiz', score: 87, routine: 'Rutina Hipertrofia Full Body', metrics: [{ label: 'Peso', value: '72 kg' }, { label: 'IMC', value: '23.4' }, { label: 'Grasa Corporal', value: '18%' }, { label: 'Masa Muscular', value: '32 kg' }], nivelActividad: 'Activo', objetivoTarjetas: ['Ganancia muscular', 'Acondicionamiento fisico'], objetivoDetalle: 'Incrementar masa muscular y mejorar la condición física general para competencias de fin de año.', estatura: '1.75 m', masaMagra: '31.2 kg', grasaVisceral: '8', presionArterial: '120/80', edadMetabolica: '25', aguaCorporal: '58%', resistenciaMuscular: 'Alta (30 min)', antecedentesSalud: [], observacionesEntrenador: 'Sin novedades relevantes. Muy buena disposición al entrenamiento.', diasDisponibles: ['Lunes', 'Miércoles', 'Viernes'], observacionesFinales: 'Seguir con la rutina de hipertrofia y controlar la ingesta proteica. Próxima valoración en agosto.' },
+    { num: 2, date: '20 Feb 2026', next: null, color: '#FF9500', type: 'Seguimiento', evaluator: 'Carlos Ruiz', score: 82, routine: 'Rutina Fuerza Tren Superior', metrics: [{ label: 'Peso', value: '73 kg' }, { label: 'IMC', value: '23.8' }, { label: 'Grasa Corporal', value: '19%' }, { label: 'Masa Muscular', value: '31 kg' }], nivelActividad: 'Activo', objetivoTarjetas: ['Ganancia muscular'], objetivoDetalle: 'Aumentar fuerza en tren superior y mejorar los levantamientos básicos.', estatura: '1.75 m', masaMagra: '30.4 kg', grasaVisceral: '8', presionArterial: '122/80', edadMetabolica: '26', aguaCorporal: '57%', resistenciaMuscular: 'Media (20 min)', antecedentesSalud: ['Metabólico'], observacionesEntrenador: 'Seguimiento a la planificación de fuerza, buena respuesta a cargas.', diasDisponibles: ['Lunes', 'Martes', 'Jueves', 'Viernes'], observacionesFinales: 'Ajustar cargas progresivamente cada 3 semanas.' },
+    { num: 3, date: '10 Nov 2025', next: null, color: '#FF9500', type: 'Seguimiento', evaluator: 'Carlos Ruiz', score: 78, routine: 'Rutina Resistencia', metrics: [{ label: 'Peso', value: '74 kg' }, { label: 'IMC', value: '24.1' }, { label: 'Grasa Corporal', value: '20%' }, { label: 'Masa Muscular', value: '30 kg' }], nivelActividad: 'Ligeramente activo', objetivoTarjetas: ['Acondicionamiento fisico', 'Salud'], objetivoDetalle: 'Mejorar resistencia cardiovascular y bienestar general.', estatura: '1.75 m', masaMagra: '29.6 kg', grasaVisceral: '9', presionArterial: '125/82', edadMetabolica: '27', aguaCorporal: '55%', resistenciaMuscular: 'Media (15 min)', antecedentesSalud: ['Cardiovascular'], observacionesEntrenador: 'Monitorear frecuencia cardíaca durante el cardio.', diasDisponibles: ['Martes', 'Jueves', 'Sábado'], observacionesFinales: 'Resistencia en aumento, continuar plan cardiovascular.' },
+    { num: 4, date: '05 Jun 2025', next: null, color: '#FF9500', type: 'Seguimiento', evaluator: 'Laura Gómez', score: 80, routine: 'Rutina Full Body', metrics: [{ label: 'Peso', value: '74 kg' }, { label: 'IMC', value: '24.0' }, { label: 'Grasa Corporal', value: '19.5%' }, { label: 'Masa Muscular', value: '30.5 kg' }], nivelActividad: 'Activo', objetivoTarjetas: ['Perdida de peso'], objetivoDetalle: 'Reducir porcentaje graso manteniendo la masa muscular actual.', estatura: '1.75 m', masaMagra: '29.8 kg', grasaVisceral: '9', presionArterial: '123/81', edadMetabolica: '26', aguaCorporal: '56%', resistenciaMuscular: 'Media (18 min)', antecedentesSalud: [], observacionesEntrenador: 'Buena respuesta al cardio programado.', diasDisponibles: ['Lunes', 'Miércoles', 'Sábado'], observacionesFinales: 'Definición avanzando según lo esperado.' },
+    { num: 5, date: '12 Dic 2024', next: null, color: '#FF9500', type: 'Seguimiento', evaluador: 'Laura Gómez', score: 75, routine: 'Rutina Tonificación', metrics: [{ label: 'Peso', value: '75 kg' }, { label: 'IMC', value: '24.5' }, { label: 'Grasa Corporal', value: '21%' }, { label: 'Masa Muscular', value: '29 kg' }], nivelActividad: 'Sedentario', objetivoTarjetas: ['Salud'], objetivoDetalle: 'Comenzar hábitos saludables y mejorar la calidad de vida.', estatura: '1.75 m', masaMagra: '29.1 kg', grasaVisceral: '10', presionArterial: '128/84', edadMetabolica: '28', aguaCorporal: '54%', resistenciaMuscular: 'Baja (10 min)', antecedentesSalud: ['Osteomuscular', 'Cardiovascular'], observacionesEntrenador: 'Inicio de rutina de adaptación, cuidar técnica en todos los ejercicios.', diasDisponibles: ['Martes', 'Jueves'], observacionesFinales: 'Adaptación a la rutina, priorizar técnica sobre carga.' },
+    { num: 6, date: '20 Jul 2024', next: null, color: '#FF9500', type: 'Seguimiento', evaluador: 'Laura Gómez', score: 76, routine: 'Rutina Acondicionamiento', metrics: [{ label: 'Peso', value: '75 kg' }, { label: 'IMC', value: '24.4' }, { label: 'Grasa Corporal', value: '21%' }, { label: 'Masa Muscular', value: '29.2 kg' }], nivelActividad: 'Ligeramente activo', objetivoTarjetas: ['Acondicionamiento fisico'], objetivoDetalle: 'Mantener constancia y mejorar el acondicionamiento general.', estatura: '1.75 m', masaMagra: '29.0 kg', grasaVisceral: '10', presionArterial: '126/83', edadMetabolica: '28', aguaCorporal: '54%', resistenciaMuscular: 'Media (15 min)', antecedentesSalud: [], observacionesEntrenador: 'Asistencia regular a las sesiones.', diasDisponibles: ['Lunes', 'Martes', 'Miércoles', 'Jueves'], observacionesFinales: 'Continúa progresando de forma constante.' },
+    { num: 7, date: '15 Mar 2024', next: null, color: '#FF9500', type: 'Seguimiento', evaluador: 'Laura Gómez', score: 72, routine: 'Rutina Básica', metrics: [{ label: 'Peso', value: '76 kg' }, { label: 'IMC', value: '24.8' }, { label: 'Grasa Corporal', value: '22%' }, { label: 'Masa Muscular', value: '28 kg' }], nivelActividad: 'Sedentario', objetivoTarjetas: ['Perdida de peso', 'Salud'], objetivoDetalle: 'Bajar de peso y reducir el riesgo cardiovascular.', estatura: '1.75 m', masaMagra: '28.6 kg', grasaVisceral: '11', presionArterial: '130/86', edadMetabolica: '29', aguaCorporal: '53%', resistenciaMuscular: 'Baja (8 min)', antecedentesSalud: ['Cardiovascular', 'Metabólico'], observacionesEntrenador: 'Controlar la intensidad inicial de las sesiones.', diasDisponibles: ['Miércoles', 'Viernes'], observacionesFinales: 'Requiere mayor constancia en la asistencia.' },
+    { num: 8, date: '08 Oct 2023', next: null, color: '#E63946', type: 'Inicial', evaluator: 'Laura Gómez', score: 70, routine: 'Rutina Adaptación', metrics: [{ label: 'Peso', value: '77 kg' }, { label: 'IMC', value: '25.1' }, { label: 'Grasa Corporal', value: '23%' }, { label: 'Masa Muscular', value: '27 kg' }], nivelActividad: 'Sedentario', objetivoTarjetas: ['Salud'], objetivoDetalle: 'Iniciar actividad física por recomendación médica.', estatura: '1.75 m', masaMagra: '28.0 kg', grasaVisceral: '12', presionArterial: '132/88', edadMetabolica: '30', aguaCorporal: '52%', resistenciaMuscular: 'Baja (5 min)', antecedentesSalud: ['Osteomuscular', 'Respiratorio', 'Cardiovascular'], observacionesEntrenador: 'Valoración inicial, plan conservador de adaptación.', diasDisponibles: ['Martes', 'Jueves'], observacionesFinales: 'Ajustar rutina tras la primera evaluación de seguimiento.' },
   ]
   const ASSESSMENT_PAGE_SIZE = 6
   const assessmentTotalPages = Math.max(1, Math.ceil(assessmentItems.length / ASSESSMENT_PAGE_SIZE))
   const assessmentCurrentPage = Math.min(assessmentPage, assessmentTotalPages)
   const pagedAssessments = assessmentItems.slice((assessmentCurrentPage - 1) * ASSESSMENT_PAGE_SIZE, assessmentCurrentPage * ASSESSMENT_PAGE_SIZE)
   const assessmentPageNumbers = Array.from({ length: assessmentTotalPages }, (_, i) => i + 1)
+  const valuationStat = (label: string, value: string, color?: string) => (
+    <div className="rounded-xl p-3 flex items-center justify-between gap-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
+      <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{label}</span>
+      <span className="text-sm font-bold text-right" style={{ color: color ?? '#0D1B2A' }}>{value}</span>
+    </div>
+  )
+  const numOnly = (s: any) => String(s ?? '').replace(/[^\d.]/g, '')
+  const loadAssessmentIntoForm = (a: any) => {
+    const metric = (label: string) => a.metrics?.find((m: any) => m.label === label)?.value ?? ''
+    setValuationForm({
+      nivelActividad: a.nivelActividad ?? '',
+      objetivoTarjetas: a.objetivoTarjetas ?? [],
+      objetivoDetalle: a.objetivoDetalle ?? '',
+      peso: numOnly(metric('Peso')),
+      estatura: numOnly(a.estatura),
+      imc: numOnly(metric('IMC')),
+      grasaCorporal: numOnly(metric('Grasa Corporal')),
+      masaMuscular: numOnly(metric('Masa Muscular')),
+      masaMagra: numOnly(a.masaMagra),
+      grasaVisceral: numOnly(a.grasaVisceral),
+      presionArterial: a.presionArterial ?? '',
+      edadMetabolica: numOnly(a.edadMetabolica),
+      aguaCorporal: numOnly(a.aguaCorporal),
+      resistenciaMuscular: a.resistenciaMuscular ?? '',
+      antecedentesSalud: a.antecedentesSalud ?? [],
+      observacionesEntrenador: a.observacionesEntrenador ?? '',
+      diasDisponibles: a.diasDisponibles ?? [],
+      observacionesFinales: a.observacionesFinales ?? '',
+    })
+  }
+  const openRoutineFromAssessment = (a: any) => {
+    loadAssessmentIntoForm(a)
+    setRoutineFromAssessment(true)
+    const days = (a.diasDisponibles?.length ? a.diasDisponibles : ['Lunes', 'Miércoles', 'Viernes']) as string[]
+    const perDay = Math.max(2, Math.ceil(routineExercises.length / days.length))
+    const rows: RoutineRow[] = []
+    days.forEach((dia, di) => {
+      const chunk = routineExercises.slice(di * perDay, (di + 1) * perDay)
+      chunk.forEach((ex, ei) => {
+        rows.push({ id: `rv-${di}-${ei}`, dia, muscle: ex.muscle, name: ex.name, sets: String(ex.sets), reps: ex.reps, rest: '60 s', weight: ex.weight })
+      })
+    })
+    const routineObj: AiRoutine = {
+      name: a.routine ?? 'Rutina personalizada',
+      description: `Rutina asociada a la valoración del estudiante: ${days.length} días por semana.`,
+      duration: '8 semanas',
+      frequency: `${days.length} días/semana`,
+      level: 'Intermedio',
+      rows,
+    }
+    setAiGeneratedRoutine(routineObj)
+    setRoutineForm({ name: routineObj.name, description: routineObj.description, duration: routineObj.duration, frequency: routineObj.frequency, level: routineObj.level })
+    setRoutineRows(rows)
+    setSelectedRoutineDay(rows.length ? rows[0].dia : null)
+    setRoutineDayPage(1)
+    setRoutineSnapshot(JSON.stringify({ form: { name: routineObj.name, description: routineObj.description, duration: routineObj.duration, frequency: routineObj.frequency, level: routineObj.level }, rows }))
+    setRoutineStep(2)
+    setRoutineSuccess(false)
+    setShowNewRoutineModal(true)
+  }
   const sourceDays = valuationForm.diasDisponibles.length > 0 ? valuationForm.diasDisponibles : routineRows.map(r => r.dia)
-  const routineDayList = [...new Set(
-    WEEK_DAYS.filter(d => sourceDays.includes(d) || routineRows.some(r => r.dia === d))
-  )]
+  const routineEdited = routineSnapshot !== '' && JSON.stringify({ form: routineForm, rows: routineRows }) !== routineSnapshot
+  const routineDayList = (() => {
+    const days = [...new Set(WEEK_DAYS.filter(d => sourceDays.includes(d) || routineRows.some(r => r.dia === d)))]
+    return days.length ? days : WEEK_DAYS
+  })()
   const ROUTINE_DAY_PAGE_SIZE = 6
   const routineDayTotalPages = Math.max(1, Math.ceil(routineDayList.length / ROUTINE_DAY_PAGE_SIZE))
   const routineDayCurrentPage = Math.min(routineDayPage, routineDayTotalPages)
@@ -445,9 +519,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         alt=""
         className="mb-0.5"
         animate={{
-          width: 32,
-          height: 32,
-          filter: selected ? 'blur(0px) drop-shadow(0 6px 16px rgba(0,0,0,0.15))' : 'blur(2px)',
+          width: selected ? 52 : 28,
+          height: selected ? 52 : 28,
+          marginTop: selected ? -28 : 0,
+          filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
         }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       />
@@ -465,7 +540,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
       <div className="relative">
         <button
           type="button"
-          onClick={() => setRoutineDropdown(open ? null : { id: row.id, field: 'muscle' })}
+          disabled={routineViewMode}
+          onClick={() => { if (!routineViewMode) setRoutineDropdown(open ? null : { id: row.id, field: 'muscle' }) }}
           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold outline-none cursor-pointer transition-all duration-200"
           style={{ background: meshInputBg, border: '1px solid transparent', color: row.muscle ? '#0D1B2A' : 'rgba(0,0,0,0.35)' }}
           onMouseEnter={e => enterMesh(e.currentTarget)}
@@ -481,9 +557,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
             </div>
           )}
           <span className="flex-1 truncate text-left">{category || 'Categoría'}</span>
-          <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
-            <ChevronDown size={13} />
-          </motion.div>
+          {!routineViewMode && (
+            <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
+              <ChevronDown size={13} />
+            </motion.div>
+          )}
         </button>
         <AnimatePresence initial={false}>
           {open && (
@@ -544,8 +622,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
       <div className="relative">
         <button
           type="button"
-          disabled={!row.muscle}
-          onClick={() => setRoutineDropdown(open ? null : { id: row.id, field: 'exercise' })}
+          disabled={!row.muscle || routineViewMode}
+          onClick={() => { if (!routineViewMode) setRoutineDropdown(open ? null : { id: row.id, field: 'exercise' }) }}
           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold outline-none cursor-pointer transition-all duration-200"
           style={{
             background: row.muscle ? meshInputBg : 'rgba(0,0,0,0.03)',
@@ -560,9 +638,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         >
           <Dumbbell size={13} style={{ color: row.name ? '#1270B7' : 'rgba(0,0,0,0.3)' }} className="flex-shrink-0" />
           <span className="flex-1 truncate text-left">{row.name || 'Ejercicio'}</span>
-          <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
-            <ChevronDown size={13} />
-          </motion.div>
+          {!routineViewMode && (
+            <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
+              <ChevronDown size={13} />
+            </motion.div>
+          )}
         </button>
         <AnimatePresence initial={false}>
           {open && (
@@ -724,6 +804,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
           setShowNewValuationModal(false)
           setValuationSuccess(false)
           setValuationStep(1)
+          setValuationViewMode(false)
+          setRoutineViewMode(false)
+          setRoutineFromAssessment(false)
+          setRoutineSnapshot('')
           setRoutineStep(1)
           setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
           setRoutineRows([])
@@ -1362,7 +1446,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             animation: 'mesh-shift 15s ease-in-out infinite',
                             boxShadow: '0 8px 32px rgba(230,57,70,0.12), 0 2px 8px rgba(230,57,70,0.06)',
                           }}
-                          onClick={() => { setValuationStep(1); setValuationSuccess(false); setValuationForm(emptyValuationForm); setShowNewValuationModal(true) }}
+                          onClick={() => { setValuationStep(1); setValuationSuccess(false); setValuationViewMode(false); setValuationForm(emptyValuationForm); setShowNewValuationModal(true) }}
                         >
                           <div className="w-full flex flex-col items-center relative z-10">
                             <div
@@ -1399,8 +1483,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             const isFirst = v.num === 1
                             const isLast = v.num === assessmentItems.length
                             const status = isFirst ? 'Actual' : isLast ? 'Inicial' : 'Seguimiento'
-                            const statusColor = isFirst ? '#1270B7' : isLast ? '#E63946' : '#FF9500'
-                            const statusBg = isFirst ? 'rgba(18,112,183,0.12)' : isLast ? 'rgba(230,57,70,0.12)' : 'rgba(255,149,0,0.12)'
+                            const statusColor = v.color
+                            const statusBg = statusColor === '#1270B7' ? 'rgba(18,112,183,0.12)' : statusColor === '#E63946' ? 'rgba(230,57,70,0.12)' : 'rgba(255,149,0,0.12)'
                             const name = `Valoración ${v.num}`
                             return (
                               <motion.div
@@ -1950,7 +2034,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               className="fixed inset-0 z-50 flex items-center justify-center"
               style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
               onClick={() => {
-                if (valuationSuccess) {
+                if (valuationViewMode) {
+                  setShowNewValuationModal(false)
+                  setValuationSuccess(false)
+                  setValuationStep(1)
+                  setValuationViewMode(false)
+                } else if (valuationSuccess) {
                   setShowNewValuationModal(false)
                   setValuationSuccess(false)
                   setValuationStep(1)
@@ -1975,7 +2064,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               >
                 {/* Header */}
                 <div className="flex-shrink-0 px-6 pt-4 pb-0">
-                  <div className="flex justify-end">
+                  <div className="relative flex justify-end">
+                    <img src={viewGif} alt="" className="absolute left-1/2 -translate-x-1/2 w-6 h-6 pointer-events-none" />
                     <motion.button
                       initial="rest"
                       whileHover="hover"
@@ -1986,7 +2076,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         tap: { scale: 0.9 },
                       }}
                       onClick={() => {
-                        if (valuationSuccess) {
+                        if (valuationViewMode) {
+                          setShowNewValuationModal(false)
+                          setValuationSuccess(false)
+                          setValuationStep(1)
+                          setValuationViewMode(false)
+                        } else if (valuationSuccess) {
                           setShowNewValuationModal(false)
                           setValuationSuccess(false)
                           setValuationStep(1)
@@ -2047,6 +2142,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           <div className="relative">
                             <select
                               value={valuationForm.nivelActividad}
+                              disabled={valuationViewMode}
                               onChange={e => setValuationForm(p => ({ ...p, nivelActividad: e.target.value }))}
                               className="px-3 py-2 rounded-xl text-sm font-medium outline-none w-full appearance-none transition-all duration-200 cursor-pointer"
                               style={{
@@ -2099,10 +2195,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                 <motion.button
                                   key={item.value}
                                   type="button"
-                                  whileHover={!disabled ? { scale: 1.06 } : {}}
-                                  whileTap={!disabled ? { scale: 0.95 } : {}}
+                                  disabled={valuationViewMode}
+                                  whileHover={!disabled && !valuationViewMode ? { scale: 1.06 } : {}}
+                                  whileTap={!disabled && !valuationViewMode ? { scale: 0.95 } : {}}
                                   onClick={() => {
-                                    if (disabled) return
+                                    if (disabled || valuationViewMode) return
                                     if (isOtro) {
                                       setValuationForm(p => ({
                                         ...p,
@@ -2172,6 +2269,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             }} />
                             <textarea
                               value={valuationForm.objetivoDetalle}
+                              readOnly={valuationViewMode}
                               onChange={e => setValuationForm(p => ({ ...p, objetivoDetalle: e.target.value }))}
                               placeholder="Describe a detalle el objetivo del estudiante..."
                               rows={3}
@@ -2209,6 +2307,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                               <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{field.label}</label>
                               <input
                                 type={field.type}
+                                readOnly={valuationViewMode}
                                 value={(valuationForm as any)[field.key]}
                                 onChange={e => setValuationForm(p => ({ ...p, [field.key]: e.target.value }))}
                                 className="px-3 py-2 rounded-xl text-sm font-medium outline-none w-full transition-all duration-200"
@@ -2242,6 +2341,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                               <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{field.label}</label>
                               <input
                                 type={field.type}
+                                readOnly={valuationViewMode}
                                 value={(valuationForm as any)[field.key]}
                                 onChange={e => setValuationForm(p => ({ ...p, [field.key]: e.target.value }))}
                                 className="px-3 py-2 rounded-xl text-sm font-medium outline-none w-full transition-all duration-200"
@@ -2281,9 +2381,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                 <motion.button
                                   key={item.value}
                                   type="button"
-                                  whileHover={!selected ? { scale: 1.06 } : {}}
-                                  whileTap={{ scale: 0.95 }}
+                                  disabled={valuationViewMode}
+                                  whileHover={!selected && !valuationViewMode ? { scale: 1.06 } : {}}
+                                  whileTap={valuationViewMode ? {} : { scale: 0.95 }}
                                   onClick={() => {
+                                    if (valuationViewMode) return
                                     setValuationForm(p => ({
                                       ...p,
                                       antecedentesSalud: selected
@@ -2323,6 +2425,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Observaciones del entrenador</label>
                           <textarea
                             value={valuationForm.observacionesEntrenador}
+                            readOnly={valuationViewMode}
                             onChange={e => setValuationForm(p => ({ ...p, observacionesEntrenador: e.target.value }))}
                             placeholder="Notas del entrenador sobre los antecedentes..."
                             rows={3}
@@ -2354,9 +2457,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                 <motion.button
                                   key={dia}
                                   type="button"
-                                  whileHover={!selected ? { scale: 1.06 } : {}}
-                                  whileTap={{ scale: 0.95 }}
+                                  disabled={valuationViewMode}
+                                  whileHover={!selected && !valuationViewMode ? { scale: 1.06 } : {}}
+                                  whileTap={valuationViewMode ? {} : { scale: 0.95 }}
                                   onClick={() => {
+                                    if (valuationViewMode) return
                                     setValuationForm(p => ({
                                       ...p,
                                       diasDisponibles: selected
@@ -2401,6 +2506,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         <div className="flex flex-col gap-1">
                           <textarea
                             value={valuationForm.observacionesFinales}
+                            readOnly={valuationViewMode}
                             onChange={e => setValuationForm(p => ({ ...p, observacionesFinales: e.target.value }))}
                             placeholder="Escribe aquí las observaciones finales..."
                             rows={6}
@@ -2450,6 +2556,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         onClick={() => {
                           if (valuationStep < 6) {
                             setValuationStep(s => s + 1)
+                          } else if (valuationViewMode) {
+                            setShowNewValuationModal(false)
+                            setValuationSuccess(false)
+                            setValuationStep(1)
+                            setValuationViewMode(false)
                           } else {
                             setLastValuationObjectives(valuationForm.objetivoTarjetas.length)
                             setValuationSuccess(true)
@@ -2457,10 +2568,12 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         }}
                         className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
                         style={{
-                          background: valuationStep === 6 ? 'linear-gradient(135deg, #22C55E, #16A34A)' : 'linear-gradient(135deg, #1270B7, #7ec8e3)',
+                          background: !valuationViewMode && valuationStep === 6 ? 'linear-gradient(135deg, #22C55E, #16A34A)' : 'linear-gradient(135deg, #1270B7, #7ec8e3)',
                         }}
                       >
-                        {valuationStep === 6 ? (
+                        {valuationStep === 6 && valuationViewMode ? (
+                          <>Cerrar</>
+                        ) : valuationStep === 6 ? (
                           <>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                             Guardar Valoración
@@ -2504,18 +2617,22 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   <motion.button
                     whileHover={{ scale: 1.04, y: -6 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => { setShowAssessmentOptions(false); setShowValuationModal(true) }}
-                    className="relative w-72 h-80 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
+                    onClick={() => {
+                      setShowAssessmentOptions(false)
+                      loadAssessmentIntoForm(selectedAssessment)
+                      setValuationStep(1)
+                      setValuationSuccess(false)
+                      setValuationViewMode(true)
+                      setShowNewValuationModal(true)
+                    }}
+                    className="relative w-80 h-96 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
                     style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
                   >
-                    <div className="absolute inset-0" style={{
-                      background: `linear-gradient(135deg, ${selectedAssessment.color}22, ${selectedAssessment.color}11)`,
-                    }} />
+                    <img src={assessmentSceneImg} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-110 translate-y-4" />
                     <div className="absolute inset-0 pointer-events-none" style={{
-                      background: `linear-gradient(to top, ${selectedAssessment.color} 0%, ${selectedAssessment.color}dd 50%, rgba(0,0,0,0.5) 100%)`,
+                      background: `linear-gradient(to top, ${selectedAssessment.color} 0%, ${selectedAssessment.color}cc 35%, transparent 72%)`,
                     }} />
                     <div className="relative z-10 flex flex-col items-center">
-                      <img src={assessmentSceneImg} alt="" className="w-44 h-44 object-contain mb-3 drop-shadow-2xl" />
                       <span className="text-xl font-extrabold text-white tracking-tight">Ver Valoración</span>
                       <span className="text-[11px] text-white/60 mt-1">Detalles de la evaluación</span>
                     </div>
@@ -2524,18 +2641,15 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   <motion.button
                     whileHover={{ scale: 1.04, y: -6 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => { setShowAssessmentOptions(false); setShowRoutineViewModal(true) }}
-                    className="relative w-72 h-80 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
+                    onClick={() => { setShowAssessmentOptions(false); openRoutineFromAssessment(selectedAssessment) }}
+                    className="relative w-80 h-96 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
                     style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
                   >
-                    <div className="absolute inset-0" style={{
-                      background: 'linear-gradient(135deg, rgba(48,209,88,0.13), rgba(48,209,88,0.06))',
-                    }} />
+                    <img src={routineSceneImg} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-110 translate-y-4" />
                     <div className="absolute inset-0 pointer-events-none" style={{
-                      background: 'linear-gradient(to top, rgba(26,138,63,0.95) 0%, rgba(48,209,88,0.6) 50%, rgba(0,0,0,0.5) 100%)',
+                      background: 'linear-gradient(to top, rgba(26,138,63,0.95) 0%, rgba(48,209,88,0.55) 35%, transparent 72%)',
                     }} />
                     <div className="relative z-10 flex flex-col items-center">
-                      <img src={routineSceneImg} alt="" className="w-44 h-44 object-contain mb-3 drop-shadow-2xl" />
                       <span className="text-xl font-extrabold text-white tracking-tight">Ver Rutina</span>
                       <span className="text-[11px] text-white/60 mt-1">Ejercicios y series asignados</span>
                     </div>
@@ -2563,14 +2677,15 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 exit={{ opacity: 0, filter: 'blur(6px)' }}
                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 onClick={e => e.stopPropagation()}
-                className="w-full max-w-lg rounded-3xl p-6"
+                className="w-full max-w-xl rounded-3xl p-6 flex flex-col"
                 style={{
                   background: '#FFFFFF',
                   border: '1px solid rgba(0,0,0,0.06)',
                   boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                  maxHeight: '86vh',
                 }}
               >
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center justify-between mb-5 flex-shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${selectedAssessment.color}15` }}>
                       <BarChart2 size={20} style={{ color: selectedAssessment.color }} />
@@ -2586,42 +2701,110 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   </motion.button>
                 </div>
 
-                <div className="flex items-center justify-center mb-6">
-                  <div className="relative flex-shrink-0" style={{ width: 80, height: 80 }}>
-                    <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
-                      <circle cx="18" cy="18" r="15.9" fill="none" stroke={selectedAssessment.color} strokeWidth="2.8" strokeLinecap="round"
-                        strokeDasharray={`${selectedAssessment.score * 0.999} ${100 - selectedAssessment.score * 0.999}`} />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <p className="text-lg font-extrabold" style={{ color: selectedAssessment.color }}>{selectedAssessment.score}%</p>
+                <div className="overflow-y-auto space-y-4 flex-1 pr-1" style={{ scrollbarWidth: 'thin', maxHeight: '60vh' }}>
+                  <div className="flex items-center gap-4">
+                    <div className="relative flex-shrink-0" style={{ width: 88, height: 88 }}>
+                      <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
+                        <circle cx="18" cy="18" r="15.9" fill="none" stroke={selectedAssessment.color} strokeWidth="2.8" strokeLinecap="round"
+                          strokeDasharray={`${selectedAssessment.score * 0.999} ${100 - selectedAssessment.score * 0.999}`} />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <p className="text-lg font-extrabold" style={{ color: selectedAssessment.color }}>{selectedAssessment.score}%</p>
+                      </div>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="rounded-xl px-3 py-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Nivel de actividad física</p>
+                        <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{selectedAssessment.nivelActividad}</p>
+                      </div>
+                      <div className="rounded-xl px-3 py-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Evaluador</p>
+                        <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{selectedAssessment.evaluator}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Objetivos</p>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {selectedAssessment.objetivoTarjetas.map((o: string) => (
+                        <span key={o} className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #1270B7, #7ec8e3)' }}>{o}</span>
+                      ))}
+                    </div>
+                    <div className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(212,175,55,0.25)' }}>
+                      <p className="text-[11px] font-semibold italic leading-relaxed" style={{ color: '#B8860B' }}>"{selectedAssessment.objetivoDetalle}"</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Medidas corporales</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {selectedAssessment.metrics.map((m: any) => (
+                        <div key={m.label} className="rounded-xl p-3 flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                          <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{m.label}</span>
+                          <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{m.value}</span>
+                        </div>
+                      ))}
+                      {valuationStat('Estatura', selectedAssessment.estatura)}
+                      {valuationStat('Masa magra', selectedAssessment.masaMagra)}
+                      {valuationStat('Grasa visceral', selectedAssessment.grasaVisceral, '#E63946')}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Evaluación clínica</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {valuationStat('Presión arterial', selectedAssessment.presionArterial)}
+                      {valuationStat('Edad metabólica', `${selectedAssessment.edadMetabolica} años`)}
+                      {valuationStat('Agua corporal', selectedAssessment.aguaCorporal)}
+                      {valuationStat('Resistencia muscular', selectedAssessment.resistenciaMuscular)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Antecedentes de salud</p>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {selectedAssessment.antecedentesSalud.length === 0 ? (
+                        <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>Sin antecedentes registrados</span>
+                      ) : selectedAssessment.antecedentesSalud.map((a: string) => (
+                        <span key={a} className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #E63946, #FF8FA3)' }}>{a}</span>
+                      ))}
+                    </div>
+                    <div className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                      <p className="text-[11px] font-medium leading-relaxed" style={{ color: 'rgba(0,0,0,0.6)' }}>{selectedAssessment.observacionesEntrenador}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Plan de entrenamiento</p>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {selectedAssessment.diasDisponibles.map((d: string) => (
+                        <span key={d} className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #1A8A3F, #30D158)' }}>{d}</span>
+                      ))}
+                    </div>
+                    <div className="rounded-xl px-3 py-2.5 flex items-center gap-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                      <Dumbbell size={14} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                      <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{selectedAssessment.routine}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Observaciones finales</p>
+                    <div className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.02)' }}>
+                      <p className="text-[11px] font-medium leading-relaxed" style={{ color: 'rgba(0,0,0,0.6)' }}>{selectedAssessment.observacionesFinales}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {selectedAssessment.metrics.map((m: any) => (
-                    <div key={m.label} className="rounded-xl p-3 flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                      <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{m.label}</span>
-                      <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{m.value}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-5 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm" style={{ color: 'rgba(0,0,0,0.5)' }}>
-                      <Dumbbell size={14} />
-                      {selectedAssessment.routine}
-                    </div>
-                    <button
-                      onClick={() => setShowValuationModal(false)}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
-                      style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
-                    >
-                      Cerrar
-                    </button>
-                  </div>
+                <div className="mt-4 pt-4 flex justify-end flex-shrink-0" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <button
+                    onClick={() => setShowValuationModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                  >
+                    Cerrar
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
@@ -2764,7 +2947,15 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-6"
               style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
-              onClick={() => setConfirmCancel('routine')}
+              onClick={() => {
+                if (routineViewMode) {
+                  setShowNewRoutineModal(false)
+                  setRoutineStep(1)
+                  setRoutineViewMode(false)
+                } else {
+                  setConfirmCancel('routine')
+                }
+              }}
             >
               <motion.div
                 initial={{ opacity: 0, filter: 'blur(6px)' }}
@@ -2779,8 +2970,17 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
                 }}
               >
-                <div className="flex items-center justify-end mb-4">
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setConfirmCancel('routine')}
+                <div className="relative flex items-center justify-end mb-4">
+                  <img src={editGif} alt="" className="absolute left-1/2 -translate-x-1/2 w-6 h-6 pointer-events-none" />
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => {
+                    if (routineViewMode) {
+                      setShowNewRoutineModal(false)
+                      setRoutineStep(1)
+                      setRoutineViewMode(false)
+                    } else {
+                      setConfirmCancel('routine')
+                    }
+                  }}
                     className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
                     <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
                   </motion.button>
@@ -2801,20 +3001,23 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   ))}
                 </div>
                 <span className="text-lg font-bold tracking-wide text-center block mb-4" style={{ color: '#1A1A1E' }}>
-                  Nueva Rutina
+                  {routineEdited ? 'Editar Rutina' : routineFromAssessment ? 'Visualizar Rutina' : 'Nueva Rutina'}
                 </span>
 
                 {routineStep === 1 && (
                   <div className="space-y-5 px-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
                     <p className="text-sm font-semibold" style={{ color: 'rgba(0,0,0,0.55)' }}>
-                      {aiGeneratedRoutine
-                        ? 'Ajusta los parámetros generales de la rutina (prellenados según la valoración).'
-                        : 'Configura los parámetros generales de la rutina.'}
+                      {routineViewMode
+                        ? 'Información general de la rutina generada según la valoración.'
+                        : aiGeneratedRoutine
+                          ? 'Ajusta los parámetros generales de la rutina (prellenados según la valoración).'
+                          : 'Configura los parámetros generales de la rutina.'}
                     </p>
                     <div>
                       <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre de la rutina</label>
                       <input
                         type="text"
+                        readOnly={routineViewMode}
                         value={routineForm.name}
                         onChange={e => setRoutineForm(p => ({ ...p, name: e.target.value }))}
                         placeholder="Ej. Rutina de fuerza"
@@ -2831,6 +3034,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración</label>
                         <select
                           value={routineForm.duration}
+                          disabled={routineViewMode}
                           onChange={e => setRoutineForm(p => ({ ...p, duration: e.target.value }))}
                           className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
                           style={{
@@ -2850,6 +3054,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nivel</label>
                         <select
                           value={routineForm.level}
+                          disabled={routineViewMode}
                           onChange={e => setRoutineForm(p => ({ ...p, level: e.target.value }))}
                           className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
                           style={{
@@ -2871,13 +3076,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   <div className="flex flex-col min-h-0 flex-1">
                     <div className="flex items-center justify-between mb-3 px-1">
                       <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>
-                        Configura los ejercicios de cada día de la semana
+                        {routineViewMode ? 'Ejercicios de cada día de la semana' : 'Configura los ejercicios de cada día de la semana'}
                       </p>
                     </div>
 
                     {pagedRoutineDays.length > 0 && (
                       <div className="flex flex-col mb-3">
-                        <div className="grid gap-2 mb-3" style={{ gridTemplateColumns: `repeat(6, minmax(0, 1fr))` }}>
+                        <div className="grid gap-2 mb-3" style={{ gridTemplateColumns: `repeat(${pagedRoutineDays.length}, minmax(0, 1fr))` }}>
                           {pagedRoutineDays.map(day => renderRoutineDayCard(
                             day,
                             day === (selectedRoutineDay ?? defaultRoutineDay()),
@@ -2955,15 +3160,17 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)', maxHeight: 'calc(86vh - 320px)', minHeight: 200, scrollbarWidth: 'thin' }}>
                           <div className="flex items-center justify-between sticky top-0 pt-0.5 pb-1" style={{ background: 'rgba(0,0,0,0.02)' }}>
                             <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{dayRows.length} ejercicio{dayRows.length !== 1 ? 's' : ''}</span>
-                            <button onClick={() => addRoutineRow(activeDay)}
-                              className="flex items-center gap-1 text-[11px] font-bold transition-all hover:opacity-70 cursor-pointer"
-                              style={{ color: '#1270B7' }}
-                            ><Plus size={13} strokeWidth={3} /> Agregar ejercicio</button>
+                            {!routineViewMode && (
+                              <button onClick={() => addRoutineRow(activeDay)}
+                                className="flex items-center gap-1 text-[11px] font-bold transition-all hover:opacity-70 cursor-pointer"
+                                style={{ color: '#1270B7' }}
+                              ><Plus size={13} strokeWidth={3} /> Agregar ejercicio</button>
+                            )}
                           </div>
 
                           {dayRows.length === 0 ? (
                             <p className="text-xs text-center py-6" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                              Sin ejercicios. Agrega uno.
+                              {routineViewMode ? 'Sin ejercicios.' : 'Sin ejercicios. Agrega uno.'}
                             </p>
                           ) : dayRows.map((row, i) => (
                             <motion.div
@@ -2986,21 +3193,24 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                     {renderRoutineExerciseSelect(row)}
                                   </div>
                                 </div>
-                                <motion.button
-                                  whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)' }}
-                                  whileTap={{ scale: 0.9 }}
-                                  onClick={() => removeRoutineRow(row.id)}
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer flex-shrink-0 mt-4"
-                                  style={{ background: 'rgba(0,0,0,0.04)' }}
-                                >
-                                  <Trash2 size={13} style={{ color: 'rgba(244,56,67,0.8)' }} />
-                                </motion.button>
+                                {!routineViewMode && (
+                                  <motion.button
+                                    whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)' }}
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={() => removeRoutineRow(row.id)}
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer flex-shrink-0 mt-4"
+                                    style={{ background: 'rgba(0,0,0,0.04)' }}
+                                  >
+                                    <Trash2 size={13} style={{ color: 'rgba(244,56,67,0.8)' }} />
+                                  </motion.button>
+                                )}
                               </div>
                               <div className="grid grid-cols-3 gap-2 mt-2" style={{ paddingLeft: 34 }}>
                                 <div>
                                   <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Series</label>
                                   <input
                                     value={row.sets}
+                                    readOnly={routineViewMode}
                                     onChange={e => updateRoutineRow(row.id, { sets: e.target.value })}
                                     placeholder="Series"
                                     onMouseEnter={e => enterMesh(e.currentTarget)}
@@ -3015,6 +3225,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                   <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Reps</label>
                                   <input
                                     value={row.reps}
+                                    readOnly={routineViewMode}
                                     onChange={e => updateRoutineRow(row.id, { reps: e.target.value })}
                                     placeholder="Reps"
                                     onMouseEnter={e => enterMesh(e.currentTarget)}
@@ -3029,6 +3240,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                   <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Descanso</label>
                                   <input
                                     value={row.rest}
+                                    readOnly={routineViewMode}
                                     onChange={e => updateRoutineRow(row.id, { rest: e.target.value })}
                                     placeholder="Descanso"
                                     onMouseEnter={e => enterMesh(e.currentTarget)}
@@ -3058,30 +3270,42 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       Atrás
                     </button>
                   ) : <div />}
-                  <button
-                    onClick={() => {
-                      if (routineStep < 2) {
-                        setRoutineStep(s => s + 1)
-                      } else {
-                        setShowNewRoutineModal(false)
-                        setRoutineStep(1)
-                        setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
-                        setRoutineRows([])
-                        setSelectedRoutineDay(null)
-                        setRoutineDayPage(1)
-                        setAiGeneratedRoutine(null)
-                        setRoutineSuccess(true)
-                      }
-                    }}
-                    className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
-                    style={{
-                      background: routineStep === 2 && routineRows.length === 0 ? 'rgba(48,209,88,0.3)' : 'linear-gradient(135deg, #30D158, #1A8A3F)',
-                      color: '#FFFFFF',
-                    }}
-                    disabled={(routineStep === 2 && routineRows.length === 0)}
-                  >
-                    {routineStep === 2 ? 'Crear Rutina' : 'Siguiente'}
-                  </button>
+                  {routineFromAssessment && !routineEdited && routineStep === 2 ? (
+                    <button
+                      onClick={() => { setShowNewRoutineModal(false); setRoutineFromAssessment(false); setRoutineSnapshot('') }}
+                      className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
+                      style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                    >
+                      Cerrar
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (routineStep < 2) {
+                          setRoutineStep(s => s + 1)
+                        } else {
+                          setShowNewRoutineModal(false)
+                          setRoutineFromAssessment(false)
+                          setRoutineSnapshot('')
+                          setRoutineStep(1)
+                          setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+                          setRoutineRows([])
+                          setSelectedRoutineDay(null)
+                          setRoutineDayPage(1)
+                          setAiGeneratedRoutine(null)
+                          setRoutineSuccess(true)
+                        }
+                      }}
+                      className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
+                      style={{
+                        background: routineStep === 2 && routineRows.length === 0 ? 'rgba(48,209,88,0.3)' : 'linear-gradient(135deg, #30D158, #1A8A3F)',
+                        color: '#FFFFFF',
+                      }}
+                      disabled={(routineStep === 2 && routineRows.length === 0)}
+                    >
+                      {routineStep === 2 ? 'Crear Rutina' : 'Siguiente'}
+                    </button>
+                  )}
                 </div>
               </motion.div>
             </motion.div>

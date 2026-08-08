@@ -1,11 +1,15 @@
-import { useEffect, useMemo, useState, type MouseEvent, type FocusEvent, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type FocusEvent, type CSSProperties } from 'react'
 import { motion } from 'motion/react'
-import { GraduationCap, Building2, Briefcase, Plus, Trash2, Pencil, X, Search, Inbox, ChevronLeft, ChevronRight, FileText, BookOpen, HelpCircle, ExternalLink, Power, RotateCcw, AlertTriangle } from 'lucide-react'
-import { loadConfigItems, saveConfigItems, loadInactiveCareers, saveInactiveCareers, type ConfigKey } from '../../data/systemConfig'
+import { GraduationCap, Building2, Briefcase, Plus, X, Search, Inbox, ChevronLeft, ChevronRight, FileText, RotateCcw, AlertTriangle, ShieldCheck, ClipboardCheck, Upload, Eye } from 'lucide-react'
+import editActionGif from '../../assets/icons/animated/actions/edit.gif'
+import trashActionGif from '../../assets/icons/animated/actions/trash.gif'
+import inactiveActionGif from '../../assets/icons/animated/actions/inactive.gif'
+import { loadConfigItems, saveConfigItems, loadInactiveCareers, saveInactiveCareers, loadInactiveFlat, saveInactiveFlat, type ConfigKey } from '../../data/systemConfig'
 import { INSTITUCIONES, getNiveles, loadPrograms, savePrograms } from '../../data/academicPrograms'
+import { FLAT_REGISTERED } from '../../data/flatStats'
+import { loadDocs, saveDoc, DOC_ORDER, DOC_TITLES, type DocKey, type StoredDocs } from '../../data/documents'
 import { CAREER_REGISTERED } from '../../data/careerStats'
 
-const YELLOW = '#F5A623'
 const BLUE = '#1270B7'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const PAGE_SIZE = 6
@@ -153,7 +157,9 @@ function AddButton({ background, glow, onClick }: { background: string; glow: st
       >
         Agregar
       </motion.span>
-      <Plus size={16} strokeWidth={2.6} className="px-2.5 flex-shrink-0" />
+      <div className="h-9 flex items-center justify-center px-2.5 flex-shrink-0">
+        <Plus size={16} strokeWidth={2.6} />
+      </div>
     </motion.button>
   )
 }
@@ -218,7 +224,7 @@ function CareerList({ programs, inactive, onOpenAdd, onOpenEdit, onRequestDelete
           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.4)' }}>Carrera</p>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.4)' }}>Institución</p>
           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.4)' }}>Nivel</p>
-          <div className="w-[68px]" />
+          <p className="w-[68px] text-[10px] font-extrabold uppercase tracking-[0.12em] text-right" style={{ color: 'rgba(0,0,0,0.4)' }}>Acciones</p>
         </div>
 
         {paged.length === 0 ? (
@@ -261,20 +267,20 @@ function CareerList({ programs, inactive, onOpenAdd, onOpenEdit, onRequestDelete
                   </div>
                   <div className="flex items-center gap-1 justify-end">
                     {inactiveCareer ? (
-                      <button onClick={() => onRequestActivate(row.institution, row.level, row.name)} title="Reactivar carrera" className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white" style={{ color: '#30D158', background: 'rgba(48,209,88,0.1)' }}>
+                      <button onClick={() => onRequestActivate(row.institution, row.level, row.name)} title="Reactivar carrera" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-[#30D158]/10 hover:scale-110 hover:shadow-[0_4px_14px_rgba(48,209,88,0.28)]" style={{ color: '#30D158', background: 'rgba(48,209,88,0.1)' }}>
                         <RotateCcw size={13} />
                       </button>
                     ) : studentsCount > 0 ? (
-                      <button onClick={() => onRequestInactivate(row.institution, row.level, row.name, studentsCount)} title={`Inactivar carrera (${studentsCount} estudiantes)`} className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white" style={{ color: YELLOW, background: 'rgba(245,166,35,0.1)' }}>
-                        <Power size={13} />
+                      <button onClick={() => onRequestInactivate(row.institution, row.level, row.name, studentsCount)} title={`Inactivar carrera (${studentsCount} estudiantes)`} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-[#F5A623]/10 hover:scale-110 hover:shadow-[0_4px_14px_rgba(245,166,35,0.28)]" style={{ background: 'rgba(245,166,35,0.1)' }}>
+                        <img src={inactiveActionGif} alt="Inactivar" className="w-4 h-4 object-contain" />
                       </button>
                     ) : (
-                      <button onClick={() => onRequestDelete(row.institution, row.level, row.index, row.name)} title="Eliminar carrera" className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#F43843]/10" style={{ color: 'rgba(0,0,0,0.3)', background: 'rgba(0,0,0,0.03)' }}>
-                        <Trash2 size={13} />
+                      <button onClick={() => onRequestDelete(row.institution, row.level, row.index, row.name)} title="Eliminar carrera" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-[#F43843]/10 hover:scale-110 hover:shadow-[0_4px_14px_rgba(244,56,67,0.28)]" style={{ background: 'rgba(0,0,0,0.03)' }}>
+                        <img src={trashActionGif} alt="Eliminar" className="w-4 h-4 object-contain" />
                       </button>
                     )}
-                    <button onClick={() => onOpenEdit(row.institution, row.level, row.index)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white" style={{ color: 'rgba(0,0,0,0.3)', background: 'rgba(0,0,0,0.03)' }}>
-                      <Pencil size={13} />
+                    <button onClick={() => onOpenEdit(row.institution, row.level, row.index)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-white hover:scale-110 hover:shadow-[0_4px_14px_rgba(18,112,183,0.28)]" style={{ background: 'rgba(0,0,0,0.03)' }}>
+                      <img src={editActionGif} alt="Editar" className="w-4 h-4 object-contain" />
                     </button>
                   </div>
                 </motion.div>
@@ -501,7 +507,7 @@ const APARTADOS: ApartadoConfig[] = [
     title: 'Áreas',
     singular: 'área',
     subtitle: 'Áreas de conocimiento o facultades',
-    color: '#BF5AF2',
+    color: BLUE,
   },
   {
     key: 'cargos',
@@ -509,16 +515,19 @@ const APARTADOS: ApartadoConfig[] = [
     title: 'Cargos',
     singular: 'cargo',
     subtitle: 'Roles laborales dentro de la institución',
-    color: '#30D158',
+    color: BLUE,
   },
 ]
 
-function FlatList({ apartado, items, onOpenAdd, onOpenEdit, onDelete }: {
+function FlatList({ apartado, items, inactive, onOpenAdd, onOpenEdit, onRequestDelete, onRequestInactivate, onRequestActivate }: {
   apartado: ApartadoConfig
   items: string[]
+  inactive: string[]
   onOpenAdd: () => void
   onOpenEdit: (index: number) => void
-  onDelete: (index: number) => void
+  onRequestDelete: (index: number, name: string) => void
+  onRequestInactivate: (name: string, count: number) => void
+  onRequestActivate: (name: string) => void
 }) {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
@@ -541,7 +550,7 @@ function FlatList({ apartado, items, onOpenAdd, onOpenEdit, onDelete }: {
           <Search size={14} style={{ color: 'rgba(0,0,0,0.3)' }} />
           <input value={query} onChange={e => setQuery(e.target.value)} placeholder={`Buscar ${title.toLowerCase()}...`} className="flex-1 bg-transparent text-[11px] font-semibold outline-none" style={{ color: '#1A1A1E' }} />
           {query && (
-            <button onClick={() => setQuery('')} className="flex-shrink-0" style={{ color: 'rgba(0,0,0,0.4)' }}>
+            <button onClick={() => setQuery('')} className="flex-shrink-0 cursor-pointer" style={{ color: 'rgba(0,0,0,0.4)' }}>
               <X size={12} />
             </button>
           )}
@@ -552,7 +561,7 @@ function FlatList({ apartado, items, onOpenAdd, onOpenEdit, onDelete }: {
       <div className="px-6 py-4">
         <div className="grid grid-cols-[1fr_auto] gap-4 px-4 mb-3">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.4)' }}>{title}</p>
-          <div className="w-5" />
+          <p className="w-[68px] text-[10px] font-extrabold uppercase tracking-[0.12em] text-right" style={{ color: 'rgba(0,0,0,0.4)' }}>Acciones</p>
         </div>
 
         {paged.length === 0 ? (
@@ -566,6 +575,8 @@ function FlatList({ apartado, items, onOpenAdd, onOpenEdit, onDelete }: {
           <div className="space-y-2">
             {paged.map((item, i) => {
               const originalIndex = items.indexOf(item)
+              const inactiveItem = inactive.includes(item)
+              const registered = FLAT_REGISTERED[apartado.key]?.[item] ?? 0
               return (
                 <motion.div
                   key={`${item}-${i}`}
@@ -575,17 +586,34 @@ function FlatList({ apartado, items, onOpenAdd, onOpenEdit, onDelete }: {
                   className="grid grid-cols-[1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card"
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}12`, border: `1px solid ${color}20` }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}12`, border: `1px solid ${color}20`, opacity: inactiveItem ? 0.5 : 1 }}>
                       <Icon size={16} style={{ color }} />
                     </div>
-                    <p className="text-[#1A1A1E] text-sm font-extrabold truncate">{item}</p>
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <p className="text-[#1A1A1E] text-sm font-extrabold truncate">{item}</p>
+                      {inactiveItem && (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold w-fit" style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.4)' }}>
+                          Inactiva
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 justify-end">
-                    <button onClick={() => onOpenEdit(originalIndex)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white" style={{ color: 'rgba(0,0,0,0.3)', background: 'rgba(0,0,0,0.03)' }}>
-                      <Pencil size={13} />
-                    </button>
-                    <button onClick={() => onDelete(originalIndex)} title="Eliminar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#F43843]/10" style={{ color: 'rgba(0,0,0,0.3)', background: 'rgba(0,0,0,0.03)' }}>
-                      <Trash2 size={13} />
+                    {inactiveItem ? (
+                      <button onClick={() => onRequestActivate(item)} title="Reactivar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-[#30D158]/10 hover:scale-110 hover:shadow-[0_4px_14px_rgba(48,209,88,0.28)]" style={{ color: '#30D158', background: 'rgba(48,209,88,0.1)' }}>
+                        <RotateCcw size={13} />
+                      </button>
+                    ) : registered > 0 ? (
+                      <button onClick={() => onRequestInactivate(item, registered)} title={`Inactivar (${registered} usuarios)`} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-[#F5A623]/10 hover:scale-110 hover:shadow-[0_4px_14px_rgba(245,166,35,0.28)]" style={{ background: 'rgba(245,166,35,0.1)' }}>
+                        <img src={inactiveActionGif} alt="Inactivar" className="w-4 h-4 object-contain" />
+                      </button>
+                    ) : (
+                      <button onClick={() => onRequestDelete(originalIndex, item)} title="Eliminar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-[#F43843]/10 hover:scale-110 hover:shadow-[0_4px_14px_rgba(244,56,67,0.28)]" style={{ background: 'rgba(0,0,0,0.03)' }}>
+                        <img src={trashActionGif} alt="Eliminar" className="w-4 h-4 object-contain" />
+                      </button>
+                    )}
+                    <button onClick={() => onOpenEdit(originalIndex)} title="Editar" className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-white hover:scale-110 hover:shadow-[0_4px_14px_rgba(18,112,183,0.28)]" style={{ background: 'rgba(0,0,0,0.03)' }}>
+                      <img src={editActionGif} alt="Editar" className="w-4 h-4 object-contain" />
                     </button>
                   </div>
                 </motion.div>
@@ -621,34 +649,13 @@ function ItemsModal({ apartado, mode, editIndex, existing, onSave, onClose }: {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const parsed = useMemo(() => {
-    const seen = new Set<string>()
-    const result: string[] = []
-    text.split('\n').forEach(line => {
-      const v = line.trim()
-      if (!v || seen.has(v.toLowerCase())) return
-      seen.add(v.toLowerCase())
-      result.push(v)
-    })
-    return result
-  }, [text])
-
-  const addable = useMemo(() => {
-    if (mode === 'edit') {
-      return parsed.filter(v => {
-        const isSelf = editIndex !== null && existing[editIndex]?.toLowerCase() === v.toLowerCase()
-        return isSelf || !existing.some((e, idx) => idx !== editIndex && e.toLowerCase() === v.toLowerCase())
-      })
-    }
-    return parsed.filter(v => !existing.some(e => e.toLowerCase() === v.toLowerCase()))
-  }, [parsed, existing, mode, editIndex])
-
-  const duplicatesSkipped = parsed.length - addable.length
-  const valid = addable.length > 0
+  const value = text.trim()
+  const isDuplicate = mode === 'add' && value.length > 0 && existing.some(e => e.toLowerCase() === value.toLowerCase())
+  const valid = value.length > 0 && !isDuplicate
 
   const submit = () => {
     if (!valid) return
-    onSave(mode === 'edit' ? addable.slice(0, 1) : addable)
+    onSave([value])
   }
 
   return (
@@ -699,63 +706,25 @@ function ItemsModal({ apartado, mode, editIndex, existing, onSave, onClose }: {
 
         <div className="px-7 py-6">
           <label className="block text-[11px] font-bold mb-1.5" style={{ color: 'rgba(0,0,0,0.6)' }}>
-            {mode === 'edit' ? 'Nombre' : `Nombre${mode === 'add' ? ' o lista' : ''}`}<span className="ml-0.5" style={{ color: '#F43843' }}>*</span>
+            Nombre<span className="ml-0.5" style={{ color: '#F43843' }}>*</span>
           </label>
-          {mode === 'edit' ? (
-            <input
-              value={text}
-              onChange={e => setText(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && submit()}
-              autoFocus
-              placeholder={`Nombre de la ${singular}...`}
-              className="px-3 py-2.5 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
-              style={FIELD_STYLE}
-              onMouseEnter={enterField}
-              onMouseLeave={leaveField}
-              onFocus={focusField}
-              onBlur={blurField}
-            />
-          ) : (
-            <textarea
-              value={text}
-              onChange={e => setText(e.target.value)}
-              autoFocus
-              rows={5}
-              placeholder={`Escribe o pega una lista de ${title.toLowerCase()}. Una por línea.`}
-              className="px-3 py-2.5 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200 resize-none"
-              style={FIELD_STYLE}
-              onMouseEnter={enterField}
-              onMouseLeave={leaveField}
-              onFocus={focusField}
-              onBlur={blurField}
-            />
-          )}
+          <input
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && submit()}
+            autoFocus
+            placeholder={`Nombre de la ${singular}...`}
+            className="px-3 py-2.5 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
+            style={{ ...FIELD_STYLE, border: isDuplicate ? '1px solid #F43843' : '1px solid transparent' }}
+            onMouseEnter={enterField}
+            onMouseLeave={leaveField}
+            onFocus={focusField}
+            onBlur={blurField}
+          />
 
-          {mode === 'add' && addable.length > 0 && (
-            <div className="mt-4">
-              <p className="text-[10px] font-bold tracking-widest mb-2" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                SE AGREGARÁN {addable.length} {title.toUpperCase()}
-              </p>
-              <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
-                {addable.map((item, i) => (
-                  <span key={`${item}-${i}`} className="flex items-center gap-1.5 rounded-xl pl-2.5 pr-1.5 py-1 text-[11px] font-semibold" style={{ background: `${color}0D`, border: `1px solid ${color}1F`, color: '#1D1D1F' }}>
-                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {duplicatesSkipped > 0 && (
-            <p className="mt-3 text-[10px] font-semibold" style={{ color: YELLOW }}>
-              {duplicatesSkipped} elemento{duplicatesSkipped === 1 ? '' : 's'} ya exist{duplicatesSkipped === 1 ? 'e' : 'en'} en la lista y se omitirá{duplicatesSkipped === 1 ? '' : 'n'}.
-            </p>
-          )}
-
-          {mode === 'add' && addable.length === 0 && text.trim() && (
+          {isDuplicate && (
             <p className="mt-3 text-[10px] font-semibold" style={{ color: '#F43843' }}>
-              Todo lo escrito ya existe en la lista.
+              Este {singular} ya existe en la lista.
             </p>
           )}
 
@@ -775,7 +744,7 @@ function ItemsModal({ apartado, mode, editIndex, existing, onSave, onClose }: {
                 cursor: valid ? 'pointer' : 'not-allowed',
               }}
             >
-              {mode === 'edit' ? 'Guardar cambios' : `Guardar ${addable.length || ''}`.trim()}
+              {mode === 'edit' ? 'Guardar cambios' : `Agregar ${singular}`}
             </motion.button>
           </div>
         </div>
@@ -784,38 +753,154 @@ function ItemsModal({ apartado, mode, editIndex, existing, onSave, onClose }: {
   )
 }
 
-/* ── Documentos (recursos y guías) ─────────────────────────────────── */
+/* ── Documentos (contrato, tratamiento de datos y PAR-Q) ───────────── */
 
-const DOCUMENTOS = [
-  { icon: BookOpen, title: 'Guía de inicio rápido', desc: 'Aprende los fundamentos del sistema en 5 minutos', color: '#007AFF' },
-  { icon: FileText, title: 'Manual de usuario', desc: 'Documentación completa para administradores', color: '#30D158' },
-  { icon: HelpCircle, title: 'Preguntas frecuentes', desc: 'Respuestas a las dudas más comunes', color: '#FF9500' },
-]
+const DOC_META: Record<DocKey, { icon: typeof FileText; color: string; hint: string }> = {
+  contrato: { icon: FileText, color: BLUE, hint: 'Contrato de prestación de servicios estudiantiles' },
+  tratamiento: { icon: ShieldCheck, color: '#30D158', hint: 'Autorización para el tratamiento de datos personales' },
+  parq: { icon: ClipboardCheck, color: '#F5A623', hint: 'Cuestionario de aptitud física antes de entrenar' },
+}
 
 function DocsGrid() {
+  const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
+  const [preview, setPreview] = useState<DocKey | null>(null)
+  const [pendingKey, setPendingKey] = useState<DocKey | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const pickFile = (key: DocKey) => {
+    setPendingKey(key)
+    fileRef.current?.click()
+  }
+
+  const onFile = (e: MouseEvent<HTMLInputElement>) => {
+    const file = e.currentTarget.files?.[0]
+    e.currentTarget.value = ''
+    if (!file || !pendingKey) return
+    if (file.type !== 'application/pdf') {
+      alert('Solo se permiten archivos PDF.')
+      setPendingKey(null)
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      saveDoc(pendingKey, file.name, dataUrl)
+      setDocs(loadDocs())
+      setPendingKey(null)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  useEffect(() => {
+    if (preview) {
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setPreview(null)
+      }
+      window.addEventListener('keydown', onKey)
+      return () => window.removeEventListener('keydown', onKey)
+    }
+  }, [preview])
+
   return (
-    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-3 gap-5">
-      {DOCUMENTOS.map((doc, i) => (
+    <>
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-3 gap-5">
+        {DOC_ORDER.map((key, i) => {
+          const meta = DOC_META[key]
+          const doc = docs[key]
+          return (
+            <motion.div
+              key={key}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 + i * 0.08 }}
+              className="rounded-2xl p-6 flex flex-col"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${meta.color}10`, border: `1px solid ${meta.color}15` }}>
+                <meta.icon size={18} style={{ color: meta.color }} />
+              </div>
+              <h4 className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{DOC_TITLES[key]}</h4>
+              <p className="text-[11px] mt-1.5" style={{ color: 'rgba(0,0,0,0.3)' }}>{meta.hint}</p>
+
+              <div className="mt-4 flex items-center gap-1.5 rounded-xl px-3 py-2 w-fit text-[10px] font-bold" style={{ background: doc.dataUrl ? `${meta.color}0D` : 'rgba(0,0,0,0.03)', color: doc.dataUrl ? meta.color : 'rgba(0,0,0,0.35)' }}>
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: doc.dataUrl ? meta.color : 'rgba(0,0,0,0.2)' }} />
+                {doc.dataUrl ? `Actualizado: ${doc.fileName}` : 'Sin documento cargado'}
+              </div>
+
+              <div className="flex gap-2 mt-5 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => pickFile(key)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                  style={{ background: BLUE_GRAD, boxShadow: `0 6px 16px ${BLUE}2E` }}
+                >
+                  <Upload size={13} />
+                  {doc.dataUrl ? 'Reemplazar' : 'Subir PDF'}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: doc.dataUrl ? 1.03 : 1 }}
+                  whileTap={{ scale: doc.dataUrl ? 0.97 : 1 }}
+                  onClick={() => doc.dataUrl && setPreview(key)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: doc.dataUrl ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.2)', cursor: doc.dataUrl ? 'pointer' : 'default' }}
+                >
+                  <Eye size={13} />
+                  Ver
+                </motion.button>
+              </div>
+            </motion.div>
+          )
+        })}
+      </motion.div>
+
+      <input ref={fileRef} type="file" accept="application/pdf" className="hidden" onChange={onFile} />
+
+      {preview && (
         <motion.div
-          key={doc.title}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 + i * 0.08 }}
-          className="rounded-2xl p-6 cursor-pointer"
-          style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(6px)' }}
+          onClick={() => setPreview(null)}
         >
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${doc.color}10`, border: `1px solid ${doc.color}15` }}>
-            <doc.icon size={18} style={{ color: doc.color }} />
-          </div>
-          <h4 className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{doc.title}</h4>
-          <p className="text-[11px] mt-1.5 mb-4" style={{ color: 'rgba(0,0,0,0.3)' }}>{doc.desc}</p>
-          <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: doc.color }}>
-            <span>Abrir</span>
-            <ExternalLink size={12} />
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full max-w-3xl rounded-3xl overflow-hidden"
+            style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+              <div className="flex items-center gap-2">
+                <FileText size={15} style={{ color: DOC_META[preview].color }} />
+                <span className="text-sm font-extrabold" style={{ color: '#1A1A1E' }}>{DOC_TITLES[preview]}</span>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setPreview(null)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer"
+                style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.4)' }}
+              >
+                <X size={15} />
+              </motion.button>
+            </div>
+            <div className="p-6 bg-[#F5F5F7]">
+              {docs[preview].dataUrl ? (
+                <iframe src={docs[preview].dataUrl} title={DOC_TITLES[preview]} className="w-full h-[70vh] rounded-2xl bg-white" style={{ border: '1px solid rgba(0,0,0,0.06)' }} />
+              ) : (
+                <div className="w-full h-[70vh] rounded-2xl flex flex-col items-center justify-center gap-2 bg-white" style={{ border: '1px dashed rgba(0,0,0,0.12)' }}>
+                  <FileText size={28} style={{ color: 'rgba(0,0,0,0.2)' }} />
+                  <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.35)' }}>No hay documento cargado para previsualizar.</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
         </motion.div>
-      ))}
-    </motion.div>
+      )}
+    </>
   )
 }
 
@@ -853,7 +938,7 @@ function ConfirmModal({ title, description, confirmLabel, color, onConfirm, onCl
         style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 25px 60px rgba(0,0,0,0.12)' }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="relative px-7 pt-6 pb-5" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+        <div className="relative px-7 pt-8 pb-6 text-center" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
           <div className="absolute top-5 right-6">
             <motion.button
               initial="rest"
@@ -870,23 +955,19 @@ function ConfirmModal({ title, description, confirmLabel, color, onConfirm, onCl
               <X size={15} />
             </motion.button>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}0F`, border: `1px solid ${color}1A` }}>
-              <AlertTriangle size={20} style={{ color }} />
-            </div>
-            <div>
-              <h2 className="text-base font-extrabold tracking-tight" style={{ color: '#1A1A1E' }}>{title}</h2>
-            </div>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: `${color}0F`, border: `1px solid ${color}1A` }}>
+            <AlertTriangle size={24} style={{ color }} />
           </div>
+          <h2 className="mt-4 text-base font-extrabold tracking-tight" style={{ color: '#1A1A1E' }}>{title}</h2>
         </div>
 
         <div className="px-7 py-6">
-          <p className="text-sm font-medium leading-relaxed" style={{ color: 'rgba(0,0,0,0.55)' }}>{description}</p>
-          <div className="flex gap-3 mt-7">
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onClose} className="flex-1 py-3 rounded-xl text-xs font-bold" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}>
-              Cancelar
+          <p className="text-sm font-medium leading-relaxed text-center" style={{ color: 'rgba(0,0,0,0.55)' }}>{description}</p>
+          <div className="flex flex-col gap-2.5 mt-7">
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onClose} className="w-full py-3 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: BLUE_GRAD, boxShadow: '0 8px 20px rgba(18,112,183,0.3)' }}>
+              Seguir aquí
             </motion.button>
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onConfirm} className="flex-1 py-3 rounded-xl text-xs font-bold text-white" style={{ background: `linear-gradient(135deg, ${color}, ${color}E6)`, boxShadow: `0 8px 20px ${color}3D` }}>
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onConfirm} className="w-full py-3 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: `linear-gradient(135deg, ${color}, ${color}E6)`, boxShadow: `0 8px 20px ${color}3D` }}>
               {confirmLabel}
             </motion.button>
           </div>
@@ -906,12 +987,16 @@ type ConfirmState =
   | { kind: 'delete'; institution: string; level: string; index: number; name: string }
   | { kind: 'inactivate'; institution: string; level: string; name: string; count: number }
   | { kind: 'activate'; institution: string; level: string; name: string }
+  | { kind: 'deleteFlat'; key: ConfigKey; index: number; name: string }
+  | { kind: 'inactivateFlat'; key: ConfigKey; name: string; count: number }
+  | { kind: 'activateFlat'; key: ConfigKey; name: string }
 
 export default function AdminConfig({ tab, onTabChange }: { tab: string; onTabChange: (t: string) => void }) {
   const [programs, setPrograms] = useState<Programs>(() => loadPrograms())
   const [areas, setAreas] = useState<string[]>(() => loadConfigItems('areas'))
   const [cargos, setCargos] = useState<string[]>(() => loadConfigItems('cargos'))
   const [inactive, setInactive] = useState<Record<string, string[]>>(() => loadInactiveCareers())
+  const [inactiveFlat, setInactiveFlat] = useState<Record<ConfigKey, string[]>>(() => loadInactiveFlat())
   const [modal, setModal] = useState<ModalState | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
 
@@ -955,18 +1040,19 @@ export default function AdminConfig({ tab, onTabChange }: { tab: string; onTabCh
     setFlatItems(key, getFlatItems(key).filter((_, i) => i !== index))
   }
 
-  const toggleInactive = (inst: string, lvl: string, name: string, shouldInactivate: boolean) => {
-    const key = `${inst}|${lvl}`
-    const current = inactive[key] ?? []
-    const nextMap = { ...inactive }
+  const toggleInactiveFlat = (key: ConfigKey, name: string, shouldInactivate: boolean) => {
+    const current = inactiveFlat[key] ?? []
+    const nextMap: Record<ConfigKey, string[]> = {
+      areas: key === 'areas' ? current : inactiveFlat.areas,
+      cargos: key === 'cargos' ? current : inactiveFlat.cargos,
+    }
     if (shouldInactivate) {
       nextMap[key] = current.includes(name) ? current : [...current, name]
     } else {
       nextMap[key] = current.filter(n => n !== name)
-      if (nextMap[key].length === 0) delete nextMap[key]
     }
-    setInactive(nextMap)
-    saveInactiveCareers(nextMap)
+    setInactiveFlat(nextMap)
+    saveInactiveFlat(nextMap)
   }
 
   const confirmDelete = () => {
@@ -985,6 +1071,38 @@ export default function AdminConfig({ tab, onTabChange }: { tab: string; onTabCh
     if (!confirm || confirm.kind !== 'activate') return
     toggleInactive(confirm.institution, confirm.level, confirm.name, false)
     setConfirm(null)
+  }
+
+  const confirmDeleteFlat = () => {
+    if (!confirm || confirm.kind !== 'deleteFlat') return
+    handleDeleteFlat(confirm.key, confirm.index)
+    setConfirm(null)
+  }
+
+  const confirmInactivateFlat = () => {
+    if (!confirm || confirm.kind !== 'inactivateFlat') return
+    toggleInactiveFlat(confirm.key, confirm.name, true)
+    setConfirm(null)
+  }
+
+  const confirmActivateFlat = () => {
+    if (!confirm || confirm.kind !== 'activateFlat') return
+    toggleInactiveFlat(confirm.key, confirm.name, false)
+    setConfirm(null)
+  }
+
+  const toggleInactive = (inst: string, lvl: string, name: string, shouldInactivate: boolean) => {
+    const key = `${inst}|${lvl}`
+    const current = inactive[key] ?? []
+    const nextMap = { ...inactive }
+    if (shouldInactivate) {
+      nextMap[key] = current.includes(name) ? current : [...current, name]
+    } else {
+      nextMap[key] = current.filter(n => n !== name)
+      if (nextMap[key].length === 0) delete nextMap[key]
+    }
+    setInactive(nextMap)
+    saveInactiveCareers(nextMap)
   }
 
   const areasConfig = APARTADOS.find(a => a.key === 'areas')!
@@ -1011,9 +1129,12 @@ export default function AdminConfig({ tab, onTabChange }: { tab: string; onTabCh
           <FlatList
             apartado={areasConfig}
             items={areas}
+            inactive={inactiveFlat.areas}
             onOpenAdd={() => setModal({ kind: 'areas', mode: 'add', editIndex: null })}
             onOpenEdit={index => setModal({ kind: 'areas', mode: 'edit', editIndex: index })}
-            onDelete={index => handleDeleteFlat('areas', index)}
+            onRequestDelete={(index, name) => setConfirm({ kind: 'deleteFlat', key: 'areas', index, name })}
+            onRequestInactivate={(name, count) => setConfirm({ kind: 'inactivateFlat', key: 'areas', name, count })}
+            onRequestActivate={name => setConfirm({ kind: 'activateFlat', key: 'areas', name })}
           />
         </motion.div>
       )}
@@ -1023,9 +1144,12 @@ export default function AdminConfig({ tab, onTabChange }: { tab: string; onTabCh
           <FlatList
             apartado={cargosConfig}
             items={cargos}
+            inactive={inactiveFlat.cargos}
             onOpenAdd={() => setModal({ kind: 'cargos', mode: 'add', editIndex: null })}
             onOpenEdit={index => setModal({ kind: 'cargos', mode: 'edit', editIndex: index })}
-            onDelete={index => handleDeleteFlat('cargos', index)}
+            onRequestDelete={(index, name) => setConfirm({ kind: 'deleteFlat', key: 'cargos', index, name })}
+            onRequestInactivate={(name, count) => setConfirm({ kind: 'inactivateFlat', key: 'cargos', name, count })}
+            onRequestActivate={name => setConfirm({ kind: 'activateFlat', key: 'cargos', name })}
           />
         </motion.div>
       )}
@@ -1085,6 +1209,39 @@ export default function AdminConfig({ tab, onTabChange }: { tab: string; onTabCh
           confirmLabel="Reactivar"
           color="#30D158"
           onConfirm={confirmActivate}
+          onClose={() => setConfirm(null)}
+        />
+      )}
+
+      {confirm && confirm.kind === 'deleteFlat' && (
+        <ConfirmModal
+          title={`¿Eliminar ${APARTADOS.find(a => a.key === confirm.key)!.singular}?`}
+          description={`El ${APARTADOS.find(a => a.key === confirm.key)!.singular} "${confirm.name}" no tiene usuarios registrados y se eliminará de forma permanente. Esta acción no se puede deshacer.`}
+          confirmLabel="Eliminar"
+          color="#F43843"
+          onConfirm={confirmDeleteFlat}
+          onClose={() => setConfirm(null)}
+        />
+      )}
+
+      {confirm && confirm.kind === 'inactivateFlat' && (
+        <ConfirmModal
+          title={`¿Inactivar ${APARTADOS.find(a => a.key === confirm.key)!.singular}?`}
+          description={`El ${APARTADOS.find(a => a.key === confirm.key)!.singular} "${confirm.name}" tiene ${confirm.count} usuarios registrados y no se puede eliminar. Al inactivarlo dejará de estar disponible para nuevos registros.`}
+          confirmLabel="Inactivar"
+          color="#F5A623"
+          onConfirm={confirmInactivateFlat}
+          onClose={() => setConfirm(null)}
+        />
+      )}
+
+      {confirm && confirm.kind === 'activateFlat' && (
+        <ConfirmModal
+          title={`¿Reactivar ${APARTADOS.find(a => a.key === confirm.key)!.singular}?`}
+          description={`El ${APARTADOS.find(a => a.key === confirm.key)!.singular} "${confirm.name}" volverá a estar activo y disponible para nuevos registros.`}
+          confirmLabel="Reactivar"
+          color="#30D158"
+          onConfirm={confirmActivateFlat}
           onClose={() => setConfirm(null)}
         />
       )}

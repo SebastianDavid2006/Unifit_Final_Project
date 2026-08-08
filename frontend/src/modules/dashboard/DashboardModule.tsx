@@ -1,9 +1,6 @@
 import { motion } from 'motion/react'
 import {
-  BarChart, Bar, Cell, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
-} from 'recharts'
-import { BarChart, Bar, Cell, XAxis, YAxis,
+  BarChart, Bar, Cell, XAxis, YAxis, PieChart, Pie,
   CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
 } from 'recharts'
 import { StudentsView } from '../../assets/models/ui/users/students/StudentsModel'
@@ -45,33 +42,18 @@ const weeklyAttendance = weekDays.map(wd => ({
   isToday: wd.isToday,
 }))
 
-const heatmapDays = weekDays.map(wd => ({
-  label: wd.isToday ? 'Hoy' : `${wd.name} ${wd.date}`,
-  isToday: wd.isToday,
-}))
-
-const hourBlocks = [
-  { label: '12pm-2pm', hours: [0, 1] },
-  { label: '2pm-4pm', hours: [2, 3] },
-  { label: '4pm-6pm', hours: [4, 5] },
-  { label: '6pm-8pm', hours: [6, 7] },
-  { label: '8pm-10pm', hours: [8, 9] },
+const topCareers = [
+  { name: 'Administración de Empresas', label: 'Adm. Empresas', students: 42, color: '#1270B7' },
+  { name: 'Ingeniería de Software', label: 'Ing. Software', students: 40, color: '#30D158' },
+  { name: 'Auxiliar en Enfermería', label: 'Enfermería', students: 38, color: '#FF9F0A' },
+  { name: 'Contaduría Pública', label: 'Contaduría', students: 36, color: '#BF5AF2' },
+  { name: 'Auxiliar Administrativo', label: 'Adm. Auxiliar', students: 35, color: '#F43843' },
+  { name: 'Ingeniería de Sistemas', label: 'Sistemas', students: 34, color: '#5E5CE6' },
+  { name: 'Diseño Gráfico', label: 'Diseño', students: 33, color: '#FF6482' },
+  { name: 'Ingeniería Industrial', label: 'Ing. Industrial', students: 31, color: '#00C7BE' },
+  { name: 'Derecho', label: 'Derecho', students: 30, color: '#64D2FF' },
+  { name: 'Operaciones Software y Redes', label: 'Software y Redes', students: 30, color: '#FF9F0A' },
 ]
-
-const heatmapData: { day: string; block: number; value: number }[] = []
-const basePattern = [15, 10, 8, 12, 18, 25, 35, 45, 55, 50]
-heatmapDays.forEach((wd, di) => {
-  const dayFactor = [0.9, 1.0, 0.85, 1.1, 1.3, 0.7, 0.3][di]
-  hourBlocks.forEach((block, bi) => {
-    const blockValue = block.hours.reduce((sum, h) => {
-      const noise = 0.7 + Math.random() * 0.6
-      return sum + Math.round(basePattern[h] * dayFactor * noise)
-    }, 0)
-    heatmapData.push({ day: wd.label, block: bi, value: blockValue })
-  })
-})
-
-const maxHeatValue = Math.max(...heatmapData.map(d => d.value))
 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
@@ -103,7 +85,7 @@ export default function DashboardModule() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="relative rounded-3xl gradient-border"
+        className="relative rounded-3xl gradient-border mt-12"
         style={{
           background: 'linear-gradient(145deg, #FFFFFF 0%, #F0F7FF 25%, #EBF5FF 50%, #FFF8E8 100%)',
           boxShadow: '0 20px 60px rgba(0,122,255,0.06), 0 8px 20px rgba(0,0,0,0.02)',
@@ -123,14 +105,17 @@ export default function DashboardModule() {
             }}
           />
         </div>
-        <div className="relative z-10 p-8 flex items-center justify-center min-h-[240px]">
-          <div className="flex items-center gap-4">
-            <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
+        <div className="relative z-10 p-8 flex items-center min-h-[280px]">
+          <div className="flex items-center gap-5">
+            <div className="w-1 h-24 rounded-full" style={{ background: BLUE_GRAD }} />
             <div>
-              <p className="text-[10px] font-bold tracking-[0.18em] uppercase" style={{ color: 'rgba(0,0,0,0.25)' }}>{today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-              <h1 className="mt-0.5 text-center" style={{ color: '#1A1A1E', fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.04em' }}>
-                Buenos días, <span className="text-gradient-warm">Sebastián.</span>
+              <p className="text-[11px] font-bold tracking-[0.18em] uppercase" style={{ color: 'rgba(0,0,0,0.25)' }}>{today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <h1 className="mt-1.5" style={{ color: '#1A1A1E', fontSize: '2.8rem', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+                Buenos días,
               </h1>
+              <h2 className="text-gradient-warm" style={{ fontSize: '2.8rem', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+                Sebastián.
+              </h2>
             </div>
           </div>
         </div>
@@ -141,7 +126,7 @@ export default function DashboardModule() {
           style={{
             position: 'absolute',
             right: 24,
-            top: -50,
+            bottom: 0,
             width: 400,
             height: 'auto',
             zIndex: 20,
@@ -190,7 +175,7 @@ export default function DashboardModule() {
                 <ModelView />
               </div>
               <div className="relative z-10 text-center mt-6">
-                <span className="stat-value block transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.15]" style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1, color: colors.text }}>{card.value}</span>
+                <span className="stat-value text-gradient-warm block transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.15]" style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1 }}>{card.value}</span>
                 <p className="text-xs mt-1.5 font-semibold transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" style={{ color: 'rgba(0,0,0,0.45)' }}>{card.label}</p>
               </div>
             </motion.div>
@@ -221,13 +206,13 @@ export default function DashboardModule() {
                 tickLine={false}
                 tick={({ x, y, payload }: any) => (
                   <g transform={`translate(${x},${y})`}>
-                    <text x={0} y={0} dy={16} textAnchor="middle" fontSize={11} fontWeight={payload.value === 'Hoy' ? 700 : 400} fill={payload.value === 'Hoy' ? '#30D158' : 'rgba(0,0,0,0.65)'}>
+                    <text x={0} y={0} dy={16} textAnchor="middle" fontSize={13} fontWeight={700} fill={payload.value === 'Hoy' ? '#30D158' : 'rgba(0,0,0,0.8)'}>
                       {payload.value}
                     </text>
                   </g>
                 )}
               />
-              <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.65)' }} axisLine={false} tickLine={false} />
+              <YAxis hide />
               <Tooltip content={<ChartTooltip />} />
               <defs>
                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -304,83 +289,72 @@ export default function DashboardModule() {
         >
           {/* Header */}
           <div className="flex items-center justify-center mb-5">
-            <span className="text-[13px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.55)' }}>HORA PICO DE LA SEMANA</span>
+            <span className="text-[13px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.55)' }}>CARRERAS CON MÁS ASISTENCIA</span>
           </div>
-          <div className="overflow-x-auto">
-            <div className="flex gap-0" style={{ minWidth: 500 }}>
-              {/* Hour labels column */}
-              <div className="flex flex-col gap-[3px] pt-6 pr-2">
-                {heatmapDays.map((wd) => (
-                  <div key={wd.label} className="flex items-center justify-end h-[26px]">
-                    <span className="text-[10px] font-semibold" style={{ color: wd.isToday ? '#30D158' : 'rgba(0,0,0,0.6)' }}>
-                      {wd.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {/* Heatmap grid */}
-              <div className="flex-1">
-                <div className="flex gap-[3px] mb-[3px]">
-                  {hourBlocks.map((block) => (
-                    <div key={block.label} className="flex-1 text-center">
-                      <span className="text-[9px] font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>
-                        {block.label}
-                      </span>
-                    </div>
+          <div style={{ overflow: 'visible' }} className="no-clip-chart">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={topCareers.slice(0, 5)} margin={{ top: 40, bottom: 0, left: 0, right: 0 }}>
+                <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,0,0,0.12)" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  axisLine={false}
+                  tickLine={false}
+                  interval={0}
+                  tick={{ fontSize: 13, fontWeight: 700, fill: 'rgba(0,0,0,0.8)' }}
+                  tickMargin={8}
+                />
+                <YAxis hide domain={[0, 50]} />
+                <Tooltip
+                  content={({ active, payload }: any) => {
+                    if (!active || !payload?.length) return null
+                    const entry = payload[0]
+                    return (
+                      <div style={{
+                        background: 'rgba(255,255,255,0.95)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(0,0,0,0.06)',
+                        borderRadius: 14,
+                        padding: '12px 18px',
+                        boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
+                      }}>
+                        <p style={{ color: 'rgba(0,0,0,0.35)', fontSize: 11, marginBottom: 4, fontWeight: 500 }}>{entry.payload.name}</p>
+                        <p style={{ color: entry.payload.color, fontSize: 14, fontWeight: 700 }}>{entry.value} <span style={{ color: 'rgba(0,0,0,0.3)', fontWeight: 400, fontSize: 12 }}>estudiantes</span></p>
+                      </div>
+                    )
+                  }}
+                />
+                <defs>
+                  {topCareers.slice(0, 5).map((c, i) => (
+                    <linearGradient key={i} id={`gradTop${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={c.color} stopOpacity={1} />
+                      <stop offset="100%" stopColor={c.color} stopOpacity={0.35} />
+                    </linearGradient>
                   ))}
-                </div>
-                {heatmapDays.map((wd) => (
-                  <div key={wd.label} className="flex gap-[3px] mb-[3px]">
-                    {hourBlocks.map((block, bi) => {
-                      const entry = heatmapData.find(d => d.day === wd.label && d.block === bi)
-                      const value = entry?.value ?? 0
-                      const intensity = value / maxHeatValue
-                      const isToday = wd.isToday
-                      const meshBg = isToday
-                        ? `radial-gradient(ellipse at 20% 20%, rgba(48,209,88,${0.4 + intensity * 0.5}) 0%, transparent 60%),
-                           radial-gradient(ellipse at 80% 80%, rgba(16,185,129,${0.3 + intensity * 0.55}) 0%, transparent 60%),
-                           radial-gradient(ellipse at 50% 50%, rgba(5,150,105,${0.2 + intensity * 0.4}) 0%, transparent 70%),
-                           linear-gradient(135deg, rgba(48,209,88,${0.15 + intensity * 0.3}), rgba(16,185,129,${0.1 + intensity * 0.25}))`
-                        : `radial-gradient(ellipse at 20% 20%, rgba(99,148,237,${0.08 + intensity * 0.72}) 0%, transparent 60%),
-                           radial-gradient(ellipse at 80% 80%, rgba(59,130,246,${0.05 + intensity * 0.75}) 0%, transparent 60%),
-                           radial-gradient(ellipse at 50% 50%, rgba(37,99,235,${0.04 + intensity * 0.6}) 0%, transparent 70%),
-                           linear-gradient(135deg, rgb(${Math.round(235 - 210 * intensity)},${Math.round(240 - 110 * intensity)},${Math.round(252 - 40 * intensity)}), rgb(${Math.round(180 - 160 * intensity)},${Math.round(210 - 80 * intensity)},${Math.round(250 - 20 * intensity)}))`
+                </defs>
+                <Bar dataKey="students" radius={[8, 8, 0, 0]} className="bar-hover">
+                  {topCareers.slice(0, 5).map((c, i) => (
+                    <Cell
+                      key={i}
+                      fill={`url(#gradTop${i})`}
+                      style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
+                    />
+                  ))}
+                  <LabelList
+                    dataKey="students"
+                    position="top"
+                    content={({ x, y, width, value }: any) => {
+                      const pillW = 26
                       return (
-                        <div
-                          key={`${wd.label}-${bi}`}
-                          className="flex-1 rounded-lg cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-md flex items-center justify-center"
-                          style={{
-                            height: 30,
-                            background: meshBg,
-                          }}
-                          title={`${wd.label} · ${block.label}: ${value} asistencias`}
-                        >
-                          <span style={{ fontSize: 11, fontWeight: 800, color: isToday ? '#0D5C2F' : '#1B3A6B' }}>
-                            {value}
-                          </span>
-                        </div>
+                        <g>
+                          <rect x={x + width / 2 - pillW / 2} y={y - 20} width={pillW} height={17} rx={8.5} fill="rgba(0,0,0,0.08)" />
+                          <text x={x + width / 2} y={y - 8} textAnchor="middle" fontSize={10} fontWeight={800} fill="rgba(0,0,0,0.7)">{value}</text>
+                        </g>
                       )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Legend */}
-            <div className="flex items-center justify-between mt-4 px-1">
-              {[0, 0.25, 0.5, 0.75, 1].map((t, i, arr) => {
-                const from = i === 0 ? 0 : Math.round(maxHeatValue * arr[i - 1]) + 1
-                const to = Math.round(maxHeatValue * t)
-                const r = Math.round(210 - 180 * t)
-                const g = Math.round(225 - 80 * t)
-                const b = Math.round(250 - 20 * t)
-                return (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <div style={{ width: 22, height: 14, borderRadius: 4, background: `linear-gradient(180deg, rgb(${r},${g},${b}), rgb(${Math.round(r * 0.7)},${Math.round(g * 0.8)},${Math.round(b * 1.02)}))` }} />
-                    <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{from}-{to}</span>
-                  </div>
-                )
-              })}
-            </div>
+                    }}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </motion.div>
       </div>

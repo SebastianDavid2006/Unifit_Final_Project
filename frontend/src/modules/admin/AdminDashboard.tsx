@@ -3,8 +3,11 @@ import {
   BarChart, Bar, Cell, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
 } from 'recharts'
-import { Users, Clock, Sparkles, AlertTriangle, Target, Building2, GraduationCap, Activity } from 'lucide-react'
-import { BLUE, BLUE_GRAD, RED } from '../../data/constants'
+import { StudentsView } from '../../assets/models/ui/users/students/StudentsModel'
+import { StudentCardView } from '../../assets/models/ui/objects/student_card/StudentCardModel'
+import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarModel'
+import { ListView } from '../../assets/models/ui/objects/list/ListModel'
+import { BLUE_GRAD } from '../../data/constants'
 import adminImg from '../../assets/illustrations/characters/admin/admin_default.webp'
 
 const CARD_COLORS = [
@@ -14,84 +17,15 @@ const CARD_COLORS = [
   { bg: 'rgba(241,200,39,0.08)', icon: 'rgba(241,200,39,0.15)', text: '#F1C827' },
 ]
 
-const dayRecommendations = [
-  {
-    title: 'Supervisión institucional',
-    tips: [
-      { icon: Target, text: 'Revisa el reporte de adherencia semanal. Ingeniería lidera con 87%, Derecho requiere intervención con 61%.', color: '#30D158' },
-      { icon: Users, text: 'Hay 38 estudiantes con riesgo alto de abandono. Coordina con entrenadores para plan de retención.', color: RED },
-      { icon: Building2, text: 'La ocupación pico en horas de la tarde (4-8PM) supera el 85%. Evalúa expansión de horarios.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: '3 entrenadores no han actualizado sus planes de rutina en más de 7 días.', color: '#FF9500' },
-    ],
-  },
-  {
-    title: 'Monitoreo de facultades',
-    tips: [
-      { icon: Target, text: 'Artes presenta la adherencia más baja (54%). Programa una reunión con el decano de la facultad.', color: '#FF9500' },
-      { icon: Users, text: 'Medicina tiene 38 estudiantes activos con 73% adherencia. Reconocer su progreso puede motivar a otras facultades.', color: '#1270B7' },
-      { icon: Activity, text: 'El NPS institucional subió 6 puntos este mes. Mantén las estrategias actuales de satisfacción.', color: '#30D158' },
-      { icon: Clock, text: 'Los viernes 6PM registran la ocupación más alta (95%). Considera añadir más equipos en esa franja.', color: '#BF5AF2' },
-    ],
-  },
-  {
-    title: 'Día de análisis',
-    tips: [
-      { icon: Target, text: 'La tasa de abandono general es 8.4%. La meta del trimestre es reducirla a 6%. Revisa estrategias de retención.', color: RED },
-      { icon: Users, text: 'Ciencias tiene 22 estudiantes con 69% adherencia. Una actividad interdisciplinaria podría aumentar el compromiso.', color: '#1270B7' },
-      { icon: Building2, text: 'La ocupación de 6-8PM entre semana supera el 90%. Evalúa apertura de un tercer turno de entrenadores.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: 'El crecimiento proyectado es de +18 estudiantes para junio. Asegura que la capacidad instalada lo soporte.', color: '#30D158' },
-    ],
-  },
-  {
-    title: 'Ajuste estratégico',
-    tips: [
-      { icon: Target, text: 'Estás al 68% de la meta mensual de retención. Un esfuerzo coordinado con entrenadores puede marcar la diferencia.', color: '#30D158' },
-      { icon: Users, text: 'Administración tiene 78% adherencia y 35 estudiantes. Es un modelo a seguir para facultades con bajo rendimiento.', color: '#1270B7' },
-      { icon: Clock, text: 'La ocupación máxima será a las 6PM. Verifica disponibilidad de personal y equipos en esa hora.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: 'El modelo predictivo indica alta probabilidad de necesitar turno nocturno. Prepárate para esa decisión.', color: '#FF9500' },
-    ],
-  },
-  {
-    title: 'Cierre de semana',
-    tips: [
-      { icon: Target, text: 'Último día hábil para alcanzar la meta semanal de nuevos registros. Actualmente van 22 de 30 programados.', color: '#30D158' },
-      { icon: Users, text: 'El NPS de Ingeniería (92) y Administración (88) son los más altos. Documenta sus buenas prácticas.', color: '#1270B7' },
-      { icon: Activity, text: 'Viernes tiene 20% menos asistencia que el pico de la semana. Evalúa horarios reducidos.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: 'Genera el reporte semanal para la junta directiva: 156 activos, 73% adherencia global, NPS 82.', color: '#FF9500' },
-    ],
-  },
-  {
-    title: 'Actividad ligera',
-    tips: [
-      { icon: Target, text: 'Los sábados tienen 60% menos carga administrativa. Úsalos para revisar reportes pendientes.', color: '#30D158' },
-      { icon: Users, text: 'Solo 34 asistencias esperadas hoy. Enfócate en calidad de atención más que en cantidad.', color: '#1270B7' },
-      { icon: Building2, text: 'Horario reducido: 9AM-1PM. Aprovecha la mañana para revisión de documentos y auditoría.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: 'Revisa las métricas predictivas: 87% confianza en crecimiento de +18 estudiantes para junio.', color: '#30D158' },
-    ],
-  },
-  {
-    title: 'Descanso y preparación',
-    tips: [
-      { icon: Target, text: 'Domingo de recuperación. Revisa los dashboards desde tu dispositivo móvil.', color: '#30D158' },
-      { icon: Users, text: 'Prepara la agenda para el lunes: revisión de presupuesto, reunión con decanos y reporte mensual.', color: '#1270B7' },
-      { icon: Clock, text: 'El centro está cerrado. Usa este tiempo para planificar la estrategia de la siguiente semana.', color: '#BF5AF2' },
-      { icon: AlertTriangle, text: 'El modelo predictivo muestra facturación proyectada de $124,000 MXN. Prepara la presentación financiera.', color: '#FF9500' },
-    ],
-  },
-]
-
 const today = new Date()
 const monday = new Date(today)
 monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
 
-const dayIndex = (today.getDay() + 6) % 7
-const todayRecommendations = dayRecommendations[dayIndex]
-
 const cards = [
-  { label: 'Estudiantes Activos', value: '156', icon: Users },
-  { label: 'Entrenadores', value: '8', icon: GraduationCap },
-  { label: 'Facultades', value: '6', icon: Building2 },
-  { label: 'Ocupación Promedio', value: '68%', icon: Activity },
+  { label: 'Estudiantes Registrados', value: '847', view: StudentCardView },
+  { label: 'Asistencias de Hoy', value: '12', view: ListView },
+  { label: 'Personas Activas', value: '43', view: StudentsView },
+  { label: 'Citas Programadas', value: '24', view: CalendarView },
 ]
 
 const dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
@@ -108,33 +42,18 @@ const weeklyAttendance = weekDays.map(wd => ({
   isToday: wd.isToday,
 }))
 
-const heatmapDays = weekDays.map(wd => ({
-  label: wd.isToday ? 'Hoy' : `${wd.name} ${wd.date}`,
-  isToday: wd.isToday,
-}))
-
-const hourBlocks = [
-  { label: '12pm-2pm', hours: [0, 1] },
-  { label: '2pm-4pm', hours: [2, 3] },
-  { label: '4pm-6pm', hours: [4, 5] },
-  { label: '6pm-8pm', hours: [6, 7] },
-  { label: '8pm-10pm', hours: [8, 9] },
+const topCareers = [
+  { name: 'Administración de Empresas', label: 'Adm. Empresas', students: 42, color: '#1270B7' },
+  { name: 'Ingeniería de Software', label: 'Ing. Software', students: 40, color: '#30D158' },
+  { name: 'Auxiliar en Enfermería', label: 'Enfermería', students: 38, color: '#FF9F0A' },
+  { name: 'Contaduría Pública', label: 'Contaduría', students: 36, color: '#BF5AF2' },
+  { name: 'Auxiliar Administrativo', label: 'Adm. Auxiliar', students: 35, color: '#F43843' },
+  { name: 'Ingeniería de Sistemas', label: 'Sistemas', students: 34, color: '#5E5CE6' },
+  { name: 'Diseño Gráfico', label: 'Diseño', students: 33, color: '#FF6482' },
+  { name: 'Ingeniería Industrial', label: 'Ing. Industrial', students: 31, color: '#00C7BE' },
+  { name: 'Derecho', label: 'Derecho', students: 30, color: '#64D2FF' },
+  { name: 'Operaciones Software y Redes', label: 'Software y Redes', students: 30, color: '#FF9F0A' },
 ]
-
-const heatmapData: { day: string; block: number; value: number }[] = []
-const basePattern = [15, 10, 8, 12, 18, 25, 35, 45, 55, 50]
-heatmapDays.forEach((wd, di) => {
-  const dayFactor = [0.9, 1.0, 0.85, 1.1, 1.3, 0.7, 0.3][di]
-  hourBlocks.forEach((block, bi) => {
-    const blockValue = block.hours.reduce((sum, h) => {
-      const noise = 0.7 + Math.random() * 0.6
-      return sum + Math.round(basePattern[h] * dayFactor * noise)
-    }, 0)
-    heatmapData.push({ day: wd.label, block: bi, value: blockValue })
-  })
-})
-
-const maxHeatValue = Math.max(...heatmapData.map(d => d.value))
 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
@@ -187,50 +106,19 @@ export default function AdminDashboard() {
           />
         </div>
         <div className="relative z-10 p-8">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-1 h-10 rounded-full" style={{ background: BLUE_GRAD }} />
+          <div className="flex items-center min-h-[220px]">
+            <div className="flex items-center gap-5">
+              <div className="w-1 h-24 rounded-full" style={{ background: BLUE_GRAD }} />
               <div>
-                <p className="text-[10px] font-bold tracking-[0.18em] uppercase" style={{ color: 'rgba(0,0,0,0.25)' }}>{today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                <h1 className="mt-0.5" style={{ color: '#1A1A1E', fontSize: '2.2rem', fontWeight: 800, letterSpacing: '-0.04em' }}>
-                  Buenos días, <span className="text-gradient-warm">Administrador.</span>
+                <p className="text-[11px] font-bold tracking-[0.18em] uppercase" style={{ color: 'rgba(0,0,0,0.25)' }}>{today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <h1 className="mt-1.5" style={{ color: '#1A1A1E', fontSize: '2.8rem', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+                  Buenos días,
                 </h1>
+                <h2 className="text-gradient-warm" style={{ fontSize: '2.8rem', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+                  Administrador.
+                </h2>
               </div>
             </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="col-span-2 rounded-2xl p-6"
-              style={{
-                background: 'rgba(255,255,255,0.6)',
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.4)',
-              }}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles size={15} style={{ color: BLUE }} />
-                <span className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: 'rgba(0,0,0,0.3)' }}>Recomendaciones IA · {todayRecommendations.title}</span>
-                <div className="ml-auto flex items-center gap-1.5">
-                  <div className="dot-live" style={{ width: 5, height: 5 }} />
-                  <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.25)' }}>Generado para hoy</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {todayRecommendations.tips.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl nested-card">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}0A` }}>
-                      <item.icon size={14} style={{ color: item.color }} />
-                    </div>
-                    <div>
-                      <p className="text-xs leading-snug" style={{ color: 'rgba(0,0,0,0.6)', lineHeight: 1.5 }}>{item.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
           </div>
         </div>
         <motion.div
@@ -240,8 +128,8 @@ export default function AdminDashboard() {
           style={{
             position: 'absolute',
             right: 24,
-            top: -50,
-            width: 500,
+            bottom: 0,
+            width: 400,
             height: 'auto',
             zIndex: 20,
           }}
@@ -253,28 +141,43 @@ export default function AdminDashboard() {
         </motion.div>
       </motion.div>
 
+      {/* ── Stat Cards ── */}
       <div className="grid grid-cols-4 gap-4">
         {cards.map((card, i) => {
           const colors = CARD_COLORS[i]
-          const Icon = card.icon
+          const ModelView = card.view
+          const isActive = i === 2
           return (
             <motion.div
               key={card.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-              className="relative rounded-2xl px-5 pb-5 pt-6 group cursor-pointer transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+              className="relative rounded-2xl px-5 pb-5 pt-14 group cursor-pointer transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:pt-[68px] group-hover:pb-7"
               style={{
                 background: '#FFFFFF',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
+                backdropFilter: 'none',
+                WebkitBackdropFilter: 'none',
+                boxShadow: isActive
+                  ? '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06), 0 12px 40px rgba(48,209,88,0.12)'
+                  : '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
               }}
             >
+              {isActive && (
+                <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{
+                  background: 'linear-gradient(145deg, rgba(48,209,88,0.08), transparent 60%)',
+                  borderRadius: 20,
+                }} />
+              )}
               <div className="absolute top-0 left-4 right-4 h-[3px] rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500" style={{ background: `linear-gradient(90deg, ${colors.text}, transparent)` }} />
-              <div className="relative z-10 text-center">
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3" style={{ background: colors.bg }}>
-                  <Icon size={22} style={{ color: colors.text }} />
-                </div>
-                <span className="stat-value block transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.15]" style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1, color: colors.text }}>{card.value}</span>
+              <div
+                className="absolute left-1/2 -translate-x-1/2 top-1 w-14 h-14 z-20 pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.6]"
+                style={{ transformOrigin: 'bottom center' }}
+              >
+                <ModelView />
+              </div>
+              <div className="relative z-10 text-center mt-6">
+                <span className="stat-value text-gradient-warm block transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.15]" style={{ fontSize: '2rem', fontWeight: 800, lineHeight: 1 }}>{card.value}</span>
                 <p className="text-xs mt-1.5 font-semibold transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" style={{ color: 'rgba(0,0,0,0.45)' }}>{card.label}</p>
               </div>
             </motion.div>
@@ -282,6 +185,7 @@ export default function AdminDashboard() {
         })}
       </div>
 
+      {/* ── Charts Row ── */}
       <div className="grid grid-cols-2 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -303,13 +207,13 @@ export default function AdminDashboard() {
                 tickLine={false}
                 tick={({ x, y, payload }: any) => (
                   <g transform={`translate(${x},${y})`}>
-                    <text x={0} y={0} dy={16} textAnchor="middle" fontSize={11} fontWeight={payload.value === 'Hoy' ? 700 : 400} fill={payload.value === 'Hoy' ? '#30D158' : 'rgba(0,0,0,0.65)'}>
+                    <text x={0} y={0} dy={16} textAnchor="middle" fontSize={13} fontWeight={700} fill={payload.value === 'Hoy' ? '#30D158' : 'rgba(0,0,0,0.8)'}>
                       {payload.value}
                     </text>
                   </g>
                 )}
               />
-              <YAxis tick={{ fontSize: 11, fill: 'rgba(0,0,0,0.65)' }} axisLine={false} tickLine={false} />
+              <YAxis hide />
               <Tooltip content={<ChartTooltip />} />
               <defs>
                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -385,80 +289,72 @@ export default function AdminDashboard() {
           style={{ background: 'rgba(255,255,255,0.55)', backdropFilter: 'blur(24px) saturate(1.6)', border: '1px solid rgba(255,255,255,0.6)' }}
         >
           <div className="flex items-center justify-center mb-5">
-            <span className="text-[13px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.55)' }}>HORA PICO DE LA SEMANA</span>
+            <span className="text-[13px] font-bold tracking-wide" style={{ color: 'rgba(0,0,0,0.55)' }}>CARRERAS CON MÁS ASISTENCIA</span>
           </div>
-          <div className="overflow-x-auto">
-            <div className="flex gap-0" style={{ minWidth: 500 }}>
-              <div className="flex flex-col gap-[3px] pt-6 pr-2">
-                {heatmapDays.map((wd) => (
-                  <div key={wd.label} className="flex items-center justify-end h-[26px]">
-                    <span className="text-[10px] font-semibold" style={{ color: wd.isToday ? '#30D158' : 'rgba(0,0,0,0.6)' }}>
-                      {wd.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex-1">
-                <div className="flex gap-[3px] mb-[3px]">
-                  {hourBlocks.map((block) => (
-                    <div key={block.label} className="flex-1 text-center">
-                      <span className="text-[9px] font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>
-                        {block.label}
-                      </span>
-                    </div>
+          <div style={{ overflow: 'visible' }} className="no-clip-chart">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={topCareers.slice(0, 5)} margin={{ top: 40, bottom: 0, left: 0, right: 0 }}>
+                <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,0,0,0.12)" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  axisLine={false}
+                  tickLine={false}
+                  interval={0}
+                  tick={{ fontSize: 13, fontWeight: 700, fill: 'rgba(0,0,0,0.8)' }}
+                  tickMargin={8}
+                />
+                <YAxis hide domain={[0, 50]} />
+                <Tooltip
+                  content={({ active, payload }: any) => {
+                    if (!active || !payload?.length) return null
+                    const entry = payload[0]
+                    return (
+                      <div style={{
+                        background: 'rgba(255,255,255,0.95)',
+                        backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(0,0,0,0.06)',
+                        borderRadius: 14,
+                        padding: '12px 18px',
+                        boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
+                      }}>
+                        <p style={{ color: 'rgba(0,0,0,0.35)', fontSize: 11, marginBottom: 4, fontWeight: 500 }}>{entry.payload.name}</p>
+                        <p style={{ color: entry.payload.color, fontSize: 14, fontWeight: 700 }}>{entry.value} <span style={{ color: 'rgba(0,0,0,0.3)', fontWeight: 400, fontSize: 12 }}>estudiantes</span></p>
+                      </div>
+                    )
+                  }}
+                />
+                <defs>
+                  {topCareers.slice(0, 5).map((c, i) => (
+                    <linearGradient key={i} id={`gradTop${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={c.color} stopOpacity={1} />
+                      <stop offset="100%" stopColor={c.color} stopOpacity={0.35} />
+                    </linearGradient>
                   ))}
-                </div>
-                {heatmapDays.map((wd) => (
-                  <div key={wd.label} className="flex gap-[3px] mb-[3px]">
-                    {hourBlocks.map((block, bi) => {
-                      const entry = heatmapData.find(d => d.day === wd.label && d.block === bi)
-                      const value = entry?.value ?? 0
-                      const intensity = value / maxHeatValue
-                      const isToday = wd.isToday
-                      const meshBg = isToday
-                        ? `radial-gradient(ellipse at 20% 20%, rgba(48,209,88,${0.4 + intensity * 0.5}) 0%, transparent 60%),
-                           radial-gradient(ellipse at 80% 80%, rgba(16,185,129,${0.3 + intensity * 0.55}) 0%, transparent 60%),
-                           radial-gradient(ellipse at 50% 50%, rgba(5,150,105,${0.2 + intensity * 0.4}) 0%, transparent 70%),
-                           linear-gradient(135deg, rgba(48,209,88,${0.15 + intensity * 0.3}), rgba(16,185,129,${0.1 + intensity * 0.25}))`
-                        : `radial-gradient(ellipse at 20% 20%, rgba(99,148,237,${0.08 + intensity * 0.72}) 0%, transparent 60%),
-                           radial-gradient(ellipse at 80% 80%, rgba(59,130,246,${0.05 + intensity * 0.75}) 0%, transparent 60%),
-                           radial-gradient(ellipse at 50% 50%, rgba(37,99,235,${0.04 + intensity * 0.6}) 0%, transparent 70%),
-                           linear-gradient(135deg, rgb(${Math.round(235 - 210 * intensity)},${Math.round(240 - 110 * intensity)},${Math.round(252 - 40 * intensity)}), rgb(${Math.round(180 - 160 * intensity)},${Math.round(210 - 80 * intensity)},${Math.round(250 - 20 * intensity)}))`
+                </defs>
+                <Bar dataKey="students" radius={[8, 8, 0, 0]} className="bar-hover">
+                  {topCareers.slice(0, 5).map((c, i) => (
+                    <Cell
+                      key={i}
+                      fill={`url(#gradTop${i})`}
+                      style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
+                    />
+                  ))}
+                  <LabelList
+                    dataKey="students"
+                    position="top"
+                    content={({ x, y, width, value }: any) => {
+                      const pillW = 26
                       return (
-                        <div
-                          key={`${wd.label}-${bi}`}
-                          className="flex-1 rounded-lg cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-md flex items-center justify-center"
-                          style={{
-                            height: 30,
-                            background: meshBg,
-                          }}
-                          title={`${wd.label} · ${block.label}: ${value} asistencias`}
-                        >
-                          <span style={{ fontSize: 11, fontWeight: 800, color: isToday ? '#0D5C2F' : '#1B3A6B' }}>
-                            {value}
-                          </span>
-                        </div>
+                        <g>
+                          <rect x={x + width / 2 - pillW / 2} y={y - 20} width={pillW} height={17} rx={8.5} fill="rgba(0,0,0,0.08)" />
+                          <text x={x + width / 2} y={y - 8} textAnchor="middle" fontSize={10} fontWeight={800} fill="rgba(0,0,0,0.7)">{value}</text>
+                        </g>
                       )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center justify-between mt-4 px-1">
-              {[0, 0.25, 0.5, 0.75, 1].map((t, i, arr) => {
-                const from = i === 0 ? 0 : Math.round(maxHeatValue * arr[i - 1]) + 1
-                const to = Math.round(maxHeatValue * t)
-                const r = Math.round(210 - 180 * t)
-                const g = Math.round(225 - 80 * t)
-                const b = Math.round(250 - 20 * t)
-                return (
-                  <div key={i} className="flex items-center gap-1.5">
-                    <div style={{ width: 22, height: 14, borderRadius: 4, background: `linear-gradient(180deg, rgb(${r},${g},${b}), rgb(${Math.round(r * 0.7)},${Math.round(g * 0.8)},${Math.round(b * 1.02)}))` }} />
-                    <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{from}-{to}</span>
-                  </div>
-                )
-              })}
-            </div>
+                    }}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </motion.div>
       </div>
