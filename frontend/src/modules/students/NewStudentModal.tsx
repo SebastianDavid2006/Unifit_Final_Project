@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, type RefObject } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   X, Check, Pen, FileText, User,
@@ -44,6 +44,7 @@ const GRUPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 const MODALIDADES = ['Presencial', 'Virtual']
 const JORNADAS = ['Mañana', 'Noche', 'Fin de semana']
 const ESTADOS = ['Egresado', 'No egresado']
+const PARENTESCOS = ['Padre', 'Madre', 'Hermano(a)', 'Abuelo(a)', 'Tío(a)', 'Primo(a)', 'Otro']
 
 const STEPS = [
   { num: 1, label: 'Información personal', icon: User },
@@ -73,12 +74,13 @@ const INITIAL_FORM = {
   primerNombre: '', segundoNombre: '', primerApellido: '', segundoApellido: '',
   tipoDoc: 'CC', numDoc: '', fechaNac: '', genero: 'Masculino',
   eps: '', grupoSanguineo: 'O+', email: '', telefono: '',
-  nombreContacto: '', telefonoContacto: '', numCarnet: '',
+  nombreContacto: '', telefonoContacto: '', parentesco: '', numCarnet: '',
   institucion: 'Universitaria de Colombia',
   nivelFormacion: 'Técnicos',
   programa: 'Auxiliar Administrativo',
   semestre: '1', modalidad: 'Presencial',
   jornada: 'Mañana', estado: 'Activo', cargo: '', area: '',
+  nombreAcudiente: '', docAcudiente: '',
 }
 
 export default function NewStudentModal({ open, onClose }: NewStudentModalProps) {
@@ -90,6 +92,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const [parqAnswers, setParqAnswers] = useState<Record<string, YesNo>>({})
   const [parqDetails, setParqDetails] = useState<Record<string, string>>({})
   const [parqPos, setParqPos] = useState(0)
+  const [sigPos, setSigPos] = useState(0)
   const [aceptaParq, setAceptaParq] = useState(false)
   const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
   const [fingerprintStatus, setFingerprintStatus] = useState<FingerprintStatus>('idle')
@@ -97,6 +100,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
   const sigRef = useRef<SignatureCanvas>(null)
+  const guardianRef = useRef<SignatureCanvas>(null)
 
   useEffect(() => {
     if (open) {
@@ -108,6 +112,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       setParqAnswers({})
       setParqDetails({})
       setParqPos(0)
+      setSigPos(0)
       setAceptaParq(false)
       setDocs(loadDocs())
       setFingerprintStatus('idle')
@@ -153,7 +158,13 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     if (step === 2) return aceptaDatos
     if (step === 3) return aceptaContrato
     if (step === 4) return parqComplete
-    if (step === 5) return !(sigRef.current?.isEmpty() ?? true)
+    if (step === 5) {
+      if (sigRef.current?.isEmpty() ?? true) return false
+      if (isMinor) {
+        return !!form.nombreAcudiente && !!form.docAcudiente && !(guardianRef.current?.isEmpty() ?? true)
+      }
+      return true
+    }
     if (step === 6) return fingerprintStatus === 'captured'
     return true
   }
@@ -188,6 +199,17 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const parqDone = Math.max(0, parqQCount - parqPending)
   const stepLocked = (step === 6 && fingerprintStatus !== 'captured') || (step === 4 && !parqComplete)
 
+  const isMinor = useMemo(() => {
+    if (!form.fechaNac) return false
+    const birth = new Date(form.fechaNac)
+    if (isNaN(birth.getTime())) return false
+    const now = new Date()
+    let age = now.getFullYear() - birth.getFullYear()
+    const m = now.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+    return age < 18
+  }, [form.fechaNac])
+
   const submitForm = () => {
     const signatureData = sigRef.current?.toDataURL()
     const payload = {
@@ -202,6 +224,9 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         fecha: new Date().toISOString(),
       },
       firma: signatureData ?? null,
+      firmaAcudiente: isMinor ? (guardianRef.current?.toDataURL() ?? null) : null,
+      nombreAcudiente: isMinor ? form.nombreAcudiente : null,
+      docAcudiente: isMinor ? form.docAcudiente : null,
       huella: fingerprintStatus === 'captured' ? 'capturada' : null,
     }
     console.log('Nuevo estudiante:', payload)
@@ -293,6 +318,64 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     </div>
   )
 
+  const signaturePad = (title: string, ref: RefObject<SignatureCanvas | null>) => (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{title}</p>
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.93 }}
+          onClick={() => ref.current?.clear()}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer"
+          style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.4)' }}
+        >
+          <RefreshCw size={11} />
+          Limpiar
+        </motion.button>
+      </div>
+      <p className="text-[11px] font-medium mb-2" style={{ color: 'rgba(0,0,0,0.4)' }}>
+        Dibuja tu firma en el recuadro utilizando el mouse o tu dedo (si usas pantalla táctil).
+      </p>
+      <div
+        className="relative rounded-2xl p-4 overflow-hidden"
+        style={{
+          background: '#FFFFFF',
+          border: '1px solid rgba(0,0,0,0.04)',
+        }}
+      >
+        <motion.div
+          className="absolute top-0 left-0 right-0 h-0.5 pointer-events-none z-10"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
+          animate={{ x: ['-100%', '100%'] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+        />
+        <motion.div
+          className="absolute bottom-0 left-0 right-0 h-0.5 pointer-events-none z-10"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
+          animate={{ x: ['100%', '-100%'] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+        />
+        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 rounded-tl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
+        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 rounded-tr pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
+        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
+        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
+        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
+          <SignatureCanvas
+            ref={ref}
+            penColor="#1A1A1E"
+            minWidth={1}
+            maxWidth={2.5}
+            canvasProps={{
+              className: 'w-full',
+              style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+
   const renderStep1 = () => (
     <div className="space-y-5">
       {sectionTitle('Información personal')}
@@ -326,9 +409,10 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       </div>
 
       {sectionTitle('Contacto de emergencia')}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         {field('Nombre contacto', 'nombreContacto')}
         {field('Teléfono contacto', 'telefonoContacto')}
+        {select('Parentesco', 'parentesco', PARENTESCOS)}
       </div>
 
       {sectionTitle('Tipo de usuario')}
@@ -790,46 +874,48 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   }
 
   const renderStep4 = () => (
-    <div className="space-y-5">
-      <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>
-        Dibuja tu firma en el recuadro utilizando el mouse o tu dedo (si usas pantalla táctil).
-      </p>
-      <div
-        className="relative rounded-2xl p-4 overflow-hidden"
-        style={{
-          background: '#FFFFFF',
-          border: '1px solid rgba(0,0,0,0.04)',
-        }}
-      >
-        <motion.div
-          className="absolute top-0 left-0 right-0 h-0.5 pointer-events-none z-10"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
-          animate={{ x: ['-100%', '100%'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        />
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-0.5 pointer-events-none z-10"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
-          animate={{ x: ['100%', '-100%'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        />
-        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 rounded-tl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 rounded-tr pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
-          <SignatureCanvas
-            ref={sigRef}
-            penColor="#1A1A1E"
-            minWidth={1}
-            maxWidth={2.5}
-            canvasProps={{
-              className: 'w-full',
-              style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },
-            }}
-          />
-        </div>
-      </div>
+    <div className="space-y-6">
+      {isMinor ? (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={sigPos}
+            initial={{ opacity: 0, x: 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -28 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-6"
+          >
+            {sigPos === 0 && (
+              <>
+                <div className="flex items-start gap-3 rounded-2xl px-4 py-3.5" style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.25)' }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(245,166,35,0.15)' }}>
+                    <User size={15} style={{ color: '#D98E00' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold" style={{ color: '#B37000' }}>Eres menor de edad</p>
+                    <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'rgba(0,0,0,0.5)' }}>
+                      Primero firma tu acudiente o responsable legal, y después firmarás tú.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-bold mb-2" style={{ color: '#1A1A1E' }}>Datos del acudiente</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    {field('Nombre del acudiente', 'nombreAcudiente', { required: true })}
+                    {field('Documento del acudiente', 'docAcudiente', { required: true })}
+                  </div>
+                </div>
+
+                {signaturePad('Firma del acudiente (responsable legal)', guardianRef)}
+              </>
+            )}
+            {sigPos === 1 && signaturePad('Firma del estudiante', sigRef)}
+          </motion.div>
+        </AnimatePresence>
+      ) : (
+        signaturePad('Firma del estudiante', sigRef)
+      )}
     </div>
   )
 
@@ -1268,18 +1354,38 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             Abrir documento
                           </motion.button>
                         )}
-                        {step === 5 && (
-                          <motion.button
-                            type="button"
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => sigRef.current?.clear()}
-                            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
-                            style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.4)' }}
-                          >
-                            <RefreshCw size={12} />
-                            Limpiar firma
-                          </motion.button>
+                        {step === 5 && isMinor && (
+                          <div className="flex items-center gap-1.5">
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setSigPos(p => Math.max(0, p - 1))}
+                              disabled={sigPos <= 0}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+                              style={{
+                                background: sigPos > 0 ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.02)',
+                                color: sigPos > 0 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.15)',
+                              }}
+                            >
+                              <ChevronLeft size={16} />
+                            </motion.button>
+                            <span className="text-[10px] font-bold tabular-nums min-w-[56px] text-center" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                              {sigPos + 1} de 2
+                            </span>
+                            <motion.button
+                              type="button"
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setSigPos(p => Math.min(1, p + 1))}
+                              disabled={sigPos >= 1}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
+                              style={{
+                                background: sigPos < 1 ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.02)',
+                                color: sigPos < 1 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.15)',
+                              }}
+                            >
+                              <ChevronRight size={16} />
+                            </motion.button>
+                          </div>
                         )}
                         {step === 6 && fingerprintStatus === 'idle' && (
                           <motion.button

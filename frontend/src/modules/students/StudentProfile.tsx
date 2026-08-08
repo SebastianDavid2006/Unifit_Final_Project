@@ -8,7 +8,7 @@ import {
 import {
   AlertTriangle, Activity,
   Calendar, FileText, Dumbbell, Plus,
-  Flame, Shield, BarChart2, Maximize2, X,
+  Shield, BarChart2, Maximize2, X,
   Check, CheckCircle, XCircle, Clock, Eye,
   MoreVertical, Download, Trash2, Upload,
   Sparkles, Loader2, ChevronDown, ChevronLeft, ChevronRight, List,
@@ -86,6 +86,7 @@ interface Student {
   phone: string
   contactName: string
   contactPhone: string
+  contactRelation?: string
   carnetId: string
   program: string
   institution: string
@@ -101,6 +102,14 @@ interface Student {
   sessions: number
   weight: number
   height: number
+  faculty?: string
+  semester?: string
+  nextAssessment?: string
+  status?: 'active' | 'inactive' | 'process'
+  role?: 'estudiante' | 'profesor' | 'administrador'
+  nivelFormacion?: string
+  area?: string
+  cargo?: string
 }
 
 const RED = '#E63946'
@@ -206,6 +215,7 @@ export const TABS = [
 export function StudentProfile({ student, tab = 'overview', onTabChange }: { student: Student; tab?: string; onTabChange?: (t: string) => void }) {
   const [localTab, setLocalTab] = useState('overview')
   const [modalOpen, setModalOpen] = useState(false)
+  const [showInfoModal, setShowInfoModal] = useState(false)
   const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'año'>('mes')
   const [hoveredCol, setHoveredCol] = useState<number | null>(null)
   const [hoveredCell, setHoveredCell] = useState<{w: number; d: number} | null>(null)
@@ -213,6 +223,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [signatureModalOpen, setSignatureModalOpen] = useState(false)
   const [fileModalOpen, setFileModalOpen] = useState(false)
   const [fileModalData, setFileModalData] = useState<{name: string, date: string} | null>(null)
+  const [addDocModalOpen, setAddDocModalOpen] = useState(false)
+  const [addDocSection, setAddDocSection] = useState<number | null>(null)
+  const [newDocName, setNewDocName] = useState('')
+  const [newDocDate, setNewDocDate] = useState('')
+  const [extraDocs, setExtraDocs] = useState<Record<number, {name: string, date: string, signed: boolean, originalName: string}[]>>({})
   const [openMenuDoc, setOpenMenuDoc] = useState<string | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteDocName, setDeleteDocName] = useState('')
@@ -243,6 +258,9 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const [routineViewMode, setRoutineViewMode] = useState(false)
   const [routineFromAssessment, setRoutineFromAssessment] = useState(false)
   const [routineSnapshot, setRoutineSnapshot] = useState('')
+  const [routineFromAI, setRoutineFromAI] = useState(false)
+  const [routineDays, setRoutineDays] = useState<string[]>([])
+  const [showAddDayMenu, setShowAddDayMenu] = useState(false)
   const [valuationSuccess, setValuationSuccess] = useState(false)
   const [valuationStep, setValuationStep] = useState(1)
   const [lastValuationObjectives, setLastValuationObjectives] = useState(0)
@@ -296,6 +314,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
     setRoutineViewMode(false)
     setRoutineFromAssessment(false)
     setRoutineSnapshot('')
+    setRoutineFromAI(true)
     setAiGenerating(true)
     setAiGenStep(0)
     let step = 0
@@ -332,6 +351,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         setRoutineRows(routine.rows)
         setSelectedRoutineDay(routine.rows.length ? routine.rows[0].dia : null)
         setRoutineDayPage(1)
+        setRoutineDays([...new Set(routine.rows.map(r => r.dia))])
         setRoutineStep(1)
         setTimeout(() => {
           setAiGenerating(false)
@@ -407,7 +427,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
     el.style.borderColor = 'transparent'; el.style.background = meshInputBg; el.style.boxShadow = 'none'
   }
 
-  const WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+  const WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
   const assessmentItems = [
     { num: 1, date: '15 May 2026', next: '01 Ago 2026', color: '#1270B7', type: 'Actual', evaluator: 'Carlos Ruiz', score: 87, routine: 'Rutina Hipertrofia Full Body', metrics: [{ label: 'Peso', value: '72 kg' }, { label: 'IMC', value: '23.4' }, { label: 'Grasa Corporal', value: '18%' }, { label: 'Masa Muscular', value: '32 kg' }], nivelActividad: 'Activo', objetivoTarjetas: ['Ganancia muscular', 'Acondicionamiento fisico'], objetivoDetalle: 'Incrementar masa muscular y mejorar la condición física general para competencias de fin de año.', estatura: '1.75 m', masaMagra: '31.2 kg', grasaVisceral: '8', presionArterial: '120/80', edadMetabolica: '25', aguaCorporal: '58%', resistenciaMuscular: 'Alta (30 min)', antecedentesSalud: [], observacionesEntrenador: 'Sin novedades relevantes. Muy buena disposición al entrenamiento.', diasDisponibles: ['Lunes', 'Miércoles', 'Viernes'], observacionesFinales: 'Seguir con la rutina de hipertrofia y controlar la ingesta proteica. Próxima valoración en agosto.' },
     { num: 2, date: '20 Feb 2026', next: null, color: '#FF9500', type: 'Seguimiento', evaluator: 'Carlos Ruiz', score: 82, routine: 'Rutina Fuerza Tren Superior', metrics: [{ label: 'Peso', value: '73 kg' }, { label: 'IMC', value: '23.8' }, { label: 'Grasa Corporal', value: '19%' }, { label: 'Masa Muscular', value: '31 kg' }], nivelActividad: 'Activo', objetivoTarjetas: ['Ganancia muscular'], objetivoDetalle: 'Aumentar fuerza en tren superior y mejorar los levantamientos básicos.', estatura: '1.75 m', masaMagra: '30.4 kg', grasaVisceral: '8', presionArterial: '122/80', edadMetabolica: '26', aguaCorporal: '57%', resistenciaMuscular: 'Media (20 min)', antecedentesSalud: ['Metabólico'], observacionesEntrenador: 'Seguimiento a la planificación de fuerza, buena respuesta a cargas.', diasDisponibles: ['Lunes', 'Martes', 'Jueves', 'Viernes'], observacionesFinales: 'Ajustar cargas progresivamente cada 3 semanas.' },
@@ -456,6 +476,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const openRoutineFromAssessment = (a: any) => {
     loadAssessmentIntoForm(a)
     setRoutineFromAssessment(true)
+    setRoutineFromAI(false)
     const days = (a.diasDisponibles?.length ? a.diasDisponibles : ['Lunes', 'Miércoles', 'Viernes']) as string[]
     const perDay = Math.max(2, Math.ceil(routineExercises.length / days.length))
     const rows: RoutineRow[] = []
@@ -478,6 +499,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
     setRoutineRows(rows)
     setSelectedRoutineDay(rows.length ? rows[0].dia : null)
     setRoutineDayPage(1)
+    setRoutineDays(days)
     setRoutineSnapshot(JSON.stringify({ form: { name: routineObj.name, description: routineObj.description, duration: routineObj.duration, frequency: routineObj.frequency, level: routineObj.level }, rows }))
     setRoutineStep(2)
     setRoutineSuccess(false)
@@ -485,7 +507,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   }
   const sourceDays = valuationForm.diasDisponibles.length > 0 ? valuationForm.diasDisponibles : routineRows.map(r => r.dia)
   const routineEdited = routineSnapshot !== '' && JSON.stringify({ form: routineForm, rows: routineRows }) !== routineSnapshot
-  const routineDayList = (() => {
+  const routineDayList = routineDays.length ? routineDays : (() => {
     const days = [...new Set(WEEK_DAYS.filter(d => sourceDays.includes(d) || routineRows.some(r => r.dia === d)))]
     return days.length ? days : WEEK_DAYS
   })()
@@ -496,9 +518,35 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
   const routineDayPageNumbers = Array.from({ length: routineDayTotalPages }, (_, i) => i + 1)
   const defaultRoutineDay = () => routineDayList.find(d => routineRows.some(r => r.dia === d)) ?? routineDayList[0]
 
+  const addRoutineDay = (day: string) => {
+    setRoutineDays(d => [...d, day])
+    if (!routineRows.some(r => r.dia === day)) {
+      const stamp = Date.now()
+      const defaults = routineExercises.slice(0, 2).map((ex, ei) => ({
+        id: `ad-${stamp}-${ei}`,
+        dia: day,
+        muscle: ex.muscle,
+        name: ex.name,
+        sets: String(ex.sets),
+        reps: ex.reps,
+        rest: '60 s',
+        weight: ex.weight,
+      }))
+      setRoutineRows(p => [...p, ...defaults])
+    }
+    setSelectedRoutineDay(day)
+    setShowAddDayMenu(false)
+  }
+  const removeRoutineDay = (day: string) => {
+    if (routineDayList.length <= 1) return
+    setRoutineDays(d => d.filter(x => x !== day))
+    setRoutineRows(p => p.filter(r => r.dia !== day))
+    setShowAddDayMenu(false)
+  }
+
   const ROUTINE_DAY_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 
-  const renderRoutineDayCard = (day: string, selected: boolean, done: boolean, onClick: () => void) => (
+  const renderRoutineDayCard = (day: string, selected: boolean, done: boolean, onClick: () => void, onRemove?: () => void) => (
     <motion.button
       type="button"
       whileHover={!selected ? { scale: 1.05 } : {}}
@@ -527,6 +575,18 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       />
       <span className="text-sm leading-none text-center">{day}</span>
+      {onRemove && (
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={e => { e.stopPropagation(); onRemove() }}
+          className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer z-10"
+          style={{ background: selected ? 'rgba(255,255,255,0.95)' : 'rgba(244,56,67,0.12)', color: '#E63946', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+        >
+          <X size={11} strokeWidth={3.5} />
+        </motion.button>
+      )}
     </motion.button>
   )
 
@@ -808,6 +868,9 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
           setRoutineViewMode(false)
           setRoutineFromAssessment(false)
           setRoutineSnapshot('')
+          setRoutineFromAI(false)
+          setRoutineDays([])
+          setShowAddDayMenu(false)
           setRoutineStep(1)
           setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
           setRoutineRows([])
@@ -849,6 +912,19 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
                       <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Información General</p>
+                      <motion.button
+                        whileHover={{ scale: 1.12 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => setShowInfoModal(true)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center ml-auto flex-shrink-0 cursor-pointer transition-colors"
+                        style={{
+                          background: 'rgba(18,112,183,0.1)',
+                          color: '#1270B7',
+                          border: '1px solid rgba(18,112,183,0.18)',
+                        }}
+                      >
+                        <Maximize2 size={14} />
+                      </motion.button>
                     </div>
                     <div className="flex flex-col">
                       {[
@@ -1614,6 +1690,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           docs: [
                             { name: 'Contrato Firmado', date: '15 Ene 2026', signed: true, originalName: 'contrato_firmado_v2.pdf' },
                             { name: 'Aceptación de Tratamiento de Datos', date: '15 Ene 2026', signed: true, originalName: 'aceptacion_datos_2026.pdf' },
+                            { name: 'PAR-Q+', date: '15 Ene 2026', signed: true, originalName: 'parq_plus_2026.pdf' },
                           ],
                         },
                         {
@@ -1658,7 +1735,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             </div>
                           </div>
                           <div className="flex-1 space-y-4">
-                            {section.docs.map((doc, di) => (
+                            {[...section.docs, ...(extraDocs[si] || [])].map((doc, di) => (
                               doc.signed ? (
                                 <motion.div
                                   key={di}
@@ -1736,6 +1813,34 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                                 </motion.div>
                               )
                             ))}
+                            {(si === 1 || si === 2) && (
+                              <motion.button
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: si * 0.1 + (section.docs.length + (extraDocs[si] || []).length) * 0.06 }}
+                                onClick={() => { setAddDocSection(si); setNewDocName(''); setNewDocDate(''); setAddDocModalOpen(true) }}
+                                className="w-full rounded-xl px-5 pt-6 pb-5 flex flex-col items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer relative overflow-hidden"
+                                style={{
+                                  background: 'linear-gradient(180deg, rgba(230,57,70,0.05) 0%, rgba(255,255,255,0.6) 100%)',
+                                  border: '2px dashed rgba(230,57,70,0.35)',
+                                }}
+                                whileHover={{ scale: 1.02, borderColor: '#E63946', boxShadow: '0 10px 28px rgba(230,57,70,0.12)' }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <motion.div
+                                  animate={{ y: [0, -3, 0] }}
+                                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                                  className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                                  style={{ background: 'linear-gradient(135deg, #E63946, #FF6B6B)', boxShadow: '0 6px 16px rgba(230,57,70,0.3)' }}
+                                >
+                                  <Upload size={19} style={{ color: '#FFFFFF' }} />
+                                </motion.div>
+                                <div className="text-center">
+                                  <p className="text-sm font-bold transition-colors duration-300" style={{ color: '#C62828' }}>Subir documento</p>
+                                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>Arrastra o selecciona un archivo PDF, JPG o PNG</p>
+                                </div>
+                              </motion.button>
+                            )}
                           </div>
                         </motion.div>
                       ))}
@@ -2017,6 +2122,107 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     style={{ background: '#E63946', color: '#FFFFFF' }}
                   >
                     Eliminar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal agregar documento */}
+        <AnimatePresence>
+          {addDocModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[70] flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setAddDocModalOpen(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-md rounded-3xl p-6"
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
+                }}
+              >
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.1)' }}>
+                    <Upload size={17} style={{ color: '#E63946' }} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Agregar documento</h3>
+                    <p className="text-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                      {addDocSection === 1 ? 'Informes Médicos' : addDocSection === 2 ? 'Lesiones y Seguimiento' : ''}
+                    </p>
+                  </div>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setAddDocModalOpen(false)}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
+                  </motion.button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-2xl p-5 flex flex-col items-center justify-center border-2 border-dashed cursor-pointer transition-all" style={{ borderColor: 'rgba(230,57,70,0.25)', background: 'rgba(230,57,70,0.03)' }}>
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2" style={{ background: 'rgba(230,57,70,0.1)' }}>
+                      <Upload size={20} style={{ color: '#E63946' }} />
+                    </div>
+                    <p className="text-xs font-bold" style={{ color: '#E63946' }}>Seleccionar archivo</p>
+                    <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>PDF, JPG o PNG · Máx 10 MB</p>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Nombre del documento</label>
+                    <input
+                      value={newDocName}
+                      onChange={e => setNewDocName(e.target.value)}
+                      placeholder="Ej: Certificado médico"
+                      className="w-full px-4 py-2.5 rounded-xl outline-none text-sm transition-all"
+                      style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)', color: '#0D1B2A' }}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Fecha</label>
+                    <input
+                      value={newDocDate}
+                      onChange={e => setNewDocDate(e.target.value)}
+                      placeholder="Ej: 08 Ago 2026"
+                      className="w-full px-4 py-2.5 rounded-xl outline-none text-sm transition-all"
+                      style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)', color: '#0D1B2A' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2.5 mt-6">
+                  <button
+                    onClick={() => setAddDocModalOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all"
+                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!newDocName.trim()) return
+                      setExtraDocs(prev => ({
+                        ...prev,
+                        [addDocSection ?? 1]: [
+                          ...(prev[addDocSection ?? 1] || []),
+                          { name: newDocName.trim(), date: newDocDate.trim() || 'Hoy', signed: true, originalName: newDocName.trim().toLowerCase().replace(/\s+/g, '_') + '.pdf' },
+                        ],
+                      }))
+                      setAddDocModalOpen(false)
+                    }}
+                    className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all"
+                    style={{ background: '#E63946', color: '#FFFFFF' }}
+                  >
+                    Agregar
                   </button>
                 </div>
               </motion.div>
@@ -2531,7 +2737,23 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 {/* Footer */}
                 {!valuationSuccess && (
                 <div className="flex-shrink-0 px-6 py-4" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', background: 'rgba(255,255,255,0.8)' }}>
-                  <div className="flex items-center justify-between">
+                  <div className="relative flex items-center justify-between">
+                    {valuationViewMode && (
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.04, boxShadow: '0 10px 28px rgba(124,58,237,0.45)', transition: { duration: 0.15 } }}
+                        whileTap={{ scale: 0.94, boxShadow: '0 2px 8px rgba(124,58,237,0.2)', transition: { duration: 0.1 } }}
+                        onClick={startAiRoutine}
+                        className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                        style={{
+                          background: 'linear-gradient(135deg, #BF5AF2, #7C3AED)',
+                          boxShadow: '0 8px 22px rgba(124,58,237,0.3)',
+                        }}
+                      >
+                        <Sparkles size={14} />
+                        Generar rutina con IA
+                      </motion.button>
+                    )}
                     <div className="flex-1 flex justify-start">
                       {valuationStep > 1 ? (
                         <motion.button
@@ -3088,7 +3310,46 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             day === (selectedRoutineDay ?? defaultRoutineDay()),
                             routineRows.some(r => r.dia === day),
                             () => setSelectedRoutineDay(day),
+                            routineDayList.length > 1 ? () => removeRoutineDay(day) : undefined,
                           ))}
+                        </div>
+
+                        <div className="relative mb-3">
+                          {(() => {
+                            const addable = WEEK_DAYS.filter(d => !routineDayList.includes(d))
+                            return addable.length ? (
+                              <>
+                                <button
+                                  onClick={() => setShowAddDayMenu(v => !v)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all"
+                                  style={{ border: '1px dashed rgba(18,112,183,0.45)', color: '#1270B7', background: 'rgba(18,112,183,0.05)' }}
+                                >
+                                  <Plus size={13} strokeWidth={3} /> Agregar día
+                                </button>
+                                {showAddDayMenu && (
+                                  <div
+                                    className="absolute top-full left-0 z-50 mt-1 rounded-xl min-w-40 overflow-hidden"
+                                    style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 12px 40px rgba(0,0,0,0.08)' }}
+                                  >
+                                    {addable.map(d => (
+                                      <button
+                                        key={d}
+                                        onClick={() => addRoutineDay(d)}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-medium text-left transition-colors"
+                                        style={{ color: '#0D1B2A', borderBottom: '1px solid rgba(0,0,0,0.03)' }}
+                                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)' }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                                      >
+                                        <img src={calendarImg} alt="" className="w-4 h-4" />
+                                        <span className="flex-1">{d}</span>
+                                        <Plus size={11} style={{ color: '#1270B7' }} />
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            ) : null
+                          })()}
                         </div>
 
                         {routineDayTotalPages > 1 && (
@@ -3272,7 +3533,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   ) : <div />}
                   {routineFromAssessment && !routineEdited && routineStep === 2 ? (
                     <button
-                      onClick={() => { setShowNewRoutineModal(false); setRoutineFromAssessment(false); setRoutineSnapshot('') }}
+                      onClick={() => { setShowNewRoutineModal(false); setRoutineFromAssessment(false); setRoutineSnapshot(''); setRoutineDays([]); setShowAddDayMenu(false) }}
                       className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
                       style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
                     >
@@ -3287,6 +3548,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                           setShowNewRoutineModal(false)
                           setRoutineFromAssessment(false)
                           setRoutineSnapshot('')
+                          setRoutineDays([])
+                          setShowAddDayMenu(false)
                           setRoutineStep(1)
                           setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
                           setRoutineRows([])
@@ -3332,8 +3595,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                 className="w-full max-w-2xl rounded-3xl flex flex-col relative"
                 style={{
                   background: '#FFFFFF',
-                  border: '1px solid rgba(191,90,242,0.15)',
-                  boxShadow: '0 25px 60px rgba(124,58,237,0.18)',
+                  border: `1px solid ${routineFromAI ? 'rgba(191,90,242,0.15)' : 'rgba(34,197,94,0.15)'}`,
+                  boxShadow: `0 25px 60px ${routineFromAI ? 'rgba(124,58,237,0.18)' : 'rgba(34,197,94,0.18)'}`,
                 }}
               >
                 <motion.div
@@ -3350,7 +3613,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                         <motion.span
                           key={i}
                           className="absolute pointer-events-none text-lg select-none"
-                          style={{ color: '#C084FC' }}
+                          style={{ color: routineFromAI ? '#C084FC' : '#4ADE80' }}
                           animate={{
                             x: [0, Math.cos(rad) * (110 + (i % 6) * 20)],
                             y: [0, Math.sin(rad) * (110 + (i % 6) * 20)],
@@ -3370,10 +3633,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     })}
                     <div className="relative flex items-center justify-center">
                       <motion.img
-                        src={coachMagicImg}
+                        src={routineFromAI ? coachMagicImg : coachCongratsImg}
                         alt="rutina generada"
                         className="w-96 h-auto object-contain relative z-10"
-                        style={{ filter: 'drop-shadow(0 0 30px rgba(124,58,237,0.2))' }}
+                        style={{ filter: `drop-shadow(0 0 30px ${routineFromAI ? 'rgba(124,58,237,0.2)' : 'rgba(34,197,94,0.15)'})` }}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
@@ -3405,13 +3668,13 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.3 }}
-                    whileHover={{ scale: 1.05, boxShadow: '0 10px 28px rgba(124,58,237,0.4)', transition: { duration: 0.15 } }}
-                    whileTap={{ scale: 0.93, boxShadow: '0 2px 8px rgba(124,58,237,0.2)', transition: { duration: 0.1 } }}
+                    whileHover={{ scale: 1.05, boxShadow: `0 10px 28px ${routineFromAI ? 'rgba(124,58,237,0.4)' : 'rgba(48,209,88,0.4)'}`, transition: { duration: 0.15 } }}
+                    whileTap={{ scale: 0.93, boxShadow: `0 2px 8px ${routineFromAI ? 'rgba(124,58,237,0.2)' : 'rgba(48,209,88,0.2)'}`, transition: { duration: 0.1 } }}
                     onClick={() => setRoutineSuccess(false)}
                     className="mt-7 mb-10 px-10 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer shadow-lg"
                     style={{
-                      background: 'linear-gradient(135deg, #BF5AF2, #F472B6)',
-                      boxShadow: '0 10px 26px rgba(191,90,242,0.35)',
+                      background: routineFromAI ? 'linear-gradient(135deg, #BF5AF2, #F472B6)' : 'linear-gradient(135deg, #30D158, #00C7BE)',
+                      boxShadow: `0 10px 26px ${routineFromAI ? 'rgba(191,90,242,0.35)' : 'rgba(48,209,88,0.35)'}`,
                     }}
                   >
                     Cerrar
@@ -3585,6 +3848,160 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   >
                     Sí, cancelar
                   </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Info completa (modal por categorías) ─────────── */}
+        <AnimatePresence>
+          {showInfoModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[115] flex items-center justify-center p-6"
+              style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)' }}
+              onClick={() => setShowInfoModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                className="w-full max-w-5xl max-h-[85vh] flex flex-col rounded-[28px] relative overflow-hidden"
+                style={{
+                  background: 'rgba(255,255,255,0.96)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.6)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
+                }}
+              >
+                {/* Header */}
+                <div className="flex-shrink-0 flex items-center justify-between px-7 pt-6 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{
+                      background: student.risk === 'high'
+                        ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
+                        : student.risk === 'medium'
+                        ? 'linear-gradient(135deg, #FF9500, #E68600)'
+                        : 'linear-gradient(135deg, #30D158, #20A040)',
+                      fontSize: 14,
+                    }}>
+                      {student.avatar}
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-extrabold" style={{ color: '#0D1B2A' }}>
+                        {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
+                      </h2>
+                      <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                        {student.faculty || student.program} · {student.institution}
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowInfoModal(false)}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
+                    style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}
+                  >
+                    <X size={16} />
+                  </motion.button>
+                </div>
+
+                {/* Categorías */}
+                <div className="flex-1 min-h-0 overflow-y-auto px-7 py-6" style={{ scrollbarWidth: 'thin' }}>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      {
+                        title: 'Información personal',
+                        model: <StudentCardView />,
+                        fields: [
+                          { label: 'Primer nombre', value: student.firstName },
+                          { label: 'Segundo nombre', value: student.secondName || '—' },
+                          { label: 'Primer apellido', value: student.lastName },
+                          { label: 'Segundo apellido', value: student.secondLastName || '—' },
+                          { label: 'Documento', value: `${student.documentType}. ${student.documentNumber}` },
+                          { label: 'Fecha de nacimiento', value: student.birthDate },
+                          { label: 'Género', value: student.gender },
+                          { label: 'Edad', value: `${Math.abs(new Date(student.birthDate.split('/').reverse().join('-')).getFullYear() - new Date().getFullYear())} años` },
+                        ],
+                      },
+                      {
+                        title: student.role === 'profesor' || student.role === 'administrador' ? 'Información laboral' : 'Información académica',
+                        model: <CapView />,
+                        fields:
+                          student.role === 'profesor' || student.role === 'administrador'
+                            ? [
+                                { label: 'Área', value: student.area || '—' },
+                                { label: 'Cargo', value: student.cargo || '—' },
+                              ]
+                            : [
+                                { label: 'Número carnet', value: student.carnetId },
+                                { label: 'Estado', value: student.graduationStatus },
+                                { label: 'Institución', value: student.institution },
+                                { label: 'Modalidad', value: student.modality },
+                                { label: 'Nivel de formación', value: student.nivelFormacion || 'Técnicos' },
+                                { label: 'Carrera', value: student.faculty || student.program },
+                                { label: 'Semestre', value: student.semester || `${student.semestre}` },
+                                { label: 'Jornada', value: student.jornada },
+                              ],
+                      },
+                      {
+                        title: 'Información médica',
+                        model: <StethoscopeView />,
+                        fields: [
+                          { label: 'EPS', value: student.eps },
+                          { label: 'Grupo sanguíneo', value: student.bloodType },
+                        ],
+                      },
+                      {
+                        title: 'Información de contacto',
+                        model: <TelephoneView />,
+                        fields: [
+                          { label: 'Email', value: student.email },
+                          { label: 'Teléfono', value: student.phone },
+                          { label: 'Contacto de emergencia', value: student.contactName },
+                          { label: 'Parentesco', value: student.contactRelation || '—' },
+                          { label: 'Teléfono de emergencia', value: student.contactPhone },
+                        ],
+                      },
+                    ].map((cat, ci) => (
+                      <motion.div
+                        key={cat.title}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.05 + ci * 0.06 }}
+                        className="rounded-2xl p-5 flex flex-col"
+                        style={{
+                          background: 'linear-gradient(145deg, rgba(18,112,183,0.09) 0%, rgba(18,112,183,0.03) 55%, rgba(255,255,255,0.6) 100%)',
+                          boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 16px rgba(18,112,183,0.06)',
+                        }}
+                      >
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden" style={{ background: 'rgba(18,112,183,0.10)' }}>
+                            {cat.model}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-1 h-6 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
+                            <p className="text-sm font-extrabold capitalize" style={{ color: '#0D1B2A' }}>{cat.title}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-x-5 gap-y-3 flex-1">
+                          {cat.fields.map(f => (
+                            <div key={f.label} className="flex flex-col">
+                              <p className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{f.label}</p>
+                              <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{f.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             </motion.div>

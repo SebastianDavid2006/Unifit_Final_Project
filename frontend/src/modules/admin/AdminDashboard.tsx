@@ -129,15 +129,21 @@ export default function AdminDashboard() {
             position: 'absolute',
             right: 24,
             bottom: 0,
-            width: 400,
+            width: 480,
             height: 'auto',
             zIndex: 20,
+            pointerEvents: 'none',
           }}
         >
-          <img src={adminImg} alt="Admin Dashboard" className="w-full h-auto" />
-          <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-10" style={{
-            background: 'linear-gradient(to top, rgba(240,247,255,1) 0%, transparent 60%)',
-          }} />
+          <img
+            src={adminImg}
+            alt="Admin Dashboard"
+            className="w-full h-auto"
+            style={{
+              maskImage: 'linear-gradient(to top, transparent 0%, black 35%, black 100%)',
+              WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 35%, black 100%)',
+            }}
+          />
         </motion.div>
       </motion.div>
 
@@ -324,21 +330,12 @@ export default function AdminDashboard() {
                   }}
                 />
                 <defs>
-                  {topCareers.slice(0, 5).map((c, i) => (
-                    <linearGradient key={i} id={`gradTop${i}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={c.color} stopOpacity={1} />
-                      <stop offset="100%" stopColor={c.color} stopOpacity={0.35} />
-                    </linearGradient>
-                  ))}
+                  <linearGradient id="careerBarGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2563EB" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#93C5FD" stopOpacity={0.6} />
+                  </linearGradient>
                 </defs>
-                <Bar dataKey="students" radius={[8, 8, 0, 0]} className="bar-hover">
-                  {topCareers.slice(0, 5).map((c, i) => (
-                    <Cell
-                      key={i}
-                      fill={`url(#gradTop${i})`}
-                      style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
-                    />
-                  ))}
+                <Bar dataKey="students" radius={[8, 8, 0, 0]} className="bar-hover" fill="url(#careerBarGradient)">
                   <LabelList
                     dataKey="students"
                     position="top"

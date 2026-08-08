@@ -102,7 +102,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <TrainerDashboard />
+              <TrainerDashboard onLogout={() => setScreen('login')} />
             </motion.div>
           )}
           {screen === 'student' && (
@@ -126,7 +126,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <AdminDashboard />
+              <AdminDashboard onLogout={() => setScreen('login')} />
             </motion.div>
           )}
         </AnimatePresence>

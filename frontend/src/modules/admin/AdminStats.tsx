@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -12,8 +12,8 @@ import { StudentCardView } from '../../assets/models/ui/objects/student_card/Stu
 import { ListView } from '../../assets/models/ui/objects/list/ListModel'
 import { StudentsView } from '../../assets/models/ui/users/students/StudentsModel'
 import { CalendarView } from '../../assets/models/ui/objects/calendar/CalendarModel'
-import { ClockView } from '../../assets/models/ui/objects/clock/ClockModel'
 import { CAREER_STATS } from '../../data/careerStats'
+import { INSTITUCIONES, getNiveles, getPrograms } from '../../data/academicPrograms'
 
 const BLUE = '#1270B7'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
@@ -23,6 +23,23 @@ const CAT_COLORS: Record<string, string> = {
   profesional: '#30D158',
   especialización: '#BF5AF2',
 }
+
+const NIVEL_OPTIONS = ['Técnico', 'Profesional', 'Especialización']
+const normalizeNivel = (cat: string) =>
+  cat === 'técnico' ? 'Técnico' : cat === 'profesional' ? 'Profesional' : cat === 'especialización' ? 'Especialización' : cat
+
+const programsByInstitution: Record<string, Set<string>> = {}
+INSTITUCIONES.forEach(inst => {
+  const s = new Set<string>()
+  getNiveles(inst).forEach(lv => getPrograms(inst, lv).forEach(p => s.add(p)))
+  programsByInstitution[inst] = s
+})
+const institutionOf = (faculty: string) =>
+  INSTITUCIONES.find(inst => programsByInstitution[inst]?.has(faculty)) ?? INSTITUCIONES[0]
+
+const PROGRAM_OPTIONS = [...new Set(
+  INSTITUCIONES.flatMap(inst => getNiveles(inst).flatMap(lv => getPrograms(inst, lv))),
+)]
 
 const evolutionData = [
   { mes: 'Ene', date: '2026-01-15', usuarios: 380, asistencia: 2350 },
@@ -39,43 +56,6 @@ const evolutionData = [
   { mes: 'Dic', date: '2026-12-15', usuarios: 847, asistencia: 5200 },
 ]
 
-const scheduleWeekly = [
-  { day: 'Lun', clases: 8, asistencia: 112 },
-  { day: 'Mar', clases: 7, asistencia: 96 },
-  { day: 'Mié', clases: 9, asistencia: 124 },
-  { day: 'Jue', clases: 6, asistencia: 88 },
-  { day: 'Vie', clases: 8, asistencia: 118 },
-  { day: 'Sáb', clases: 5, asistencia: 74 },
-  { day: 'Dom', clases: 2, asistencia: 26 },
-]
-
-const scheduleHours = [
-  { hora: '12pm', asistencia: 68 },
-  { hora: '2pm', asistencia: 54 },
-  { hora: '4pm', asistencia: 76 },
-  { hora: '6pm', asistencia: 112 },
-  { hora: '8pm', asistencia: 88 },
-  { hora: '10pm', asistencia: 52 },
-]
-
-const heatDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-const heatBlocks = [
-  { label: '12pm-2pm' },
-  { label: '2pm-4pm' },
-  { label: '4pm-6pm' },
-  { label: '6pm-8pm' },
-  { label: '8pm-10pm' },
-]
-const heatBase = [20, 30, 45, 60, 42]
-const heatDayFactor = [0.9, 1.0, 0.85, 1.1, 1.3, 0.7, 0.3]
-const heatmapData: { day: string; block: number; value: number }[] = []
-heatDays.forEach((day, di) => {
-  heatBlocks.forEach((_, bi) => {
-    heatmapData.push({ day, block: bi, value: Math.round(heatBase[bi] * heatDayFactor[di]) })
-  })
-})
-const maxHeatValue = Math.max(...heatmapData.map(d => d.value))
-
 export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggleCareerFilter, statsRange }: {
   tab: string
   onTabChange: (t: string) => void
@@ -85,16 +65,37 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
 }) {
   const [careersModal, setCareersModal] = useState<'registered' | 'attendance' | null>(null)
   const [careerQuery, setCareerQuery] = useState('')
+  const [filterCategory, setFilterCategory] = useState<'institucion' | 'nivel' | 'programa'>('institucion')
+  const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
+  const [filterSearch, setFilterSearch] = useState('')
+
+  const filterLabels: Record<string, string> = {
+    institucion: 'Institución',
+    nivel: 'Nivel académico',
+    programa: 'Programa',
+  }
+  const filterOptions: Record<string, string[]> = {
+    institucion: [...INSTITUCIONES],
+    nivel: NIVEL_OPTIONS,
+    programa: PROGRAM_OPTIONS,
+  }
 
   const filteredEvolution = (statsRange.start && statsRange.end)
     ? evolutionData.filter(m => m.date >= statsRange.start && m.date <= statsRange.end)
     : evolutionData
   const lastUsuarios = filteredEvolution[filteredEvolution.length - 1]?.usuarios ?? 847
   const asistenciasPeriodo = filteredEvolution.reduce((s, m) => s + m.asistencia, 0)
-  const totalClasesSemana = scheduleWeekly.reduce((s, d) => s + d.clases, 0)
-  const promedioAsistentesClase = Math.round(scheduleWeekly.reduce((s, d) => s + d.asistencia, 0) / totalClasesSemana)
 
-  const careerData = CAREER_STATS
+  const careerData = useMemo(() => CAREER_STATS.filter(c => {
+    const entries = Object.entries(filterSelections).filter(([, v]) => v.size > 0)
+    if (entries.length === 0) return true
+    return entries.every(([cat, vals]) => {
+      if (cat === 'nivel') return vals.has(normalizeNivel(c.cat))
+      if (cat === 'programa') return vals.has(c.faculty)
+      if (cat === 'institucion') return vals.has(institutionOf(c.faculty))
+      return true
+    })
+  }), [filterSelections])
   const allCareers = careerData
   const careerCategories: { id: string; label: string }[] = [
     { id: 'técnico', label: 'Técnicos' },
@@ -116,17 +117,189 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
 
   return (
     <div className="p-8 space-y-6 w-full relative">
-      <AnimatePresence mode="wait">
-        <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+      {showCareerFilter && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="relative z-40 mb-4"
+        >
+          <div className="flex items-center justify-between gap-1 p-1 rounded-2xl w-full" style={{
+            background: 'rgba(255,255,255,0.35)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.5)',
+          }}>
+            {Object.entries(filterLabels).map(([key, label]) => {
+              const hasSelection = (filterSelections[key]?.size ?? 0) > 0
+              return (
+                <button key={key}
+                  onClick={() => { setFilterCategory(key as any); setFilterSearch('') }}
+                  className="relative px-4 py-1.5 rounded-xl text-[11px] font-bold transition-colors flex-1 text-center hover:bg-white/40"
+                  style={{
+                    color: filterCategory === key ? '#1A1A1E' : hasSelection ? '#1270B7' : 'rgba(0,0,0,0.35)',
+                  }}
+                >
+                  {filterCategory === key && (
+                    <motion.div
+                      layoutId="statsFilterBg"
+                      className="absolute inset-0 rounded-xl"
+                      style={{ background: '#FFFFFF', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center justify-center gap-1.5">
+                    {hasSelection && <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#1270B7' }} />}
+                    {label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <AnimatePresence>
+            <motion.div
+              key={filterCategory}
+              initial={{ opacity: 0, y: -6, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.96 }}
+              className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 rounded-2xl p-3"
+              style={{
+                background: 'rgba(255,255,255,0.92)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.6)',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.1)',
+              }}
+            >
+              <div className="relative mb-2">
+                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(0,0,0,0.2)' }} />
+                <input
+                  value={filterSearch}
+                  onChange={e => setFilterSearch(e.target.value)}
+                  placeholder="Buscar..."
+                  className="w-full pl-8 pr-3 py-2 rounded-xl text-xs font-medium outline-none"
+                  style={{ background: 'rgba(0,0,0,0.03)', color: '#1A1A1E' }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                {(() => {
+                  const currentSelected = filterSelections[filterCategory] ?? new Set()
+                  return (
+                    <>
+                      <motion.button layout
+                        onClick={() => {
+                          setFilterSelections(prev => {
+                            const next = { ...prev }
+                            delete next[filterCategory]
+                            return next
+                          })
+                          setFilterSearch('')
+                        }}
+                        whileHover={{ background: 'rgba(18,112,183,0.06)' }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-2 transition-colors duration-300"
+                        style={{
+                          background: currentSelected.size === 0 ? 'rgba(18,112,183,0.1)' : 'transparent',
+                          color: currentSelected.size === 0 ? '#1270B7' : 'rgba(0,0,0,0.45)',
+                        }}
+                      >
+                        <motion.div className="w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0"
+                          animate={{
+                            borderColor: currentSelected.size === 0 ? '#1270B7' : 'rgba(0,0,0,0.15)',
+                            background: currentSelected.size === 0 ? '#1270B7' : 'transparent',
+                          }}
+                          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                          <motion.span
+                            animate={{
+                              scale: currentSelected.size === 0 ? 1 : 0,
+                              opacity: currentSelected.size === 0 ? 1 : 0,
+                            }}
+                            className="text-white text-[9px] font-bold"
+                          >✓</motion.span>
+                        </motion.div>
+                        Todos
+                      </motion.button>
+                      {filterOptions[filterCategory]
+                        ?.filter(opt => opt.toLowerCase().includes(filterSearch.toLowerCase()))
+                        .map(opt => (
+                          <motion.button key={opt} layout
+                            onClick={() => {
+                              setFilterSelections(prev => {
+                                const catSet = new Set(prev[filterCategory] ?? [])
+                                if (catSet.has(opt)) catSet.delete(opt)
+                                else catSet.add(opt)
+                                if (catSet.size === 0) {
+                                  const next = { ...prev }
+                                  delete next[filterCategory]
+                                  return next
+                                }
+                                return { ...prev, [filterCategory]: catSet }
+                              })
+                              setFilterSearch('')
+                            }}
+                            whileHover={{ background: 'rgba(18,112,183,0.06)' }}
+                            whileTap={{ scale: 0.98 }}
+                            className="w-full text-left px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-2 transition-colors duration-300"
+                            style={{
+                              background: currentSelected.has(opt) ? 'rgba(18,112,183,0.1)' : 'transparent',
+                              color: currentSelected.has(opt) ? '#1270B7' : 'rgba(0,0,0,0.45)',
+                            }}
+                          >
+                            <motion.div className="w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0"
+                              animate={{
+                                borderColor: currentSelected.has(opt) ? '#1270B7' : 'rgba(0,0,0,0.15)',
+                                background: currentSelected.has(opt) ? '#1270B7' : 'transparent',
+                              }}
+                              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                            >
+                              <motion.span
+                                animate={{
+                                  scale: currentSelected.has(opt) ? 1 : 0,
+                                  opacity: currentSelected.has(opt) ? 1 : 0,
+                                }}
+                                className="text-white text-[9px] font-bold"
+                              >✓</motion.span>
+                            </motion.div>
+                            {opt}
+                          </motion.button>
+                        ))}
+                    </>
+                  )
+                })()}
+              </div>
+              <AnimatePresence>
+                {Object.values(filterSelections).some(s => s.size > 0) && (
+                  <motion.button
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    onClick={() => setFilterSelections({})}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="w-full mt-2 py-2 rounded-xl text-[11px] font-bold text-center"
+                    style={{ background: 'rgba(244,56,67,0.08)', color: '#F43843' }}
+                  >
+                    Limpiar filtros
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
+      )}
+      <div style={{ filter: showCareerFilter ? 'blur(4px)' : 'none', opacity: showCareerFilter ? 0.5 : 1, pointerEvents: showCareerFilter ? 'none' : 'auto', transition: 'filter 0.3s ease, opacity 0.3s ease' }}>
+        <AnimatePresence mode="wait">
+          <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
           {tab === 'overview' && (
             <>
-              <div className="grid grid-cols-5 gap-4 mb-8">
+              <div className="grid grid-cols-4 gap-4 mb-8">
                 {[
                   { label: 'Total Usuarios', value: String(lastUsuarios), sub: 'Registrados en el sistema', color: '#1270B7', view: StudentsView },
                   { label: 'Asistencias del Período', value: asistenciasPeriodo.toLocaleString('en-US'), sub: 'Asistencias acumuladas', color: '#30D158', view: StudentCardView },
                   { label: 'Carrera con Más Estudiantes', value: topRegistered.faculty, sub: `${topRegistered.registered} registrados`, color: '#BF5AF2', view: CalendarView },
-                  { label: 'Carreras Activas', value: '27', sub: 'Facultades en el programa', color: '#FF9F0A', view: ListView },
-                  { label: 'Hora Pico', value: '6pm', sub: '112 asistencias', color: '#FF6B8A', view: ClockView },
+                  { label: 'Carreras Activas', value: String(totalCareers), sub: 'Facultades en el programa', color: '#FF9F0A', view: ListView },
                 ].map((card, i) => {
                   const ModelView = card.view
                   return (
@@ -225,30 +398,6 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
 
           {tab === 'careers' && (
             <>
-              {showCareerFilter && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="relative mb-6"
-                >
-                  <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: '#FFFFFF', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)' }}>
-                    <Search size={16} style={{ color: 'rgba(0,0,0,0.3)' }} />
-                    <input
-                      value={careerQuery}
-                      onChange={e => setCareerQuery(e.target.value)}
-                      placeholder="Buscar carrera por nombre..."
-                      className="flex-1 bg-transparent text-sm font-semibold outline-none"
-                      style={{ color: '#1A1A1E' }}
-                    />
-                    {careerQuery && (
-                      <button onClick={() => setCareerQuery('')} className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.05)' }}>
-                        <X size={12} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              )}
               <div className="grid grid-cols-4 gap-4 mb-8">
                 {[
                   { label: 'Carreras Activas', value: String(totalCareers), sub: 'Facultades en el programa', color: '#BF5AF2', view: ListView },
@@ -284,6 +433,17 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
                   )
                 })}
               </div>
+
+              {totalCareers === 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center justify-center rounded-2xl p-8 mb-6"
+                  style={{ background: 'rgba(255,255,255,0.6)', border: '1px dashed rgba(0,0,0,0.12)' }}
+                >
+                  <p className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>No hay carreras que coincidan con los filtros seleccionados</p>
+                </motion.div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <motion.div
@@ -451,8 +611,7 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
             </>
           )}
 
-          {tab === 'students' && (
-            <>
+          {tab === 'students' && (            <>
               <div className="grid grid-cols-4 gap-4 mb-8">
                 {[
                   { label: 'Total Estudiantes', value: '847', sub: 'Registrados en el sistema', color: '#1270B7', view: StudentsView },
@@ -679,149 +838,9 @@ export default function AdminStats({ tab, onTabChange, showCareerFilter, onToggl
             </>
           )}
 
-          {tab === 'schedule' && (
-            <>
-              <div className="grid grid-cols-4 gap-4 mb-8">
-                {[
-                  { label: 'Clases por Semana', value: '45', sub: 'Sesiones programadas', color: '#1270B7', view: CalendarView },
-                  { label: 'Entrenadores Activos', value: '12', sub: 'Instructores en planta', color: '#30D158', view: StudentsView },
-                  { label: 'Asistentes por Clase', value: String(promedioAsistentesClase), sub: 'Promedio de la semana', color: '#BF5AF2', view: StudentCardView },
-                  { label: 'Horas Programadas', value: '68h', sub: 'Actividad semanal', color: '#FF9F0A', view: ListView },
-                ].map((card, i) => {
-                  const ModelView = card.view
-                  return (
-                    <motion.div key={card.label}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-                      className="relative rounded-2xl p-4 group cursor-pointer transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                      style={{
-                        background: '#FFFFFF',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06)',
-                      }}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div
-                          className="w-14 h-14 flex-shrink-0 z-20 pointer-events-none transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
-                        >
-                          <ModelView />
-                        </div>
-                        <div className="relative z-10 min-w-0">
-                          <span className="stat-value block transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.2, color: card.color }}>{card.value}</span>
-                          <p className="text-[11px] mt-1 font-bold truncate" style={{ color: '#1A1A1E' }}>{card.label}</p>
-                          <p className="text-[11px] mt-1 font-semibold truncate" style={{ color: 'rgba(0,0,0,0.65)' }}>{card.sub}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )
-                })}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 }}
-                  whileHover={{ scale: 1.01 }}
-                  className="rounded-2xl p-6 premium-card"
-                >
-                  <div className="flex items-center justify-center mb-5">
-                    <span className="text-xs font-bold tracking-wide" style={{ color: '#1A1A1E' }}>HORA PICO DE LA SEMANA</span>
-                  </div>
-                  <div className="flex">
-                    <div className="flex flex-col gap-[3px] pt-6 pr-2">
-                      {heatDays.map(day => (
-                        <div key={day} className="flex items-center justify-end h-[30px]">
-                          <span className="text-[11px] font-semibold" style={{ color: 'rgba(0,0,0,0.6)' }}>{day}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex gap-[3px] mb-[3px]">
-                        {heatBlocks.map(block => (
-                          <div key={block.label} className="flex-1 text-center">
-                            <span className="text-[9px] font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>{block.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                      {heatDays.map(day => (
-                        <div key={day} className="flex gap-[3px] mb-[3px]">
-                          {heatBlocks.map((block, bi) => {
-                            const entry = heatmapData.find(d => d.day === day && d.block === bi)
-                            const value = entry?.value ?? 0
-                            const intensity = value / maxHeatValue
-                            const meshBg = `radial-gradient(ellipse at 20% 20%, rgba(99,148,237,${0.08 + intensity * 0.72}) 0%, transparent 60%),
-                              radial-gradient(ellipse at 80% 80%, rgba(59,130,246,${0.05 + intensity * 0.75}) 0%, transparent 60%),
-                              radial-gradient(ellipse at 50% 50%, rgba(37,99,235,${0.04 + intensity * 0.6}) 0%, transparent 70%),
-                              linear-gradient(135deg, rgb(${Math.round(235 - 210 * intensity)},${Math.round(240 - 110 * intensity)},${Math.round(252 - 40 * intensity)}), rgb(${Math.round(180 - 160 * intensity)},${Math.round(210 - 80 * intensity)},${Math.round(250 - 20 * intensity)}))`
-                            return (
-                              <div
-                                key={`${day}-${bi}`}
-                                className="flex-1 rounded-lg cursor-pointer transition-all duration-200 hover:scale-110 hover:shadow-md flex items-center justify-center"
-                                style={{ height: 30, background: meshBg }}
-                                title={`${day} · ${block.label}: ${value} asistencias`}
-                              >
-                                <span style={{ fontSize: 11, fontWeight: 800, color: '#1B3A6B' }}>{value}</span>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between mt-4 px-1">
-                    {[0, 0.25, 0.5, 0.75, 1].map((t, i, arr) => {
-                      const from = i === 0 ? 0 : Math.round(maxHeatValue * arr[i - 1]) + 1
-                      const to = Math.round(maxHeatValue * t)
-                      const r = Math.round(210 - 180 * t)
-                      const g = Math.round(225 - 80 * t)
-                      const b = Math.round(250 - 20 * t)
-                      return (
-                        <div key={i} className="flex items-center gap-1.5">
-                          <div style={{ width: 22, height: 14, borderRadius: 4, background: `linear-gradient(180deg, rgb(${r},${g},${b}), rgb(${Math.round(r * 0.7)},${Math.round(g * 0.8)},${Math.round(b * 1.02)}))` }} />
-                          <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{from}-{to}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  whileHover={{ scale: 1.01 }}
-                  className="rounded-2xl p-6 premium-card"
-                >
-                  <div className="flex items-center gap-2 mb-5">
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
-                      <Activity size={14} style={{ color: BLUE }} />
-                    </div>
-                    <span className="text-xs font-bold tracking-wide" style={{ color: '#1A1A1E' }}>ASISTENCIA POR HORA</span>
-                  </div>
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={scheduleHours} margin={{ left: 0, right: 16, top: 0, bottom: 0 }} barCategoryGap="26%">
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
-                      <XAxis dataKey="hora" tick={{ fontSize: 11, fill: '#1A1A1E', fontWeight: 600 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: '#1A1A1E', fontWeight: 600 }} axisLine={false} tickLine={false} width={30} />
-                      <ReTooltip contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }} />
-                      <defs>
-                        <linearGradient id="scheduleHourGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#30D158" />
-                          <stop offset="100%" stopColor="#FFFFFF" />
-                        </linearGradient>
-                      </defs>
-                      <Bar dataKey="asistencia" fill="url(#scheduleHourGrad)" radius={[8, 8, 0, 0]}>
-                        <LabelList dataKey="asistencia" position="top" style={{ fontSize: 10, fontWeight: 700, fill: '#30D158' }} />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </motion.div>
-              </div>
-            </>
-          )}
         </motion.div>
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
     </div>
   )
 }

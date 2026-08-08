@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Clock, Briefcase, Search, Shield } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Briefcase, Search, Shield, LogOut } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
 import AdminTrainers from '../modules/admin/AdminTrainers'
 import AdminGym from '../modules/admin/AdminGym'
@@ -24,7 +24,7 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: 'config', label: 'Configuración', icon: Settings },
 ]
 
-export function AdminDashboard() {
+export function AdminDashboard({ onLogout }: { onLogout?: () => void }) {
   const [section, setSection] = useState<AdminSection>('dashboard')
   const [expanded, setExpanded] = useState(false)
   const [trainerSearch, setTrainerSearch] = useState('')
@@ -41,6 +41,7 @@ export function AdminDashboard() {
   const [statsRange, setStatsRange] = useState({ start: '', end: '' })
   const [calendarPos, setCalendarPos] = useState({ top: 0, right: 0 })
   const calendarBtnRef = useRef<HTMLButtonElement>(null)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
   useEffect(() => {
     if (showStatsCalendar && calendarBtnRef.current) {
@@ -469,7 +470,6 @@ export function AdminDashboard() {
                     { id: 'overview', label: 'Resumen', icon: BarChart3 },
                     { id: 'students', label: 'Estudiantes', icon: Users },
                     { id: 'careers', label: 'Carreras', icon: GraduationCap },
-                    { id: 'schedule', label: 'Horarios', icon: Clock },
                   ] as const).map(t => (
                     <motion.button key={t.id} onClick={() => setStatsTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                       className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
@@ -522,40 +522,60 @@ export function AdminDashboard() {
                 <div className="dot-alert absolute -top-1 -right-1" style={{ width: 8, height: 8 }} />
               </motion.button>
 
-              <motion.div
-                initial="initial"
-                whileHover="hover"
-                className="flex items-center rounded-xl cursor-pointer overflow-hidden"
-                style={{
-                  height: 38,
-                  background: isPermissions ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.12)',
-                  backdropFilter: 'blur(24px) saturate(1.6)',
-                  border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}`,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-                }}
-              >
-                <motion.div
-                  variants={{
-                    initial: { width: 0, opacity: 0, paddingRight: 0, paddingLeft: 0 },
-                    hover: { width: 175, opacity: 1, paddingRight: 10, paddingLeft: 12 },
+              <div className="relative flex-shrink-0">
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  title="Menú de usuario"
+                  className="flex items-center rounded-xl cursor-pointer overflow-hidden"
+                  style={{
+                    height: 38,
+                    background: isPermissions ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.12)',
+                    backdropFilter: 'blur(24px) saturate(1.6)',
+                    border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}`,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                   }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-                  className="overflow-hidden whitespace-nowrap flex items-center"
                 >
-                  <div className="flex items-center gap-2">
-                    <div>
-                      <p className="text-xs font-bold leading-none" style={{ color: isPermissions ? '#FFFFFF' : '#1A1A1E' }}>Admin UNIFIT</p>
-                      <p style={{ color: isPermissions ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)', fontSize: 9 }} className="mt-0.5">Plataforma de Administración</p>
-                    </div>
+                  <div
+                    className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
+                    style={{ background: RED_GRAD }}
+                  >
+                    AD
                   </div>
-                </motion.div>
-                <div
-                  className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                  style={{ background: RED_GRAD }}
-                >
-                  AD
-                </div>
-              </motion.div>
+                </motion.button>
+
+                <AnimatePresence>
+                  {profileMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setProfileMenuOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 6, scale: 0.96, filter: 'blur(4px)' }}
+                        animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, y: 6, scale: 0.96, filter: 'blur(4px)' }}
+                        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                        className="absolute right-0 top-full mt-2 z-50 w-56 rounded-2xl overflow-hidden"
+                        style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 16px 48px rgba(0,0,0,0.12)' }}
+                      >
+                        <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                          <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>Admin UNIFIT</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Plataforma de Administración</p>
+                        </div>
+                        <motion.button
+                          whileHover={{ background: 'rgba(244,56,67,0.06)' }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => { setProfileMenuOpen(false); onLogout?.() }}
+                          className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-left"
+                          style={{ color: '#F43843' }}
+                        >
+                          <LogOut size={14} />
+                          Cerrar sesión
+                        </motion.button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
