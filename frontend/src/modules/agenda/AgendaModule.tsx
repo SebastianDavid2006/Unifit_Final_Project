@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronRight, Plus, X, ChevronLeft, Sparkles, Maximize2, Minimize2, Check, AlertTriangle } from 'lucide-react'
 import calendarImg from '../../assets/illustrations/modules/calendar_module.webp'
@@ -6,74 +6,9 @@ import calendarCardImg from '../../assets/icons/objects/calendar.webp'
 import coachCalendarSuccessImg from '../../assets/illustrations/characters/coach/coach_calendar_success.webp'
 import { meshInputBg, meshInputHover, GREEN_GRAD } from '../../data/constants'
 import { initialTrainers } from '../../data/trainers'
-
-const RED = '#F43843'
-const BLUE = '#1270B7'
-const YELLOW = '#F1C827'
-const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
-const GOLD_GRAD = 'linear-gradient(135deg, #F1C827, #FFD60A, #D4A800)'
-
-interface Appointment {
-  id: string; date: string; startTime: string; endTime: string
-  type: 'class' | 'initial_assessment' | 'physical_assessment' | 'registration' | 'event'
-  title: string; studentName?: string; trainer?: string; notes?: string
-}
-
-const dayKey = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB']
-const dayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-const dayLabelsGetDay = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-
-const DAY_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
-
-const WEEK_DAYS_6: { key: string; label: string; short: string }[] = [
-  { key: 'LUN', label: 'Lunes', short: 'Lun' },
-  { key: 'MAR', label: 'Martes', short: 'Mar' },
-  { key: 'MIÉ', label: 'Miércoles', short: 'Mié' },
-  { key: 'JUE', label: 'Jueves', short: 'Jue' },
-  { key: 'VIE', label: 'Viernes', short: 'Vie' },
-  { key: 'SÁB', label: 'Sábado', short: 'Sáb' },
-]
-
-function DayCard({ label, selected, done, onClick }: { label: string; selected: boolean; done?: boolean; onClick: () => void }) {
-  return (
-    <motion.button
-      type="button"
-      whileHover={!selected ? { scale: 1.05 } : {}}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
-      className="relative flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
-      style={{
-        background: selected ? DAY_GRAD : 'rgba(0,0,0,0.03)',
-        color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-        border: '1px solid transparent',
-        boxShadow: selected ? '0 4px 20px rgba(18,112,183,0.25)' : 'none',
-      }}
-      onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
-      onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
-    >
-      <motion.img
-        src={calendarCardImg}
-        alt=""
-        className="mb-0.5"
-        animate={{
-          width: selected ? 48 : 24,
-          height: selected ? 48 : 24,
-          marginTop: selected ? -24 : 0,
-          filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
-        }}
-        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      />
-      <span className="text-sm leading-none text-center">{label}</span>
-      {done !== undefined && (
-        <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
-          style={{ background: done ? '#30D158' : 'rgba(0,0,0,0.1)' }}>
-          <Check size={10} color="#fff" strokeWidth={3.5} />
-        </span>
-      )}
-    </motion.button>
-  )
-}
+import { RED, BLUE, YELLOW, BLUE_GRAD, GOLD_GRAD, DAY_GRAD, dayKey, dayLabels, dayLabelsGetDay, monthNames, WEEK_DAYS_6 } from './AgendaData'
+import type { Appointment } from './AgendaData'
+import { DayCard } from './AgendaDayCard'
 
 export default function AgendaModule({ students = [] }: { students?: { name: string; carnetId?: string; program?: string; faculty?: string; avatar?: string }[] }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
@@ -1606,3 +1541,4 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     </div>
   )
 }
+

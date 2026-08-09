@@ -73,7 +73,7 @@ function ActivityRing({ radius, value, max, color, strokeWidth = 8 }: {
 
 type MobileTab = 'home' | 'workout' | 'achievements' | 'profile'
 
-export function StudentMobileApp() {
+export function StudentView() {
   const [tab, setTab] = useState<MobileTab>('home')
   const [workoutStarted, setWorkoutStarted] = useState(false)
 

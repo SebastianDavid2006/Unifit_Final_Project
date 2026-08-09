@@ -1,7 +1,7 @@
-import { StudentProfile } from '../students/StudentProfile'
-import StudentsModule from '../students/StudentsModule'
-import AgendaModule from '../agenda/AgendaModule'
-import EquipmentPage from '../../pages/EquipmentPage'
+import { StudentProfile } from '../../modules/students/StudentProfile'
+import StudentsModule from '../../modules/students/StudentsModule'
+import AgendaModule from '../../modules/agenda/AgendaModule'
+import EquipmentPage from '../../modules/equipment/EquipmentPage'
 import type { Status } from '../../data/types'
 import type { Student } from '../../data/students'
 

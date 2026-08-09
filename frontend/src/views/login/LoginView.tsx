@@ -1,8 +1,8 @@
 import { motion } from 'motion/react'
 import { Dumbbell, User, Shield, ArrowRight, Brain, Zap } from 'lucide-react'
-import logotipo from '../assets/images/Logotipo.png'
+import logotipo from '../../assets/images/Logotipo.png'
 
-interface LoginPageProps {
+interface LoginViewProps {
   onSelect: (platform: 'trainer' | 'student' | 'admin') => void
 }
 
@@ -36,7 +36,7 @@ const roles = [
   },
 ]
 
-export function LoginPage({ onSelect }: LoginPageProps) {
+export function LoginView({ onSelect }: LoginViewProps) {
   return (
     <div className="size-full flex flex-col items-center justify-center relative overflow-hidden">
       <div className="floating-sphere" style={{

@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Briefcase, Search, Shield, LogOut, Filter } from 'lucide-react'
-import AdminDashboardView from '../modules/admin/AdminDashboard'
-import AdminTrainers from '../modules/admin/AdminTrainers'
-import AdminGym from '../modules/admin/AdminGym'
-import AdminConfig from '../modules/admin/AdminConfig'
-import AdminStats from '../modules/admin/AdminStats'
-import { TABS } from '../modules/students/StudentProfile'
-import { students } from '../data/students'
-import iconRunning from '../assets/icons/animated/icon_running.gif'
-import permissionsScene from '../assets/scenes/permmisions_scene.png'
+import AdminDashboardView from './AdminDashboard'
+import AdminTrainers from './AdminTrainers'
+import AdminGym from './AdminGym'
+import AdminConfig from './AdminConfig'
+import AdminStats from './AdminStats'
+import { TABS } from '../../modules/students/StudentProfile'
+import { students } from '../../data/students'
+import iconRunning from '../../assets/icons/animated/icon_running.gif'
+import permissionsScene from '../../assets/scenes/permmisions_scene.png'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -26,7 +26,7 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: 'config', label: 'Configuración', icon: Settings },
 ]
 
-export function AdminDashboard({ onLogout }: { onLogout?: () => void }) {
+export function AdminView({ onLogout }: { onLogout?: () => void }) {
   const [section, setSection] = useState<AdminSection>('dashboard')
   const [expanded, setExpanded] = useState(false)
   const [trainerSearch, setTrainerSearch] = useState('')
