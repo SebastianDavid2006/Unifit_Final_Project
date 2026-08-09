@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Briefcase, Search, Shield, LogOut } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Briefcase, Search, Shield, LogOut, Filter } from 'lucide-react'
 import AdminDashboardView from '../modules/admin/AdminDashboard'
 import AdminTrainers from '../modules/admin/AdminTrainers'
 import AdminGym from '../modules/admin/AdminGym'
 import AdminConfig from '../modules/admin/AdminConfig'
 import AdminStats from '../modules/admin/AdminStats'
+import { TABS } from '../modules/students/StudentProfile'
+import { students } from '../data/students'
 import iconRunning from '../assets/icons/animated/icon_running.gif'
 import permissionsScene from '../assets/scenes/permmisions_scene.png'
 
@@ -34,6 +36,18 @@ export function AdminDashboard({ onLogout }: { onLogout?: () => void }) {
   const [trainerDetailOpen, setTrainerDetailOpen] = useState(false)
   const [trainerTab, setTrainerTab] = useState('overview')
   const [gymTab, setGymTab] = useState('students')
+  const [gymStudentSearch, setGymStudentSearch] = useState('')
+  const [gymStudentSearchFocused, setGymStudentSearchFocused] = useState(false)
+  const [showGymStudentFilters, setShowGymStudentFilters] = useState(false)
+  const [gymStudentRiskFilter, setGymStudentRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
+  const [gymSelectedStudent, setGymSelectedStudent] = useState<(typeof students)[0] | null>(null)
+  const [gymStudentTab, setGymStudentTab] = useState('overview')
+  const [equipSearch, setEquipSearch] = useState('')
+  const [equipSearchFocused, setEquipSearchFocused] = useState(false)
+  const [equipStatusFilter, setEquipStatusFilter] = useState<'active' | 'maintenance' | 'inactive' | 'all'>('all')
+  const [showEquipFilters, setShowEquipFilters] = useState(false)
+  const [equipViewMode, setEquipViewMode] = useState<'machines' | 'exercises'>('machines')
+  const [equipSearchHovered, setEquipSearchHovered] = useState(false)
   const [statsTab, setStatsTab] = useState('overview')
   const [configTab, setConfigTab] = useState('carreras')
   const [showCareerFilter, setShowCareerFilter] = useState(false)
@@ -53,6 +67,9 @@ export function AdminDashboard({ onLogout }: { onLogout?: () => void }) {
   useEffect(() => {
     setShowStatsCalendar(false)
     setShowTrainerFilters(false)
+    setGymSelectedStudent(null)
+    setShowGymStudentFilters(false)
+    setShowEquipFilters(false)
   }, [section])
   const trainerRef = useRef<{ clearSelection: () => void }>(null)
   const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
@@ -367,49 +384,215 @@ export function AdminDashboard({ onLogout }: { onLogout?: () => void }) {
               </div>
             )}
             {section === 'gym' && (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
-                  background: 'rgba(255,255,255,0.12)',
-                  backdropFilter: 'blur(24px) saturate(1.6)',
-                  border: '1px solid rgba(255,255,255,0.25)',
-                }}>
-                  <motion.button onClick={() => setGymTab('students')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                    style={{
-                      background: gymTab === 'students'
-                        ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
-                        : 'transparent',
-                      color: gymTab === 'students' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    <Users size={14} />
-                    Estudiantes
-                  </motion.button>
-                  <motion.button onClick={() => setGymTab('equipment')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                    style={{
-                      background: gymTab === 'equipment'
-                        ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
-                        : 'transparent',
-                      color: gymTab === 'equipment' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    <Dumbbell size={14} />
-                    Equipamiento
-                  </motion.button>
-                  <motion.button onClick={() => setGymTab('schedule')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                    style={{
-                      background: gymTab === 'schedule'
-                        ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
-                        : 'transparent',
-                      color: gymTab === 'schedule' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    <Calendar size={14} />
-                    Agenda
-                  </motion.button>
-                </div>
+              <div className="flex-1 flex items-center justify-center gap-3 relative">
+                {gymSelectedStudent ? (
+                  <>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setGymSelectedStudent(null)}
+                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{
+                        background: 'rgba(255,255,255,0.2)',
+                        backdropFilter: 'blur(16px) saturate(1.5)',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+                      }}
+                    >
+                      <img src={iconRunning} alt="Volver" className="w-5 h-5 object-contain" style={{ transform: 'scaleX(-1)' }} />
+                    </motion.button>
+                  </>
+                ) : (
+                  <>
+                    {gymTab === 'students' && (
+                      <div className="flex items-center gap-2 w-72 flex-shrink-0">
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0, scaleX: gymStudentSearchFocused ? 1.04 : 1 }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                          className="flex items-center gap-3 px-4 py-2 rounded-2xl flex-1 min-w-0"
+                          style={{
+                            background: gymStudentSearchFocused ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                            backdropFilter: 'blur(24px) saturate(1.6)',
+                            border: gymStudentSearchFocused ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                            boxShadow: gymStudentSearchFocused ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
+                            transformOrigin: 'center',
+                          }}
+                        >
+                          <Search size={16} style={{ color: gymStudentSearchFocused ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)' }} />
+                          <input
+                            value={gymStudentSearch}
+                            onChange={e => setGymStudentSearch(e.target.value)}
+                            onFocus={() => setGymStudentSearchFocused(true)}
+                            onBlur={() => setGymStudentSearchFocused(false)}
+                            placeholder="Buscar por nombre o documento..."
+                            className="bg-transparent border-none outline-none text-sm w-full placeholder:text-black/20 text-[#1A1A1E] font-medium"
+                          />
+                        </motion.div>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setShowGymStudentFilters(!showGymStudentFilters)}
+                          className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                          style={{
+                            marginLeft: gymStudentSearchFocused ? 6 : 0,
+                            background: showGymStudentFilters ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)',
+                            backdropFilter: 'blur(24px) saturate(1.6)',
+                            border: showGymStudentFilters ? '1px solid rgba(255,255,255,0.6)' : '1px solid rgba(255,255,255,0.25)',
+                            boxShadow: showGymStudentFilters ? '0 4px 24px rgba(0,0,0,0.08)' : '0 4px 16px rgba(0,0,0,0.03)',
+                            color: showGymStudentFilters ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
+                          }}
+                        >
+                          <Menu size={18} />
+                        </motion.button>
+                      </div>
+                    )}
+                    {gymTab === 'equipment' && (
+                      <div className="flex items-center justify-center gap-3 relative">
+                        <div className="relative flex-shrink-0" style={{ width: 36, height: 36 }}>
+                          <div
+                            className="absolute top-0 h-full overflow-hidden"
+                            style={{
+                              right: 0,
+                              width: equipSearchFocused || equipSearch || equipSearchHovered ? 356 : 36,
+                              borderRadius: '9999px',
+                              background: equipSearchFocused || equipSearch ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                              backdropFilter: 'blur(24px) saturate(1.6)',
+                              border: equipSearchFocused || equipSearch ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                              boxShadow: equipSearchFocused || equipSearch ? '0 4px 24px rgba(0,0,0,0.06)' : '0 4px 16px rgba(0,0,0,0.03)',
+                              transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                            onMouseEnter={() => setEquipSearchHovered(true)}
+                            onMouseLeave={() => setEquipSearchHovered(false)}
+                          >
+                            <div className="flex items-center h-full">
+                              <input
+                                value={equipSearch}
+                                onChange={e => setEquipSearch(e.target.value)}
+                                onFocus={() => setEquipSearchFocused(true)}
+                                onBlur={() => setEquipSearchFocused(false)}
+                                placeholder="Buscar máquina o ejercicio..."
+                                className="bg-transparent border-none outline-none text-sm placeholder:text-black/20 text-[#1A1A1E] font-medium"
+                                style={{
+                                  flex: equipSearchFocused || equipSearch || equipSearchHovered ? '1' : '0',
+                                  opacity: equipSearchFocused || equipSearch || equipSearchHovered ? 1 : 0,
+                                  minWidth: 0,
+                                  paddingRight: equipSearchFocused || equipSearch || equipSearchHovered ? '8px' : '0',
+                                  paddingLeft: equipSearchFocused || equipSearch || equipSearchHovered ? '12px' : '0',
+                                  transition: 'opacity 0.25s ease 0.1s, flex 0s 0.35s, padding 0s 0.35s',
+                                }}
+                              />
+                              <div className="flex-shrink-0" style={{ width: 36, height: 36 }} />
+                            </div>
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 2 }}>
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: equipSearchFocused || equipSearch ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.3)', display: 'block' }}>
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.35-4.35" />
+                              </svg>
+                            </motion.div>
+                          </div>
+                        </div>
+
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setShowEquipFilters(!showEquipFilters)}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center"
+                          style={{
+                            background: showEquipFilters ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                            backdropFilter: 'blur(24px) saturate(1.6)',
+                            border: showEquipFilters ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
+                            color: showEquipFilters ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.35)',
+                          }}
+                        >
+                          <Filter size={16} />
+                        </motion.button>
+                        <AnimatePresence>
+                          {showEquipFilters && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
+                              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                              exit={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
+                              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                              className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 flex gap-1.5 p-2 rounded-xl"
+                              style={{
+                                background: 'rgba(255,255,255,0.9)',
+                                backdropFilter: 'blur(24px) saturate(1.6)',
+                                border: '1px solid rgba(255,255,255,0.5)',
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+                              }}
+                            >
+                              {(['all', 'active', 'maintenance', 'inactive'] as const).map(s => {
+                                const label = s === 'all' ? 'Todas' : s === 'active' ? 'Activo' : s === 'maintenance' ? 'Mantenimiento' : 'Inactiva'
+                                const color = s === 'all' ? '#1270B7' : s === 'active' ? '#30D158' : s === 'maintenance' ? '#F1C827' : '#F43843'
+                                return (
+                                  <motion.button
+                                    key={s}
+                                    whileHover={{ scale: 1.03 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    onClick={() => setEquipStatusFilter(s)}
+                                    className="px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide whitespace-nowrap transition-all"
+                                    style={{
+                                      background: equipStatusFilter === s ? `${color}15` : 'transparent',
+                                      color: equipStatusFilter === s ? color : 'rgba(0,0,0,0.3)',
+                                      border: `1px solid ${equipStatusFilter === s ? `${color}30` : 'transparent'}`,
+                                    }}
+                                  >
+                                    {label}
+                                  </motion.button>
+                                )
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
+                      background: 'rgba(255,255,255,0.12)',
+                      backdropFilter: 'blur(24px) saturate(1.6)',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                    }}>
+                      <motion.button onClick={() => setGymTab('students')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                        style={{
+                          background: gymTab === 'students'
+                            ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                            : 'transparent',
+                          color: gymTab === 'students' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        <Users size={14} />
+                        Estudiantes
+                      </motion.button>
+                      <motion.button onClick={() => setGymTab('equipment')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                        style={{
+                          background: gymTab === 'equipment'
+                            ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                            : 'transparent',
+                          color: gymTab === 'equipment' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        <Dumbbell size={14} />
+                        Equipamiento
+                      </motion.button>
+                      <motion.button onClick={() => setGymTab('schedule')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                        style={{
+                          background: gymTab === 'schedule'
+                            ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                            : 'transparent',
+                          color: gymTab === 'schedule' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        <Calendar size={14} />
+                        Agenda
+                      </motion.button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
             {section === 'config' && (
@@ -593,7 +776,29 @@ export function AdminDashboard({ onLogout }: { onLogout?: () => void }) {
             {section === 'dashboard' && <AdminDashboardView />}
             {section === 'stats' && <AdminStats tab={statsTab} onTabChange={setStatsTab} showCareerFilter={showCareerFilter} onToggleCareerFilter={() => setShowCareerFilter(!showCareerFilter)} statsRange={statsRange} />}
             {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} roleFilter={trainerRoleFilter} showFilters={showTrainerFilters} onToggleFilters={() => setShowTrainerFilters(!showTrainerFilters)} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
-            {section === 'gym' && <AdminGym tab={gymTab} />}
+            {section === 'gym' && (
+              <AdminGym
+                tab={gymTab}
+                students={students}
+                search={gymStudentSearch}
+                riskFilter={gymStudentRiskFilter}
+                showFilters={showGymStudentFilters}
+                onToggleFilters={() => setShowGymStudentFilters(!showGymStudentFilters)}
+                onSelectStudent={setGymSelectedStudent}
+                selectedStudent={gymSelectedStudent}
+                studentTab={gymStudentTab}
+                onStudentTabChange={setGymStudentTab}
+                equipSearch={equipSearch}
+                equipSearchFocused={equipSearchFocused}
+                equipStatusFilter={equipStatusFilter}
+                showEquipFilters={showEquipFilters}
+                equipViewMode={equipViewMode}
+                onEquipViewModeChange={setEquipViewMode}
+                onEquipSearchChange={setEquipSearch}
+                onEquipSearchFocus={setEquipSearchFocused}
+                onEquipStatusFilterChange={setEquipStatusFilter}
+              />
+            )}
             {section === 'config' && <AdminConfig tab={configTab} onTabChange={setConfigTab} />}
           </motion.div>
         </AnimatePresence>
@@ -666,6 +871,110 @@ export function AdminDashboard({ onLogout }: { onLogout?: () => void }) {
             </div>
           </motion.div>
         </>
+      )}
+
+      {section === 'gym' && gymTab === 'equipment' && !gymSelectedStudent && (
+        <div className="fixed z-40 flex flex-col gap-1.5 p-1.5 rounded-2xl" style={{
+          top: '50%',
+          right: 20,
+          transform: 'translateY(-50%)',
+          background: 'rgba(255,255,255,0.12)',
+          backdropFilter: 'blur(24px) saturate(1.6)',
+          WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+          border: '1px solid rgba(255,255,255,0.25)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+        }}>
+          <div className="group relative">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setEquipViewMode('machines')}
+              title="Máquinas"
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: equipViewMode === 'machines'
+                  ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
+                  : 'transparent',
+                color: equipViewMode === 'machines' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                boxShadow: equipViewMode === 'machines' ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
+              }}
+            >
+              <Dumbbell size={17} />
+            </motion.button>
+            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap px-3 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50"
+              style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+              <p className="text-xs font-extrabold" style={{ color: '#1A1A1E' }}>Máquinas</p>
+              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>Registra máquinas, asigna ejercicios y controla su estado operativo.</p>
+            </div>
+          </div>
+          <div className="group relative">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setEquipViewMode('exercises')}
+              title="Ejercicios"
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: equipViewMode === 'exercises'
+                  ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
+                  : 'transparent',
+                color: equipViewMode === 'exercises' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                boxShadow: equipViewMode === 'exercises' ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
+              }}
+            >
+              <Activity size={17} />
+            </motion.button>
+            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap px-3 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50"
+              style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+              <p className="text-xs font-extrabold" style={{ color: '#1A1A1E' }}>Ejercicios</p>
+              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>Gestiona el catálogo de ejercicios disponibles.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {section === 'gym' && gymSelectedStudent && (
+        <div className="fixed z-40 flex flex-col gap-1.5 p-1.5 rounded-2xl" style={{
+          top: '50%',
+          right: 20,
+          transform: 'translateY(-50%)',
+          background: 'rgba(255,255,255,0.12)',
+          backdropFilter: 'blur(24px) saturate(1.6)',
+          WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+          border: '1px solid rgba(255,255,255,0.25)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+        }}>
+          {TABS.map(t => (
+            <div key={t.id} className="group relative">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setGymStudentTab(t.id)}
+                title={t.label}
+                className="w-9 h-9 rounded-xl flex items-center justify-center"
+                style={{
+                  background: gymStudentTab === t.id
+                    ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
+                    : 'transparent',
+                  color: gymStudentTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                  boxShadow: gymStudentTab === t.id ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
+                }}
+              >
+                <t.icon size={17} />
+              </motion.button>
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap px-3 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50"
+                style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+                <p className="text-xs font-extrabold" style={{ color: '#1A1A1E' }}>{t.label}</p>
+                <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>
+                  {t.id === 'overview' && 'Resumen del perfil y datos del estudiante.'}
+                  {t.id === 'progress' && 'Seguimiento de sesiones y actividad reciente.'}
+                  {t.id === 'assessment' && 'Valoraciones físicas y progreso del estudiante.'}
+                  {t.id === 'documents' && 'Documentos y archivos del estudiante.'}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )

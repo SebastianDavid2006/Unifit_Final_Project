@@ -212,7 +212,7 @@ export const TABS = [
   { id: 'documents', label: 'Documentos', icon: FileText },
 ] as const
 
-export function StudentProfile({ student, tab = 'overview', onTabChange }: { student: Student; tab?: string; onTabChange?: (t: string) => void }) {
+export function StudentProfile({ student, tab = 'overview', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
   const [localTab, setLocalTab] = useState('overview')
   const [modalOpen, setModalOpen] = useState(false)
   const [showInfoModal, setShowInfoModal] = useState(false)
@@ -1460,7 +1460,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                   {currentTab === 'assessment' && (
                       <div className="space-y-4">
                       {/* Mini Dashboard + Nueva Valoración */}
-                      <div className="grid grid-cols-4 gap-4">
+                      <div className={`grid ${canCreateValuation ? 'grid-cols-4' : 'grid-cols-3'} gap-4`}>
                         {(() => {
                           const totalRutinas = 4
                           const ultimaRutina = '15 May 2026'
@@ -1510,7 +1510,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             )
                           })
                         })()}
-                        {/* Tarjeta Nueva Valoración */}
+                        {canCreateValuation && (
+                        /* Tarjeta Nueva Valoración */
                         <motion.div
                           whileHover={{ boxShadow: '0 12px 40px rgba(230,57,70,0.3), 0 0 60px rgba(230,57,70,0.1)' }}
                           transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
@@ -1545,6 +1546,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange }: { stu
                             <Plus size={16} className="text-white/90" />
                           </div>
                         </motion.div>
+                        )}
                       </div>
 
                       <div className="flex flex-col">
