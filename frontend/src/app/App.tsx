@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Brain } from 'lucide-react'
-import { TrainerDashboard } from '../pages/TrainerPage'
-import { StudentMobileApp } from '../pages/StudentPage'
-import { AdminDashboard } from '../pages/AdminPage'
-import { LoginPage } from '../pages/LoginPage'
+import { TrainerView } from '../views/trainer/TrainerView'
+import { StudentView } from '../views/student/StudentView'
+import { AdminView } from '../views/admin/AdminView'
+import { LoginView } from '../views/login/LoginView'
 
 type Platform = 'trainer' | 'student' | 'admin'
 
@@ -90,7 +90,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <LoginPage onSelect={(platform) => setScreen(platform)} />
+              <LoginView onSelect={(platform) => setScreen(platform)} />
             </motion.div>
           )}
           {screen === 'trainer' && (
@@ -102,7 +102,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <TrainerDashboard />
+              <TrainerView onLogout={() => setScreen('login')} />
             </motion.div>
           )}
           {screen === 'student' && (
@@ -114,7 +114,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <StudentMobileApp />
+              <StudentView />
             </motion.div>
           )}
           {screen === 'admin' && (
@@ -126,7 +126,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <AdminDashboard />
+              <AdminView onLogout={() => setScreen('login')} />
             </motion.div>
           )}
         </AnimatePresence>

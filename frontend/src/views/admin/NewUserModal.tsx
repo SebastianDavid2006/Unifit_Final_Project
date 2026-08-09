@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  X, Upload, Check, FileText, User,
+  X, Check, FileText, User,
   ChevronLeft, ChevronRight, RefreshCw, ScanLine, Shield, GraduationCap
 } from 'lucide-react'
 import confetti from 'canvas-confetti'
@@ -49,7 +49,6 @@ const INITIAL_FORM = {
 export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalProps) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({ ...INITIAL_FORM })
-  const [certificado, setCertificado] = useState<File | null>(null)
   const [aceptaDatos, setAceptaDatos] = useState(false)
   const [aceptaContrato, setAceptaContrato] = useState(false)
   const [role, setRole] = useState<'trainer' | 'admin'>('trainer')
@@ -57,13 +56,11 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (open) {
       setStep(1)
       setForm({ ...INITIAL_FORM })
-      setCertificado(null)
       setAceptaDatos(false)
       setAceptaContrato(false)
       setRole('trainer')
@@ -119,7 +116,6 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   const submitForm = () => {
     const payload = {
       ...form,
-      certificado: certificado?.name ?? null,
       aceptaDatos,
       aceptaContrato,
       role,
@@ -243,18 +239,6 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
         {field('EPS', 'eps')}
         {select('Grupo sanguíneo', 'grupoSanguineo', GRUPOS_SANGRE)}
       </div>
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Certificado EPS</label>
-        <button type="button" onClick={() => fileRef.current?.click()}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-medium cursor-pointer"
-          style={{ background: 'rgba(18,112,183,0.06)', color: BLUE, border: '1px dashed rgba(18,112,183,0.2)' }}
-        >
-          <Upload size={14} />
-          {certificado ? certificado.name : 'Subir certificado'}
-        </button>
-        <input ref={fileRef} type="file" accept=".pdf,.jpg,.png" className="hidden"
-          onChange={e => setCertificado(e.target.files?.[0] ?? null)} />
-      </div>
 
       {sectionTitle('Contacto de emergencia')}
       <div className="grid grid-cols-3 gap-4">
@@ -366,17 +350,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   )
 
   const renderStep4 = () => (
-    <div className="relative min-h-[400px] flex flex-col overflow-hidden rounded-2xl">
-      <div className="absolute inset-0" style={{
-        backgroundImage: `url(${permissionsScene})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }} />
-      <div className="absolute inset-0" style={{
-        backdropFilter: 'blur(2px)',
-        WebkitBackdropFilter: 'blur(2px)',
-      }} />
+    <div className="relative h-full min-h-[400px] flex flex-col overflow-hidden rounded-2xl">
       <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-8 py-10 gap-8">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -750,14 +724,36 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className={`rounded-3xl w-full max-w-2xl flex flex-col mx-4 relative ${success ? 'overflow-visible' : 'overflow-hidden'} ${success ? '' : step === 1 ? 'h-[90vh] max-h-[700px]' : step === 5 ? 'min-h-[520px] max-h-[660px] h-auto' : 'min-h-[480px] max-h-[600px] h-auto'}`}
+            className={`flex flex-col relative ${success ? 'overflow-visible' : 'overflow-hidden'} ${step === 4 && !success
+              ? 'w-full h-full'
+              : `rounded-3xl w-full max-w-2xl mx-4 ${success ? '' : step === 1 ? 'h-[90vh] max-h-[700px]' : step === 5 ? 'min-h-[520px] max-h-[660px] h-auto' : 'min-h-[480px] max-h-[600px] h-auto'}`}`}
             style={{
               background: '#FFFFFF',
-              border: '1px solid rgba(0,0,0,0.04)',
-              boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
+              border: step === 4 && !success ? 'none' : '1px solid rgba(0,0,0,0.04)',
+              boxShadow: step === 4 && !success ? 'none' : '0 25px 60px rgba(0,0,0,0.12)',
             }}
             onClick={e => e.stopPropagation()}
           >
+            {step === 4 && !success && (
+              <>
+                <div className="absolute inset-0 z-0" style={{
+                  background: 'radial-gradient(ellipse at center, #182634 0%, #0a1017 78%)',
+                }} />
+                <img
+                  src={permissionsScene}
+                  alt="Escena de permisos"
+                  className="absolute inset-0 z-0 w-full h-full object-cover select-none pointer-events-none"
+                  draggable={false}
+                />
+                <motion.div
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: 0 }}
+                  transition={{ duration: 0.6, ease: 'easeInOut', delay: 0.05 }}
+                  className="absolute inset-0 z-0 pointer-events-none"
+                  style={{ background: '#000000' }}
+                />
+              </>
+            )}
             {success ? (
               renderSuccess()
             ) : (
@@ -771,6 +767,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                   className="flex flex-col flex-1 min-h-0"
                 >
                   {/* ── Header ──────────────────────────────── */}
+                  {step !== 4 && (
                   <div className="sticky top-0 z-10 flex-shrink-0" style={{
                     background: 'rgba(255,255,255,0.9)',
                     borderBottom: '1px solid rgba(0,0,0,0.04)',
@@ -812,10 +809,12 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                       {STEPS.find(s => s.num === step)!.label}
                     </span>
                   </div>
+                  )}
 
                   {/* ── Body (scrollable) ─────────────────── */}
-                  <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
+                  <div className={step === 4 ? 'relative z-10 flex-1 overflow-hidden' : 'flex-1 overflow-y-auto px-6 pb-6 pt-5'}>
                     <motion.div
+                      className={step === 4 ? 'h-full' : ''}
                       animate={shake ? { x: [0, -4, 4, -4, 4, 0] } : {}}
                       transition={{ duration: 0.4 }}
                     >
@@ -828,11 +827,12 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                   </div>
 
                   {/* ── Footer ────────────────────────────── */}
-                  <div className="flex-shrink-0 p-6 pt-4" style={{
-                    borderTop: '1px solid rgba(0,0,0,0.04)',
-                    background: 'rgba(255,255,255,0.8)',
+                  <div className={step === 4 ? 'relative z-10 flex-shrink-0 p-6 pt-4' : 'flex-shrink-0 p-6 pt-4'} style={{
+                    borderTop: step === 4 ? 'none' : '1px solid rgba(0,0,0,0.04)',
+                    background: step === 4 ? 'transparent' : 'rgba(255,255,255,0.8)',
                   }}>
                     <div className="flex items-center justify-between">
+                      {step !== 4 && (
                       <div className="flex-1 flex justify-start">
                         <motion.button
                           type="button"
@@ -847,6 +847,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                           Atrás
                         </motion.button>
                       </div>
+                      )}
 
                       <div className="flex-1 flex justify-center gap-3">
                         {step === 5 && fingerprintStatus === 'idle' && (
@@ -864,7 +865,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                         )}
                       </div>
 
-                      <div className="flex-1 flex justify-end">
+                      <div className={step === 4 ? 'flex justify-center w-full' : 'flex-1 flex justify-end'}>
                         <motion.button
                           type="button"
                           variants={{

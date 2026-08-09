@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Search, Plus, ClipboardList, ChevronRight, ChevronLeft } from 'lucide-react'
+import { Search, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
 import studentsImg from '../../assets/illustrations/characters/students/students_group.webp'
 import NewStudentModal from './NewStudentModal'
 
@@ -385,18 +385,13 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
                   <div className="min-w-0">
                     <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
-                    <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: 'rgba(0,0,0,0.35)' }}>CC 1098{s.id}76{s.id}</p>
+                    <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
                   </div>
                 </div>
-                <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{s.faculty}</p>
-                <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>{s.lastVisit}</p>
+                <p className="text-xs font-semibold" style={{ color: '#1A1A1E' }}>{s.faculty}</p>
+                <p className="text-xs font-medium" style={{ color: '#1A1A1E' }}>{s.lastVisit}</p>
                 <p className="text-xs font-bold" style={{ color: s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A' }}>{s.nextAssessment}</p>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.06)' }}>
-                    <ClipboardList size={14} style={{ color: BLUE }} />
-                  </div>
-                  <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal opacity-40">registros</span></p>
-                </div>
+                <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: statusMap[s.status].bg, color: statusMap[s.status].color }}>
                   <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusMap[s.status].color }} />
                   {statusMap[s.status].label}

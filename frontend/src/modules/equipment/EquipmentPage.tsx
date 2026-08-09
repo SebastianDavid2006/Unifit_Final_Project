@@ -1,5 +1,5 @@
-import EquipmentModule from '../modules/equipment/EquipmentModule'
-import type { Status } from '../data/types'
+import EquipmentModule from './EquipmentModule'
+import type { Status } from '../../data/types'
 
 interface Props {
   search: string
