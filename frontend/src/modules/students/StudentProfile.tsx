@@ -47,7 +47,7 @@ import cardioHealthIcon from '../../assets/icons/anatomy/cardio.webp'
 import liverIcon from '../../assets/icons/anatomy/liver.webp'
 import mindIcon from '../../assets/icons/health/mind.webp'
 import { assessmentItems, cardStyle, emptyValuationForm, monthNames, routineExercises, ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from './StudentProfileData'
-import type { Student, ValuationForm, ExtraDocs } from './StudentProfileData'
+import type { Student, ValuationForm } from './StudentProfileData'
 import { OverviewTab } from './tabs/OverviewTab'
 import { ProgressTab } from './tabs/ProgressTab'
 import { AssessmentTab } from './tabs/AssessmentTab'
@@ -65,11 +65,6 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
   const [signatureModalOpen, setSignatureModalOpen] = useState(false)
   const [fileModalOpen, setFileModalOpen] = useState(false)
   const [fileModalData, setFileModalData] = useState<{name: string, date: string} | null>(null)
-  const [addDocModalOpen, setAddDocModalOpen] = useState(false)
-  const [addDocSection, setAddDocSection] = useState<number | null>(null)
-  const [newDocName, setNewDocName] = useState('')
-  const [newDocDate, setNewDocDate] = useState('')
-  const [extraDocs, setExtraDocs] = useState<Record<number, {name: string, date: string, signed: boolean, originalName: string}[]>>({})
   const [openMenuDoc, setOpenMenuDoc] = useState<string | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteDocName, setDeleteDocName] = useState('')
@@ -767,15 +762,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
               )}
               {currentTab === 'documents' && (
                 <DocumentsTab
-                  extraDocs={extraDocs}
                   openMenuDoc={openMenuDoc}
                   setOpenMenuDoc={setOpenMenuDoc}
                   setFileModalData={setFileModalData}
                   setFileModalOpen={setFileModalOpen}
-                  setAddDocSection={setAddDocSection}
-                  setNewDocName={setNewDocName}
-                  setNewDocDate={setNewDocDate}
-                  setAddDocModalOpen={setAddDocModalOpen}
                 />
               )}
 
@@ -1052,107 +1042,6 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                     style={{ background: '#E63946', color: '#FFFFFF' }}
                   >
                     Eliminar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Modal agregar documento */}
-        <AnimatePresence>
-          {addDocModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[70] flex items-center justify-center p-6"
-              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
-              onClick={() => setAddDocModalOpen(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-md rounded-3xl p-6"
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
-                }}
-              >
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.1)' }}>
-                    <Upload size={17} style={{ color: '#E63946' }} />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Agregar documento</h3>
-                    <p className="text-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                      {addDocSection === 1 ? 'Informes Médicos' : addDocSection === 2 ? 'Lesiones y Seguimiento' : ''}
-                    </p>
-                  </div>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setAddDocModalOpen(false)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                  </motion.button>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="rounded-2xl p-5 flex flex-col items-center justify-center border-2 border-dashed cursor-pointer transition-all" style={{ borderColor: 'rgba(230,57,70,0.25)', background: 'rgba(230,57,70,0.03)' }}>
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2" style={{ background: 'rgba(230,57,70,0.1)' }}>
-                      <Upload size={20} style={{ color: '#E63946' }} />
-                    </div>
-                    <p className="text-xs font-bold" style={{ color: '#E63946' }}>Seleccionar archivo</p>
-                    <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>PDF, JPG o PNG · Máx 10 MB</p>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Nombre del documento</label>
-                    <input
-                      value={newDocName}
-                      onChange={e => setNewDocName(e.target.value)}
-                      placeholder="Ej: Certificado médico"
-                      className="w-full px-4 py-2.5 rounded-xl outline-none text-sm transition-all"
-                      style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)', color: '#0D1B2A' }}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Fecha</label>
-                    <input
-                      value={newDocDate}
-                      onChange={e => setNewDocDate(e.target.value)}
-                      placeholder="Ej: 08 Ago 2026"
-                      className="w-full px-4 py-2.5 rounded-xl outline-none text-sm transition-all"
-                      style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)', color: '#0D1B2A' }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-2.5 mt-6">
-                  <button
-                    onClick={() => setAddDocModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all"
-                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!newDocName.trim()) return
-                      setExtraDocs(prev => ({
-                        ...prev,
-                        [addDocSection ?? 1]: [
-                          ...(prev[addDocSection ?? 1] || []),
-                          { name: newDocName.trim(), date: newDocDate.trim() || 'Hoy', signed: true, originalName: newDocName.trim().toLowerCase().replace(/\s+/g, '_') + '.pdf' },
-                        ],
-                      }))
-                      setAddDocModalOpen(false)
-                    }}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all"
-                    style={{ background: '#E63946', color: '#FFFFFF' }}
-                  >
-                    Agregar
                   </button>
                 </div>
               </motion.div>

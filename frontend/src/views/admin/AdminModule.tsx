@@ -172,7 +172,7 @@ export default function AdminModule() {
 
       {/* Tabs */}
       <div className="flex items-center gap-2 mb-6">
-        <TabButton id="trainers" label="Entrenadores" icon={UserPlus} />
+        <TabButton id="trainers" label="Personal" icon={UserPlus} />
         <TabButton id="plans" label="Planes" icon={CreditCard} />
         <TabButton id="audit" label="Auditoría" icon={Clock} />
       </div>

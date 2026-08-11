@@ -1,32 +1,21 @@
 ﻿import { motion } from 'framer-motion'
-import { Eye, FileText, Upload } from 'lucide-react'
+import { Eye, FileText } from 'lucide-react'
 import { ScalesOfJusticeView } from '../../../assets/models/ui/objects/scales_of_justice/ScalesOfJusticeModel'
 import { StethoscopeView } from '../../../assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { KitView } from '../../../assets/models/ui/objects/kit/KitModel'
-import type { ExtraDocs } from '../StudentProfileData'
 
 interface Props {
-  extraDocs: ExtraDocs
   openMenuDoc: string | null
   setOpenMenuDoc: (v: string | null) => void
   setFileModalData: (v: { name: string; date: string } | null) => void
   setFileModalOpen: (v: boolean) => void
-  setAddDocSection: (v: number | null) => void
-  setNewDocName: (v: string) => void
-  setNewDocDate: (v: string) => void
-  setAddDocModalOpen: (v: boolean) => void
 }
 
 export function DocumentsTab({
-  extraDocs,
   openMenuDoc,
   setOpenMenuDoc,
   setFileModalData,
   setFileModalOpen,
-  setAddDocSection,
-  setNewDocName,
-  setNewDocDate,
-  setAddDocModalOpen,
 }: Props) {
   return (                    <div className="max-w-[1200px] mx-auto grid grid-cols-3 gap-6 items-start">
                       {[
@@ -81,7 +70,7 @@ export function DocumentsTab({
                             </div>
                           </div>
                           <div className="flex-1 space-y-4">
-                            {[...section.docs, ...(extraDocs[si] || [])].map((doc, di) => (
+                            {[...section.docs].map((doc, di) => (
                               doc.signed ? (
                                 <motion.div
                                   key={di}
@@ -159,34 +148,6 @@ export function DocumentsTab({
                                 </motion.div>
                               )
                             ))}
-                            {(si === 1 || si === 2) && (
-                              <motion.button
-                                initial={{ opacity: 0, y: 6 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: si * 0.1 + (section.docs.length + (extraDocs[si] || []).length) * 0.06 }}
-                                onClick={() => { setAddDocSection(si); setNewDocName(''); setNewDocDate(''); setAddDocModalOpen(true) }}
-                                className="w-full h-[100px] rounded-xl px-5 flex flex-col items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer relative overflow-hidden"
-                                style={{
-                                  background: 'linear-gradient(180deg, rgba(230,57,70,0.05) 0%, rgba(255,255,255,0.6) 100%)',
-                                  border: '2px dashed rgba(230,57,70,0.35)',
-                                }}
-                                whileHover={{ scale: 1.02, borderColor: '#E63946', boxShadow: '0 10px 28px rgba(230,57,70,0.12)' }}
-                                whileTap={{ scale: 0.98 }}
-                              >
-                                <motion.div
-                                  animate={{ y: [0, -3, 0] }}
-                                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-                                  className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-                                  style={{ background: 'linear-gradient(135deg, #E63946, #FF6B6B)', boxShadow: '0 6px 16px rgba(230,57,70,0.3)' }}
-                                >
-                                  <Upload size={19} style={{ color: '#FFFFFF' }} />
-                                </motion.div>
-                                <div className="text-center">
-                                  <p className="text-sm font-bold transition-colors duration-300" style={{ color: '#C62828' }}>Subir documento</p>
-                                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>Arrastra o selecciona un archivo PDF, JPG o PNG</p>
-                                </div>
-                              </motion.button>
-                            )}
                           </div>
                         </motion.div>
                       ))}

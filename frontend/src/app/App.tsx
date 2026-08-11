@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Brain } from 'lucide-react'
 import { TrainerView } from '../views/trainer/TrainerView'
 import { StudentView } from '../views/student/StudentView'
 import { AdminView } from '../views/admin/AdminView'
 import { LoginView } from '../views/login/LoginView'
+import { RegisterView } from '../views/login/RegisterView'
 
 type Platform = 'trainer' | 'student' | 'admin'
 
@@ -38,7 +38,7 @@ function ParticleField() {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<'login' | Platform>('login')
+  const [screen, setScreen] = useState<'login' | 'register' | Platform>('login')
 
   return (
     <div
@@ -67,18 +67,6 @@ export default function App() {
         </>
       )}
 
-      {screen === 'login' && (
-        <div className="absolute top-4 right-8 flex items-center gap-1.5 px-3 py-1.5 rounded-full z-50" style={{
-          background: 'rgba(255,255,255,0.55)',
-          backdropFilter: 'blur(25px) saturate(1.4)',
-          border: '1px solid rgba(0,0,0,0.04)',
-        }}>
-          <Brain size={11} style={{ color: '#E63946' }} />
-          <span className="text-[10px] font-semibold" style={{ color: '#E63946' }}>IA EN VIVO</span>
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#E63946', animation: 'pulse-glow 2s ease-in-out infinite' }} />
-        </div>
-      )}
-
       <div className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {screen === 'login' && (
@@ -90,7 +78,19 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <LoginView onSelect={(platform) => setScreen(platform)} />
+              <LoginView onSelect={(platform) => setScreen(platform)} onRegister={() => setScreen('register')} />
+            </motion.div>
+          )}
+          {screen === 'register' && (
+            <motion.div
+              key="register"
+              className="size-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <RegisterView onBack={() => setScreen('login')} />
             </motion.div>
           )}
           {screen === 'trainer' && (

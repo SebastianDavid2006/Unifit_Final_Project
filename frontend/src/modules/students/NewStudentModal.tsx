@@ -1,7 +1,7 @@
 ﻿import { useState, useRef, useEffect, useMemo, type RefObject } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  X, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink
+  X, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink, ClipboardCheck, ScanLine
 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import confetti from 'canvas-confetti'
@@ -359,8 +359,13 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         {field('Teléfono contacto', 'telefonoContacto')}
         {select('Parentesco', 'parentesco', PARENTESCOS)}
       </div>
+      {form.parentesco === 'Otro' && (
+        <div className="mt-4">
+          {field('Especifique el parentesco', 'otroParentesco', { required: true })}
+        </div>
+      )}
 
-      {sectionTitle('Tipo de usuario')}
+      {sectionTitle('Rol en la universidad')}
       <div className="grid grid-cols-3 gap-2">
         {TIPOS_USUARIO.map((opt, i) => {
           const selected = tipoUsuario === opt.id
@@ -449,7 +454,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       {!tipoUsuario && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: 'rgba(245,166,35,0.07)', border: '1px dashed rgba(245,166,35,0.3)' }}>
           <span className="text-[11px] font-semibold" style={{ color: '#1A1A1E' }}>
-            Selecciona el tipo de usuario para completar su información.
+            Selecciona el rol en la universidad para completar su información.
           </span>
         </div>
       )}

@@ -379,7 +379,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
             },
             {
               id: 'admin' as const,
-              label: 'Administrador',
+              label: 'Administrativo',
               desc: 'Control total del sistema: usuarios, planes, configuración y reportes.',
               icon: Shield,
               gradient: 'linear-gradient(135deg, #F43843, #CC0033)',

@@ -2,7 +2,6 @@ import { StudentProfile } from '../../modules/students/StudentProfile'
 import StudentsModule from '../../modules/students/StudentsModule'
 import AgendaModule from '../../modules/agenda/AgendaModule'
 import EquipmentPage from '../../modules/equipment/EquipmentPage'
-import type { Status } from '../../data/types'
 import type { Student } from '../../data/students'
 
 interface Props {
@@ -18,13 +17,10 @@ interface Props {
   onStudentTabChange: (t: string) => void
   equipSearch: string
   equipSearchFocused: boolean
-  equipStatusFilter: Status | 'all'
-  showEquipFilters: boolean
   equipViewMode: 'machines' | 'exercises'
   onEquipViewModeChange: (v: 'machines' | 'exercises') => void
   onEquipSearchChange: (v: string) => void
   onEquipSearchFocus: (v: boolean) => void
-  onEquipStatusFilterChange: (v: Status | 'all') => void
 }
 
 export default function AdminGym(props: Props) {
@@ -56,13 +52,10 @@ export default function AdminGym(props: Props) {
       <EquipmentPage
         search={props.equipSearch}
         searchFocused={props.equipSearchFocused}
-        statusFilter={props.equipStatusFilter}
-        showBlur={props.showEquipFilters}
         viewMode={props.equipViewMode}
         onViewModeChange={props.onEquipViewModeChange}
         onSearchChange={props.onEquipSearchChange}
         onSearchFocus={props.onEquipSearchFocus}
-        onStatusFilterChange={props.onEquipStatusFilterChange}
       />
     )
   }
