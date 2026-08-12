@@ -177,15 +177,6 @@ export function LoginView({ onSelect, onRegister }: LoginViewProps) {
               Crear cuenta
             </motion.button>
 
-            <div className="mt-5 rounded-xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.16)' }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Acceso demo</p>
-              <div className="flex flex-col gap-0.5 text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                <span>Admin: <b style={{ color: 'rgba(255,255,255,0.85)' }}>admin</b> / <b style={{ color: 'rgba(255,255,255,0.85)' }}>admin123</b></span>
-                <span>Entrenador: <b style={{ color: 'rgba(255,255,255,0.85)' }}>entrenador</b> / <b style={{ color: 'rgba(255,255,255,0.85)' }}>entrenador123</b></span>
-                <span>Estudiante: <b style={{ color: 'rgba(255,255,255,0.85)' }}>estudiante</b> / <b style={{ color: 'rgba(255,255,255,0.85)' }}>estudiante123</b></span>
-              </div>
-            </div>
-
             <div className="flex items-center justify-center gap-5 mt-6">
               <img src={universidadLogo} alt="Universidad" style={{ height: 28, objectFit: 'contain' }} />
               <div className="h-10 w-px" style={{ background: 'rgba(255,255,255,0.25)' }} />

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import gymBg from '../../assets/scenes/login_screen.mp4'
+import gymBg from '../../assets/scenes/videos/login_screen.mp4'
 
 export function LoginBackground() {
   const [opacityA, setOpacityA] = useState(1)
