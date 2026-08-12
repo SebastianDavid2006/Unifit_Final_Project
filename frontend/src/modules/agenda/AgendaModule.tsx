@@ -51,6 +51,7 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     { id: '16', date: '2026-06-20', startTime: '08:00', endTime: '09:00', type: 'registration', title: 'Registro Nuevo Ingreso', studentName: 'Jorge Torres' },
   ])
 
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
   const [newApptType, setNewApptType] = useState<'class' | 'initial_assessment' | 'physical_assessment' | 'registration' | 'event'>('initial_assessment')
   const [showPublishModal, setShowPublishModal] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -125,19 +126,44 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     return appointments.filter(a => a.date === dateStr)
   }
 
-  function handleAddAppointment() {
+  function handleSaveAppointment() {
     if (!selectedDate) return
-    const newId = String(Date.now())
-    setAppointments(prev => [...prev, {
-      id: newId, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
-      type: newApptType, title: typeLabels[newApptType] || 'Cita',
-      studentName: newApptStudent || undefined,
-    }])
+    if (editingAppointment) {
+      setAppointments(prev => prev.map(a =>
+        a.id === editingAppointment.id
+          ? { ...a, date: selectedDate, startTime: newApptStart, endTime: newApptEnd, type: newApptType, title: typeLabels[newApptType] || 'Cita', studentName: newApptStudent || undefined }
+          : a
+      ))
+    } else {
+      const newId = String(Date.now())
+      setAppointments(prev => [...prev, {
+        id: newId, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
+        type: newApptType, title: typeLabels[newApptType] || 'Cita',
+        studentName: newApptStudent || undefined,
+      }])
+    }
     setShowApptModal(false)
+    setEditingAppointment(null)
     setNewApptStudent('')
   }
 
+  function handleEditAppointment(appt: Appointment) {
+    setEditingAppointment(appt)
+    setSelectedDate(appt.date)
+    setNewApptStart(appt.startTime)
+    setNewApptEnd(appt.endTime)
+    setNewApptType(appt.type)
+    setNewApptStudent(appt.studentName || '')
+    setShowApptModal(true)
+  }
+
+  function handleDeleteAppointment(id: string) {
+    setAppointments(prev => prev.filter(a => a.id !== id))
+    setDayModalDate(null)
+  }
+
   function handleSlotClick(dateStr: string, timeStr: string) {
+    setEditingAppointment(null)
     setSelectedDate(dateStr)
     const [h, m] = timeStr.split(':')
     const normalized = `${String(Number(h)).padStart(2, '0')}:${m.padStart(2, '0')}`
@@ -419,20 +445,13 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
         {!mini && (
           <div className="space-y-0.5">
               {visible.map(a => (
-                  <div key={a.id} className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight truncate" style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `2.5px solid ${typeColors[a.type]}` }}
-                    title={`${a.startTime} – ${a.endTime} ${a.title}${a.studentName ? ' - ' + a.studentName : ''}`}
+                  <div key={a.id} className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-tight flex items-center justify-between" style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `2.5px solid ${typeColors[a.type]}` }}
+                    title={`${a.startTime} – ${a.endTime} ${typeLabels[a.type]}${a.studentName ? ' - ' + a.studentName : ''}`}
                   >
-                    {a.studentName ? (
-                      <>
-                        <div className="text-[10px] font-extrabold truncate">{a.studentName}</div>
-                        <div className="flex items-center gap-1 text-[8px] font-medium truncate" style={{ opacity: 0.75 }}>
-                          <span className="truncate">{a.title}</span>
-                          <span className="flex-shrink-0">{a.startTime} – {a.endTime}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <><span style={{ opacity: 0.75 }}>{a.startTime} – {a.endTime}</span> <span className="font-extrabold">{a.title}</span></>
-                    )}
+                    <div className="text-[10px] font-extrabold truncate pr-1">{a.studentName || `${a.startTime} – ${a.endTime}`}</div>
+                    <span className="flex-shrink-0 text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${typeColors[a.type]}30`, color: typeColors[a.type] }}>
+                      {typeLabels[a.type]}
+                    </span>
                   </div>
                 ))}
               {hidden.length > 0 && (

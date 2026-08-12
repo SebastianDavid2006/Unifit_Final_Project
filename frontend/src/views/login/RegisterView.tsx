@@ -128,21 +128,26 @@ export function RegisterView({ onBack }: RegisterViewProps) {
         v.play().catch(() => {})
       })
     }, 350)
+
+    // Fullscreen solo en desktop y después de que el elemento esté montado
     const el = introContainerRef.current
-    const doc = document as any
-    const enter = () => {
-      if (isPhonePreview) return
-      if (doc.fullscreenElement || doc.webkitFullscreenElement) return
-      const req = el?.requestFullscreen?.() ?? el?.webkitRequestFullscreen?.()
-      if (req?.catch) req.catch(() => {})
+    if (el && !isPhonePreview) {
+      const doc = document as any
+      if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
+        const req = el.requestFullscreen?.() ?? el.webkitRequestFullscreen?.()
+        if (req?.catch) req.catch(() => {})
+      }
     }
-    enter()
+
     return () => {
       clearTimeout(t)
-      const exit = doc.exitFullscreen?.() ?? doc.webkitExitFullscreen?.()
-      if (exit?.catch) exit.catch(() => {})
+      const doc = document as any
+      if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+        const exit = doc.exitFullscreen?.() ?? doc.webkitExitFullscreen?.()
+        if (exit?.catch) exit.catch(() => {})
+      }
     }
-  }, [phase, introSrc])
+  }, [phase, introSrc, isPhonePreview])
 
   const skipIntro = () => {
     introVideoRef.current?.pause()
