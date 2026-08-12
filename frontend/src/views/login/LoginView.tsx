@@ -1,7 +1,7 @@
-import { useState, useRef, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { motion } from 'motion/react'
 import { User, Lock, Eye, EyeOff, UserPlus, ArrowRight } from 'lucide-react'
-import gymBg from '../../assets/scenes/login_screen.mp4'
+import { LoginBackground } from '../../components/ui/LoginBackground'
 import logotipo from '../../assets/logo/logo.webp'
 import universidadLogo from '../../assets/logo/universitaria_de_colombia.webp'
 import secundarioLogo from '../../assets/logo/universitaria_de_bogota.webp'
@@ -25,73 +25,24 @@ export function LoginView({ onSelect, onRegister }: LoginViewProps) {
   const [usuario, setUsuario] = useState('')
   const [contraseña, setContraseña] = useState('')
   const [showPass, setShowPass] = useState(false)
-  const [opacityA, setOpacityA] = useState(1)
-  const [opacityB, setOpacityB] = useState(0)
-  const videoARef = useRef<HTMLVideoElement>(null)
-  const videoBRef = useRef<HTMLVideoElement>(null)
-  const crossfading = useRef(false)
+  const [error, setError] = useState('')
+  const [shake, setShake] = useState(false)
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    onSelect('trainer')
-  }
-
-  const triggerCrossfade = (from: HTMLVideoElement, to: HTMLVideoElement, fadeTo: () => void) => {
-    if (crossfading.current) return
-    crossfading.current = true
-    to.currentTime = 0
-    to.play()
-    fadeTo()
-    setTimeout(() => {
-      from.pause()
-      from.currentTime = 0
-      if (from === videoARef.current) setOpacityA(0)
-      else setOpacityB(0)
-      crossfading.current = false
-    }, 2200)
-  }
-
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const v = e.currentTarget
-    if (v.currentTime >= (v.duration || 0) - 2.2) {
-      if (v === videoARef.current) {
-        if (videoBRef.current) triggerCrossfade(v, videoBRef.current, () => setOpacityB(1))
-      } else if (videoARef.current) {
-        triggerCrossfade(v, videoARef.current, () => setOpacityA(1))
-      }
-    }
+    const u = usuario.trim().toLowerCase()
+    const p = contraseña.trim()
+    if (u === 'admin' && p === 'admin123') return onSelect('admin')
+    if (u === 'entrenador' && p === 'entrenador123') return onSelect('trainer')
+    if (u === 'estudiante' && p === 'estudiante123') return onSelect('student')
+    setError('Credenciales incorrectas')
+    setShake(true)
+    setTimeout(() => setShake(false), 500)
   }
 
   return (
     <div className="size-full relative overflow-hidden">
-      <div className="absolute inset-0 w-full h-full overflow-hidden">
-        <video
-          ref={videoARef}
-          src={gymBg}
-          autoPlay
-          muted
-          playsInline
-          onTimeUpdate={handleTimeUpdate}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-[cubic-bezier(0.65,0,0.35,1)]"
-          style={{ opacity: opacityA }}
-        />
-        <video
-          ref={videoBRef}
-          src={gymBg}
-          muted
-          playsInline
-          onTimeUpdate={handleTimeUpdate}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-[2000ms] ease-[cubic-bezier(0.65,0,0.35,1)]"
-          style={{ opacity: opacityB }}
-        />
-        <div className="absolute inset-0" style={{
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-        }} />
-      </div>
-      <div className="absolute inset-0" style={{
-        background: 'linear-gradient(115deg, rgba(8,12,28,0.55) 0%, rgba(8,12,28,0.3) 45%, rgba(8,12,28,0.16) 100%)',
-      }} />
+      <LoginBackground />
 
       <div className="relative z-10 size-full flex items-center justify-center px-5 py-4">
         <div className="w-full max-w-[540px] max-h-dvh flex flex-col items-center justify-center">
@@ -103,6 +54,11 @@ export function LoginView({ onSelect, onRegister }: LoginViewProps) {
         >
           <img src={logotipo} alt="UNIFIT" className="drop-shadow-[0_8px_24px_rgba(0,0,0,0.35)]" style={{ width: 96, height: 96, objectFit: 'contain' }} />
         </motion.div>
+        <motion.div
+          className="w-full"
+          animate={shake ? { x: [0, -6, 6, -6, 6, 0] } : {}}
+          transition={{ duration: 0.4 }}
+        >
         <motion.form
           onSubmit={handleSubmit}
           className="w-full max-h-[calc(100dvh-5rem)] overflow-y-auto rounded-[32px] px-6 sm:px-8 lg:px-10 pt-14 sm:pt-16 pb-8 lg:pb-10 flex flex-col justify-start relative"
@@ -171,6 +127,17 @@ export function LoginView({ onSelect, onRegister }: LoginViewProps) {
               </button>
             </div>
 
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs font-bold text-center -mt-3 mb-5"
+                style={{ color: '#F43843' }}
+              >
+                {error}
+              </motion.p>
+            )}
+
             <motion.button
               type="submit"
               whileHover={{ scale: 1.01 }}
@@ -210,7 +177,16 @@ export function LoginView({ onSelect, onRegister }: LoginViewProps) {
               Crear cuenta
             </motion.button>
 
-            <div className="flex items-center justify-center gap-5 mt-8">
+            <div className="mt-5 rounded-xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.16)' }}>
+              <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Acceso demo</p>
+              <div className="flex flex-col gap-0.5 text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <span>Admin: <b style={{ color: 'rgba(255,255,255,0.85)' }}>admin</b> / <b style={{ color: 'rgba(255,255,255,0.85)' }}>admin123</b></span>
+                <span>Entrenador: <b style={{ color: 'rgba(255,255,255,0.85)' }}>entrenador</b> / <b style={{ color: 'rgba(255,255,255,0.85)' }}>entrenador123</b></span>
+                <span>Estudiante: <b style={{ color: 'rgba(255,255,255,0.85)' }}>estudiante</b> / <b style={{ color: 'rgba(255,255,255,0.85)' }}>estudiante123</b></span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-5 mt-6">
               <img src={universidadLogo} alt="Universidad" style={{ height: 28, objectFit: 'contain' }} />
               <div className="h-10 w-px" style={{ background: 'rgba(255,255,255,0.25)' }} />
               <img src={secundarioLogo} alt="Logo secundario" style={{ height: 32, objectFit: 'contain' }} />
@@ -221,6 +197,7 @@ export function LoginView({ onSelect, onRegister }: LoginViewProps) {
               <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>Jhon Barrantes Segura</span>
             </p>
           </motion.form>
+        </motion.div>
         </div>
       </div>
     </div>
