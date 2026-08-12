@@ -1,22 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight,
-  Clock, CalendarCheck,
+  Clock, CalendarCheck, X, FileText,
 } from 'lucide-react'
-import { LoginBackground } from '../../components/ui/LoginBackground'
 import {
   TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
   TIPOS_USUARIO, INITIAL_FORM, BLUE, GREEN, BLUE_GRAD, GREEN_GRAD,
 } from '../../modules/students/NewStudentData'
 import type { TipoUsuario } from '../../modules/students/NewStudentData'
 import { INSTITUCIONES, getNiveles, getPrograms } from '../../data/academicPrograms'
-import { dayLabels, monthNames, DAY_GRAD } from '../../modules/agenda/AgendaData'
+import { dayLabels, dayLabelsGetDay, monthNames, DAY_GRAD } from '../../modules/agenda/AgendaData'
 import { useIsMobile } from '../../components/ui/use-mobile'
-import successCheckImg from '../../assets/illustrations/actions/feedback/success_check.webp'
+import coachImg from '../../assets/illustrations/characters/coach/coach_missing_fingerprint_and_signature.webp'
 import logotipo from '../../assets/logo/logo.webp'
+import welcomeDesktop from '../../assets/scenes/videos/welcome_desktop.mp4'
+import welcomeMobile from '../../assets/scenes/videos/welcome_mobile.mp4'
 
 const DARK_BG = '#0A0A14'
+
+let persistedPreview: 'celular' | 'desktop' | 'auto' = 'auto'
 
 const FORM_STEPS = [
   { num: 1, label: 'Información' },
@@ -24,7 +27,7 @@ const FORM_STEPS = [
   { num: 3, label: 'Contrato' },
 ]
 
-type Phase = 'form' | 'success' | 'schedule'
+type Phase = 'intro' | 'form' | 'success' | 'schedule'
 
 interface Slot { time: string; title: string; color: string }
 
@@ -33,35 +36,26 @@ function buildDemoAgenda(): Record<string, Slot[]> {
   const y = now.getFullYear()
   const m = now.getMonth()
   const last = new Date(y, m + 1, 0).getDate()
-  const days = [...new Set([
-    now.getDate(),
-    Math.min(now.getDate() + 1, last),
-    Math.min(now.getDate() + 2, last),
-    Math.min(now.getDate() + 3, last),
-  ])]
   const d = (day: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
   const reg = '#AF52DE'
   const assess = '#FF6B35'
   const physical = '#30D158'
-  return {
-    [d(days[0])]: [
-      { time: '07:00', title: 'Registro Nuevo Ingreso', color: reg },
-      { time: '09:00', title: 'Valoración Inicial', color: assess },
-      { time: '11:00', title: 'Valoración Física', color: physical },
-    ],
-    [d(days[1])]: [
-      { time: '08:00', title: 'Valoración Inicial', color: assess },
-      { time: '14:00', title: 'Registro Nuevo Ingreso', color: reg },
-    ],
-    [d(days[2])]: [
-      { time: '10:00', title: 'Registro Nuevo Ingreso', color: reg },
-      { time: '16:00', title: 'Valoración Física', color: physical },
-    ],
-    [d(days[3])]: [
-      { time: '09:00', title: 'Valoración Inicial', color: assess },
-      { time: '15:00', title: 'Registro Nuevo Ingreso', color: reg },
-    ],
+  const times = ['07:00', '08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
+  const titles = [
+    { title: 'Registro Nuevo Ingreso', color: reg },
+    { title: 'Valoración Inicial', color: assess },
+    { title: 'Valoración Física', color: physical },
+  ]
+  const agenda: Record<string, Slot[]> = {}
+  for (let day = 1; day <= last; day++) {
+    const start = (day * 3) % (times.length - 2)
+    agenda[d(day)] = times.slice(start, start + 3).map((time, i) => ({
+      time,
+      title: titles[i].title,
+      color: titles[i].color,
+    }))
   }
+  return agenda
 }
 
 function fmtDate(dt: Date) {
@@ -94,8 +88,13 @@ interface RegisterViewProps {
 
 export function RegisterView({ onBack }: RegisterViewProps) {
   const isMobile = useIsMobile()
-  const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>('auto')
-  const [phase, setPhase] = useState<Phase>('form')
+  const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>(persistedPreview)
+  const changePreviewMode = (v: 'celular' | 'desktop' | 'auto') => {
+    persistedPreview = v
+    setPreviewMode(v)
+    setPhase('intro')
+  }
+  const [phase, setPhase] = useState<Phase>('intro')
   const [form, setForm] = useState<Record<string, string>>({ ...INITIAL_FORM, parentesco: 'Padre', estado: 'No egresado' })
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
   const [step, setStep] = useState(1)
@@ -107,9 +106,53 @@ export function RegisterView({ onBack }: RegisterViewProps) {
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [scheduled, setScheduled] = useState(false)
+  const introVideoRef = useRef<HTMLVideoElement>(null)
+  const introContainerRef = useRef<HTMLDivElement>(null)
+  const bgVideoRef = useRef<HTMLVideoElement>(null)
 
   const isDesktopVideo = previewMode === 'desktop'
   const isPhonePreview = previewMode === 'celular' || (previewMode === 'auto' && isMobile)
+  const introSrc = isPhonePreview ? welcomeMobile : welcomeDesktop
+
+  useEffect(() => {
+    if (phase !== 'intro') return
+    const v = introVideoRef.current
+    if (!v) return
+    v.muted = true
+    v.play().catch(() => {})
+    const t = setTimeout(() => {
+      v.muted = false
+      const p = v.play()
+      if (p) p.catch(() => {
+        v.muted = true
+        v.play().catch(() => {})
+      })
+    }, 350)
+    const el = introContainerRef.current
+    const doc = document as any
+    const enter = () => {
+      if (isPhonePreview) return
+      if (doc.fullscreenElement || doc.webkitFullscreenElement) return
+      const req = el?.requestFullscreen?.() ?? el?.webkitRequestFullscreen?.()
+      if (req?.catch) req.catch(() => {})
+    }
+    enter()
+    return () => {
+      clearTimeout(t)
+      const exit = doc.exitFullscreen?.() ?? doc.webkitExitFullscreen?.()
+      if (exit?.catch) exit.catch(() => {})
+    }
+  }, [phase, introSrc])
+
+  const skipIntro = () => {
+    introVideoRef.current?.pause()
+    const bg = bgVideoRef.current
+    if (bg) {
+      bg.currentTime = 0
+      bg.play().catch(() => {})
+    }
+    setPhase('form')
+  }
 
   const set = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }))
 
@@ -201,7 +244,7 @@ export function RegisterView({ onBack }: RegisterViewProps) {
           opts?.onChange?.(v)
         }}
         className="appearance-none cursor-pointer"
-        style={{ ...inputStyle, background: '#151520' }}
+        style={inputStyle}
       >
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -394,33 +437,45 @@ export function RegisterView({ onBack }: RegisterViewProps) {
 
   const renderStep3 = () => (
     <div className="flex flex-col gap-4 px-5 py-4">
-      <div className="rounded-2xl p-5 text-xs leading-relaxed max-h-[280px] overflow-y-auto" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="font-bold text-sm mb-3" style={{ color: '#fff' }}>Contrato de prestación de servicios estudiantiles</p>
-        <p className="mb-3">
-          El presente contrato regula la relación entre UniFit S.A.S., en adelante "LA INSTITUCIÓN", y el estudiante que se registra a través del presente formulario, en adelante "EL ESTUDIANTE".
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA PRIMERA – OBJETO:</strong> LA INSTITUCIÓN se compromete a proporcionar al ESTUDIANTE los servicios de entrenamiento y acompañamiento deportivo contratados, de acuerdo con el programa académico y la modalidad seleccionada en el formulario de registro.
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA SEGUNDA – OBLIGACIONES DEL ESTUDIANTE:</strong> El ESTUDIANTE se obliga a asistir puntualmente a las sesiones programadas, cumplir con las normas internas de LA INSTITUCIÓN, utilizar adecuadamente las instalaciones y equipos, y mantener una conducta respetuosa hacia el personal y demás estudiantes.
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA TERCERA – OBLIGACIONES DE LA INSTITUCIÓN:</strong> LA INSTITUCIÓN se obliga a proporcionar entrenadores calificados, mantener las instalaciones en condiciones óptimas de seguridad e higiene, y garantizar la prestación del servicio de acuerdo con los estándares de calidad establecidos.
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA CUARTA – VALOR Y FORMA DE PAGO:</strong> El valor del programa será el establecido en la tarifa vigente al momento de la matrícula. EL ESTUDIANTE acepta realizar los pagos en las fechas y montos acordados.
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA QUINTA – TERMINACIÓN:</strong> El presente contrato podrá ser terminado por cualquiera de las partes mediante comunicación escrita con quince (15) días de antelación, o de forma inmediata por incumplimiento grave de las obligaciones aquí establecidas.
-        </p>
-        <p>
-          <strong>CLÁUSULA SEXTA – ACEPTACIÓN:</strong> Las partes aceptan el presente contrato y se obligan a su cumplimiento en todos sus términos.
-        </p>
+      <div className="rounded-xl p-1.5" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="rounded-lg bg-white px-5 py-5 flex flex-col gap-3 max-h-[340px] overflow-y-auto" style={{ color: '#1A1A1E', boxShadow: '0 8px 30px rgba(0,0,0,0.25)' }}>
+          <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
+            <span className="text-[11px] font-extrabold" style={{ color: '#007AFF' }}>UNIFIT</span>
+            <span className="text-[9px] font-bold tracking-[0.2em]" style={{ color: 'rgba(0,0,0,0.4)' }}>CONTRATO</span>
+          </div>
+          <p className="text-[12px] font-extrabold">Contrato de prestación de servicios estudiantiles</p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
+            El presente contrato regula la relación entre UniFit S.A.S., en adelante "LA INSTITUCIÓN", y el estudiante que se registra a través del presente formulario, en adelante "EL ESTUDIANTE".
+          </p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
+            <strong>CLÁUSULA PRIMERA – OBJETO:</strong> LA INSTITUCIÓN se compromete a proporcionar al ESTUDIANTE los servicios de entrenamiento y acompañamiento deportivo contratados, de acuerdo con el programa académico y la modalidad seleccionada en el formulario de registro.
+          </p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
+            <strong>CLÁUSULA SEGUNDA – OBLIGACIONES DEL ESTUDIANTE:</strong> El ESTUDIANTE se obliga a asistir puntualmente a las sesiones programadas, cumplir con las normas internas de LA INSTITUCIÓN, utilizar adecuadamente las instalaciones y equipos, y mantener una conducta respetuosa hacia el personal y demás estudiantes.
+          </p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
+            <strong>CLÁUSULA TERCERA – OBLIGACIONES DE LA INSTITUCIÓN:</strong> LA INSTITUCIÓN se obliga a proporcionar entrenadores calificados, mantener las instalaciones en condiciones óptimas de seguridad e higiene, y garantizar la prestación del servicio de acuerdo con los estándares de calidad establecidos.
+          </p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
+            <strong>CLÁUSULA CUARTA – VALOR Y FORMA DE PAGO:</strong> El valor del programa será el establecido en la tarifa vigente al momento de la matrícula. EL ESTUDIANTE acepta realizar los pagos en las fechas y montos acordados.
+          </p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
+            <strong>CLÁUSULA QUINTA – TERMINACIÓN:</strong> El presente contrato podrá ser terminado por cualquiera de las partes mediante comunicación escrita con quince (15) días de antelación, o de forma inmediata por incumplimiento grave de las obligaciones aquí establecidas.
+          </p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
+            <strong>CLÁUSULA SEXTA – ACEPTACIÓN:</strong> Las partes aceptan el presente contrato y se obligan a su cumplimiento en todos sus términos.
+          </p>
+        </div>
       </div>
       {checkRow(aceptaContrato, () => setAceptaContrato(!aceptaContrato), 'Acepto los términos y condiciones del contrato de prestación de servicios estudiantiles de UniFit.')}
     </div>
   )
+
+  const openContractDocument = () => {
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Contrato de prestación de servicios estudiantiles - UNIFIT</title><style>body{font-family:'Inter',Arial,sans-serif;color:#1A1A1E;max-width:720px;margin:0 auto;padding:48px 24px;line-height:1.7}header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #007AFF;padding-bottom:12px;margin-bottom:28px}header .brand{font-weight:800;color:#007AFF;letter-spacing:0.05em}header .doc{font-weight:700;letter-spacing:0.25em;color:rgba(0,0,0,0.45);font-size:12px}h1{font-size:20px;font-weight:800;margin:0 0 24px}p{font-size:14px;margin:0 0 14px}.footer{margin-top:48px;padding-top:16px;border-top:1px solid rgba(0,0,0,0.1);font-size:12px;color:rgba(0,0,0,0.5);display:flex;justify-content:space-between}</style></head><body><header><span class="brand">UNIFIT</span><span class="doc">CONTRATO</span></header><h1>Contrato de prestación de servicios estudiantiles</h1><p>El presente contrato regula la relación entre UniFit S.A.S., en adelante "LA INSTITUCIÓN", y el estudiante que se registra a través del presente formulario, en adelante "EL ESTUDIANTE".</p><p><strong>CLÁUSULA PRIMERA – OBJETO:</strong> LA INSTITUCIÓN se compromete a proporcionar al ESTUDIANTE los servicios de entrenamiento y acompañamiento deportivo contratados, de acuerdo con el programa académico y la modalidad seleccionada en el formulario de registro.</p><p><strong>CLÁUSULA SEGUNDA – OBLIGACIONES DEL ESTUDIANTE:</strong> El ESTUDIANTE se obliga a asistir puntualmente a las sesiones programadas, cumplir con las normas internas de LA INSTITUCIÓN, utilizar adecuadamente las instalaciones y equipos, y mantener una conducta respetuosa hacia el personal y demás estudiantes.</p><p><strong>CLÁUSULA TERCERA – OBLIGACIONES DE LA INSTITUCIÓN:</strong> LA INSTITUCIÓN se obliga a proporcionar entrenadores calificados, mantener las instalaciones en condiciones óptimas de seguridad e higiene, y garantizar la prestación del servicio de acuerdo con los estándares de calidad establecidos.</p><p><strong>CLÁUSULA CUARTA – VALOR Y FORMA DE PAGO:</strong> El valor del programa será el establecido en la tarifa vigente al momento de la matrícula. EL ESTUDIANTE acepta realizar los pagos en las fechas y montos acordados.</p><p><strong>CLÁUSULA QUINTA – TERMINACIÓN:</strong> El presente contrato podrá ser terminado por cualquiera de las partes mediante comunicación escrita con quince (15) días de antelación, o de forma inmediata por incumplimiento grave de las obligaciones aquí establecidas.</p><p><strong>CLÁUSULA SEXTA – ACEPTACIÓN:</strong> Las partes aceptan el presente contrato y se obligan a su cumplimiento en todos sus términos.</p><div class="footer"><span>UniFit S.A.S.</span><span>NIT 900.000.000-1</span></div></body></html>`
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }))
+    window.open(url, '_blank')
+  }
 
   const renderForm = () => (
     <>
@@ -466,7 +521,7 @@ export function RegisterView({ onBack }: RegisterViewProps) {
       </div>
 
       <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center justify-between">
+        <div className="relative flex items-center justify-between">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -477,6 +532,18 @@ export function RegisterView({ onBack }: RegisterViewProps) {
             <ArrowLeft size={14} />
             {step === 1 ? 'Salir' : 'Atrás'}
           </motion.button>
+          {step === FORM_STEPS.length && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={openContractDocument}
+              className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+              style={{ background: 'rgba(255,255,255,0.08)', color: '#7ec8e3', border: '1px solid rgba(126,200,227,0.25)' }}
+            >
+              <FileText size={13} />
+              Ver documento
+            </motion.button>
+          )}
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -493,8 +560,9 @@ export function RegisterView({ onBack }: RegisterViewProps) {
   )
 
   const renderSuccess = () => (
-    <div className="flex flex-col items-center justify-center flex-1 px-6 text-center">
-      <div className="relative flex items-center justify-center mb-4">
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex flex-col items-center justify-center flex-1 px-6 text-center min-h-0">
+        <div className="relative flex items-center justify-center mb-4">
         {[...Array(20)].map((_, i) => {
           const angle = (i / 20) * 360
           const rad = (angle * Math.PI) / 180
@@ -521,9 +589,13 @@ export function RegisterView({ onBack }: RegisterViewProps) {
           )
         })}
         <motion.img
-          src={successCheckImg}
+          src={coachImg}
           alt="éxito"
-          className="w-28 h-auto object-contain relative z-10"
+          className="w-44 h-44 object-contain object-bottom relative z-10"
+          style={{
+            WebkitMaskImage: 'linear-gradient(180deg, black 45%, transparent 100%)',
+            maskImage: 'linear-gradient(180deg, black 45%, transparent 100%)',
+          }}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 260, damping: 16 }}
@@ -533,22 +605,38 @@ export function RegisterView({ onBack }: RegisterViewProps) {
       <p className="text-xs mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
         Agenda tu cita para continuar con el proceso.
       </p>
-      <motion.button
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
-        onClick={() => setPhase('schedule')}
-        className="mt-6 flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
-        style={{ background: GREEN_GRAD }}
-      >
-        <CalendarCheck size={16} />
-        Agendar cita
-      </motion.button>
+      </div>
+
+      <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="flex items-center justify-between">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setPhase('form')}
+            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
+          >
+            <ArrowLeft size={14} />
+            Volver
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setPhase('schedule')}
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+            style={{ background: GREEN_GRAD }}
+          >
+            <CalendarCheck size={14} />
+            Agendar cita
+          </motion.button>
+        </div>
+      </div>
     </div>
   )
 
   const renderSchedule = () => (
     <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex flex-col items-center pt-5">
+      <div className="flex flex-col items-center pt-2">
         <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Agenda del entrenador</p>
         <p className="text-[13px] font-bold mt-0.5 mb-2" style={{ color: '#fff' }}>
           Selecciona el día para tu cita
@@ -640,55 +728,120 @@ export function RegisterView({ onBack }: RegisterViewProps) {
               Tu valoración quedó programada para el {selectedDay} a las {selectedSlot}.<br />
               El entrenador te confirmará la hora.
             </p>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={onBack}
-              className="mt-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-              style={{ background: GREEN_GRAD }}
-            >
-              Volver al inicio
-            </motion.button>
           </div>
         ) : (
-          <>
-            <p className="text-[10px] font-bold mb-2" style={{ color: 'rgba(255,255,255,0.45)' }}>Horarios disponibles</p>
-            <div className="flex flex-col gap-2">
-              {slotsOfDay.map(s => {
-                const isSelSlot = selectedSlot === s.time
-                return (
-                  <motion.button
-                    key={s.time}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setSelectedSlot(s.time)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all"
-                    style={{
-                      background: isSelSlot ? 'rgba(18,112,183,0.2)' : 'rgba(255,255,255,0.05)',
-                      border: `1px solid ${isSelSlot ? BLUE : 'rgba(255,255,255,0.08)'}`,
-                    }}
-                  >
-                    <Clock size={14} style={{ color: s.color }} />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[12px] font-bold" style={{ color: '#fff' }}>{s.time}</div>
-                      <div className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.45)' }}>{s.title}</div>
-                    </div>
-                    {isSelSlot && <Check size={15} color="#7ec8e3" strokeWidth={3} />}
-                  </motion.button>
-                )
-              })}
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={confirmSchedule}
-              disabled={!selectedSlot}
-              className="w-full mt-3 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-              style={{ background: selectedSlot ? BLUE_GRAD : 'rgba(255,255,255,0.1)', opacity: selectedSlot ? 1 : 0.5 }}
-            >
-              Confirmar cita
-            </motion.button>
-          </>
+          <div className="flex-1" />
         )}
+      </div>
+
+      <AnimatePresence>
+        {selectedDay && !scheduled && (
+          <motion.div
+            key="day-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="absolute inset-0 z-40 flex items-end sm:items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.96 }}
+              transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-[320px] rounded-3xl p-5 flex flex-col gap-3"
+              style={{
+                background: '#12121E',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold" style={{ color: '#7ec8e3' }}>
+                    {dayLabelsGetDay[new Date(selectedDay + 'T12:00:00').getDay()]}
+                  </p>
+                  <p className="text-sm font-extrabold" style={{ color: '#fff' }}>
+                    {new Date(selectedDay + 'T12:00:00').getDate()} de {monthNames[new Date(selectedDay + 'T12:00:00').getMonth()]}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedDay(null)
+                    setSelectedSlot(null)
+                  }}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer"
+                  style={{ color: 'rgba(255,255,255,0.5)' }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+              <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>Horarios disponibles</p>
+              <div className="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-1">
+                {slotsOfDay.map(s => {
+                  const isSelSlot = selectedSlot === s.time
+                  return (
+                    <motion.button
+                      key={s.time}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setSelectedSlot(s.time)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-left cursor-pointer transition-all"
+                      style={{
+                        background: isSelSlot ? 'rgba(18,112,183,0.2)' : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${isSelSlot ? BLUE : 'rgba(255,255,255,0.08)'}`,
+                      }}
+                    >
+                      <Clock size={14} style={{ color: s.color }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-bold" style={{ color: '#fff' }}>{s.time}</div>
+                        <div className="text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.45)' }}>{s.title}</div>
+                      </div>
+                      {isSelSlot && <Check size={15} color="#7ec8e3" strokeWidth={3} />}
+                    </motion.button>
+                  )
+                })}
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={confirmSchedule}
+                disabled={!selectedSlot}
+                className="w-full py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                style={{ background: selectedSlot ? BLUE_GRAD : 'rgba(255,255,255,0.1)', opacity: selectedSlot ? 1 : 0.5 }}
+              >
+                Confirmar cita
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="flex items-center justify-between">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setPhase('success')}
+            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
+          >
+            <ArrowLeft size={14} />
+            Volver
+          </motion.button>
+          <motion.button
+            whileHover={scheduled ? { scale: 1.03 } : {}}
+            whileTap={scheduled ? { scale: 0.97 } : {}}
+            onClick={scheduled ? onBack : undefined}
+            disabled={!scheduled}
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+            style={{ background: scheduled ? BLUE_GRAD : 'rgba(255,255,255,0.1)', opacity: scheduled ? 1 : 0.5 }}
+          >
+            {scheduled ? 'Finalizar' : 'Selecciona un horario'}
+            <ArrowRight size={14} />
+          </motion.button>
+        </div>
       </div>
     </div>
   )
@@ -746,7 +899,7 @@ export function RegisterView({ onBack }: RegisterViewProps) {
       {(['celular', 'desktop', 'auto'] as const).map(v => (
         <button
           key={v}
-          onClick={() => setPreviewMode(v)}
+          onClick={() => changePreviewMode(v)}
           className="px-3 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer"
           style={{
             background: previewMode === v ? 'rgba(255,255,255,0.14)' : 'transparent',
@@ -771,19 +924,34 @@ export function RegisterView({ onBack }: RegisterViewProps) {
   )
 
   return (
-    <div className="size-full flex flex-col" style={{ background: DARK_BG }}>
+    <div className="relative size-full flex flex-col" style={{ background: DARK_BG }}>
       {viewToolbar}
 
       <div className="flex-1 min-h-0 relative">
         {isDesktopVideo ? (
           <div className="absolute inset-0 overflow-hidden" style={{ background: DARK_BG }}>
-            <LoginBackground />
+            <video
+              ref={bgVideoRef}
+              src={welcomeDesktop}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0" style={{
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+            }} />
+            <div className="absolute inset-0" style={{
+              background: 'linear-gradient(115deg, rgba(8,12,28,0.55) 0%, rgba(8,12,28,0.3) 45%, rgba(8,12,28,0.16) 100%)',
+            }} />
             <div className="relative z-10 size-full flex items-center justify-center overflow-hidden" style={{ padding: 20 }}>
               <motion.div
                 initial={{ opacity: 0, y: 30, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="w-full max-w-3xl h-full flex flex-col"
+                className="relative w-full max-w-3xl h-full flex flex-col"
                 style={{
                   background: 'rgba(10,14,24,0.78)',
                   backdropFilter: 'blur(28px) saturate(1.6)',
@@ -823,6 +991,28 @@ export function RegisterView({ onBack }: RegisterViewProps) {
               </div>
             )}
             {backButton(isMobile ? 12 : 36)}
+            {phase === 'intro' && (
+              <motion.div
+                key="intro-phone"
+                className="absolute inset-0 z-50 overflow-hidden cursor-pointer"
+                style={{ background: '#000' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+                onClick={skipIntro}
+              >
+                <video
+                  ref={introVideoRef}
+                  src={introSrc}
+                  autoPlay
+                  muted
+                  playsInline
+                  onEnded={skipIntro}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              </motion.div>
+            )}
             {phaseContent}
           </motion.div>
         ) : (
@@ -845,6 +1035,34 @@ export function RegisterView({ onBack }: RegisterViewProps) {
           </motion.div>
         )}
       </div>
+
+      <AnimatePresence>
+        {phase === 'intro' && !isPhonePreview && (
+          <motion.div
+            key="intro"
+            ref={introContainerRef}
+            className="absolute inset-0 z-50 overflow-hidden cursor-pointer"
+            style={{ background: '#000' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 1.06 }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+            onClick={skipIntro}
+          >
+            <video
+              ref={introVideoRef}
+              src={introSrc}
+              autoPlay
+              muted
+              playsInline
+              onEnded={skipIntro}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {contractModal}
     </div>
   )
 }

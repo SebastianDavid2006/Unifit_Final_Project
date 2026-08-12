@@ -184,8 +184,8 @@ export function LoginView({ onSelect, onRegister }: LoginViewProps) {
             </div>
 
             <p className="text-[11px] text-center font-medium mt-6 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)' }}>
-              Desarrollado por <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>Sebastian Pérez Rico</span> y{' '}
-              <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>Jhon Barrantes Segura</span>
+              © 2026 Universidad IUDC. Desarrollado por <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>Sebastian David Pérez Rico</span> y{' '}
+              <span className="font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>Jhon Alexander Barrantes Segura</span>
             </p>
           </motion.form>
         </motion.div>
