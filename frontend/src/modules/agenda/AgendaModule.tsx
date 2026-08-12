@@ -5,7 +5,6 @@ import calendarImg from '../../assets/illustrations/modules/calendar_module.webp
 import calendarCardImg from '../../assets/icons/objects/calendar.webp'
 import coachCalendarSuccessImg from '../../assets/illustrations/characters/coach/coach_calendar_success.webp'
 import { meshInputBg, meshInputHover, GREEN_GRAD } from '../../data/constants'
-import { initialTrainers } from '../../data/trainers'
 import { RED, BLUE, YELLOW, BLUE_GRAD, GOLD_GRAD, DAY_GRAD, dayKey, dayLabels, dayLabelsGetDay, monthNames, WEEK_DAYS_6 } from './AgendaData'
 import type { Appointment } from './AgendaData'
 import { DayCard } from './AgendaDayCard'
@@ -67,8 +66,6 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
   const [rangeConflict, setRangeConflict] = useState<{ day: string; msg: string } | null>(null)
   const [newApptStart, setNewApptStart] = useState('08:00')
   const [newApptEnd, setNewApptEnd] = useState('09:00')
-  const [newApptTrainer, setNewApptTrainer] = useState('')
-  const [trainerListOpen, setTrainerListOpen] = useState(false)
   const [newApptStudent, setNewApptStudent] = useState('')
   const [studentListOpen, setStudentListOpen] = useState(false)
 
@@ -77,12 +74,6 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     if (!q) return []
     return students.filter(s => s.name.toLowerCase().includes(q))
   }, [students, newApptStudent])
-
-  const trainerMatches = useMemo(() => {
-    const q = newApptTrainer.trim().toLowerCase()
-    if (!q) return []
-    return initialTrainers.filter(t => t.name.toLowerCase().includes(q))
-  }, [newApptTrainer])
 
   function fmtDate(d: Date) {
     const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0')
@@ -139,11 +130,11 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     const newId = String(Date.now())
     setAppointments(prev => [...prev, {
       id: newId, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
-      type: newApptType, title: typeLabels[newApptType] || 'Cita', trainer: newApptTrainer || undefined,
+      type: newApptType, title: typeLabels[newApptType] || 'Cita',
       studentName: newApptStudent || undefined,
     }])
     setShowApptModal(false)
-    setNewApptStudent(''); setNewApptTrainer('')
+    setNewApptStudent('')
   }
 
   function handleSlotClick(dateStr: string, timeStr: string) {
@@ -153,7 +144,6 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     setNewApptStart(normalized)
     setNewApptEnd(`${String(Number(h) + 1).padStart(2, '0')}:${m.padStart(2, '0')}`)
     setNewApptType('initial_assessment')
-    setNewApptTrainer('')
     setNewApptStudent('')
     setShowApptModal(true)
   }
@@ -870,7 +860,7 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
                     ))
                   )}
                 </div>
-                <button onClick={() => { setDayModalDate(null); setNewApptType('initial_assessment'); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptTrainer(''); setNewApptStudent(''); setShowApptModal(true) }}
+                <button onClick={() => { setDayModalDate(null); setNewApptType('initial_assessment'); setNewApptStart('08:00'); setNewApptEnd('09:00'); setNewApptStudent(''); setShowApptModal(true) }}
                   className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
                   style={{ background: MESH_GRAD }}
                 ><Plus size={13} /> Agregar Cita</button>
@@ -953,38 +943,6 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
                       onFocus={e => focusMesh(e.currentTarget)}
                       onBlur={e => blurMesh(e.currentTarget)} />
                   </div>
-                </div>
-                <div>
-                  <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Entrenador</label>
-                  <input value={newApptTrainer} onChange={e => { setNewApptTrainer(e.target.value); setTrainerListOpen(true) }}
-                    onFocus={e => { setTrainerListOpen(true); focusMesh(e.currentTarget) }}
-                    onBlur={e => { setTimeout(() => setTrainerListOpen(false), 120); blurMesh(e.currentTarget) }}
-                    placeholder="Escribe el nombre del entrenador…"
-                    className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                    style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
-                    onMouseEnter={e => enterMesh(e.currentTarget)}
-                    onMouseLeave={e => leaveMesh(e.currentTarget)} />
-                  {trainerListOpen && trainerMatches.length > 0 && (
-                    <div className="mt-1.5 rounded-xl overflow-hidden" style={{ background: '#fff', border: '1px solid rgba(18,112,183,0.15)', boxShadow: '0 8px 24px rgba(18,112,183,0.12)' }}>
-                      {trainerMatches.slice(0, 6).map((t, i) => (
-                        <button
-                          key={i} type="button"
-                          onMouseDown={e => e.preventDefault()}
-                          onClick={() => { setNewApptTrainer(t.name); setTrainerListOpen(false) }}
-                          className="w-full text-left px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2.5 border-b last:border-b-0"
-                          style={{ color: '#1A1A1E', borderColor: 'rgba(0,0,0,0.04)' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'rgba(18,112,183,0.08)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                          <span className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ background: BLUE_GRAD }}>{t.avatar || t.name.slice(0, 2).toUpperCase()}</span>
-                          <span className="min-w-0">
-                            <span className="block font-semibold truncate">{t.name}</span>
-                            <span className="block text-[11px] truncate" style={{ color: 'rgba(0,0,0,0.45)' }}>{t.speciality}</span>
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
                 <AnimatePresence initial={false}>
                   {newApptType !== 'event' && (

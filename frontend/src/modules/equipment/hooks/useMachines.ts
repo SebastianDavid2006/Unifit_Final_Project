@@ -19,7 +19,7 @@ const defaultForm: MachineForm = {
   recommendedLevel: 'principiante', observations: '', selectedIds: [],
 }
 
-export function useMachines(initialMachines: Machine[], search: string, statusFilter: string) {
+export function useMachines(initialMachines: Machine[], search: string) {
   const [machines, setMachines] = useState<Machine[]>(initialMachines)
   const [showModal, setShowModal] = useState(false)
   const [editingMachine, setEditingMachine] = useState<Machine | null>(null)
@@ -39,11 +39,8 @@ export function useMachines(initialMachines: Machine[], search: string, statusFi
         m.zone.toLowerCase().includes(q)
       )
     }
-    if (statusFilter !== 'all') {
-      list = list.filter(m => m.status === statusFilter)
-    }
     return list
-  }, [machines, search, statusFilter])
+  }, [machines, search])
 
   function openAdd() {
     setEditingMachine(null)

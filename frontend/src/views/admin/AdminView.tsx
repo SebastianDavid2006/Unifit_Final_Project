@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Briefcase, Search, Shield, LogOut, Filter } from 'lucide-react'
+import { LayoutDashboard, UserPlus, Settings, FileText, Bell, PanelLeftClose, PanelLeftOpen, Activity, Edit, Trash2, Building2, Users, Dumbbell, Calendar, Menu, BarChart3, GraduationCap, Briefcase, Search, Shield, LogOut } from 'lucide-react'
 import AdminDashboardView from './AdminDashboard'
 import AdminTrainers from './AdminTrainers'
 import AdminGym from './AdminGym'
@@ -20,7 +20,7 @@ type AdminSection = 'dashboard' | 'trainers' | 'stats' | 'gym' | 'config'
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'trainers', label: 'Entrenadores', icon: UserPlus },
+  { id: 'trainers', label: 'Personal', icon: UserPlus },
   { id: 'stats', label: 'Estadísticas', icon: BarChart3 },
   { id: 'gym', label: 'Gestión', icon: Building2 },
   { id: 'config', label: 'Configuración', icon: Settings },
@@ -44,8 +44,6 @@ export function AdminView({ onLogout }: { onLogout?: () => void }) {
   const [gymStudentTab, setGymStudentTab] = useState('overview')
   const [equipSearch, setEquipSearch] = useState('')
   const [equipSearchFocused, setEquipSearchFocused] = useState(false)
-  const [equipStatusFilter, setEquipStatusFilter] = useState<'active' | 'maintenance' | 'inactive' | 'all'>('all')
-  const [showEquipFilters, setShowEquipFilters] = useState(false)
   const [equipViewMode, setEquipViewMode] = useState<'machines' | 'exercises'>('machines')
   const [equipSearchHovered, setEquipSearchHovered] = useState(false)
   const [statsTab, setStatsTab] = useState('overview')
@@ -69,7 +67,6 @@ export function AdminView({ onLogout }: { onLogout?: () => void }) {
     setShowTrainerFilters(false)
     setGymSelectedStudent(null)
     setShowGymStudentFilters(false)
-    setShowEquipFilters(false)
   }, [section])
   const trainerRef = useRef<{ clearSelection: () => void }>(null)
   const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
@@ -387,25 +384,49 @@ export function AdminView({ onLogout }: { onLogout?: () => void }) {
               <div className="flex-1 flex items-center justify-center gap-3 relative">
                 {gymSelectedStudent ? (
                   <>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setGymSelectedStudent(null)}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{
-                        background: 'rgba(255,255,255,0.2)',
-                        backdropFilter: 'blur(16px) saturate(1.5)',
-                        border: '1px solid rgba(255,255,255,0.3)',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-                      }}
-                    >
-                      <img src={iconRunning} alt="Volver" className="w-5 h-5 object-contain" style={{ transform: 'scaleX(-1)' }} />
-                    </motion.button>
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setGymSelectedStudent(null)}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{
+                          background: 'rgba(255,255,255,0.2)',
+                          backdropFilter: 'blur(16px) saturate(1.5)',
+                          border: '1px solid rgba(255,255,255,0.3)',
+                          boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+                        }}
+                      >
+                        <img src={iconRunning} alt="Volver" className="w-5 h-5 object-contain" style={{ transform: 'scaleX(-1)' }} />
+                      </motion.button>
+                    </div>
+                    <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
+                      background: 'rgba(255,255,255,0.12)',
+                      backdropFilter: 'blur(24px) saturate(1.6)',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                    }}>
+                      {TABS.map(t => (
+                        <motion.button key={t.id} onClick={() => setGymStudentTab(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                          style={{
+                            background: gymStudentTab === t.id
+                              ? 'radial-gradient(ellipse at 20% 30%, rgba(230,57,70,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(230,57,70,0.85)'
+                              : 'transparent',
+                            color: gymStudentTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                            boxShadow: gymStudentTab === t.id ? '0 2px 8px rgba(230,57,70,0.2), 0 0 20px rgba(230,57,70,0.1)' : 'none',
+                          }}
+                        >
+                          <t.icon size={14} />
+                          {t.label}
+                        </motion.button>
+                      ))}
+                    </div>
                   </>
                 ) : (
                   <>
                     {gymTab === 'students' && (
-                      <div className="flex items-center gap-2 w-72 flex-shrink-0">
+                      <div className="flex items-center gap-2 w-96 flex-shrink-0">
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0, scaleX: gymStudentSearchFocused ? 1.04 : 1 }}
@@ -495,102 +516,49 @@ export function AdminView({ onLogout }: { onLogout?: () => void }) {
                           </div>
                         </div>
 
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setShowEquipFilters(!showEquipFilters)}
-                          className="w-9 h-9 rounded-xl flex items-center justify-center"
+                        <div
+                          className="flex items-center rounded-xl gap-0.5 px-1"
                           style={{
-                            background: showEquipFilters ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                            height: 36,
+                            background: 'rgba(255,255,255,0.12)',
                             backdropFilter: 'blur(24px) saturate(1.6)',
-                            border: showEquipFilters ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
-                            color: showEquipFilters ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.35)',
+                            border: '1px solid rgba(255,255,255,0.25)',
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
                           }}
                         >
-                          <Filter size={16} />
-                        </motion.button>
-                        <AnimatePresence>
-                          {showEquipFilters && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
-                              animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                              exit={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
-                              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                              className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 flex gap-1.5 p-2 rounded-xl"
-                              style={{
-                                background: 'rgba(255,255,255,0.9)',
-                                backdropFilter: 'blur(24px) saturate(1.6)',
-                                border: '1px solid rgba(255,255,255,0.5)',
-                                boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-                              }}
-                            >
-                              {(['all', 'active', 'maintenance', 'inactive'] as const).map(s => {
-                                const label = s === 'all' ? 'Todas' : s === 'active' ? 'Activo' : s === 'maintenance' ? 'Mantenimiento' : 'Inactiva'
-                                const color = s === 'all' ? '#1270B7' : s === 'active' ? '#30D158' : s === 'maintenance' ? '#F1C827' : '#F43843'
-                                return (
-                                  <motion.button
-                                    key={s}
-                                    whileHover={{ scale: 1.03 }}
-                                    whileTap={{ scale: 0.97 }}
-                                    onClick={() => setEquipStatusFilter(s)}
-                                    className="px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide whitespace-nowrap transition-all"
-                                    style={{
-                                      background: equipStatusFilter === s ? `${color}15` : 'transparent',
-                                      color: equipStatusFilter === s ? color : 'rgba(0,0,0,0.3)',
-                                      border: `1px solid ${equipStatusFilter === s ? `${color}30` : 'transparent'}`,
-                                    }}
-                                  >
-                                    {label}
-                                  </motion.button>
-                                )
-                              })}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => setEquipViewMode('machines')}
+                            className="px-4 py-1.5 text-[11px] font-bold cursor-pointer rounded-lg transition-all duration-200"
+                            style={{
+                              background: equipViewMode === 'machines'
+                                ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
+                                : 'transparent',
+                              color: equipViewMode === 'machines' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                              boxShadow: equipViewMode === 'machines' ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
+                            }}
+                          >
+                            Máquinas
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => setEquipViewMode('exercises')}
+                            className="px-4 py-1.5 text-[11px] font-bold cursor-pointer rounded-lg transition-all duration-200"
+                            style={{
+                              background: equipViewMode === 'exercises'
+                                ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
+                                : 'transparent',
+                              color: equipViewMode === 'exercises' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                              boxShadow: equipViewMode === 'exercises' ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
+                            }}
+                          >
+                            Ejercicios
+                          </motion.button>
+                        </div>
                       </div>
                     )}
-                    <div className="flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
-                      background: 'rgba(255,255,255,0.12)',
-                      backdropFilter: 'blur(24px) saturate(1.6)',
-                      border: '1px solid rgba(255,255,255,0.25)',
-                    }}>
-                      <motion.button onClick={() => setGymTab('students')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                        style={{
-                          background: gymTab === 'students'
-                            ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
-                            : 'transparent',
-                          color: gymTab === 'students' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
-                        }}
-                      >
-                        <Users size={14} />
-                        Estudiantes
-                      </motion.button>
-                      <motion.button onClick={() => setGymTab('equipment')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                        style={{
-                          background: gymTab === 'equipment'
-                            ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
-                            : 'transparent',
-                          color: gymTab === 'equipment' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
-                        }}
-                      >
-                        <Dumbbell size={14} />
-                        Equipamiento
-                      </motion.button>
-                      <motion.button onClick={() => setGymTab('schedule')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                        style={{
-                          background: gymTab === 'schedule'
-                            ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
-                            : 'transparent',
-                          color: gymTab === 'schedule' ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
-                        }}
-                      >
-                        <Calendar size={14} />
-                        Agenda
-                      </motion.button>
-                    </div>
                   </>
                 )}
               </div>
@@ -790,13 +758,10 @@ export function AdminView({ onLogout }: { onLogout?: () => void }) {
                 onStudentTabChange={setGymStudentTab}
                 equipSearch={equipSearch}
                 equipSearchFocused={equipSearchFocused}
-                equipStatusFilter={equipStatusFilter}
-                showEquipFilters={showEquipFilters}
                 equipViewMode={equipViewMode}
                 onEquipViewModeChange={setEquipViewMode}
                 onEquipSearchChange={setEquipSearch}
                 onEquipSearchFocus={setEquipSearchFocused}
-                onEquipStatusFilterChange={setEquipStatusFilter}
               />
             )}
             {section === 'config' && <AdminConfig tab={configTab} onTabChange={setConfigTab} />}
@@ -873,7 +838,7 @@ export function AdminView({ onLogout }: { onLogout?: () => void }) {
         </>
       )}
 
-      {section === 'gym' && gymTab === 'equipment' && !gymSelectedStudent && (
+      {section === 'gym' && (
         <div className="fixed z-40 flex flex-col gap-1.5 p-1.5 rounded-2xl" style={{
           top: '50%',
           right: 20,
@@ -888,92 +853,71 @@ export function AdminView({ onLogout }: { onLogout?: () => void }) {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setEquipViewMode('machines')}
-              title="Máquinas"
+              onClick={() => { setGymSelectedStudent(null); setGymTab('students') }}
+              title="Usuarios"
               className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{
-                background: equipViewMode === 'machines'
-                  ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
+                background: gymTab === 'students'
+                  ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
                   : 'transparent',
-                color: equipViewMode === 'machines' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-                boxShadow: equipViewMode === 'machines' ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
+                color: gymTab === 'students' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                boxShadow: gymTab === 'students' ? '0 2px 8px rgba(244,56,67,0.25)' : 'none',
+              }}
+            >
+              <Users size={17} />
+            </motion.button>
+            <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap px-3 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50"
+              style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
+              <p className="text-xs font-extrabold" style={{ color: '#1A1A1E' }}>Usuarios</p>
+              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>Gestiona los usuarios y su información.</p>
+            </div>
+          </div>
+          <div className="group relative">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => { setGymSelectedStudent(null); setGymTab('equipment') }}
+              title="Equipamiento"
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: gymTab === 'equipment'
+                  ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
+                  : 'transparent',
+                color: gymTab === 'equipment' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                boxShadow: gymTab === 'equipment' ? '0 2px 8px rgba(244,56,67,0.25)' : 'none',
               }}
             >
               <Dumbbell size={17} />
             </motion.button>
             <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap px-3 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50"
               style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
-              <p className="text-xs font-extrabold" style={{ color: '#1A1A1E' }}>Máquinas</p>
-              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>Registra máquinas, asigna ejercicios y controla su estado operativo.</p>
+              <p className="text-xs font-extrabold" style={{ color: '#1A1A1E' }}>Equipamiento</p>
+              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>Administra máquinas, ejercicios y su mantenimiento.</p>
             </div>
           </div>
           <div className="group relative">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setEquipViewMode('exercises')}
-              title="Ejercicios"
+              onClick={() => { setGymSelectedStudent(null); setGymTab('schedule') }}
+              title="Agenda"
               className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{
-                background: equipViewMode === 'exercises'
-                  ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
+                background: gymTab === 'schedule'
+                  ? 'radial-gradient(ellipse at 20% 30%, rgba(244,56,67,0.35) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.3) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(241,200,39,0.3) 0%, transparent 50%), rgba(244,56,67,0.85)'
                   : 'transparent',
-                color: equipViewMode === 'exercises' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-                boxShadow: equipViewMode === 'exercises' ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
+                color: gymTab === 'schedule' ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                boxShadow: gymTab === 'schedule' ? '0 2px 8px rgba(244,56,67,0.25)' : 'none',
               }}
             >
-              <Activity size={17} />
+              <Calendar size={17} />
             </motion.button>
             <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap px-3 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50"
               style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
-              <p className="text-xs font-extrabold" style={{ color: '#1A1A1E' }}>Ejercicios</p>
-              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>Gestiona el catálogo de ejercicios disponibles.</p>
+              <p className="text-xs font-extrabold" style={{ color: '#1A1A1E' }}>Agenda</p>
+              <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>Planifica sesiones y citas del gimnasio.</p>
             </div>
           </div>
-        </div>
-      )}
-
-      {section === 'gym' && gymSelectedStudent && (
-        <div className="fixed z-40 flex flex-col gap-1.5 p-1.5 rounded-2xl" style={{
-          top: '50%',
-          right: 20,
-          transform: 'translateY(-50%)',
-          background: 'rgba(255,255,255,0.12)',
-          backdropFilter: 'blur(24px) saturate(1.6)',
-          WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
-          border: '1px solid rgba(255,255,255,0.25)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-        }}>
-          {TABS.map(t => (
-            <div key={t.id} className="group relative">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setGymStudentTab(t.id)}
-                title={t.label}
-                className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{
-                  background: gymStudentTab === t.id
-                    ? 'radial-gradient(ellipse at 30% 25%, #3A9BDC 0%, transparent 60%), radial-gradient(ellipse at 75% 70%, #1270B7 0%, transparent 55%), radial-gradient(ellipse at 90% 25%, rgba(244,56,67,0.5) 0%, transparent 45%), radial-gradient(ellipse at 10% 85%, rgba(241,200,39,0.45) 0%, transparent 45%), #1270B7'
-                    : 'transparent',
-                  color: gymStudentTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-                  boxShadow: gymStudentTab === t.id ? '0 2px 8px rgba(18,112,183,0.25)' : 'none',
-                }}
-              >
-                <t.icon size={17} />
-              </motion.button>
-              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap px-3 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50"
-                style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
-                <p className="text-xs font-extrabold" style={{ color: '#1A1A1E' }}>{t.label}</p>
-                <p className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.45)' }}>
-                  {t.id === 'overview' && 'Resumen del perfil y datos del estudiante.'}
-                  {t.id === 'progress' && 'Seguimiento de sesiones y actividad reciente.'}
-                  {t.id === 'assessment' && 'Valoraciones físicas y progreso del estudiante.'}
-                  {t.id === 'documents' && 'Documentos y archivos del estudiante.'}
-                </p>
-              </div>
-            </div>
-          ))}
         </div>
       )}
     </div>

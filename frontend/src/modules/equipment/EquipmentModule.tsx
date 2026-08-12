@@ -16,7 +16,7 @@ import coachExerciseSuccessImg from '../../assets/illustrations/characters/coach
 import machineTreadmillImg from '../../assets/illustrations/equipment/treadmill.webp'
 import { initialMachines, initialExercises } from '../../data/mockData'
 import { BLUE, BLUE_GRAD, GREEN_GRAD, ORANGE_GRAD, RED, ORANGE, muscleIcons, statusConfig } from '../../data/constants'
-import type { Machine, Exercise, Status } from '../../data/types'
+import type { Machine, Exercise } from '../../data/types'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { MachineModal } from './MachineModal'
 import { ExerciseManagerModal } from './ExerciseManagerModal'
@@ -29,20 +29,17 @@ import { useExercises } from './hooks/useExercises'
 interface Props {
   search: string
   searchFocused: boolean
-  statusFilter: Status | 'all'
-  showBlur: boolean
   viewMode: 'machines' | 'exercises'
   onViewModeChange: (v: 'machines' | 'exercises') => void
   onSearchChange: (v: string) => void
   onSearchFocus: (v: boolean) => void
-  onStatusFilterChange: (v: Status | 'all') => void
 }
 
 export default function EquipmentModule({
-  search, searchFocused, statusFilter, showBlur,
-  viewMode, onViewModeChange, onSearchChange, onSearchFocus, onStatusFilterChange,
+  search, searchFocused,
+  viewMode, onViewModeChange, onSearchChange, onSearchFocus,
 }: Props) {
-  const machine = useMachines(initialMachines, search, statusFilter)
+  const machine = useMachines(initialMachines, search)
   const ex = useExercises(initialExercises)
   const createToast = useToast()
   const deleteToast = useToast()
@@ -160,7 +157,7 @@ export default function EquipmentModule({
   }
 
   return (
-    <div className="p-8 pt-12 max-w-[1440px] mx-auto relative" style={showBlur ? { filter: 'blur(4px)', transition: 'filter 0.25s ease' } : undefined}>
+    <div className="p-8 pt-12 max-w-[1440px] mx-auto relative">
       {/* ── Banner Card ── */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}

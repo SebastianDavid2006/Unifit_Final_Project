@@ -21,8 +21,6 @@ export function TrainerView({ onLogout }: { onLogout?: () => void }) {
   const [riskFilter, setRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
   const [equipSearch, setEquipSearch] = useState('')
   const [equipSearchFocused, setEquipSearchFocused] = useState(false)
-  const [equipStatusFilter, setEquipStatusFilter] = useState<'active' | 'maintenance' | 'inactive' | 'all'>('all')
-  const [showEquipFilters, setShowEquipFilters] = useState(false)
   const [equipViewMode, setEquipViewMode] = useState<'machines' | 'exercises'>('machines')
   const [equipSearchHovered, setEquipSearchHovered] = useState(false)
   const [showStudentsFilters, setShowStudentsFilters] = useState(false)
@@ -32,13 +30,10 @@ export function TrainerView({ onLogout }: { onLogout?: () => void }) {
     <EquipmentPage
       search={equipSearch}
       searchFocused={equipSearchFocused}
-      statusFilter={equipStatusFilter}
-      showBlur={showEquipFilters}
       viewMode={equipViewMode}
       onViewModeChange={setEquipViewMode}
       onSearchChange={setEquipSearch}
       onSearchFocus={setEquipSearchFocused}
-      onStatusFilterChange={setEquipStatusFilter}
     />
   )
 
@@ -85,10 +80,6 @@ export function TrainerView({ onLogout }: { onLogout?: () => void }) {
           onEquipSearchHoveredChange={setEquipSearchHovered}
           equipViewMode={equipViewMode}
           onEquipViewModeChange={setEquipViewMode}
-          showEquipFilters={showEquipFilters}
-          onToggleEquipFilters={() => setShowEquipFilters(!showEquipFilters)}
-          equipStatusFilter={equipStatusFilter}
-          onEquipStatusFilterChange={setEquipStatusFilter}
           selectedStudent={!!selectedStudent}
           studentTab={studentTab}
           onStudentTabChange={setStudentTab}

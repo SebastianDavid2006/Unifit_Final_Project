@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { Search, Menu, Bell, LogOut, Filter } from 'lucide-react'
+import { Search, Menu, Bell, LogOut } from 'lucide-react'
 import { TABS } from '../../modules/students/StudentProfile'
 import iconRunning from '../../assets/icons/animated/icon_running.gif'
 import type { TrainerSection } from './TrainerSidebar'
@@ -29,10 +29,6 @@ interface Props {
   onEquipSearchHoveredChange: (v: boolean) => void
   equipViewMode: 'machines' | 'exercises'
   onEquipViewModeChange: (v: 'machines' | 'exercises') => void
-  showEquipFilters: boolean
-  onToggleEquipFilters: () => void
-  equipStatusFilter: 'active' | 'maintenance' | 'inactive' | 'all'
-  onEquipStatusFilterChange: (v: 'active' | 'maintenance' | 'inactive' | 'all') => void
   // Student detail
   selectedStudent: boolean
   studentTab: string
@@ -53,7 +49,6 @@ export default function TrainerTopbar(props: Props) {
     equipSearch, onEquipSearchChange, equipSearchFocused, onEquipSearchFocusChange,
     equipSearchHovered, onEquipSearchHoveredChange,
     equipViewMode, onEquipViewModeChange,
-    showEquipFilters, onToggleEquipFilters, equipStatusFilter, onEquipStatusFilterChange,
     selectedStudent, studentTab, onStudentTabChange, onBack,
     profileMenuOpen, onProfileMenuToggle, onLogout,
   } = props
@@ -230,61 +225,6 @@ export default function TrainerTopbar(props: Props) {
               Ejercicios
             </motion.button>
           </div>
-
-          <div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onToggleEquipFilters}
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{
-                background: showEquipFilters ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
-                backdropFilter: 'blur(24px) saturate(1.6)',
-                border: showEquipFilters ? '1px solid rgba(255,255,255,0.5)' : '1px solid rgba(255,255,255,0.25)',
-                color: showEquipFilters ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.35)',
-              }}
-            >
-              <Filter size={16} />
-            </motion.button>
-          </div>
-          <AnimatePresence>
-            {showEquipFilters && (
-              <motion.div
-                initial={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
-                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: -6, scale: 0.93, filter: 'blur(6px)' }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50 flex gap-1.5 p-2 rounded-xl"
-                style={{
-                  background: 'rgba(255,255,255,0.9)',
-                  backdropFilter: 'blur(24px) saturate(1.6)',
-                  border: '1px solid rgba(255,255,255,0.5)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
-                }}
-              >
-                {(['all', 'active', 'maintenance', 'inactive'] as const).map(s => {
-                  const label = s === 'all' ? 'Todas' : s === 'active' ? 'Activo' : s === 'maintenance' ? 'Mantenimiento' : 'Inactiva'
-                  const color = s === 'all' ? '#1270B7' : s === 'active' ? '#30D158' : s === 'maintenance' ? '#F1C827' : '#F43843'
-                  return (
-                      <motion.button
-                        key={s}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        onClick={() => onEquipStatusFilterChange(s)}
-                        className="px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide whitespace-nowrap transition-all"
-                        style={{
-                          background: equipStatusFilter === s ? `${color}15` : 'transparent',
-                          color: equipStatusFilter === s ? color : 'rgba(0,0,0,0.3)',
-                          border: `1px solid ${equipStatusFilter === s ? `${color}30` : 'transparent'}`,
-                        }}
-                      >
-                        {label}
-                      </motion.button>
-                    )
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
         </div>
       )}
 

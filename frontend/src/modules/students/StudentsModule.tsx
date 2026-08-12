@@ -41,7 +41,7 @@ interface Props {
 }
 
 export default function StudentsModule({ students, search, riskFilter, onSelectStudent, showFilters, onToggleFilters }: Props) {
-  const [filterCategory, setFilterCategory] = useState<'eps' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
+  const [filterCategory, setFilterCategory] = useState<'status' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
   const [filterSearch, setFilterSearch] = useState('')
   const [showNewStudent, setShowNewStudent] = useState(false)
@@ -49,11 +49,11 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
   const pageSize = 7
 
   const filterLabels: Record<string, string> = {
-    eps: 'EPS', gender: 'Género', institution: 'Institución',
+    status: 'Estado', gender: 'Género', institution: 'Institución',
     program: 'Programa', modality: 'Modalidad', jornada: 'Jornada', semester: 'Semestre'
   }
   const filterOptions: Record<string, string[]> = useMemo(() => ({
-    eps: [...new Set(students.map(s => s.eps))],
+    status: ['Activo', 'Inactivo', 'En proceso'],
     gender: [...new Set(students.map(s => s.gender))],
     institution: [...new Set(students.map(s => s.institution))],
     program: [...new Set(students.map(s => s.program))],
@@ -67,7 +67,8 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
       const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.faculty.toLowerCase().includes(search.toLowerCase())
       const matchRisk = riskFilter === 'all' || s.risk === riskFilter
       const entries = Object.entries(filterSelections).filter(([, v]) => v.size > 0)
-      const matchCategory = entries.length === 0 || entries.every(([cat, vals]) => vals.has((s as any)[cat]))
+      const statusLabel: Record<string, string> = { active: 'Activo', inactive: 'Inactivo', process: 'En proceso' }
+      const matchCategory = entries.length === 0 || entries.every(([cat, vals]) => vals.has(cat === 'status' ? statusLabel[s.status] : (s as any)[cat]))
       return matchSearch && matchRisk && matchCategory
     }),
     [students, search, riskFilter, filterSelections]
