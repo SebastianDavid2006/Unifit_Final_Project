@@ -22,15 +22,17 @@ enum TipoUsuario {
 }
 
 enum EstadoUsuario {
+  pendiente
   activo
   inactivo
 }
 
 enum TipoDocumento {
-  CC
-  TI
-  CE
-  PASAPORTE
+  CC //Cédula de ciudadanía
+  TI //Tarjeta de identidad
+  CE //Cédula de extranjería
+  PA //Pasaporte
+  RC //Registro cívil
 }
 
 enum NivelPrograma {
@@ -40,8 +42,8 @@ enum NivelPrograma {
 }
 
 enum Universidad {
-  universitaria_de_colombia
-  universitaria_de_bogota
+  uni_colombia // Universitaria de Colombia
+  uni_bogota // Universitaria de Bogotá
 }
 
 enum EstadoAgenda {
@@ -72,7 +74,8 @@ enum EstadoRutina {
 
 enum EstadoMaquina {
   disponible
-  fuera_de_servicio
+  mantenimiento
+  sin_servicio
 }
 
 enum EstadoEjercicio {
@@ -84,13 +87,6 @@ enum NivelEjercicio {
   principiante
   intermedio
   avanzado
-}
-
-enum TipoIndicacion {
-  mejora
-  restriccion
-  continuar
-  recomendacion
 }
 
 enum NivelActividad {
@@ -113,70 +109,99 @@ enum EstadoSesionRutina {
   cancelada
 }
 
+enum ObjetivoUsuario {
+  perdida_peso
+  ganancia_muscular
+  acondicionamiento_fisico
+  salud
+  rendimiento_deportivo
+  otro
+}
+
+enum TipoAntecedente {
+  osteomuscular
+  respiratorio
+  psiquiatrico
+  cardiovascular
+  metabolico
+  psicologico
+}
+
+enum DiaSemana {
+  lunes
+  martes
+  miercoles
+  jueves
+  viernes
+  sabado
+}
+
 // USUARIO
 
 model Usuario {
-  id_usuario          String        @id @default(uuid())
-  primer_nombre       String
-  segundo_nombre      String?
-  primer_apellido     String
-  segundo_apellido    String?
-  email_contacto      String        @unique
-  telefono_contacto   String?
-  documento           String        @unique
-  tipo_documento      TipoDocumento @default(CC)
-  fecha_nacimiento    DateTime?
-  genero              String?
-  rol                 Rol           @default(usuario)
-  tipo_usuario        TipoUsuario?
-  estado              EstadoUsuario @default(activo)
-  password_hash       String?
-  token_activacion    String?
-  token_expira        DateTime?
-  avatar              String?
-  eps                 String?
-  eps_certificado     String?
-  grupo_sanguineo     String?
-  nombre_emergencia   String?
-  telefono_emergencia String?
-  parentesco_emergencia String?
-  fecha_creacion      DateTime      @default(now())
-  fecha_modificacion  DateTime      @updatedAt
+  id_usuario             String        @id @default(uuid())
+  primer_nombre          String
+  segundo_nombre         String?
+  primer_apellido        String
+  segundo_apellido       String?
+  email_contacto         String        @unique
+  telefono_contacto      String?
+  documento              String        @unique
+  tipo_documento         TipoDocumento @default(CC)
+  fecha_nacimiento       DateTime?
+  genero                 String?
+  rol                    Rol           @default(usuario)
+  tipo_usuario            TipoUsuario?
+  estado                 EstadoUsuario @default(pendiente)
+  password_hash          String?
+  token_activacion       String?
+  token_expira           DateTime?
+  avatar                 String?
+  eps                    String?
+  eps_certificado        String?
+  grupo_sanguineo        String?
+  nombre_emergencia      String?
+  telefono_emergencia    String?
+  parentesco_emergencia  String?
+  fecha_creacion         DateTime      @default(now())
+  fecha_modificacion     DateTime      @updatedAt
 
-  estudiante          Estudiante?
-  profesor            Profesor?
-  administrativo      Administrativo?
-  
-  huella              Huella?
-  valoraciones_creadas Valoracion[]   @relation("ValoracionCreador")
-  rutinas_creadas     Rutina[]        @relation("RutinaCreador")
-  rutinas             Rutina[]        @relation("RutinaUsuario")
-  asistencias         Asistencia[]
-  agenda_usuario      Agenda[]        @relation("AgendaUsuario")
-  agenda_creada       Agenda[]        @relation("AgendaCreador")
-  documentacion       Documentacion[]
-  ejercicios          Ejercicio[]
-  maquinas            Maquina[]
-  sesiones_rutina     SesionRutina[]
+  estudiante     Estudiante?
+  profesor       Profesor?
+  administrativo Administrativo?
+  acudiente_de   Acudiente?      // si este usuario es menor, su acudiente
+
+  huella                Huella?
+  parq                  Parq[]
+  aceptaciones          AceptacionDocumento[]
+  valoraciones_creadas  Valoracion[]    @relation("ValoracionCreador")
+  rutinas_creadas       Rutina[]        @relation("RutinaCreador")
+  rutinas               Rutina[]        @relation("RutinaUsuario")
+  asistencias           Asistencia[]
+  agenda_usuario        Agenda[]        @relation("AgendaUsuario")
+  agenda_creada         Agenda[]        @relation("AgendaCreador")
+  documentacion         Documentacion[]
+  ejercicios            Ejercicio[]
+  maquinas               Maquina[]
+  sesiones_rutina       SesionRutina[]
 }
 
 // Tipos de Usuario
 
 model Estudiante {
-  id_estudiante  String              @id @default(uuid())
-  id_usuario     String              @unique
+  id_estudiante  String               @id @default(uuid())
+  id_usuario     String               @unique
   id_programa    String?
   numero_carnet  String?
   semestre       Int?
   modalidad      ModalidadEstudiante?
   jornada        String?
-  es_egresado    Boolean             @default(false)
-  fecha_creacion DateTime            @default(now())
+  es_egresado    Boolean              @default(false)
+  fecha_creacion DateTime             @default(now())
 
-  usuario        Usuario             @relation(fields: [id_usuario], references: [id_usuario])
-  programa       Programa?           @relation(fields: [id_programa], references: [id_programa])
-  valoraciones   Valoracion[]
-  aceptaciones   AceptacionDocumento[]
+  usuario      Usuario      @relation(fields: [id_usuario], references: [id_usuario])
+  programa     Programa?    @relation(fields: [id_programa], references: [id_programa])
+  valoraciones Valoracion[]
 }
 
 model Profesor {
@@ -186,51 +211,71 @@ model Profesor {
   id_area        String?
   fecha_creacion DateTime @default(now())
 
-  usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario])
-  cargo          Cargo?   @relation(fields: [id_cargo], references: [id_cargo])
-  area           Area?    @relation(fields: [id_area], references: [id_area])
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
+  cargo   Cargo?  @relation(fields: [id_cargo], references: [id_cargo])
+  area    Area?   @relation(fields: [id_area], references: [id_area])
 }
 
 model Administrativo {
   id_administrativo String   @id @default(uuid())
-  id_usuario        String   @unique
-  id_cargo          String?
-  id_area           String?
-  fecha_creacion    DateTime @default(now())
+  id_usuario         String   @unique
+  id_cargo           String?
+  id_area            String?
+  fecha_creacion     DateTime @default(now())
 
-  usuario           Usuario  @relation(fields: [id_usuario], references: [id_usuario])
-  cargo             Cargo?   @relation(fields: [id_cargo], references: [id_cargo])
-  area              Area?    @relation(fields: [id_area], references: [id_area])
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
+  cargo   Cargo?  @relation(fields: [id_cargo], references: [id_cargo])
+  area    Area?   @relation(fields: [id_area], references: [id_area])
+}
+
+// ACUDIENTE (para usuarios menores de edad)
+
+model Acudiente {
+  id_acudiente       String   @id @default(uuid())
+  id_usuario_acudido String   @unique
+  primer_nombre      String
+  segundo_nombre     String?
+  primer_apellido    String
+  segundo_apellido   String?
+  documento          String   @unique
+  tipo_documento     TipoDocumento @default(CC)
+  fecha_nacimiento   DateTime?
+  genero             String?
+  telefono_contacto  String?
+  fecha_creacion     DateTime @default(now())
+  fecha_modificacion DateTime @updatedAt
+
+  usuario_acudido Usuario @relation(fields: [id_usuario_acudido], references: [id_usuario])
 }
 
 // CONFIG UNIVERSIDAD
 
 model Programa {
-  id_programa    String        @id @default(uuid())
-  nombre         String
-  universidad    Universidad
-  tipo_programa  NivelPrograma
-  fecha_creacion    DateTime   @default(now())
-  fecha_modificacion DateTime  @updatedAt
+  id_programa        String        @id @default(uuid())
+  nombre             String
+  universidad        Universidad
+  tipo_programa      NivelPrograma
+  fecha_creacion     DateTime      @default(now())
+  fecha_modificacion DateTime      @updatedAt
 
-  estudiantes    Estudiante[]
+  estudiantes Estudiante[]
 }
 
 model Cargo {
-  id_cargo       String           @id @default(uuid())
-  nombre         String           @unique
-  fecha_creacion DateTime         @default(now())
+  id_cargo       String   @id @default(uuid())
+  nombre         String   @unique
+  fecha_creacion DateTime @default(now())
 
-  profesores     Profesor[]
+  profesores      Profesor[]
   administrativos Administrativo[]
 }
 
 model Area {
-  id_area        String           @id @default(uuid())
-  nombre         String           @unique
-  fecha_creacion DateTime         @default(now())
+  id_area        String   @id @default(uuid())
+  nombre         String   @unique
+  fecha_creacion DateTime @default(now())
 
-  profesores     Profesor[]
+  profesores      Profesor[]
   administrativos Administrativo[]
 }
 
@@ -243,63 +288,53 @@ model Huella {
   estado         Boolean  @default(true)
   fecha_creacion DateTime @default(now())
 
-  usuario        Usuario  @relation(fields: [id_usuario], references: [id_usuario])
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
 }
 
 // ASISTENCIA
 
 model Asistencia {
-  id_asistencia  String    @id @default(uuid())
-  id_usuario     String
-  fecha          DateTime  @default(now())
-  hora_ingreso   DateTime
-  hora_salida    DateTime?
+  id_asistencia    String    @id @default(uuid())
+  id_usuario       String
+  fecha            DateTime  @default(now())
+  hora_ingreso     DateTime
+  hora_salida      DateTime?
   duracion_minutos Int?
-  estado         String    @default("activo")
-  observaciones  String?
+  estado           String    @default("activo")
+  observaciones    String?
 
-  usuario        Usuario   @relation(fields: [id_usuario], references: [id_usuario])
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
 }
 
 // VALORACIÓN
 
 model Valoracion {
-  id_valoracion      String         @id @default(uuid())
-  id_estudiante      String
-  id_creador         String
-  fecha              DateTime       @default(now())
-  proxima_valoracion DateTime?
-  objetivo           String?
-  nivel_actividad    NivelActividad?
-  observaciones      String?
-  analisis_ia        String?
-  plan_entrenamiento Json?
-  estado_ia          String?
-  fecha_creacion     DateTime       @default(now())
-
-  estudiante         Estudiante     @relation(fields: [id_estudiante], references: [id_estudiante])
-  creador            Usuario        @relation("ValoracionCreador", fields: [id_creador], references: [id_usuario])
-  datos_medicos      DatosMedicos?
-  medidas_corporales MedidasCorporales?
-  antecedentes       AntecedenteSalud[]
-  indicaciones       Indicacion[]
-  disponibilidad     Disponibilidad[]
-}
-
-model DatosMedicos {
-  id_datos             String     @id @default(uuid())
-  id_valoracion        String     @unique
-  presion_arterial     String?
-  edad_metabolica      Float?
-  agua_corporal        Float?
-  resistencia_muscular Float?
-
-  valoracion           Valoracion @relation(fields: [id_valoracion], references: [id_valoracion])
+  id_valoracion              String          @id @default(uuid())
+  id_estudiante              String
+  id_creador                 String
+  fecha                      DateTime        @default(now())
+  proxima_valoracion         DateTime?
+  objetivos                  ObjetivoUsuario[]
+  objetivo_detalle           String?
+  nivel_actividad            NivelActividad?
+  tipo_antecedentes          TipoAntecedente[]
+  observaciones_antecedentes String?
+  observaciones_finales      String?
+  dias_disponibles           DiaSemana[]
+  analisis_ia                String?
+  plan_entrenamiento         Json?
+  estado_ia                  String?
+  fecha_creacion             DateTime        @default(now())
+        
+  estudiante                 Estudiante         @relation(fields: [id_estudiante], references: [id_estudiante])
+  creador                    Usuario            @relation("ValoracionCreador", fields: [id_creador], references: [id_usuario])
+  datos_medicos              DatosMedicos?
+  medidas_corporales         MedidasCorporales?
 }
 
 model MedidasCorporales {
-  id_medidas     String     @id @default(uuid())
-  id_valoracion  String     @unique
+  id_medidas     String @id @default(uuid())
+  id_valoracion  String @unique
   peso           Float?
   estatura       Float?
   imc            Float?
@@ -308,104 +343,78 @@ model MedidasCorporales {
   masa_magra     Float?
   grasa_visceral Float?
 
-  valoracion     Valoracion @relation(fields: [id_valoracion], references: [id_valoracion])
-}
-
-model AntecedenteSalud {
-  id_antecedente String     @id @default(uuid())
-  id_valoracion  String
-  tipo           String
-  descripcion    String?
-
-  valoracion     Valoracion @relation(fields: [id_valoracion], references: [id_valoracion])
-}
-
-model Indicacion {
-  id_indicacion  String         @id @default(uuid())
-  id_valoracion  String
-  tipo           TipoIndicacion
-  descripcion    String?
-
-  valoracion     Valoracion @relation(fields: [id_valoracion], references: [id_valoracion])
-}
-
-model Disponibilidad {
-  id_disponibilidad String     @id @default(uuid())
-  id_valoracion     String
-  dia               String
-
-  valoracion        Valoracion @relation(fields: [id_valoracion], references: [id_valoracion])
+  valoracion Valoracion @relation(fields: [id_valoracion], references: [id_valoracion])
 }
 
 // GIMNASIO: EJERCICIOS Y MÁQUINAS
 
 model GrupoMuscular {
-  id_grupo       String           @id @default(uuid())
-  nombre         String           @unique
-  fecha_creacion DateTime         @default(now())
+  id_grupo       String   @id @default(uuid())
+  nombre         String   @unique
+  fecha_creacion DateTime @default(now())
 
-  ejercicios     EjercicioGrupo[]
-  maquinas       MaquinaGrupo[]
+  ejercicios EjercicioGrupo[]
+  maquinas   MaquinaGrupo[]
 }
 
 model Ejercicio {
-  id_ejercicio      String           @id @default(uuid())
-  id_usuario        String
-  nombre            String
-  descripcion       String?
-  nivel             NivelEjercicio?
-  url_multimedia    String?
-  estado            EstadoEjercicio  @default(activo)
-  fecha_creacion    DateTime         @default(now())
-  fecha_modificacion DateTime        @updatedAt
+  id_ejercicio       String @id @default(uuid())
+  id_usuario         String
+  nombre             String
+  descripcion        String?
+  nivel              NivelEjercicio?
+  url_multimedia     String?
+  estado             EstadoEjercicio  @default(activo)
+  fecha_creacion     DateTime  @default(now())
+  fecha_modificacion DateTime  @updatedAt
 
-  usuario           Usuario          @relation(fields: [id_usuario], references: [id_usuario])
+  usuario           Usuario  @relation(fields: [id_usuario], references: [id_usuario])
   grupos            EjercicioGrupo[]
   maquinas          MaquinaEjercicio[]
   rutina_ejercicios RutinaEjercicio[]
 }
 
 model EjercicioGrupo {
-  id_ejercicio  String
-  id_grupo      String
+  id_ejercicio String
+  id_grupo     String
 
-  ejercicio     Ejercicio     @relation(fields: [id_ejercicio], references: [id_ejercicio])
-  grupo         GrupoMuscular @relation(fields: [id_grupo], references: [id_grupo])
+  ejercicio Ejercicio     @relation(fields: [id_ejercicio], references: [id_ejercicio])
+  grupo     GrupoMuscular @relation(fields: [id_grupo], references: [id_grupo])
 
   @@id([id_ejercicio, id_grupo])
 }
 
 model Maquina {
-  id_maquina         String           @id @default(uuid())
+  id_maquina         String        @id @default(uuid())
   id_usuario         String
   nombre             String
   descripcion        String?
   url_multimedia     String?
-  estado             EstadoMaquina    @default(disponible)
-  fecha_creacion     DateTime         @default(now())
-  fecha_modificacion DateTime         @updatedAt
+  estado             EstadoMaquina @default(disponible)
+  fecha_creacion     DateTime      @default(now())
+  fecha_modificacion DateTime      @updatedAt
 
-  usuario            Usuario          @relation(fields: [id_usuario], references: [id_usuario])
-  grupos             MaquinaGrupo[]
-  ejercicios         MaquinaEjercicio[]
+  usuario    Usuario            @relation(fields: [id_usuario], references: [id_usuario])
+  grupos     MaquinaGrupo[]
+  ejercicios MaquinaEjercicio[]
 }
 
 model MaquinaGrupo {
-  id_maquina    String
-  id_grupo      String
+  id_maquina String
+  id_grupo   String
 
-  maquina       Maquina       @relation(fields: [id_maquina], references: [id_maquina])
-  grupo         GrupoMuscular @relation(fields: [id_grupo], references: [id_grupo])
+  maquina Maquina       @relation(fields: [id_maquina], references: [id_maquina])
+  grupo   GrupoMuscular @relation(fields: [id_grupo], references: [id_grupo])
 
   @@id([id_maquina, id_grupo])
 }
 
 model MaquinaEjercicio {
-  id_maquina    String
-  id_ejercicio  String
+  id_maquina   String
+  id_ejercicio String
 
-  maquina       Maquina   @relation(fields: [id_maquina], references: [id_maquina])
-  ejercicio     Ejercicio @relation(fields: [id_ejercicio], references: [id_ejercicio])
+  maquina   Maquina   @relation(fields: [id_maquina], references: [id_maquina])
+  ejercicio Ejercicio @relation(fields: [id_ejercicio], references: [id_ejercicio])
 
   @@id([id_maquina, id_ejercicio])
 }
@@ -422,25 +431,25 @@ model Rutina {
   fecha_creacion     DateTime     @default(now())
   fecha_modificacion DateTime     @updatedAt
 
-  usuario            Usuario      @relation("RutinaUsuario", fields: [id_usuario], references: [id_usuario])
-  creador            Usuario      @relation("RutinaCreador", fields: [id_creador], references: [id_usuario])
-  ejercicios         RutinaEjercicio[]
-  sesiones           SesionRutina[]
+  usuario    Usuario           @relation("RutinaUsuario", fields: [id_usuario], references: [id_usuario])
+  creador    Usuario           @relation("RutinaCreador", fields: [id_creador], references: [id_usuario])
+  ejercicios RutinaEjercicio[]
+  sesiones   SesionRutina[]
 }
 
 model RutinaEjercicio {
-  id_rutina_ejercicio String    @id @default(uuid())
+  id_rutina_ejercicio String  @id @default(uuid())
   id_rutina           String
   id_ejercicio        String
-  dia_semana          String
+  dia_semana          DiaSemana
   series              Int?
   repeticiones        Int?
   descanso            Int?
-  orden               Int?
-  observaciones       String?
+  orden                Int?
+  observaciones        String?
 
-  rutina              Rutina    @relation(fields: [id_rutina], references: [id_rutina])
-  ejercicio           Ejercicio @relation(fields: [id_ejercicio], references: [id_ejercicio])
+  rutina    Rutina    @relation(fields: [id_rutina], references: [id_rutina])
+  ejercicio Ejercicio @relation(fields: [id_ejercicio], references: [id_ejercicio])
 }
 
 model SesionRutina {
@@ -453,8 +462,8 @@ model SesionRutina {
   estado         EstadoSesionRutina @default(en_progreso)
   fecha_creacion DateTime           @default(now())
 
-  rutina         Rutina             @relation(fields: [id_rutina], references: [id_rutina])
-  usuario        Usuario            @relation(fields: [id_usuario], references: [id_usuario])
+  rutina  Rutina  @relation(fields: [id_rutina], references: [id_rutina])
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
 }
 
 // AGENDA
@@ -471,11 +480,11 @@ model Agenda {
   fecha_creacion     DateTime     @default(now())
   fecha_modificacion DateTime     @updatedAt
 
-  usuario            Usuario @relation("AgendaUsuario", fields: [id_usuario], references: [id_usuario])
-  creador            Usuario @relation("AgendaCreador", fields: [id_creador], references: [id_usuario])
+  usuario Usuario @relation("AgendaUsuario", fields: [id_usuario], references: [id_usuario])
+  creador Usuario @relation("AgendaCreador", fields: [id_creador], references: [id_usuario])
 }
 
-// DOCUMENTOS 
+// DOCUMENTOS
 
 model DocumentoLegal {
   id_doc_legal       String          @id @default(uuid())
@@ -487,28 +496,40 @@ model DocumentoLegal {
   fecha_creacion     DateTime        @default(now())
   fecha_modificacion DateTime        @updatedAt
 
-  aceptaciones       AceptacionDocumento[]
+  aceptaciones AceptacionDocumento[]
 }
 
 model AceptacionDocumento {
-  id_aceptacion  String         @id @default(uuid())
-  id_doc_legal   String
-  id_estudiante  String
-  firma_imagen   String?
-  fecha_creacion DateTime       @default(now())
+  id_aceptacion    String   @id @default(uuid())
+  id_doc_legal     String
+  id_usuario       String
+  firma_imagen     String?
+  fecha_aceptacion DateTime @default(now())
 
-  documento      DocumentoLegal @relation(fields: [id_doc_legal], references: [id_doc_legal])
-  estudiante     Estudiante     @relation(fields: [id_estudiante], references: [id_estudiante])
+  documento DocumentoLegal @relation(fields: [id_doc_legal], references: [id_doc_legal])
+  usuario   Usuario        @relation(fields: [id_usuario], references: [id_usuario])
+  parq      Parq?
+}
+
+model Parq {
+  id_parq            String   @id @default(uuid())
+  id_usuario         String
+  id_aceptacion      String   @unique
+  respuestas         Json
+  seguimiento_medico Boolean  @default(false)
+
+  usuario    Usuario             @relation(fields: [id_usuario], references: [id_usuario])
+  aceptacion AceptacionDocumento @relation(fields: [id_aceptacion], references: [id_aceptacion])
 }
 
 model Documentacion {
-  id_documentacion   String   @id @default(uuid())
-  id_usuario         String
-  nombre             String
-  tipo               String?
-  url_archivo        String?
-  estado             String   @default("activo")
-  fecha_creacion     DateTime @default(now())
+  id_documentacion String   @id @default(uuid())
+  id_usuario       String
+  nombre           String
+  tipo             String?
+  url_archivo      String?
+  estado           String   @default("activo")
+  fecha_creacion   DateTime @default(now())
 
-  usuario            Usuario  @relation(fields: [id_usuario], references: [id_usuario])
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
 }
