@@ -691,7 +691,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
                 onEquipSearchFocus={setEquipSearchFocused}
               />
             )}
-            {section === 'config' && <AdminConfig tab={configTab} onTabChange={setConfigTab} />}
+            {section === 'config' && <AdminConfig tab={configTab} />}
           </motion.div>
         </AnimatePresence>
       </div>
