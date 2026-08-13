@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import type { Machine } from '../../../data/types'
+import type { Machine } from '@/data/types'
 
 interface MachineForm {
   name: string

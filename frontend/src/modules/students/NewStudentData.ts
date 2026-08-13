@@ -1,7 +1,7 @@
 import { User, FileText, ClipboardCheck, Pen, ScanLine } from 'lucide-react'
-import studentRoleImg from '../../assets/icons/users/student.webp'
-import teacherRoleImg from '../../assets/icons/users/teacher.webp'
-import adminRoleImg from '../../assets/icons/users/administrator.webp'
+import studentRoleImg from '@/assets/icons/users/student.webp'
+import teacherRoleImg from '@/assets/icons/users/teacher.webp'
+import adminRoleImg from '@/assets/icons/users/administrator.webp'
 
 export const BLUE = '#1270B7'
 export const RED = '#F43843'

@@ -1,8 +1,8 @@
 ﻿import { motion } from 'framer-motion'
 import { Eye, FileText } from 'lucide-react'
-import { ScalesOfJusticeView } from '../../../assets/models/ui/objects/scales_of_justice/ScalesOfJusticeModel'
-import { StethoscopeView } from '../../../assets/models/ui/objects/stethoscope/StethoscopeModel'
-import { KitView } from '../../../assets/models/ui/objects/kit/KitModel'
+import { ScalesOfJusticeView } from '@/assets/models/ui/objects/scales_of_justice/ScalesOfJusticeModel'
+import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
+import { KitView } from '@/assets/models/ui/objects/kit/KitModel'
 
 interface Props {
   openMenuDoc: string | null

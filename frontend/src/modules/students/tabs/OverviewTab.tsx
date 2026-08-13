@@ -1,10 +1,10 @@
 ﻿import { motion } from 'framer-motion'
 import { Maximize2 } from 'lucide-react'
-import { StudentCardView } from '../../../assets/models/ui/objects/student_card/StudentCardModel'
-import { TelephoneView } from '../../../assets/models/ui/objects/telephone/TelephoneModel'
-import { CapView } from '../../../assets/models/ui/objects/cap/CapModel'
-import { TrophyView } from '../../../assets/models/ui/objects/trophy/TrophyModel'
-import type { Student } from '../StudentProfileData'
+import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
+import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
+import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
+import { TrophyView } from '@/assets/models/ui/objects/trophy/TrophyModel'
+import type { Student } from '@/modules/students/StudentProfileData'
 
 interface Props {
   student: Student

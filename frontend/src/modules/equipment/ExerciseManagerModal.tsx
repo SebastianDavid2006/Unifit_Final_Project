@@ -5,15 +5,15 @@ import {
   Plus, X, Check, ChevronDown, Dumbbell, Trash2, Pencil,
   ChevronLeft, Upload, Camera,
 } from 'lucide-react'
-import type { Exercise, Status } from '../../data/types'
+import type { Exercise, Status } from '@/data/types'
 import {
   BLUE, BLUE_GRAD, GREEN_GRAD, ORANGE_GRAD, RED, ORANGE,
   muscleIcons, meshInputBg, meshInputHover, BODY_GROUPS,
-} from '../../data/constants'
-import { StatusBadge } from '../../components/ui/StatusBadge'
-import coachExerciseSuccessImg from '../../assets/illustrations/characters/coach/coach_exercise_success.webp'
-import machineExercisesImg from '../../assets/illustrations/equipment/cable_machine.webp'
-import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
+} from '@/data/constants'
+import { StatusBadge } from '@/shared/components/ui/StatusBadge'
+import coachExerciseSuccessImg from '@/assets/illustrations/characters/coach/coach_exercise_success.webp'
+import machineExercisesImg from '@/assets/illustrations/equipment/cable_machine.webp'
+import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
 
 interface ExerciseManagerModalProps {
   show: boolean

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { TrainerView } from '../views/trainer/TrainerView'
-import { StudentView } from '../views/student/StudentView'
-import { AdminView } from '../views/admin/AdminView'
-import { LoginView } from '../views/login/LoginView'
-import { RegisterView } from '../views/login/RegisterView'
+import { LoginPage } from '@/auth/pages/LoginPage'
+import { RegisterPage } from '@/auth/pages/RegisterPage'
+import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
+import { StudentPage } from '@/features/student/pages/StudentPage'
+import { AdminPage } from '@/features/admin/pages/AdminPage'
 
 type Platform = 'trainer' | 'student' | 'admin'
 
@@ -78,7 +78,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <LoginView onSelect={(platform) => setScreen(platform)} onRegister={() => setScreen('register')} />
+              <LoginPage onSelect={(platform) => setScreen(platform)} onRegister={() => setScreen('register')} />
             </motion.div>
           )}
           {screen === 'register' && (
@@ -90,7 +90,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <RegisterView onBack={() => setScreen('login')} />
+                <RegisterPage onBack={() => setScreen('login')} />
             </motion.div>
           )}
           {screen === 'trainer' && (
@@ -102,7 +102,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <TrainerView onLogout={() => setScreen('login')} />
+              <TrainerPage onLogout={() => setScreen('login')} />
             </motion.div>
           )}
           {screen === 'student' && (
@@ -114,7 +114,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <StudentView />
+              <StudentPage />
             </motion.div>
           )}
           {screen === 'admin' && (
@@ -126,7 +126,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <AdminView onLogout={() => setScreen('login')} />
+              <AdminPage onLogout={() => setScreen('login')} />
             </motion.div>
           )}
         </AnimatePresence>

@@ -1,14 +1,14 @@
 ﻿import { motion } from 'framer-motion'
 import { Check, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { ClockView } from '../../../assets/models/ui/objects/clock/ClockModel'
-import { ListView } from '../../../assets/models/ui/objects/list/ListModel'
-import { CalendarView } from '../../../assets/models/ui/objects/calendar/CalendarModel'
-import fireGif from '../../../assets/icons/animated/fire.gif'
-import listImg from '../../../assets/icons/objects/list.webp'
-import physicalAssessmentImg from '../../../assets/illustrations/modules/physical_assessment.webp'
+import { ClockView } from '@/assets/models/ui/objects/clock/ClockModel'
+import { ListView } from '@/assets/models/ui/objects/list/ListModel'
+import { CalendarView } from '@/assets/models/ui/objects/calendar/CalendarModel'
+import fireGif from '@/assets/icons/animated/fire.gif'
+import listImg from '@/assets/icons/objects/list.webp'
+import physicalAssessmentImg from '@/assets/illustrations/modules/physical_assessment.webp'
 import type { Dispatch, SetStateAction } from 'react'
-import type { ValuationForm } from '../StudentProfileData'
-import { cardStyle, assessmentItems, emptyValuationForm } from '../StudentProfileData'
+import type { ValuationForm } from '@/modules/students/StudentProfileData'
+import { cardStyle, assessmentItems, emptyValuationForm } from '@/modules/students/StudentProfileData'
 
 type AssessmentItem = (typeof assessmentItems)[number]
 

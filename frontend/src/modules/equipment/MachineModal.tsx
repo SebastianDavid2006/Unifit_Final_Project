@@ -5,16 +5,16 @@ import {
   Search, Plus, Dumbbell, X, List, Upload, Pencil, Trash2,
   ChevronDown, ChevronRight, ChevronLeft, Check, Camera,
 } from 'lucide-react'
-import type { Machine, Exercise, Status } from '../../data/types'
+import type { Machine, Exercise, Status } from '@/data/types'
 import {
   BLUE, BLUE_GRAD, GREEN_GRAD, ORANGE_GRAD, RED,
   muscleIcons, statusConfig, meshInputBg, meshInputHover, muscleToZones, BODY_GROUPS,
-} from '../../data/constants'
-import { StatusBadge } from '../../components/ui/StatusBadge'
-import machineImg from '../../assets/illustrations/modules/equipment_module.webp'
-import machineTreadmillImg from '../../assets/illustrations/equipment/treadmill.webp'
-import machineExercisesImg from '../../assets/illustrations/equipment/cable_machine.webp'
-import coachCongratsImg from '../../assets/illustrations/characters/coach/coach_congratulations.webp'
+} from '@/data/constants'
+import { StatusBadge } from '@/shared/components/ui/StatusBadge'
+import machineImg from '@/assets/illustrations/modules/equipment_module.webp'
+import machineTreadmillImg from '@/assets/illustrations/equipment/treadmill.webp'
+import machineExercisesImg from '@/assets/illustrations/equipment/cable_machine.webp'
+import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
 
 interface MachineModalProps {
   show: boolean

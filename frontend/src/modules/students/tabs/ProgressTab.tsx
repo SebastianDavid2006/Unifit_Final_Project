@@ -1,11 +1,11 @@
 ﻿import { motion } from 'framer-motion'
 import { Calendar, Clock } from 'lucide-react'
-import { ClockView } from '../../../assets/models/ui/objects/clock/ClockModel'
-import { ListView } from '../../../assets/models/ui/objects/list/ListModel'
-import { CalendarView } from '../../../assets/models/ui/objects/calendar/CalendarModel'
-import fireGif from '../../../assets/icons/animated/fire.gif'
-import { cardStyle, historialAsistencia } from '../StudentProfileData'
-import type { AttendanceRecord } from '../StudentProfileData'
+import { ClockView } from '@/assets/models/ui/objects/clock/ClockModel'
+import { ListView } from '@/assets/models/ui/objects/list/ListModel'
+import { CalendarView } from '@/assets/models/ui/objects/calendar/CalendarModel'
+import fireGif from '@/assets/icons/animated/fire.gif'
+import { cardStyle, historialAsistencia } from '@/modules/students/StudentProfileData'
+import type { AttendanceRecord } from '@/modules/students/StudentProfileData'
 
 const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
 

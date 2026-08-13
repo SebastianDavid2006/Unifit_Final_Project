@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { Check } from 'lucide-react'
-import calendarCardImg from '../../assets/icons/objects/calendar.webp'
+import calendarCardImg from '@/assets/icons/objects/calendar.webp'
 import { DAY_GRAD } from './AgendaData'
 
 export function DayCard({ label, selected, done, onClick }: { label: string; selected: boolean; done?: boolean; onClick: () => void }) {
