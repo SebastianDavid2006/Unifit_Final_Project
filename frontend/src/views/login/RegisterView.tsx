@@ -1066,8 +1066,6 @@ export function RegisterView({ onBack }: RegisterViewProps) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {contractModal}
     </div>
   )
 }
