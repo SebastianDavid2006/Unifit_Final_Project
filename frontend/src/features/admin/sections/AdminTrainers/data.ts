@@ -1,4 +1,4 @@
-import type { Shield, GraduationCap } from 'lucide-react'
+import { Shield, GraduationCap } from 'lucide-react'
 
 export const RED = '#F43843'
 export const BLUE = '#1270B7'
