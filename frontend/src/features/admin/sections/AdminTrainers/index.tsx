@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Trainer, initialTrainers } from '@/data/trainers'
-import NewUserModal from '@/features/admin/components/NewUserModal'
+import NewUserModal from './components/NewUserModal'
 import TrainersList from './sections/TrainersList'
 import TrainerDetail from './sections/TrainerDetail'
 import PermissionsSection from './sections/PermissionsSection'
