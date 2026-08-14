@@ -633,10 +633,10 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       </div>
       <h2 className="text-xl sm:text-2xl font-extrabold" style={{ color: '#fff' }}>¡Felicidades, registro exitoso!</h2>
       <p className="text-sm font-bold mt-3" style={{ color: '#7ec8e3' }}>
-        Te faltan solo 2 pasos para tu acceso completo
+        Te faltan solo 3 pasos para tu acceso completo
       </p>
       <p className="text-xs mt-3 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
-        Agenda tu cita para terminar tu registro: capturamos tu huella digital y tu firma y quedas listo para entrenar.
+        Agenda tu cita para capturar tu huella digital y tu firma, y completa tu PAR-Q, el registro que determina tus condiciones físicas. Así quedas listo para entrenar.
       </p>
       </div>
 
@@ -795,8 +795,8 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             ))}
           </>
         ) : (
-          <div className="overflow-x-auto pb-1">
-            <div className="grid min-w-[560px]" style={{ gridTemplateColumns: '44px repeat(7, 1fr)' }}>
+          <div className="pb-1">
+            <div className="grid" style={{ gridTemplateColumns: '32px repeat(7, 1fr)' }}>
               <div />
               {weekGrid.map((dt, i) => (
                 <div key={i} className="text-center py-1">
@@ -806,7 +806,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
               ))}
               {AGENDA_TIMES.map(t => (
                 <Fragment key={t}>
-                  <div className="flex items-center justify-end pr-2 text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>{t}</div>
+                  <div className="flex items-center justify-end pr-1 text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>{t}</div>
                   {weekGrid.map(dt => {
                     const ds = fmtDate(dt)
                     const slot = (agenda[ds] ?? []).find(s => s.title === 'Disponible' && s.time === t)
@@ -838,18 +838,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 mt-3">
-        {!selectedDay ? (
-          <div className="flex flex-col items-center py-8 gap-2">
-            <CalendarCheck size={22} style={{ color: 'rgba(255,255,255,0.2)' }} />
-            <p className="text-[11px] text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              Toca un día resaltado para ver los horarios disponibles
-            </p>
-          </div>
-        ) : (
-          <div className="flex-1" />
-        )}
-      </div>
+      <div className="flex-1 min-h-0" />
 
       <AnimatePresence>
         {selectedDay && !scheduled && (
@@ -895,9 +884,9 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
                 </button>
               </div>
               <div className="h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-              <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>Horarios disponibles</p>
+              <p className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>{selectedSlot ? 'Horario seleccionado' : 'Horarios disponibles'}</p>
               <div className="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-1">
-                {slotsOfDay.map(s => {
+                {slotsOfDay.filter(s => !selectedSlot || s.time === selectedSlot).map(s => {
                   const isSelSlot = selectedSlot === s.time
                   return (
                     <motion.button
