@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, Fragment } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight,
-  Clock, CalendarCheck, X, FileText,
+  Clock, CalendarCheck, X, Maximize2,
 } from 'lucide-react'
 import {
   TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
@@ -91,6 +91,17 @@ function getWeekGrid(date: Date): Date[] {
 
 const AGENDA_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
 
+const CONTRACT_TITLE = 'Contrato de prestación de servicios estudiantiles'
+const CONTRACT_INTRO = 'El presente contrato regula la relación entre UniFit S.A.S., en adelante "LA INSTITUCIÓN", y el estudiante que se registra a través del presente formulario, en adelante "EL ESTUDIANTE".'
+const CONTRACT_CLAUSES = [
+  { t: 'CLÁUSULA PRIMERA – OBJETO:', b: 'LA INSTITUCIÓN se compromete a proporcionar al ESTUDIANTE los servicios de entrenamiento y acompañamiento deportivo contratados, de acuerdo con el programa académico y la modalidad seleccionada en el formulario de registro.' },
+  { t: 'CLÁUSULA SEGUNDA – OBLIGACIONES DEL ESTUDIANTE:', b: 'El ESTUDIANTE se obliga a asistir puntualmente a las sesiones programadas, cumplir con las normas internas de LA INSTITUCIÓN, utilizar adecuadamente las instalaciones y equipos, y mantener una conducta respetuosa hacia el personal y demás estudiantes.' },
+  { t: 'CLÁUSULA TERCERA – OBLIGACIONES DE LA INSTITUCIÓN:', b: 'LA INSTITUCIÓN se obliga a proporcionar entrenadores calificados, mantener las instalaciones en condiciones óptimas de seguridad e higiene, y garantizar la prestación del servicio de acuerdo con los estándares de calidad establecidos.' },
+  { t: 'CLÁUSULA CUARTA – VALOR Y FORMA DE PAGO:', b: 'El valor del programa será el establecido en la tarifa vigente al momento de la matrícula. EL ESTUDIANTE acepta realizar los pagos en las fechas y montos acordados.' },
+  { t: 'CLÁUSULA QUINTA – TERMINACIÓN:', b: 'El presente contrato podrá ser terminado por cualquiera de las partes mediante comunicación escrita con quince (15) días de antelación, o de forma inmediata por incumplimiento grave de las obligaciones aquí establecidas.' },
+  { t: 'CLÁUSULA SEXTA – ACEPTACIÓN:', b: 'Las partes aceptan el presente contrato y se obligan a su cumplimiento en todos sus términos.' },
+]
+
 interface RegisterPageProps {
   onBack: () => void
 }
@@ -118,6 +129,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   const [scheduled, setScheduled] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showContractExpand, setShowContractExpand] = useState(false)
   const introVideoRef = useRef<HTMLVideoElement>(null)
   const introContainerRef = useRef<HTMLDivElement>(null)
   const bgVideoRef = useRef<HTMLVideoElement>(null)
@@ -473,39 +485,18 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             <span className="text-[11px] font-extrabold" style={{ color: '#007AFF' }}>UNIFIT</span>
             <span className="text-[9px] font-bold tracking-[0.2em]" style={{ color: 'rgba(0,0,0,0.4)' }}>CONTRATO</span>
           </div>
-          <p className="text-[12px] font-extrabold">Contrato de prestación de servicios estudiantiles</p>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
-            El presente contrato regula la relación entre UniFit S.A.S., en adelante "LA INSTITUCIÓN", y el estudiante que se registra a través del presente formulario, en adelante "EL ESTUDIANTE".
-          </p>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
-            <strong>CLÁUSULA PRIMERA – OBJETO:</strong> LA INSTITUCIÓN se compromete a proporcionar al ESTUDIANTE los servicios de entrenamiento y acompañamiento deportivo contratados, de acuerdo con el programa académico y la modalidad seleccionada en el formulario de registro.
-          </p>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
-            <strong>CLÁUSULA SEGUNDA – OBLIGACIONES DEL ESTUDIANTE:</strong> El ESTUDIANTE se obliga a asistir puntualmente a las sesiones programadas, cumplir con las normas internas de LA INSTITUCIÓN, utilizar adecuadamente las instalaciones y equipos, y mantener una conducta respetuosa hacia el personal y demás estudiantes.
-          </p>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
-            <strong>CLÁUSULA TERCERA – OBLIGACIONES DE LA INSTITUCIÓN:</strong> LA INSTITUCIÓN se obliga a proporcionar entrenadores calificados, mantener las instalaciones en condiciones óptimas de seguridad e higiene, y garantizar la prestación del servicio de acuerdo con los estándares de calidad establecidos.
-          </p>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
-            <strong>CLÁUSULA CUARTA – VALOR Y FORMA DE PAGO:</strong> El valor del programa será el establecido en la tarifa vigente al momento de la matrícula. EL ESTUDIANTE acepta realizar los pagos en las fechas y montos acordados.
-          </p>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
-            <strong>CLÁUSULA QUINTA – TERMINACIÓN:</strong> El presente contrato podrá ser terminado por cualquiera de las partes mediante comunicación escrita con quince (15) días de antelación, o de forma inmediata por incumplimiento grave de las obligaciones aquí establecidas.
-          </p>
-          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
-            <strong>CLÁUSULA SEXTA – ACEPTACIÓN:</strong> Las partes aceptan el presente contrato y se obligan a su cumplimiento en todos sus términos.
-          </p>
+          <p className="text-[12px] font-extrabold">{CONTRACT_TITLE}</p>
+          <p className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>{CONTRACT_INTRO}</p>
+          {CONTRACT_CLAUSES.map((c, i) => (
+            <p key={i} className="text-[10px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
+              <strong>{c.t}</strong> {c.b}
+            </p>
+          ))}
         </div>
       </div>
       {checkRow(aceptaContrato, () => setAceptaContrato(!aceptaContrato), 'Acepto los términos y condiciones del contrato de prestación de servicios estudiantiles de UniFit.')}
     </div>
   )
-
-  const openContractDocument = () => {
-    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Contrato de prestación de servicios estudiantiles - UNIFIT</title><style>body{font-family:'Inter',Arial,sans-serif;color:#1A1A1E;max-width:720px;margin:0 auto;padding:48px 24px;line-height:1.7}header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #007AFF;padding-bottom:12px;margin-bottom:28px}header .brand{font-weight:800;color:#007AFF;letter-spacing:0.05em}header .doc{font-weight:700;letter-spacing:0.25em;color:rgba(0,0,0,0.45);font-size:12px}h1{font-size:20px;font-weight:800;margin:0 0 24px}p{font-size:14px;margin:0 0 14px}.footer{margin-top:48px;padding-top:16px;border-top:1px solid rgba(0,0,0,0.1);font-size:12px;color:rgba(0,0,0,0.5);display:flex;justify-content:space-between}</style></head><body><header><span class="brand">UNIFIT</span><span class="doc">CONTRATO</span></header><h1>Contrato de prestación de servicios estudiantiles</h1><p>El presente contrato regula la relación entre UniFit S.A.S., en adelante "LA INSTITUCIÓN", y el estudiante que se registra a través del presente formulario, en adelante "EL ESTUDIANTE".</p><p><strong>CLÁUSULA PRIMERA – OBJETO:</strong> LA INSTITUCIÓN se compromete a proporcionar al ESTUDIANTE los servicios de entrenamiento y acompañamiento deportivo contratados, de acuerdo con el programa académico y la modalidad seleccionada en el formulario de registro.</p><p><strong>CLÁUSULA SEGUNDA – OBLIGACIONES DEL ESTUDIANTE:</strong> El ESTUDIANTE se obliga a asistir puntualmente a las sesiones programadas, cumplir con las normas internas de LA INSTITUCIÓN, utilizar adecuadamente las instalaciones y equipos, y mantener una conducta respetuosa hacia el personal y demás estudiantes.</p><p><strong>CLÁUSULA TERCERA – OBLIGACIONES DE LA INSTITUCIÓN:</strong> LA INSTITUCIÓN se obliga a proporcionar entrenadores calificados, mantener las instalaciones en condiciones óptimas de seguridad e higiene, y garantizar la prestación del servicio de acuerdo con los estándares de calidad establecidos.</p><p><strong>CLÁUSULA CUARTA – VALOR Y FORMA DE PAGO:</strong> El valor del programa será el establecido en la tarifa vigente al momento de la matrícula. EL ESTUDIANTE acepta realizar los pagos en las fechas y montos acordados.</p><p><strong>CLÁUSULA QUINTA – TERMINACIÓN:</strong> El presente contrato podrá ser terminado por cualquiera de las partes mediante comunicación escrita con quince (15) días de antelación, o de forma inmediata por incumplimiento grave de las obligaciones aquí establecidas.</p><p><strong>CLÁUSULA SEXTA – ACEPTACIÓN:</strong> Las partes aceptan el presente contrato y se obligan a su cumplimiento en todos sus términos.</p><div class="footer"><span>UniFit S.A.S.</span><span>NIT 900.000.000-1</span></div></body></html>`
-    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }))
-    window.open(url, '_blank')
-  }
 
   const renderForm = () => (
     <>
@@ -551,34 +542,38 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       </div>
 
       <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="relative flex items-center justify-between">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handlePrev}
-            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
+            className="flex items-center gap-1 px-3.5 py-2.5 rounded-xl text-xs font-medium cursor-pointer justify-self-start"
             style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
           >
             <ArrowLeft size={14} />
             {step === 1 ? 'Salir' : 'Atrás'}
           </motion.button>
-          {step === FORM_STEPS.length && (
+          {step === FORM_STEPS.length ? (
             <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              onClick={openContractDocument}
-              className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+              onClick={() => setShowContractExpand(true)}
+              title="Expandir documento"
+              className="flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer justify-self-center"
               style={{ background: 'rgba(255,255,255,0.08)', color: '#7ec8e3', border: '1px solid rgba(126,200,227,0.25)' }}
+              animate={{ scale: [1, 1.12, 1] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <FileText size={13} />
-              Ver documento
+              <Maximize2 size={15} />
             </motion.button>
+          ) : (
+            <span />
           )}
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={handleNext}
-            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer justify-self-end"
             style={{ background: BLUE_GRAD }}
           >
             {step === FORM_STEPS.length ? 'Finalizar' : 'Siguiente'}
@@ -1258,9 +1253,43 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
                 />
               </motion.div>
             )}
-            <div className="relative z-10 flex flex-col flex-1 min-h-0">
+            {showContractExpand ? (
+              <div className="relative z-10 flex flex-col flex-1 min-h-0">
+                <div className="flex-shrink-0 flex items-center px-5 pt-4 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] font-extrabold" style={{ color: '#007AFF' }}>UNIFIT</span>
+                    <span className="text-[9px] font-bold tracking-[0.2em]" style={{ color: 'rgba(255,255,255,0.4)' }}>CONTRATO</span>
+                  </div>
+                </div>
+                <div className="relative flex-1 min-h-0 px-4 pb-4">
+                  <div className="h-full rounded-2xl bg-white overflow-y-auto px-5 py-5 text-[11px] leading-relaxed" style={{ color: 'rgba(0,0,0,0.75)', boxShadow: '0 8px 30px rgba(0,0,0,0.25)' }}>
+                    <p className="text-[13px] font-extrabold mb-3" style={{ color: '#1A1A1E' }}>{CONTRACT_TITLE}</p>
+                    <p className="mb-3">{CONTRACT_INTRO}</p>
+                    {CONTRACT_CLAUSES.map((c, i) => (
+                      <p key={i} className="mb-3">
+                        <strong>{c.t}</strong> {c.b}
+                      </p>
+                    ))}
+                    <div className="flex items-center justify-between pt-3 mt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                      <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>UniFit S.A.S.</span>
+                      <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>NIT 900.000.000-1</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowContractExpand(false)}
+                    title="Contraer"
+                    className="absolute top-4 right-6 w-9 h-9 rounded-xl flex items-center justify-center z-20 cursor-pointer"
+                    style={{ background: '#FFFFFF', color: '#1A1A1E', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="relative z-10 flex flex-col flex-1 min-h-0">
                 {phaseContent}
               </div>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -1305,6 +1334,70 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
               onEnded={skipIntro}
               className="absolute inset-0 w-full h-full object-cover"
             />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showContractExpand && !isPhonePreview && (
+          <motion.div
+            key="contract-expand"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[70] flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-2xl h-[85%] flex flex-col rounded-3xl overflow-hidden"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 40px 120px rgba(0,0,0,0.7)' }}
+            >
+              <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] font-extrabold" style={{ color: '#007AFF' }}>UNIFIT</span>
+                  <span className="text-[9px] font-bold tracking-[0.2em]" style={{ color: 'rgba(0,0,0,0.4)' }}>CONTRATO</span>
+                </div>
+                <button
+                  onClick={() => setShowContractExpand(false)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors cursor-pointer"
+                  style={{ color: 'rgba(0,0,0,0.5)' }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6 text-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.75)' }}>
+                <p className="text-[14px] font-extrabold mb-4" style={{ color: '#1A1A1E' }}>Contrato de prestación de servicios estudiantiles</p>
+                <p className="mb-4">
+                  El presente contrato regula la relación entre UniFit S.A.S., en adelante "LA INSTITUCIÓN", y el estudiante que se registra a través del presente formulario, en adelante "EL ESTUDIANTE".
+                </p>
+                <p className="mb-4">
+                  <strong>CLÁUSULA PRIMERA – OBJETO:</strong> LA INSTITUCIÓN se compromete a proporcionar al ESTUDIANTE los servicios de entrenamiento y acompañamiento deportivo contratados, de acuerdo con el programa académico y la modalidad seleccionada en el formulario de registro.
+                </p>
+                <p className="mb-4">
+                  <strong>CLÁUSULA SEGUNDA – OBLIGACIONES DEL ESTUDIANTE:</strong> El ESTUDIANTE se obliga a asistir puntualmente a las sesiones programadas, cumplir con las normas internas de LA INSTITUCIÓN, utilizar adecuadamente las instalaciones y equipos, y mantener una conducta respetuosa hacia el personal y demás estudiantes.
+                </p>
+                <p className="mb-4">
+                  <strong>CLÁUSULA TERCERA – OBLIGACIONES DE LA INSTITUCIÓN:</strong> LA INSTITUCIÓN se obliga a proporcionar entrenadores calificados, mantener las instalaciones en condiciones óptimas de seguridad e higiene, y garantizar la prestación del servicio de acuerdo con los estándares de calidad establecidos.
+                </p>
+                <p className="mb-4">
+                  <strong>CLÁUSULA CUARTA – VALOR Y FORMA DE PAGO:</strong> El valor del programa será el establecido en la tarifa vigente al momento de la matrícula. EL ESTUDIANTE acepta realizar los pagos en las fechas y montos acordados.
+                </p>
+                <p className="mb-4">
+                  <strong>CLÁUSULA QUINTA – TERMINACIÓN:</strong> El presente contrato podrá ser terminado por cualquiera de las partes mediante comunicación escrita con quince (15) días de antelación, o de forma inmediata por incumplimiento grave de las obligaciones aquí establecidas.
+                </p>
+                <p className="mb-4">
+                  <strong>CLÁUSULA SEXTA – ACEPTACIÓN:</strong> Las partes aceptan el presente contrato y se obligan a su cumplimiento en todos sus términos.
+                </p>
+                <div className="flex items-center justify-between pt-4 mt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                  <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>UniFit S.A.S.</span>
+                  <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>NIT 900.000.000-1</span>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
