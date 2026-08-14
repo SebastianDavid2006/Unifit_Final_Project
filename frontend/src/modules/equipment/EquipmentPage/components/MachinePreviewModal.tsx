@@ -1,9 +1,9 @@
 import type { Machine, Exercise } from '@/data/types'
-import { BLUE, RED, ORANGE, GREEN, YELLOW, BLUE_GRAD, muscleIcons, statusConfig } from '@/data/constants'
+import { BLUE, RED, BLUE_GRAD, muscleIcons, statusConfig } from '@/data/constants'
 import { StatusBadge } from '@/shared/components/ui/StatusBadge'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Pencil, Trash2, List } from 'lucide-react'
-import machineImg from '@/assets/illustrations/modules/equipment_module.webp'
+import { EQUIPMENT_IMAGES } from '@/modules/equipment/data'
 
 interface MachinePreviewModalProps {
   machine: Machine | null
@@ -44,7 +44,7 @@ export function MachinePreviewModal(props: MachinePreviewModalProps) {
             {/* Image */}
             <div className="relative" style={{ height: 160, background: `${statusConfig[props.machine.status].color}08` }}>
               <img
-                src={props.machine.imageDataUrl || machineImg}
+                src={props.machine.imageDataUrl || EQUIPMENT_IMAGES.machineImg}
                 alt={props.machine.name}
                 className="w-full h-full"
                 style={{

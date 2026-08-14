@@ -1,8 +1,9 @@
 import type { Exercise } from '@/data/types'
-import { BLUE, RED, ORANGE, GREEN, YELLOW, muscleIcons } from '@/data/constants'
+import { BLUE, RED, muscleIcons } from '@/data/constants'
 import { StatusBadge } from '@/shared/components/ui/StatusBadge'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Pencil, Trash2, Dumbbell } from 'lucide-react'
+import { LEVEL_BADGE } from '@/modules/equipment/data'
 
 interface ExercisePreviewModalProps {
   exercise: Exercise | null
@@ -77,10 +78,10 @@ export function ExercisePreviewModal(props: ExercisePreviewModalProps) {
 
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-[10px] px-2 py-0.5 rounded-md font-medium" style={{
-                  background: props.exercise.recommendedLevel === 'principiante' ? 'rgba(48,209,88,0.1)' : props.exercise.recommendedLevel === 'intermedio' ? 'rgba(245,166,35,0.1)' : 'rgba(244,56,67,0.1)',
-                  color: props.exercise.recommendedLevel === 'principiante' ? '#30D158' : props.exercise.recommendedLevel === 'intermedio' ? '#F5A623' : '#F43843',
+                  background: LEVEL_BADGE[props.exercise.recommendedLevel].bg,
+                  color: LEVEL_BADGE[props.exercise.recommendedLevel].color,
                 }}>
-                  {props.exercise.recommendedLevel === 'principiante' ? 'Principiante' : props.exercise.recommendedLevel === 'intermedio' ? 'Intermedio' : 'Avanzado'}
+                  {LEVEL_BADGE[props.exercise.recommendedLevel].label}
                 </span>
                 <span className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{props.exercise.zone}</span>
               </div>
