@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight,
@@ -27,7 +27,8 @@ const FORM_STEPS = [
   { num: 3, label: 'Contrato' },
 ]
 
-type Phase = 'intro' | 'form' | 'success' | 'schedule'
+type Phase = 'intro' | 'form' | 'success' | 'schedule' | 'final'
+type ViewMode = 'month' | 'week'
 
 interface Slot { time: string; title: string; color: string }
 
@@ -37,22 +38,14 @@ function buildDemoAgenda(): Record<string, Slot[]> {
   const m = now.getMonth()
   const last = new Date(y, m + 1, 0).getDate()
   const d = (day: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-  const reg = '#AF52DE'
-  const assess = '#FF6B35'
-  const physical = '#30D158'
-  const times = ['07:00', '08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
-  const titles = [
-    { title: 'Registro Nuevo Ingreso', color: reg },
-    { title: 'Valoración Inicial', color: assess },
-    { title: 'Valoración Física', color: physical },
-  ]
+  const available = '#4ADE80'
   const agenda: Record<string, Slot[]> = {}
   for (let day = 1; day <= last; day++) {
-    const start = (day * 3) % (times.length - 2)
-    agenda[d(day)] = times.slice(start, start + 3).map((time, i) => ({
+    const start = (day * 3) % (AGENDA_TIMES.length - 2)
+    agenda[d(day)] = AGENDA_TIMES.slice(start, start + 3).map((time) => ({
       time,
-      title: titles[i].title,
-      color: titles[i].color,
+      title: 'Disponible',
+      color: available,
     }))
   }
   return agenda
@@ -82,6 +75,22 @@ function getMonthGrid(year: number, month: number): (Date | null)[][] {
   return weeks
 }
 
+function getWeekGrid(date: Date): Date[] {
+  const day = date.getDay()
+  const diff = day === 0 ? -6 : 1 - day
+  const monday = new Date(date)
+  monday.setDate(date.getDate() + diff)
+  const week: Date[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    week.push(d)
+  }
+  return week
+}
+
+const AGENDA_TIMES = ['07:00', '08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
+
 interface RegisterPageProps {
   onBack: () => void
 }
@@ -103,9 +112,12 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   const [shake, setShake] = useState(false)
   const [agenda] = useState<Record<string, Slot[]>>(() => buildDemoAgenda())
   const [viewMonth, setViewMonth] = useState(new Date())
+  const [viewMode, setViewMode] = useState<ViewMode>('month')
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [scheduled, setScheduled] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
   const introVideoRef = useRef<HTMLVideoElement>(null)
   const introContainerRef = useRef<HTMLDivElement>(null)
   const bgVideoRef = useRef<HTMLVideoElement>(null)
@@ -202,13 +214,26 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
 
   const confirmSchedule = () => {
     if (!selectedDay || !selectedSlot) return
+    setShowConfirm(true)
+  }
+
+  const executeSchedule = () => {
+    if (!selectedDay || !selectedSlot) return
     setScheduled(true)
+    setShowConfirm(false)
+    setShowSuccess(true)
   }
 
   const slotsOfDay = selectedDay ? (agenda[selectedDay] ?? []) : []
 
   const grid = getMonthGrid(viewMonth.getFullYear(), viewMonth.getMonth())
   const title = `${monthNames[viewMonth.getMonth()]} ${viewMonth.getFullYear()}`
+
+  const weekGrid = getWeekGrid(viewMonth)
+  const weekTitle = `${fmtDate(weekGrid[0]!)} - ${fmtDate(weekGrid[6]!)}`
+  const currentTitle = viewMode === 'month' ? title : weekTitle
+
+  const hasAvailableSlots = (dateStr: string) => (agenda[dateStr] ?? []).some(s => s.title === 'Disponible')
 
   const inputStyle = {
     background: 'rgba(255,255,255,0.06)',
@@ -642,6 +667,37 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     </div>
   )
 
+  const renderFinal = () => (
+    <div className="relative flex flex-col flex-1 min-h-0 overflow-hidden">
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 text-center min-h-0">
+        <h2 className="text-xl sm:text-2xl font-extrabold" style={{ color: '#fff' }}>
+          ¡Listo, tu cita quedó agendada!
+        </h2>
+        <p className="text-xs mt-3 font-bold" style={{ color: '#7ec8e3' }}>
+          Para el {selectedDay ? new Date(selectedDay + 'T12:00:00').getDate() : ''} de {selectedDay ? monthNames[new Date(selectedDay + 'T12:00:00').getMonth()] : ''} a las {selectedSlot}
+        </p>
+        <p className="text-xs mt-3 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          Una vez termines el registro, la experiencia UNIFIT se habilitará y podrás empezar a entrenar.
+        </p>
+      </div>
+
+      <div className="relative z-10 flex-shrink-0 pb-5">
+        <div className="flex items-center justify-center">
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onBack}
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+            style={{ background: 'rgba(255,255,255,0.08)', color: '#fff' }}
+          >
+            <ArrowLeft size={14} />
+            Volver
+          </motion.button>
+        </div>
+      </div>
+    </div>
+  )
+
   const renderSchedule = () => (
     <div className="flex flex-col flex-1 min-h-0">
       <div className="flex flex-col items-center pt-2">
@@ -651,65 +707,135 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
         </p>
       </div>
 
-      <div className="flex items-center justify-center gap-3 mb-2">
-        <button
-          onClick={() => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-          className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer"
-          style={{ color: 'rgba(255,255,255,0.5)' }}
-        >
-          <ChevronLeft size={15} />
-        </button>
-        <span className="text-xs font-extrabold" style={{ color: '#fff' }}>{title}</span>
-        <button
-          onClick={() => setViewMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-          className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer"
-          style={{ color: 'rgba(255,255,255,0.5)' }}
-        >
-          <ChevronRight size={15} />
-        </button>
+      <div className="flex flex-col items-center gap-1.5 mb-2">
+        <div className="flex items-center gap-1">
+          {(['month', 'week'] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => setViewMode(v)}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+              style={{
+                background: viewMode === v ? 'rgba(255,255,255,0.14)' : 'transparent',
+                border: viewMode === v ? '1px solid rgba(255,255,255,0.22)' : '1px solid transparent',
+                color: viewMode === v ? '#FFFFFF' : 'rgba(255,255,255,0.35)',
+              }}
+            >
+              {v === 'month' ? 'Mes' : 'Semana'}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setViewMonth(prev => viewMode === 'month'
+              ? new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
+              : new Date(prev.getTime() - 7 * 24 * 60 * 60 * 1000)
+            )}
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer"
+            style={{ color: 'rgba(255,255,255,0.5)' }}
+          >
+            <ChevronLeft size={15} />
+          </button>
+          <span className="text-xs font-extrabold" style={{ color: '#fff' }}>{currentTitle}</span>
+          <button
+            onClick={() => setViewMonth(prev => viewMode === 'month'
+              ? new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
+              : new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000)
+            )}
+            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer"
+            style={{ color: 'rgba(255,255,255,0.5)' }}
+          >
+            <ChevronRight size={15} />
+          </button>
+        </div>
       </div>
 
       <div className="px-4">
-        <div className="grid grid-cols-7 mb-1">
-          {dayLabels.map(d => (
-            <div key={d} className="text-center text-[9px] font-bold py-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{d}</div>
-          ))}
-        </div>
-        {grid.map((week, wi) => (
-          <div key={wi} className="grid grid-cols-7">
-            {week.map((dt, di) => {
-              if (!dt) return <div key={di} className="aspect-square" />
-              const ds = fmtDate(dt)
-              const hasSlots = !!agenda[ds]
-              const isSel = selectedDay === ds
-              const isToday = ds === fmtDate(new Date())
-              return (
-                <motion.div
-                  key={di}
-                  whileTap={{ scale: 0.92 }}
-                  onClick={() => {
-                    if (!hasSlots) return
-                    setSelectedDay(ds)
-                    setSelectedSlot(null)
-                  }}
-                  className="relative aspect-square flex items-center justify-center rounded-lg cursor-pointer select-none"
-                  style={{
-                    background: isSel ? DAY_GRAD : hasSlots ? 'rgba(18,112,183,0.12)' : 'transparent',
-                    border: isSel ? 'none' : '1px solid rgba(255,255,255,0.05)',
-                    color: isSel ? '#fff' : hasSlots ? '#fff' : isToday ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)',
-                    fontWeight: hasSlots || isSel ? 800 : 500,
-                    fontSize: 12,
-                  }}
-                >
-                  {dt.getDate()}
-                  {hasSlots && !isSel && (
-                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full" style={{ background: '#7ec8e3' }} />
-                  )}
-                </motion.div>
-              )
-            })}
+        {viewMode === 'month' ? (
+          <>
+            <div className="grid grid-cols-7 mb-1">
+              {dayLabels.map(d => (
+                <div key={d} className="text-center text-[9px] font-bold py-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{d}</div>
+              ))}
+            </div>
+            {grid.map((week, wi) => (
+              <div key={wi} className="grid grid-cols-7">
+                {week.map((dt, di) => {
+                  if (!dt) return <div key={di} className="aspect-square" />
+                  const ds = fmtDate(dt)
+                  const hasSlots = hasAvailableSlots(ds)
+                  const isSel = selectedDay === ds
+                  const isToday = ds === fmtDate(new Date())
+                  return (
+                    <motion.div
+                      key={di}
+                      whileHover={hasSlots ? { scale: 1.15, zIndex: 10 } : {}}
+                      whileTap={{ scale: 0.92 }}
+                      onClick={() => {
+                        if (!hasSlots) return
+                        setSelectedDay(ds)
+                        setSelectedSlot(null)
+                      }}
+                      className="relative aspect-square flex items-center justify-center rounded-lg cursor-pointer select-none"
+                      style={{
+                        background: isSel ? DAY_GRAD : hasSlots ? 'rgba(18,112,183,0.12)' : 'transparent',
+                        border: isSel ? 'none' : '1px solid rgba(255,255,255,0.05)',
+                        color: isSel ? '#fff' : hasSlots ? '#fff' : isToday ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.35)',
+                        fontWeight: hasSlots || isSel ? 800 : 500,
+                        fontSize: 12,
+                      }}
+                    >
+                      {dt.getDate()}
+                      {hasSlots && !isSel && (
+                        <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full" style={{ background: '#7ec8e3' }} />
+                      )}
+                    </motion.div>
+                  )
+                })}
+              </div>
+            ))}
+          </>
+        ) : (
+          <div className="overflow-x-auto pb-1">
+            <div className="grid min-w-[560px]" style={{ gridTemplateColumns: '44px repeat(7, 1fr)' }}>
+              <div />
+              {weekGrid.map((dt, i) => (
+                <div key={i} className="text-center py-1">
+                  <div className="text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>{dayLabels[i]}</div>
+                  <div className="text-[10px] font-extrabold mt-0.5" style={{ color: fmtDate(dt) === fmtDate(new Date()) ? '#7ec8e3' : 'rgba(255,255,255,0.55)' }}>{dt.getDate()}</div>
+                </div>
+              ))}
+              {AGENDA_TIMES.map(t => (
+                <Fragment key={t}>
+                  <div className="flex items-center justify-end pr-2 text-[9px] font-bold" style={{ color: 'rgba(255,255,255,0.35)' }}>{t}</div>
+                  {weekGrid.map(dt => {
+                    const ds = fmtDate(dt)
+                    const slot = (agenda[ds] ?? []).find(s => s.title === 'Disponible' && s.time === t)
+                    const isSel = selectedDay === ds && selectedSlot === t
+                    return (
+                      <motion.button
+                        key={ds + t}
+                        whileHover={slot ? { scale: 1.06, zIndex: 10 } : {}}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          if (!slot) return
+                          setSelectedDay(ds)
+                          setSelectedSlot(t)
+                        }}
+                        className="h-12 flex items-center justify-center rounded-lg cursor-pointer select-none"
+                        style={{
+                          background: isSel ? 'rgba(18,112,183,0.28)' : slot ? 'rgba(18,112,183,0.12)' : 'transparent',
+                          border: slot ? `1px solid ${isSel ? BLUE : 'rgba(126,200,227,0.35)'}` : '1px solid rgba(255,255,255,0.04)',
+                        }}
+                      >
+                        {slot && <Clock size={14} style={{ color: slot.color }} />}
+                      </motion.button>
+                    )
+                  })}
+                </Fragment>
+              ))}
+            </div>
           </div>
-        ))}
+        )}
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-5 mt-3">
@@ -718,23 +844,6 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             <CalendarCheck size={22} style={{ color: 'rgba(255,255,255,0.2)' }} />
             <p className="text-[11px] text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>
               Toca un día resaltado para ver los horarios disponibles
-            </p>
-          </div>
-        ) : scheduled ? (
-          <div className="flex flex-col items-center py-6 gap-3 text-center">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 16 }}
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)' }}
-            >
-              <Check size={22} color={GREEN} strokeWidth={3} />
-            </motion.div>
-            <h3 className="text-sm font-extrabold" style={{ color: '#fff' }}>¡Cita agendada!</h3>
-            <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              Tu valoración quedó programada para el {selectedDay} a las {selectedSlot}.<br />
-              El entrenador te confirmará la hora.
             </p>
           </div>
         ) : (
@@ -826,6 +935,114 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {showConfirm && (
+          <motion.div
+            key="confirm-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-[320px] rounded-3xl p-6 flex flex-col gap-4 text-center"
+              style={{
+                background: '#12121E',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+              }}
+            >
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto" style={{ background: 'rgba(18,112,183,0.15)', border: '1px solid rgba(18,112,183,0.3)' }}>
+                <Clock size={28} style={{ color: BLUE }} />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold" style={{ color: '#fff' }}>Confirmar reserva</h3>
+                <p className="text-[13px] mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  ¿Seguro que deseas agendar para el <span className="font-bold" style={{ color: '#fff' }}>{new Date(selectedDay + 'T12:00:00').getDate()} de {monthNames[new Date(selectedDay + 'T12:00:00').getMonth()]}</span> a las <span className="font-bold" style={{ color: '#fff' }}>{selectedSlot}</span>?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                  style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={executeSchedule}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                  style={{ background: BLUE_GRAD }}
+                >
+                  Confirmar
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            key="success-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 30 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="w-full max-w-[320px] rounded-3xl p-8 flex flex-col items-center gap-4 text-center"
+              style={{
+                background: '#12121E',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 16 }}
+                className="w-20 h-20 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)' }}
+              >
+                <Check size={32} color={GREEN} strokeWidth={3} />
+              </motion.div>
+              <div>
+                <h3 className="text-lg font-extrabold" style={{ color: '#fff' }}>¡Cita agendada exitosamente!</h3>
+                <p className="text-[13px] mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  Tu cita quedó reservada para el <span className="font-bold" style={{ color: '#fff' }}>{new Date(selectedDay + 'T12:00:00').getDate()} de {monthNames[new Date(selectedDay + 'T12:00:00').getMonth()]}</span> a las <span className="font-bold" style={{ color: '#fff' }}>{selectedSlot}</span>.<br />
+                  El entrenador te confirmará los detalles.
+                </p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setPhase('final')}
+                className="w-full py-3 rounded-xl text-sm font-bold text-white cursor-pointer"
+                style={{ background: GREEN_GRAD }}
+              >
+                Finalizar
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="flex items-center justify-between">
           <motion.button
@@ -841,7 +1058,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
           <motion.button
             whileHover={scheduled ? { scale: 1.03 } : {}}
             whileTap={scheduled ? { scale: 0.97 } : {}}
-            onClick={scheduled ? onBack : undefined}
+            onClick={scheduled ? () => setPhase('final') : undefined}
             disabled={!scheduled}
             className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
             style={{ background: scheduled ? BLUE_GRAD : 'rgba(255,255,255,0.1)', opacity: scheduled ? 1 : 0.5 }}
@@ -896,6 +1113,18 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
           className="flex flex-col flex-1 min-h-0 pt-3"
         >
           {renderSchedule()}
+        </motion.div>
+      )}
+      {phase === 'final' && (
+        <motion.div
+          key="final"
+          initial={{ opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.94 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col flex-1 min-h-0 pt-6"
+        >
+          {renderFinal()}
         </motion.div>
       )}
     </AnimatePresence>
@@ -998,6 +1227,25 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-2.5 rounded-full" style={{ background: '#151520' }} />
               </div>
             )}
+            <div className="absolute inset-0 overflow-hidden" style={{ background: '#000' }}>
+              <video
+                src={welcomeMobile}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0" style={{
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+              }} />
+              <div className="absolute inset-0" style={{
+                background: phase === 'form'
+                  ? 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)'
+                  : 'linear-gradient(180deg, rgba(8,12,28,0.65) 0%, rgba(8,12,28,0.45) 50%, rgba(8,12,28,0.6) 100%)',
+              }} />
+            </div>
             {backButton(isMobile ? 12 : 36)}
             {phase === 'intro' && (
               <motion.div
@@ -1021,7 +1269,9 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
                 />
               </motion.div>
             )}
-            {phaseContent}
+            <div className="relative z-10 flex flex-col flex-1 min-h-0">
+                {phaseContent}
+              </div>
           </motion.div>
         ) : (
           <motion.div
