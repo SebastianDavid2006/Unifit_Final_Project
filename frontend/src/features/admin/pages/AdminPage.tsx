@@ -670,7 +670,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
           >
             {section === 'dashboard' && <AdminDashboardView />}
             {section === 'stats' && <AdminStats tab={statsTab} showCareerFilter={showCareerFilter} statsRange={statsRange} />}
-            {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} roleFilter={trainerRoleFilter} showFilters={showTrainerFilters} onToggleFilters={() => setShowTrainerFilters(!showTrainerFilters)} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
+            {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} roleFilter={trainerRoleFilter} showFilters={showTrainerFilters} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
             {section === 'gym' && (
               <AdminGym
                 tab={gymTab}
