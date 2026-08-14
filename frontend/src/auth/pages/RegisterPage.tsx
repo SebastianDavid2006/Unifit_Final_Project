@@ -448,8 +448,8 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   )
 
   const renderStep2 = () => (
-    <div className="flex flex-col gap-4 px-5 py-4">
-      <div className="rounded-2xl p-5 text-xs leading-relaxed max-h-[280px] overflow-y-auto" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.07)' }}>
+    <div className="flex flex-col gap-4 px-5 py-4 h-full min-h-0">
+      <div className="flex-1 min-h-0 rounded-2xl p-5 text-xs leading-relaxed overflow-y-auto" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <p className="font-bold text-sm mb-3" style={{ color: '#fff' }}>Autorización para el tratamiento de datos personales</p>
         <p className="mb-3">
           En cumplimiento de la Ley 1581 de 2012 y sus decretos reglamentarios, UniFit S.A.S. en calidad de responsable del tratamiento de datos personales, solicita su autorización para recolectar, almacenar, usar, circular y suprimir los datos personales suministrados en el presente formulario, con la finalidad de gestionar su registro como estudiante, llevar a cabo el seguimiento académico, realizar comunicaciones institucionales, enviar información sobre programas y servicios, y cumplir con obligaciones legales y contractuales.
@@ -466,9 +466,9 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   )
 
   const renderStep3 = () => (
-    <div className="flex flex-col gap-4 px-5 py-4">
-      <div className="rounded-xl p-1.5" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <div className="rounded-lg bg-white px-5 py-5 flex flex-col gap-3 max-h-[340px] overflow-y-auto" style={{ color: '#1A1A1E', boxShadow: '0 8px 30px rgba(0,0,0,0.25)' }}>
+    <div className="flex flex-col gap-4 px-5 py-4 h-full min-h-0">
+      <div className="rounded-xl p-1.5 flex-1 min-h-0 flex flex-col" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="flex-1 min-h-0 rounded-lg bg-white px-5 py-5 flex flex-col gap-3 overflow-y-auto" style={{ color: '#1A1A1E', boxShadow: '0 8px 30px rgba(0,0,0,0.25)' }}>
           <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
             <span className="text-[11px] font-extrabold" style={{ color: '#007AFF' }}>UNIFIT</span>
             <span className="text-[9px] font-bold tracking-[0.2em]" style={{ color: 'rgba(0,0,0,0.4)' }}>CONTRATO</span>
@@ -544,7 +544,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -14 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="py-1"
+          className="h-full py-1"
         >
           {step === 1 ? formBody() : step === 2 ? renderStep2() : renderStep3()}
         </motion.div>

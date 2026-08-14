@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Check, Pen, ScanLine, CheckCircle, RefreshCw } from 'lucide-react'
+import { X, Check, Pen, ScanLine, CheckCircle } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
-import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
-import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
-import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
+import { SignaturePad } from './components/SignaturePad'
+import { FingerprintCapture } from './components/FingerprintCapture'
 
 const BLUE = '#1270B7'
 const RED = '#F43843'
@@ -66,64 +65,6 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
     return false
   }
 
-  const signaturePad = (title: string) => (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{title}</p>
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.93 }}
-          onClick={clearSignature}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer"
-          style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.4)' }}
-        >
-          <RefreshCw size={11} />
-          Limpiar
-        </motion.button>
-      </div>
-      <p className="text-[11px] font-medium mb-2" style={{ color: 'rgba(0,0,0,0.4)' }}>
-        Dibuja tu firma en el recuadro utilizando el mouse o tu dedo (si usas pantalla táctil).
-      </p>
-      <div
-        className="relative rounded-2xl p-4 overflow-hidden"
-        style={{
-          background: '#FFFFFF',
-          border: '1px solid rgba(0,0,0,0.04)',
-        }}
-      >
-        <motion.div
-          className="absolute top-0 left-0 right-0 h-0.5 pointer-events-none z-10"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
-          animate={{ x: ['-100%', '100%'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        />
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-0.5 pointer-events-none z-10"
-          style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }}
-          animate={{ x: ['100%', '-100%'] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        />
-        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 rounded-tl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 rounded-tr pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
-          <SignatureCanvas
-            ref={sigRef}
-            penColor="#1A1A1E"
-            minWidth={1}
-            maxWidth={2.5}
-            canvasProps={{
-              className: 'w-full',
-              style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },
-            }}
-          />
-        </div>
-      </div>
-    </div>
-  )
-
   const renderStep1 = () => (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -144,205 +85,20 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
       <p className="text-sm text-center" style={{ color: 'rgba(0,0,0,0.5)' }}>
         {studentName} debe firmar el contrato para completar su registro
       </p>
-      {signaturePad('Firma del estudiante')}
+      <SignaturePad
+        title="Firma del estudiante"
+        ref={sigRef}
+        onClear={clearSignature}
+      />
     </motion.div>
   )
 
   const renderStep2 = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.25 }}
-      className="flex flex-col items-center pt-8 gap-4"
-    >
-      <div className="relative flex items-center justify-center">
-        <motion.div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 320,
-            height: 320,
-            background: fingerprintStatus === 'scanning'
-              ? 'radial-gradient(circle, rgba(34,197,94,0.5) 0%, rgba(34,197,94,0.15) 40%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(18,112,183,0.5) 0%, rgba(18,112,183,0.12) 40%, transparent 70%)',
-          }}
-          animate={fingerprintStatus !== 'captured' ? {
-            scale: [1, 1.15, 1],
-            opacity: fingerprintStatus === 'scanning' ? [0.3, 1, 0.3] : [0.5, 0.9, 0.5],
-          } : { opacity: 0, scale: 1.5 }}
-          transition={{ duration: 3, repeat: fingerprintStatus === 'captured' ? 0 : Infinity, ease: 'easeInOut' }}
-        />
-
-        {fingerprintStatus === 'scanning' && (
-          <>
-            {[...Array(2)].map((_, i) => (
-              <motion.div
-                key={`ring-${i}`}
-                className="absolute rounded-full pointer-events-none"
-                style={{
-                  width: 64,
-                  height: 64,
-                  border: '1.5px solid rgba(34,197,94,0.4)',
-                }}
-                animate={{ scale: [1, 5], opacity: [0.6, 0] }}
-                transition={{ duration: 3, repeat: Infinity, delay: i * 1.5, ease: 'easeOut' }}
-              />
-            ))}
-          </>
-        )}
-
-        {fingerprintStatus === 'captured' ? (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 15 }}
-            className="relative flex items-center justify-center"
-          >
-            <div className="absolute w-64 h-64 rounded-full" style={{
-              background: 'radial-gradient(circle, rgba(34,197,94,0.25) 0%, transparent 70%)',
-            }} />
-            {[...Array(12)].map((_, i) => {
-              const angle = (i / 12) * 360
-              const rad = (angle * Math.PI) / 180
-              const dist = 80 + (i % 3) * 20
-              return (
-                <motion.span
-                  key={i}
-                  className="absolute pointer-events-none text-lg select-none"
-                  style={{ color: '#22C55E' }}
-                  animate={{
-                    x: [0, Math.cos(rad) * dist],
-                    y: [0, Math.sin(rad) * dist],
-                    opacity: [0, 1, 0],
-                    scale: [0, 1.2, 0],
-                  }}
-                  transition={{
-                    duration: 2 + (i % 4) * 0.3,
-                    repeat: Infinity,
-                    delay: i * 0.1,
-                    ease: 'easeOut',
-                  }}
-                >
-                  ✦
-                </motion.span>
-              )
-            })}
-            <div className="relative w-64 h-64 flex items-center justify-center">
-              <motion.img
-                src={checkSuccessImg}
-                alt="check"
-                className="w-32 h-auto object-contain relative z-10"
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              />
-            </div>
-          </motion.div>
-        ) : (
-          <div className="relative flex items-center justify-center">
-            <div className="relative w-64 h-64">
-              <motion.img
-                src={lectorHuellaImg}
-                alt="lector huella"
-                className="w-full h-full object-contain"
-                animate={{
-                  scale: [1, 1.02, 1],
-                  opacity: fingerprintStatus === 'scanning' ? 0.3 : 0.4,
-                }}
-                transition={{
-                  scale: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
-                  opacity: { duration: 0.3 },
-                }}
-              />
-
-              {fingerprintStatus === 'scanning' && (
-                <>
-                  <motion.div
-                    className="absolute inset-0 pointer-events-none z-10 overflow-hidden"
-                    style={{
-                      filter: 'brightness(1.3) drop-shadow(0 0 15px rgba(34,197,94,0.5))',
-                    }}
-                    animate={{
-                      clipPath: [
-                        'inset(90% 0 10% 0)',
-                        'inset(10% 0 80% 0)',
-                        'inset(90% 0 10% 0)',
-                      ],
-                    }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                  >
-                    <img src={lectorHuellaImg} alt="" className="w-full h-full object-contain" />
-                  </motion.div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {fingerprintStatus === 'idle' && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-xs font-medium text-center"
-          style={{ color: 'rgba(0,0,0,0.4)' }}
-        >
-          Coloca tu dedo sobre el sensor para capturar tu huella digital.
-        </motion.p>
-      )}
-
-      {fingerprintStatus === 'scanning' && (
-        <motion.div
-          className="flex items-center gap-2"
-          animate={{ opacity: [1, 0.3, 1] }}
-          transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
-            <RefreshCw size={16} color={GREEN} />
-          </motion.div>
-          <span className="text-xs font-medium" style={{ color: GREEN }}>Escaneando huella...</span>
-        </motion.div>
-      )}
-
-      {fingerprintStatus === 'captured' && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-xs font-medium text-center"
-          style={{ color: '#22C55E' }}
-        >
-          ¡Huella capturada exitosamente!
-        </motion.p>
-      )}
-
-      {fingerprintStatus === 'idle' && (
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={startFingerprintScan}
-          className="mt-4 px-8 py-3 rounded-2xl text-base font-bold text-white flex items-center gap-2"
-          style={{
-            background: RED_GRAD,
-            boxShadow: '0 6px 20px rgba(244,56,67,0.35)',
-          }}
-        >
-          <ScanLine size={20} />
-          Capturar Huella
-        </motion.button>
-      )}
-
-      {fingerprintStatus === 'captured' && (
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setStep(3)}
-          className="mt-4 px-8 py-3 rounded-2xl text-base font-bold text-white flex items-center gap-2"
-          style={{ background: GREEN_GRAD }}
-        >
-          <CheckCircle size={20} />
-          Continuar
-        </motion.button>
-      )}
-    </motion.div>
+    <FingerprintCapture
+      status={fingerprintStatus}
+      onStartScan={startFingerprintScan}
+      onCaptureComplete={() => setStep(3)}
+    />
   )
 
   const renderStep3 = () => (

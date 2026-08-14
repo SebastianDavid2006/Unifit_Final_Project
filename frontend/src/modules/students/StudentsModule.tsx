@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Search, Plus, ChevronRight, ChevronLeft, Clock } from 'lucide-react'
+import { Search, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
 import studentsImg from '@/assets/illustrations/characters/students/students_group.webp'
 import NewStudentModal from './NewStudentModal'
 import RegistrationCompletionModal from './RegistrationCompletionModal'
@@ -8,6 +8,7 @@ import RegistrationCompletionModal from './RegistrationCompletionModal'
 const RED = '#F43843'
 const BLUE = '#1270B7'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
+const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 
 interface Student {
   id: number
@@ -122,6 +123,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
 
   return (
     <>
+      <style>{`@keyframes shimmer { 0% { background-position: 200% center } 100% { background-position: -200% center } }`}</style>
       <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
 
       {/* Banner card */}
@@ -401,38 +403,38 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
             {paged.map((s, i) => {
               const isProcess = s.status === 'process'
               return (
-                <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => handleStudentClick(s)} whileHover={{ y: -3, scale: 1.002, background: isProcess ? 'rgba(18,112,183,0.06)' : 'rgba(255,255,255,0.8)' }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer relative" style={{
-                  background: isProcess ? 'linear-gradient(135deg, rgba(18,112,183,0.08) 0%, rgba(18,112,183,0.03) 50%, rgba(255,255,255,1) 100%)' : undefined,
-                  border: isProcess ? '1px solid rgba(18,112,183,0.3)' : undefined,
-                  boxShadow: isProcess ? '0 4px 16px rgba(18,112,183,0.1), 0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03)' : undefined,
+                <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => handleStudentClick(s)} whileHover={{ y: -3, scale: 1.002 }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer relative overflow-hidden" style={{
+                  background: isProcess ? BLUE_GRAD : undefined,
+                  color: isProcess ? '#FFFFFF' : undefined,
+                  border: 'none',
+                  boxShadow: isProcess ? '0 4px 16px rgba(18,112,183,0.3), 0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03)' : undefined,
                 }}>
                   {isProcess && (
-                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1270B7, #1A8CDB)', boxShadow: '0 2px 8px rgba(18,112,183,0.3)' }}>
-                      <Clock size={9} className="text-white" />
-                    </div>
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(110deg, transparent 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 63%, transparent 75%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer 3s ease-in-out infinite',
+                      }}
+                    />
                   )}
-                  <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex items-center gap-4 min-w-0 relative z-10">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
                     <div className="min-w-0">
-                      <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
-                      <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
+                      <p className="text-sm font-bold truncate" style={{ color: isProcess ? '#FFFFFF' : '#1A1A1E' }}>{s.name}</p>
+                      <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
                     </div>
                   </div>
-                  <p className="text-xs font-semibold" style={{ color: '#1A1A1E' }}>{s.faculty}</p>
-                  <p className="text-xs font-medium" style={{ color: '#1A1A1E' }}>{s.lastVisit}</p>
-                  <p className="text-xs font-bold" style={{ color: s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A' }}>{s.nextAssessment}</p>
-                  <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: statusMap[s.status].bg, color: statusMap[s.status].color }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusMap[s.status].color }} />
+                  <p className="text-xs font-semibold" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.faculty}</p>
+                  <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : s.lastVisit}</p>
+                  <p className="text-xs font-bold" style={{ color: isProcess ? '#FFD6E0' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{s.nextAssessment}</p>
+                  <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : statusMap[s.status].bg, color: isProcess ? '#FFFFFF' : statusMap[s.status].color }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: isProcess ? '#FFFFFF' : statusMap[s.status].color }} />
                     {statusMap[s.status].label}
                   </span>
-                  {isProcess && (
-                    <span className="flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-extrabold w-fit" style={{ background: 'linear-gradient(135deg, #1270B7, #1A8CDB)', color: '#FFFFFF' }}>
-                      <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-pulse" />
-                      Pendiente firma
-                    </span>
-                  )}
-                  <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
+                  <ChevronRight size={15} style={{ color: isProcess ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.12)' }} />
                 </motion.div>
               )
             })}
