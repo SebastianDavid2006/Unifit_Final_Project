@@ -5,6 +5,7 @@ import { RegisterPage } from '@/auth/pages/RegisterPage'
 import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
 import { StudentPage } from '@/features/student/pages/StudentPage'
 import { AdminPage } from '@/features/admin/pages/AdminPage'
+import BackgroundDecor from '@/components/BackgroundDecor'
 
 type Platform = 'trainer' | 'student' | 'admin'
 
@@ -48,23 +49,14 @@ export default function App() {
       <ParticleField />
 
       {screen !== 'login' && (
-        <>
-          <div className="floating-sphere" style={{
-            width: 380, height: 380,
-            background: 'radial-gradient(circle at 30% 30%, rgba(230,57,70,0.05), transparent)',
-            top: '-120px', right: '-80px', animationDelay: '0s',
-          }} />
-          <div className="floating-sphere" style={{
-            width: 250, height: 250,
-            background: 'radial-gradient(circle at 70% 30%, rgba(255,107,138,0.04), transparent)',
-            bottom: '10%', left: '-60px', animationDelay: '-4s',
-          }} />
-          <div className="floating-sphere" style={{
-            width: 180, height: 180,
-            background: 'radial-gradient(circle at 50% 50%, rgba(204,0,51,0.03), transparent)',
-            top: '30%', right: '15%', animationDelay: '-8s',
-          }} />
-        </>
+        <BackgroundDecor
+          goo={false}
+          spheres={[
+            { width: 380, height: 380, background: 'radial-gradient(circle at 30% 30%, rgba(230,57,70,0.05), transparent)', top: '-120px', right: '-80px', animationDelay: '0s' },
+            { width: 250, height: 250, background: 'radial-gradient(circle at 70% 30%, rgba(255,107,138,0.04), transparent)', bottom: '10%', left: '-60px', animationDelay: '-4s' },
+            { width: 180, height: 180, background: 'radial-gradient(circle at 50% 50%, rgba(204,0,51,0.03), transparent)', top: '30%', right: '15%', animationDelay: '-8s' },
+          ]}
+        />
       )}
 
       <div className="flex-1 overflow-hidden relative">
