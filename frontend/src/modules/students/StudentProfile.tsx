@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from 'react'
+﻿import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   AlertTriangle, Activity,
@@ -2303,33 +2303,51 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                                 </div>
                                 <div>
                                   <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Reps</label>
-                                  <input
-                                    value={row.reps}
-                                    readOnly={routineViewMode}
-                                    onChange={e => updateRoutineRow(row.id, { reps: e.target.value })}
-                                    placeholder="Reps"
-                                    onMouseEnter={e => enterMesh(e.currentTarget)}
-                                    onMouseLeave={e => leaveMesh(e.currentTarget)}
-                                    onFocus={e => focusMesh(e.currentTarget)}
-                                    onBlur={e => blurMesh(e.currentTarget)}
-                                    className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
-                                    style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
-                                  />
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      value={(row.reps.split('-')[0] ?? '').trim()}
+                                      readOnly={routineViewMode}
+                                      onChange={e => updateRoutineRow(row.id, { reps: `${e.target.value}-${(row.reps.split('-')[1] ?? '').trim()}` })}
+                                      placeholder="Mín"
+                                      onMouseEnter={e => enterMesh(e.currentTarget)}
+                                      onMouseLeave={e => leaveMesh(e.currentTarget)}
+                                      onFocus={e => focusMesh(e.currentTarget)}
+                                      onBlur={e => blurMesh(e.currentTarget)}
+                                      className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+                                      style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
+                                    />
+                                    <span className="text-[11px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>–</span>
+                                    <input
+                                      value={(row.reps.split('-')[1] ?? '').trim()}
+                                      readOnly={routineViewMode}
+                                      onChange={e => updateRoutineRow(row.id, { reps: `${(row.reps.split('-')[0] ?? '').trim()}-${e.target.value}` })}
+                                      placeholder="Máx"
+                                      onMouseEnter={e => enterMesh(e.currentTarget)}
+                                      onMouseLeave={e => leaveMesh(e.currentTarget)}
+                                      onFocus={e => focusMesh(e.currentTarget)}
+                                      onBlur={e => blurMesh(e.currentTarget)}
+                                      className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+                                      style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
+                                    />
+                                  </div>
                                 </div>
                                 <div>
                                   <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Descanso</label>
-                                  <input
-                                    value={row.rest}
-                                    readOnly={routineViewMode}
-                                    onChange={e => updateRoutineRow(row.id, { rest: e.target.value })}
-                                    placeholder="Descanso"
-                                    onMouseEnter={e => enterMesh(e.currentTarget)}
-                                    onMouseLeave={e => leaveMesh(e.currentTarget)}
-                                    onFocus={e => focusMesh(e.currentTarget)}
-                                    onBlur={e => blurMesh(e.currentTarget)}
-                                    className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
-                                    style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
-                                  />
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      value={row.rest.replace(/[^\d]/g, '')}
+                                      readOnly={routineViewMode}
+                                      onChange={e => updateRoutineRow(row.id, { rest: e.target.value ? `${e.target.value} s` : '' })}
+                                      placeholder="Segundos"
+                                      onMouseEnter={e => enterMesh(e.currentTarget)}
+                                      onMouseLeave={e => leaveMesh(e.currentTarget)}
+                                      onFocus={e => focusMesh(e.currentTarget)}
+                                      onBlur={e => blurMesh(e.currentTarget)}
+                                      className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+                                      style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
+                                    />
+                                    <span className="text-[11px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>s</span>
+                                  </div>
                                 </div>
                               </div>
                             </motion.div>
