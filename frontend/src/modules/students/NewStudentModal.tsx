@@ -32,6 +32,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const [aceptaDatos, setAceptaDatos] = useState(false)
   const [aceptaContrato, setAceptaContrato] = useState(false)
   const [sigPos, setSigPos] = useState(0)
+  const [sigVersion, setSigVersion] = useState(0)
   const [aceptaParq, setAceptaParq] = useState(false)
   const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
   const [fingerprintStatus, setFingerprintStatus] = useState<FingerprintStatus>('idle')
@@ -127,7 +128,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const stepDoc = step === 2 ? docs.tratamiento : step === 3 ? docs.contrato : step === 4 ? docs.parq : null
 
-    const stepLocked = step === 6 && fingerprintStatus !== 'captured'
+    const stepLocked = (step === 6 && fingerprintStatus !== 'captured') ||
+    (step === 5 && !canGoNext())
 
   const isMinor = useMemo(() => {
     if (!form.fechaNac) return false
@@ -296,6 +298,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
               penColor="#1A1A1E"
               minWidth={1}
               maxWidth={2.5}
+              onEnd={() => setSigVersion(v => v + 1)}
               canvasProps={{
                 className: 'w-full',
                 style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },

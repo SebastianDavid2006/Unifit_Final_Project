@@ -22,8 +22,8 @@ const MESH_BUTTON = `
 `
 
 export function LoginPage({ onSelect, onRegister }: LoginPageProps) {
-  const [usuario, setUsuario] = useState('')
-  const [contraseña, setContraseña] = useState('')
+  const [usuario, setUsuario] = useState('entrenador')
+  const [contraseña, setContraseña] = useState('entrenador123')
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [shake, setShake] = useState(false)
