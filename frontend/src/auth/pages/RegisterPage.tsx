@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from 'react'
+import { useState, useEffect, useRef, useMemo, Fragment } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight,
@@ -199,8 +199,29 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     }))
   }
 
+  const isMinor = useMemo(() => {
+    if (!form.fechaNac) return false
+    const birth = new Date(form.fechaNac)
+    if (isNaN(birth.getTime())) return false
+    const now = new Date()
+    let age = now.getFullYear() - birth.getFullYear()
+    const m = now.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+    return age < 18
+  }, [form.fechaNac])
+
   const canGoNext = () => {
-    if (step === 1) return !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc)
+    if (step === 1) {
+      const base = !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc)
+      if (!base) return false
+      if (isMinor) {
+        return !!form.nombreAcudiente &&
+          !!form.parentescoAcudiente &&
+          !!form.telefonoAcudiente &&
+          (form.parentescoAcudiente !== 'Otro' || !!form.otroParentescoAcudiente)
+      }
+      return true
+    }
     if (step === 2) return aceptaDatos
     if (step === 3) return aceptaContrato
     return true
@@ -319,6 +340,22 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
         {field('Fecha de nacimiento', 'fechaNac', { type: 'date' })}
         {select('Género', 'genero', GENEROS)}
       </div>
+
+      {isMinor && (
+        <>
+          {sectionTitle('Información del acudiente')}
+          <div className="grid grid-cols-2 gap-3">
+            {field('Nombre completo del acudiente', 'nombreAcudiente', { required: true })}
+            {field('Teléfono del acudiente', 'telefonoAcudiente', { required: true })}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {select('Parentesco', 'parentescoAcudiente', PARENTESCOS, { required: true })}
+            {form.parentescoAcudiente === 'Otro'
+              ? field('Especifique el parentesco', 'otroParentescoAcudiente', { required: true })
+              : <span />}
+          </div>
+        </>
+      )}
 
       {sectionTitle('Información de contacto')}
       <div className="grid grid-cols-2 gap-3">

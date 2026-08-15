@@ -1,13 +1,14 @@
-﻿import { useState, useRef, useEffect, useMemo, type RefObject } from 'react'
+﻿import { useState, useRef, useEffect, useMemo, Component, type ReactNode, type RefObject } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  X, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink, ClipboardCheck, ScanLine
+  X, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink, ScanLine, User
 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import confetti from 'canvas-confetti'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
+import parqBanner from '@/assets/illustrations/banners/parq_banner.webp'
 import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/academicPrograms'
 import { loadDocs, type StoredDocs } from '@/data/documents'
 import {
@@ -289,16 +290,18 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
         <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
         <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
-          <SignatureCanvas
-            ref={ref}
-            penColor="#1A1A1E"
-            minWidth={1}
-            maxWidth={2.5}
-            canvasProps={{
-              className: 'w-full',
-              style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },
-            }}
-          />
+          <SignatureErrorBoundary>
+            <SignatureCanvas
+              ref={ref}
+              penColor="#1A1A1E"
+              minWidth={1}
+              maxWidth={2.5}
+              canvasProps={{
+                className: 'w-full',
+                style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },
+              }}
+            />
+          </SignatureErrorBoundary>
         </div>
       </div>
     </div>
@@ -327,17 +330,15 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       {isMinor && (
         <>
           {sectionTitle('Información del acudiente')}
-          <div>
+          <div className="grid grid-cols-2 gap-4">
             {field('Nombre completo del acudiente', 'nombreAcudiente', { required: true })}
+            {field('Teléfono del acudiente', 'telefonoAcudiente', { required: true })}
           </div>
           <div className="grid grid-cols-2 gap-4">
             {select('Parentesco', 'parentescoAcudiente', PARENTESCOS, { required: true })}
             {form.parentescoAcudiente === 'Otro'
               ? field('Especifique el parentesco', 'otroParentescoAcudiente', { required: true })
               : <span />}
-          </div>
-          <div>
-            {field('Teléfono del acudiente', 'telefonoAcudiente', { required: true })}
           </div>
         </>
       )}
@@ -582,17 +583,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
             <iframe src={docs.parq.dataUrl} title="PAR-Q" className="w-full h-[280px] bg-white" />
           </div>
         ) : (
-          <div className="rounded-2xl p-5 text-xs leading-relaxed" style={{ background: 'rgba(0,0,0,0.02)', color: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,0,0,0.04)' }}>
-            <div className="flex items-center gap-2 mb-3">
-              <ClipboardCheck size={16} style={{ color: BLUE }} />
-              <p className="font-bold text-sm" style={{ color: '#1A1A1E' }}>Cuestionario PAR-Q</p>
-            </div>
-            <p className="mb-3">
-              Debes llenar el PAR-Q para continuar con tu registro. El cuestionario indicará si es necesario consultar a su médico o profesional de la salud antes de volverse más activo físicamente.
-            </p>
-            <p>
-              Una vez lo hayas completado, marca la casilla a continuación para poder continuar con el proceso de registro.
-            </p>
+          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
+            <img src={parqBanner} alt="Cuestionario PAR-Q" className="w-full h-auto object-cover" />
           </div>
         )}
       </div>
@@ -626,53 +618,58 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     </div>
   )
 
-  const renderStep4 = () => (
-    <div className="space-y-6">
-      {isMinor ? (
-        <AnimatePresence mode="wait">
+  const renderStep4 = () => {
+    if (!isMinor) {
+      return signaturePad('Firma del estudiante', sigRef)
+    }
+    return (
+      <div className="space-y-6">
+        {sigPos === 0 ? (
           <motion.div
-            key={sigPos}
+            key="guardian"
             initial={{ opacity: 0, x: 28 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -28 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             className="space-y-6"
           >
-            {sigPos === 0 && (
-              <>
-                <div className="flex items-start gap-3 rounded-2xl px-4 py-3.5" style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.25)' }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(245,166,35,0.15)' }}>
-                    <User size={15} style={{ color: '#D98E00' }} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold" style={{ color: '#B37000' }}>Eres menor de edad</p>
-                    <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'rgba(0,0,0,0.5)' }}>
-                      Primero firma tu acudiente o responsable legal, y después firmarás tú.
-                    </p>
-                  </div>
-                </div>
+            <div className="flex items-start gap-3 rounded-2xl px-4 py-3.5" style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.25)' }}>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(245,166,35,0.15)' }}>
+                <User size={15} style={{ color: '#D98E00' }} />
+              </div>
+              <div>
+                <p className="text-xs font-bold" style={{ color: '#B37000' }}>Eres menor de edad</p>
+                <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: 'rgba(0,0,0,0.5)' }}>
+                  Primero firma tu acudiente o responsable legal, y después firmarás tú.
+                </p>
+              </div>
+            </div>
 
-                <div className="flex items-center justify-between gap-3 rounded-xl px-4 py-3" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.04)' }}>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.4)' }}>Acudiente</p>
-                    <p className="text-xs font-bold mt-0.5" style={{ color: '#1A1A1E' }}>{form.nombreAcudiente || '—'}</p>
-                  </div>
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0" style={{ background: 'rgba(245,166,35,0.12)', color: '#B37000' }}>
-                    {form.parentescoAcudiente === 'Otro' ? form.otroParentescoAcudiente : form.parentescoAcudiente || '—'}
-                  </span>
-                </div>
+            <div className="flex items-center justify-between gap-3 rounded-xl px-4 py-3" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.04)' }}>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.4)' }}>Acudiente</p>
+                <p className="text-xs font-bold mt-0.5" style={{ color: '#1A1A1E' }}>{form.nombreAcudiente || '—'}</p>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0" style={{ background: 'rgba(245,166,35,0.12)', color: '#B37000' }}>
+                {form.parentescoAcudiente === 'Otro' ? form.otroParentescoAcudiente : form.parentescoAcudiente || '—'}
+              </span>
+            </div>
 
-                {signaturePad('Firma del acudiente (responsable legal)', guardianRef)}
-              </>
-            )}
-            {sigPos === 1 && signaturePad('Firma del estudiante', sigRef)}
+            {signaturePad('Firma del acudiente (responsable legal)', guardianRef)}
           </motion.div>
-        </AnimatePresence>
-      ) : (
-        signaturePad('Firma del estudiante', sigRef)
-      )}
-    </div>
-  )
+        ) : (
+          <motion.div
+            key="student"
+            initial={{ opacity: 0, x: 28 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-6"
+          >
+            {signaturePad('Firma del estudiante', sigRef)}
+          </motion.div>
+        )}
+      </div>
+    )
+  }
 
   const renderStep5 = () => (
     <div className="flex flex-col items-center pt-8 gap-3 min-h-[400px]">
@@ -1249,6 +1246,28 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       )}
     </AnimatePresence>
   )
+}
+
+class SignatureErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-full" style={{ height: 200, background: '#FFFFFF' }}>
+          <div className="h-full flex flex-col items-center justify-center gap-1 text-center px-4">
+            <p className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.55)' }}>No se pudo cargar el recuadro de firma</p>
+            <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>Intenta recargar la página o usa otro dispositivo.</p>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }
 
 
