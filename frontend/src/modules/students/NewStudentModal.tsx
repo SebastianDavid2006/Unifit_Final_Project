@@ -11,10 +11,6 @@ import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_che
 import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/academicPrograms'
 import { loadDocs, type StoredDocs } from '@/data/documents'
 import {
-  PARQ_GENERAL, PARQ_BLOCKS, PARQ_RECOMMENDATIONS, PARQ_DELAY, PARQ_DECLARATION_TEXT,
-  getParqQuestion, buildParqSequence, parqPendingCount, type YesNo,
-} from '@/data/parq'
-import {
   BLUE, RED, GREEN, BLUE_GRAD, GREEN_GRAD, BRAND_GRADIENT, MESH_ACTIVE, MESH_BUTTON,
   TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
   STEPS, TIPOS_USUARIO, INITIAL_FORM,
@@ -34,9 +30,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
   const [aceptaDatos, setAceptaDatos] = useState(false)
   const [aceptaContrato, setAceptaContrato] = useState(false)
-  const [parqAnswers, setParqAnswers] = useState<Record<string, YesNo>>({})
-  const [parqDetails, setParqDetails] = useState<Record<string, string>>({})
-  const [parqPos, setParqPos] = useState(0)
   const [sigPos, setSigPos] = useState(0)
   const [aceptaParq, setAceptaParq] = useState(false)
   const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
@@ -54,9 +47,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       setTipoUsuario(null)
       setAceptaDatos(false)
       setAceptaContrato(false)
-      setParqAnswers({})
-      setParqDetails({})
-      setParqPos(0)
       setSigPos(0)
       setAceptaParq(false)
       setDocs(loadDocs())
@@ -102,11 +92,15 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     }
     if (step === 2) return aceptaDatos
     if (step === 3) return aceptaContrato
-    if (step === 4) return parqComplete
+    if (step === 4) return aceptaParq
     if (step === 5) {
       if (sigRef.current?.isEmpty() ?? true) return false
       if (isMinor) {
-        return !!form.nombreAcudiente && !!form.docAcudiente && !(guardianRef.current?.isEmpty() ?? true)
+        return !!form.nombreAcudiente &&
+          !!form.parentescoAcudiente &&
+          !!form.telefonoAcudiente &&
+          (form.parentescoAcudiente !== 'Otro' || !!form.otroParentescoAcudiente) &&
+          !(guardianRef.current?.isEmpty() ?? true)
       }
       return true
     }
@@ -132,17 +126,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const stepDoc = step === 2 ? docs.tratamiento : step === 3 ? docs.contrato : step === 4 ? docs.parq : null
 
-  const parqSequence = useMemo(() => buildParqSequence(parqAnswers), [parqAnswers])
-  const parqPending = useMemo(
-    () => parqPendingCount(parqAnswers, parqDetails, parqSequence),
-    [parqAnswers, parqDetails, parqSequence],
-  )
-  const parqComplete = parqPending === 0 && aceptaParq
-  const parqCurrentIndex = Math.min(parqPos, Math.max(0, parqSequence.length - 1))
-  const parqCurrent = parqSequence[parqCurrentIndex]
-  const parqQCount = parqSequence.filter(s => s.kind === 'general' || s.kind === 'gate' || s.kind === 'sub').length
-  const parqDone = Math.max(0, parqQCount - parqPending)
-  const stepLocked = (step === 6 && fingerprintStatus !== 'captured') || (step === 4 && !parqComplete)
+    const stepLocked = step === 6 && fingerprintStatus !== 'captured'
 
   const isMinor = useMemo(() => {
     if (!form.fechaNac) return false
@@ -163,15 +147,14 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       aceptaDatos,
       aceptaContrato,
       parq: {
-        respuestas: parqAnswers,
-        detalles: parqDetails,
         acepta: aceptaParq,
         fecha: new Date().toISOString(),
       },
       firma: signatureData ?? null,
       firmaAcudiente: isMinor ? (guardianRef.current?.toDataURL() ?? null) : null,
       nombreAcudiente: isMinor ? form.nombreAcudiente : null,
-      docAcudiente: isMinor ? form.docAcudiente : null,
+      parentescoAcudiente: isMinor ? (form.parentescoAcudiente === 'Otro' ? form.otroParentescoAcudiente : form.parentescoAcudiente) : null,
+      telefonoAcudiente: isMinor ? form.telefonoAcudiente : null,
       huella: fingerprintStatus === 'captured' ? 'capturada' : null,
     }
     console.log('Nuevo estudiante:', payload)
@@ -340,6 +323,24 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         {field('Fecha de nacimiento', 'fechaNac', { type: 'date' })}
         {select('Género', 'genero', GENEROS)}
       </div>
+
+      {isMinor && (
+        <>
+          {sectionTitle('Información del acudiente')}
+          <div>
+            {field('Nombre completo del acudiente', 'nombreAcudiente', { required: true })}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {select('Parentesco', 'parentescoAcudiente', PARENTESCOS, { required: true })}
+            {form.parentescoAcudiente === 'Otro'
+              ? field('Especifique el parentesco', 'otroParentescoAcudiente', { required: true })
+              : <span />}
+          </div>
+          <div>
+            {field('Teléfono del acudiente', 'telefonoAcudiente', { required: true })}
+          </div>
+        </>
+      )}
 
       {sectionTitle('Información de contacto')}
       <div className="grid grid-cols-2 gap-4">
@@ -573,255 +574,57 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     </div>
   )
 
-  const parqBlockFor = (id: string) => {
-    const idx = PARQ_BLOCKS.findIndex(b => b.gate.id === id || b.subs.some(s => s.id === id))
-    return idx >= 0 ? { block: PARQ_BLOCKS[idx], number: idx + 1 } : null
-  }
-
-  const renderParqDetail = (q: NonNullable<ReturnType<typeof getParqQuestion>>) => {
-    if (!q.detail || parqAnswers[q.id] !== 'si') return null
-    const d = q.detail
-    return (
-      <motion.div
-        initial={{ opacity: 0, height: 0 }}
-        animate={{ opacity: 1, height: 'auto' }}
-        transition={{ duration: 0.25 }}
-        className="overflow-hidden"
-      >
-        <p className="text-[10px] font-bold mb-1.5 mt-3" style={{ color: RED }}>{d.label}</p>
-        <textarea
-          value={parqDetails[d.id] ?? ''}
-          onChange={e => setParqDetails(prev => ({ ...prev, [d.id]: e.target.value }))}
-          placeholder={d.placeholder}
-          rows={2}
-          className="w-full rounded-xl px-3 py-2.5 text-xs outline-none resize-none"
-          style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.08)', color: '#1A1A1E' }}
-        />
-      </motion.div>
-    )
-  }
-
-  const renderParqQuestion = (q: NonNullable<ReturnType<typeof getParqQuestion>>) => {
-    const value = parqAnswers[q.id]
-    let chip = { text: '', color: BLUE }
-    if (q.kind === 'general') {
-      const n = PARQ_GENERAL.findIndex(g => g.id === q.id) + 1
-      chip = { text: `Pregunta general ${n} de 7`, color: BLUE }
-    } else {
-      const found = parqBlockFor(q.id)
-      if (found) {
-        chip = {
-          text: q.kind === 'gate' ? `Bloque ${found.number} · ${found.block.title}` : `Seguimiento · ${found.block.title}`,
-          color: '#7C3AED',
-        }
-      }
-    }
-    return (
-      <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(0,0,0,0.04)', background: '#FFFFFF' }}>
-        <span
-          className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide"
-          style={{ background: `${chip.color}0F`, color: chip.color }}
+  const renderStepParq = () => (
+    <div className="flex flex-col flex-1 min-h-0 gap-5">
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {docs.parq.dataUrl ? (
+          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
+            <iframe src={docs.parq.dataUrl} title="PAR-Q" className="w-full h-[280px] bg-white" />
+          </div>
+        ) : (
+          <div className="rounded-2xl p-5 text-xs leading-relaxed" style={{ background: 'rgba(0,0,0,0.02)', color: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,0,0,0.04)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <ClipboardCheck size={16} style={{ color: BLUE }} />
+              <p className="font-bold text-sm" style={{ color: '#1A1A1E' }}>Cuestionario PAR-Q</p>
+            </div>
+            <p className="mb-3">
+              Debes llenar el PAR-Q para continuar con tu registro. El cuestionario indicará si es necesario consultar a su médico o profesional de la salud antes de volverse más activo físicamente.
+            </p>
+            <p>
+              Una vez lo hayas completado, marca la casilla a continuación para poder continuar con el proceso de registro.
+            </p>
+          </div>
+        )}
+      </div>
+      <label className="flex items-start gap-3 cursor-pointer group">
+        <div
+          onClick={() => setAceptaParq(!aceptaParq)}
+          className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
+          style={{
+            background: aceptaParq ? BLUE_GRAD : 'transparent',
+            border: `1.5px solid ${aceptaParq ? BLUE : 'rgba(0,0,0,0.06)'}`,
+          }}
         >
-          {chip.text}
+          {aceptaParq && (
+            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
+              <Check size={12} color="white" strokeWidth={3} />
+            </motion.span>
+          )}
+        </div>
+        <span style={{
+          fontSize: 12,
+          fontWeight: 500,
+          lineHeight: 1.6,
+          color: aceptaParq ? 'transparent' : 'rgba(0,0,0,0.55)',
+          background: aceptaParq ? BLUE_GRAD : 'none',
+          backgroundClip: aceptaParq ? 'text' : 'none',
+          WebkitBackgroundClip: aceptaParq ? 'text' : 'none',
+        }}>
+          He completado el cuestionario PAR-Q y acepto continuar con mi registro.
         </span>
-        <p className="text-sm font-semibold leading-relaxed mt-3" style={{ color: '#1A1A1E' }}>
-          {q.kind === 'sub' ? `${q.id}) ` : ''}{q.text}
-        </p>
-        {q.note && (
-          <p className="text-[11px] leading-relaxed mt-2" style={{ color: 'rgba(0,0,0,0.45)' }}>
-            {q.note}
-          </p>
-        )}
-        <div className="flex gap-2.5 mt-4">
-          {(['si', 'no'] as const).map(opt => (
-            <motion.button
-              key={opt}
-              type="button"
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setParqAnswers(prev => ({ ...prev, [q.id]: opt }))}
-              className="px-4 py-2 rounded-xl text-[11px] font-bold uppercase cursor-pointer transition-all duration-200"
-              style={{
-                background: value === opt ? (opt === 'si' ? '#F43843' : '#22C55E') : 'rgba(0,0,0,0.04)',
-                color: value === opt ? '#FFFFFF' : 'rgba(0,0,0,0.4)',
-                boxShadow: value === opt ? `0 4px 12px ${opt === 'si' ? 'rgba(244,56,67,0.3)' : 'rgba(34,197,94,0.3)'}` : 'none',
-              }}
-            >
-              {opt === 'si' ? 'Sí' : 'No'}
-            </motion.button>
-          ))}
-        </div>
-        {renderParqDetail(q)}
-      </div>
-    )
-  }
-
-  const renderParqInfo = (kind: string) => {
-    if (kind === 'info-rec') {
-      return (
-        <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(34,197,94,0.15)', background: '#FFFFFF' }}>
-          <span
-            className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide"
-            style={{ background: 'rgba(34,197,94,0.1)', color: GREEN }}
-          >
-            Recomendaciones
-          </span>
-          <p className="text-xs leading-relaxed mt-3 font-medium" style={{ color: 'rgba(0,0,0,0.6)' }}>
-            Si usted contestó NO a todas las preguntas de SEGUIMIENTO (páginas 2-3) sobre trastornos médicos, está en condiciones de volverse más activo físicamente. Firme la DECLARACIÓN DEL PARTICIPANTE a continuación:
-          </p>
-          <div className="space-y-2.5 mt-4">
-            {PARQ_RECOMMENDATIONS.map((r, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <span
-                  className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                  style={{ background: 'rgba(34,197,94,0.12)' }}
-                >
-                  <Check size={9} color={GREEN} strokeWidth={3} />
-                </span>
-                <p className="text-[11px] leading-relaxed font-medium" style={{ color: 'rgba(0,0,0,0.6)' }}>{r}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )
-    }
-    if (kind === 'info-delay') {
-      return (
-        <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(245,166,35,0.3)', background: 'rgba(245,166,35,0.04)' }}>
-          <span
-            className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide"
-            style={{ background: 'rgba(245,166,35,0.12)', color: '#C77700' }}
-          >
-            Retarde el inicio de la actividad física si:
-          </span>
-          <div className="space-y-2.5 mt-3">
-            {PARQ_DELAY.map((r, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <span className="text-[10px] font-bold flex-shrink-0 mt-0.5" style={{ color: '#C77700' }}>•</span>
-                <p className="text-[11px] leading-relaxed font-medium" style={{ color: 'rgba(0,0,0,0.6)' }}>{r}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )
-    }
-    const nombre = `${form.primerNombre ?? ''} ${form.primerApellido ?? ''}`.trim()
-    const fecha = new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })
-    return (
-      <div className="space-y-4">
-        <div className="rounded-2xl p-5" style={{ border: '1px solid rgba(18,112,183,0.12)', background: '#FFFFFF' }}>
-          <span
-            className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide"
-            style={{ background: `${BLUE}0F`, color: BLUE }}
-          >
-            Declaración del participante
-          </span>
-          <p className="text-[11px] leading-relaxed mt-3 font-medium" style={{ color: 'rgba(0,0,0,0.55)' }}>
-            Todo aquel que haya completado el PAR-Q+ debe leer y firmar la declaración que sigue a continuación.
-          </p>
-          <div className="rounded-xl px-4 py-3.5 mt-3" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)' }}>
-            <p className="text-[11px] leading-relaxed italic" style={{ color: 'rgba(0,0,0,0.6)' }}>{PARQ_DECLARATION_TEXT}</p>
-          </div>
-          <p className="text-[10px] leading-relaxed mt-2 font-medium" style={{ color: '#C77700' }}>
-            Si es usted menor de edad, la persona responsable por usted también debe firmar la declaración.
-          </p>
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            <div>
-              <p className="text-[9px] font-bold uppercase mb-1" style={{ color: 'rgba(0,0,0,0.4)' }}>Nombre</p>
-              <div className="rounded-xl px-3 py-2.5 text-xs font-semibold" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)', color: '#1A1A1E' }}>
-                {nombre || '—'}
-              </div>
-            </div>
-            <div>
-              <p className="text-[9px] font-bold uppercase mb-1" style={{ color: 'rgba(0,0,0,0.4)' }}>Fecha</p>
-              <div className="rounded-xl px-3 py-2.5 text-xs font-semibold" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)', color: '#1A1A1E' }}>
-                {fecha}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <div
-            onClick={() => setAceptaParq(!aceptaParq)}
-            className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
-            style={{
-              background: aceptaParq ? BLUE_GRAD : 'transparent',
-              border: `1.5px solid ${aceptaParq ? BLUE : 'rgba(0,0,0,0.06)'}`,
-            }}
-          >
-            {aceptaParq && (
-              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
-                <Check size={12} color="white" strokeWidth={3} />
-              </motion.span>
-            )}
-          </div>
-          <span style={{
-            fontSize: 12,
-            fontWeight: 500,
-            lineHeight: 1.6,
-            color: aceptaParq ? 'transparent' : 'rgba(0,0,0,0.55)',
-            background: aceptaParq ? BLUE_GRAD : 'none',
-            backgroundClip: aceptaParq ? 'text' : 'none',
-            WebkitBackgroundClip: aceptaParq ? 'text' : 'none',
-          }}>
-            Declaro haber leído y comprendido el cuestionario PAR-Q+ y acepto la declaración del participante.
-          </span>
-        </label>
-      </div>
-    )
-  }
-
-  const renderStepParq = () => {
-    const q = parqCurrent ? getParqQuestion(parqCurrent.id) : undefined
-    const progressPct = parqQCount > 0 ? (parqDone / parqQCount) * 100 : 0
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: `${BLUE}0A`, border: '1px solid rgba(18,112,183,0.12)' }}>
-          <ClipboardCheck size={15} style={{ color: BLUE }} />
-          <p className="text-[11px] font-semibold" style={{ color: 'rgba(0,0,0,0.55)' }}>
-            PAR-Q+ · El cuestionario indicará si es necesario consultar a su médico o profesional de la salud antes de volverse más activo físicamente.
-          </p>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.4)' }}>
-              Progreso del PAR-Q+
-            </span>
-            <span className="text-[10px] font-bold tabular-nums" style={{ color: parqQCount > 0 && parqDone < parqQCount ? '#C77700' : GREEN }}>
-              {parqQCount > 0 ? `${parqDone}/${parqQCount}` : '0/0'} preguntas
-            </span>
-          </div>
-          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
-            <motion.div
-              className="h-full rounded-full"
-              style={{ background: parqQCount > 0 && parqDone < parqQCount ? BLUE_GRAD : GREEN_GRAD }}
-              animate={{ width: `${progressPct}%` }}
-              transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-            />
-          </div>
-        </div>
-
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={parqCurrent?.id ?? 'none'}
-            initial={{ opacity: 0, x: 28 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -28 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {q ? renderParqQuestion(q) : renderParqInfo(parqCurrent?.kind ?? 'info-rec')}
-          </motion.div>
-        </AnimatePresence>
-
-        {parqPending > 0 && (
-          <p className="text-[10px] font-semibold text-center" style={{ color: RED }}>
-            Faltan {parqPending} pregunta{parqPending !== 1 ? 's' : ''} por responder para poder continuar
-          </p>
-        )}
-      </div>
-    )
-  }
+      </label>
+    </div>
+  )
 
   const renderStep4 = () => (
     <div className="space-y-6">
@@ -849,12 +652,14 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-xs font-bold mb-2" style={{ color: '#1A1A1E' }}>Datos del acudiente</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    {field('Nombre del acudiente', 'nombreAcudiente', { required: true })}
-                    {field('Documento del acudiente', 'docAcudiente', { required: true })}
+                <div className="flex items-center justify-between gap-3 rounded-xl px-4 py-3" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.04)' }}>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.4)' }}>Acudiente</p>
+                    <p className="text-xs font-bold mt-0.5" style={{ color: '#1A1A1E' }}>{form.nombreAcudiente || '—'}</p>
                   </div>
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0" style={{ background: 'rgba(245,166,35,0.12)', color: '#B37000' }}>
+                    {form.parentescoAcudiente === 'Otro' ? form.otroParentescoAcudiente : form.parentescoAcudiente || '—'}
+                  </span>
                 </div>
 
                 {signaturePad('Firma del acudiente (responsable legal)', guardianRef)}
@@ -1222,8 +1027,9 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                   </div>
 
                   {/* ── Body (scrollable) ─────────────────── */}
-                  <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
+                  <div className="flex-1 flex flex-col min-h-0 px-6 pb-6 pt-5 overflow-y-auto">
                     <motion.div
+                      className={step === 4 ? 'flex flex-col flex-1 min-h-0' : ''}
                       animate={shake ? { x: [0, -4, 4, -4, 4, 0] } : {}}
                       transition={{ duration: 0.4 }}
                     >
@@ -1258,39 +1064,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                       </div>
 
                       <div className="flex-1 flex justify-center gap-3">
-                        {step === 4 && (
-                          <div className="flex items-center gap-1.5">
-                            <motion.button
-                              type="button"
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => setParqPos(p => Math.max(0, p - 1))}
-                              disabled={parqCurrentIndex <= 0}
-                              className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
-                              style={{
-                                background: parqCurrentIndex > 0 ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.02)',
-                                color: parqCurrentIndex > 0 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.15)',
-                              }}
-                            >
-                              <ChevronLeft size={16} />
-                            </motion.button>
-                            <span className="text-[10px] font-bold tabular-nums min-w-[56px] text-center" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                              {parqCurrentIndex + 1} de {parqSequence.length}
-                            </span>
-                            <motion.button
-                              type="button"
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => setParqPos(p => Math.min(Math.max(0, parqSequence.length - 1), p + 1))}
-                              disabled={parqCurrentIndex >= parqSequence.length - 1}
-                              className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors"
-                              style={{
-                                background: parqCurrentIndex < parqSequence.length - 1 ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.02)',
-                                color: parqCurrentIndex < parqSequence.length - 1 ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.15)',
-                              }}
-                            >
-                              <ChevronRight size={16} />
-                            </motion.button>
-                          </div>
-                        )}
                         {stepDoc?.dataUrl && (
                           <motion.button
                             type="button"
@@ -1320,7 +1093,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                               <ChevronLeft size={16} />
                             </motion.button>
                             <span className="text-[10px] font-bold tabular-nums min-w-[56px] text-center" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                              {sigPos + 1} de 2
+                              {sigPos + 1}/2
                             </span>
                             <motion.button
                               type="button"
