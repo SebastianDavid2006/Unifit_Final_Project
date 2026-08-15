@@ -32,6 +32,7 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
   const [dayExceptions, setDayExceptions] = useState<Record<string, { active: boolean; open?: string; close?: string; reason?: string }>>({})
 
   const [appointments, setAppointments] = useState<Appointment[]>(defaultAppointments)
+  const [editingApptId, setEditingApptId] = useState<string | null>(null)
 
   const [newApptType, setNewApptType] = useState<AppointmentType>('initial_assessment')
   const [showPublishModal, setShowPublishModal] = useState(false)
@@ -44,7 +45,7 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
   const [publishSelectedDay, setPublishSelectedDay] = useState<string | null>(null)
   const [showPublishConfirm, setShowPublishConfirm] = useState(false)
   const [showPublishSuccess, setShowPublishSuccess] = useState(false)
-  const [publishDayConfig, setPublishDayConfig] = useState<Record<string, { duration: string; ranges: { open: string; close: string }[] }>>({})
+  const [publishDayConfig, setPublishDayConfig] = useState<Record<string, { ranges: { open: string; close: string }[] }>>({})
   const [rangeConflict, setRangeConflict] = useState<{ day: string; msg: string } | null>(null)
   const [newApptStart, setNewApptStart] = useState('08:00')
   const [newApptEnd, setNewApptEnd] = useState('09:00')
@@ -74,6 +75,17 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
 
   function handleSaveAppointment() {
     if (!selectedDate) return
+    if (editingApptId) {
+      setAppointments(prev => prev.map(a => a.id === editingApptId ? {
+        ...a, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
+        type: newApptType, title: typeLabels[newApptType] || 'Cita',
+        studentName: newApptStudent || undefined,
+      } : a))
+      setEditingApptId(null)
+      setShowApptModal(false)
+      setNewApptStudent('')
+      return
+    }
     const newId = String(Date.now())
     setAppointments(prev => [...prev, {
       id: newId, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
@@ -84,6 +96,23 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     setNewApptStudent('')
   }
 
+  function handleEditAppointment(a: Appointment) {
+    setDayModalDate(null)
+    setSelectedDate(a.date)
+    setNewApptType(a.type as AppointmentType)
+    setNewApptStart(a.startTime)
+    setNewApptEnd(a.endTime)
+    setNewApptStudent(a.studentName || '')
+    setEditingApptId(a.id)
+    setShowApptModal(true)
+  }
+
+  function handleDeleteAppointment(id: string) {
+    setAppointments(prev => prev.filter(a => a.id !== id))
+    setShowApptModal(false)
+    setEditingApptId(null)
+  }
+
   function handleSlotClick(dateStr: string, timeStr: string) {
     setSelectedDate(dateStr)
     const [h, m] = timeStr.split(':')
@@ -92,16 +121,12 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     setNewApptEnd(`${String(Number(h) + 1).padStart(2, '0')}:${m.padStart(2, '0')}`)
     setNewApptType('initial_assessment')
     setNewApptStudent('')
+    setEditingApptId(null)
     setShowApptModal(true)
   }
 
   function getDayConfig(day: string) {
-    return publishDayConfig[day] || { duration: '60', ranges: [{ open: '06:00', close: '22:00' }] }
-  }
-
-  function updateDayDuration(day: string, duration: string) {
-    const cfg = getDayConfig(day)
-    setPublishDayConfig(prev => ({ ...prev, [day]: { ...cfg, duration } }))
+    return publishDayConfig[day] || { ranges: [{ open: '06:00', close: '22:00' }] }
   }
 
   function updateDayRange(day: string, index: number, field: 'open' | 'close', value: string) {
@@ -182,6 +207,14 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
   const allDaysComplete = publishDays.length > 0 && publishDays.every(dayIsComplete)
   const selDay = publishStep === 2 ? (publishSelectedDay && publishDays.includes(publishSelectedDay) ? publishSelectedDay : (publishDays[0] ?? null)) : null
 
+  const editingAppt = editingApptId ? appointments.find(a => a.id === editingApptId) : null
+  const apptDirty = !!editingAppt && (
+    newApptType !== editingAppt.type ||
+    newApptStart !== editingAppt.startTime ||
+    newApptEnd !== editingAppt.endTime ||
+    newApptStudent !== (editingAppt.studentName || '')
+  )
+
   const year = currentMonth.getFullYear()
   const month = currentMonth.getMonth()
   const todayStr = fmtDate(new Date())
@@ -236,6 +269,7 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     setNewApptStart('08:00')
     setNewApptEnd('09:00')
     setNewApptStudent('')
+    setEditingApptId(null)
     setShowApptModal(true)
   }
 
@@ -276,12 +310,17 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
         status={dayModalDate ? getDayStatus(dayModalDate) : null}
         appts={dayModalDate ? getApptsForDate(dayModalDate) : []}
         onAddAppointment={handleAddAppointmentFromModal}
+        onEdit={handleEditAppointment}
       />
 
       <AppointmentModal
         show={showApptModal}
-        onClose={() => setShowApptModal(false)}
+        title={editingApptId ? 'Reagendar Cita' : 'Nueva Cita'}
+        editing={!!editingApptId}
+        dirty={apptDirty}
+        onClose={() => { setShowApptModal(false); setEditingApptId(null) }}
         onSave={handleSaveAppointment}
+        onDelete={() => { if (editingApptId) handleDeleteAppointment(editingApptId) }}
         apptType={newApptType}
         onTypeChange={setNewApptType}
         startTime={newApptStart}
@@ -317,7 +356,6 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
         onCancelConfirm={() => setShowPublishConfirm(false)}
         onPublish={handlePublish}
         getDayConfig={getDayConfig}
-        updateDayDuration={updateDayDuration}
         updateDayRange={updateDayRange}
         addDayRange={addDayRange}
         removeDayRange={removeDayRange}

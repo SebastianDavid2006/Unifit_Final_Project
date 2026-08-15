@@ -10,9 +10,10 @@ interface DayModalProps {
   status: { active: boolean; open: string; close: string } | null
   appts: Appointment[]
   onAddAppointment: () => void
+  onEdit: (a: Appointment) => void
 }
 
-export function DayModal({ date, onClose, status, appts, onAddAppointment }: DayModalProps) {
+export function DayModal({ date, onClose, status, appts, onAddAppointment, onEdit }: DayModalProps) {
   return (
     <AnimatePresence>
       {date && (
@@ -57,14 +58,17 @@ export function DayModal({ date, onClose, status, appts, onAddAppointment }: Day
                   <p className="text-xs py-4 text-center" style={{ color: 'rgba(0,0,0,0.2)' }}>Sin citas este día</p>
                 ) : (
                   appts.sort((a, b) => a.startTime.localeCompare(b.startTime)).map(a => (
-                    <div key={a.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: `${typeColors[a.type]}12`, borderLeft: `3.5px solid ${typeColors[a.type]}` }}>
+                    <div key={a.id}
+                      onClick={() => onEdit(a)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all hover:opacity-90"
+                      style={{ background: `${typeColors[a.type]}12`, borderLeft: `3.5px solid ${typeColors[a.type]}` }}
+                    >
                       <div className="text-[11px] font-bold min-w-[65px]" style={{ color: 'rgba(0,0,0,0.55)' }}>{a.startTime} – {a.endTime}</div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.title}</div>
-                        {a.studentName && <div className="text-[11px] font-medium truncate" style={{ color: 'rgba(0,0,0,0.5)' }}>{a.studentName}</div>}
+                        {a.studentName && <div className="text-[13px] font-bold truncate" style={{ color: '#1A1A1E' }}>{a.studentName}</div>}
                         {a.trainer && <div className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>Con {a.trainer}</div>}
                       </div>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type] }}>{typeLabels[a.type]}</span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: `${typeColors[a.type]}12`, color: typeColors[a.type] }}>{typeLabels[a.type]}</span>
                     </div>
                   ))
                 )}

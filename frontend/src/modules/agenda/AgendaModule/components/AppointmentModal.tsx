@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { X } from 'lucide-react'
+import { Trash2, X } from 'lucide-react'
 import { meshInputBg } from '@/data/constants'
-import { BLUE_GRAD } from '../../AgendaData'
+import { BLUE_GRAD, RED } from '../../AgendaData'
 import { blurMesh, enterMesh, focusMesh, leaveMesh, MESH_GRAD, typeColors, typeLabels } from '../data'
+import { DeleteAppointmentModal } from './DeleteAppointmentModal'
 
 export type AppointmentType = 'class' | 'initial_assessment' | 'physical_assessment' | 'registration' | 'event'
 
@@ -16,8 +18,12 @@ interface StudentMatch {
 
 interface AppointmentModalProps {
   show: boolean
+  title?: string
+  editing?: boolean
+  dirty?: boolean
   onClose: () => void
   onSave: () => void
+  onDelete?: () => void
   apptType: AppointmentType
   onTypeChange: (t: AppointmentType) => void
   startTime: string
@@ -31,7 +37,13 @@ interface AppointmentModalProps {
   setStudentListOpen: (v: boolean) => void
 }
 
-export function AppointmentModal({ show, onClose, onSave, apptType, onTypeChange, startTime, endTime, onStartChange, onEndChange, student, onStudentChange, studentMatches, studentListOpen, setStudentListOpen }: AppointmentModalProps) {
+export function AppointmentModal({ show, title = 'Nueva Cita', editing = false, dirty = false, onClose, onSave, onDelete, apptType, onTypeChange, startTime, endTime, onStartChange, onEndChange, student, onStudentChange, studentMatches, studentListOpen, setStudentListOpen }: AppointmentModalProps) {
+  const [confirmDel, setConfirmDel] = useState(false)
+
+  useEffect(() => {
+    if (show) setConfirmDel(false)
+  }, [show])
+
   return (
     <AnimatePresence>
       {show && (
@@ -53,7 +65,7 @@ export function AppointmentModal({ show, onClose, onSave, apptType, onTypeChange
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-6 pt-6 pb-3">
-              <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>Nueva Cita</h2>
+              <h2 className="text-lg font-extrabold" style={{ color: '#1A1A1E' }}>{title}</h2>
               <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors"><X size={16} style={{ color: 'rgba(0,0,0,0.3)' }} /></button>
             </div>
             <div className="px-6 pb-6 space-y-4">
@@ -151,11 +163,31 @@ export function AppointmentModal({ show, onClose, onSave, apptType, onTypeChange
                   </motion.div>
                 )}
               </AnimatePresence>
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                onClick={onSave}
-                className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                style={{ background: MESH_GRAD }}
-              >Agendar Cita</motion.button>
+              {editing ? (
+                <div className="flex gap-2">
+                  <motion.button whileHover={dirty ? { scale: 1.02 } : {}} whileTap={dirty ? { scale: 0.98 } : {}}
+                    onClick={onSave}
+                    disabled={!dirty}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                    style={{ background: MESH_GRAD, opacity: dirty ? 1 : 0.4, cursor: dirty ? 'pointer' : 'not-allowed' }}
+                  >Reagendar</motion.button>
+                  <button onClick={() => setConfirmDel(true)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
+                    style={{ background: `${RED}14`, color: RED }}
+                  ><Trash2 size={14} /> Cancelar</button>
+                </div>
+              ) : (
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={onSave}
+                  className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                  style={{ background: MESH_GRAD }}
+                >Agendar Cita</motion.button>
+              )}
+              <DeleteAppointmentModal
+                show={confirmDel}
+                onClose={() => setConfirmDel(false)}
+                onConfirm={() => { setConfirmDel(false); onDelete?.() }}
+              />
             </div>
           </motion.div>
         </motion.div>

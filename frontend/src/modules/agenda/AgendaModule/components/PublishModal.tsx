@@ -13,7 +13,6 @@ interface Range {
 }
 
 interface DayConfig {
-  duration: string
   ranges: Range[]
 }
 
@@ -39,14 +38,13 @@ interface PublishModalProps {
   onCancelConfirm: () => void
   onPublish: () => void
   getDayConfig: (day: string) => DayConfig
-  updateDayDuration: (day: string, duration: string) => void
   updateDayRange: (day: string, index: number, field: 'open' | 'close', value: string) => void
   addDayRange: (day: string) => void
   removeDayRange: (day: string, index: number) => void
   rangeConflict: { day: string; msg: string } | null
 }
 
-export function PublishModal({ show, publishStep, onClose, publishStart, publishEnd, onStartChange, onEndChange, publishDays, onToggleDay, selDay, onSelectDay, allDaysComplete, dayIsComplete, showPublishSuccess, showPublishConfirm, onContinue, onBack, onOpenConfirm, onCancelConfirm, onPublish, getDayConfig, updateDayDuration, updateDayRange, addDayRange, removeDayRange, rangeConflict }: PublishModalProps) {
+export function PublishModal({ show, publishStep, onClose, publishStart, publishEnd, onStartChange, onEndChange, publishDays, onToggleDay, selDay, onSelectDay, allDaysComplete, dayIsComplete, showPublishSuccess, showPublishConfirm, onContinue, onBack, onOpenConfirm, onCancelConfirm, onPublish, getDayConfig, updateDayRange, addDayRange, removeDayRange, rangeConflict }: PublishModalProps) {
   return (
     <AnimatePresence>
       {show && (
@@ -154,22 +152,6 @@ export function PublishModal({ show, publishStep, onClose, publishStart, publish
                       const cfg = getDayConfig(dk)
                       return (
                         <div className="rounded-2xl p-4 space-y-3" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                          <div>
-                            <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración de la sesión</label>
-                            <select value={cfg.duration} onChange={e => updateDayDuration(dk, e.target.value)}
-                              className="w-full mt-1.5 px-3.5 py-2.5 rounded-xl text-sm font-medium outline-none"
-                              style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
-                              onMouseEnter={e => enterMesh(e.currentTarget)}
-                              onMouseLeave={e => leaveMesh(e.currentTarget)}
-                              onFocus={e => focusMesh(e.currentTarget)}
-                              onBlur={e => blurMesh(e.currentTarget)}
-                            >
-                              <option value="30">30 min</option>
-                              <option value="45">45 min</option>
-                              <option value="60">60 min</option>
-                              <option value="90">90 min</option>
-                            </select>
-                          </div>
                           <div>
                             <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.5)' }}>Horario de atención</label>
                             <div className="space-y-2 mt-1.5">
