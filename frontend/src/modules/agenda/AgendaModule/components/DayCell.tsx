@@ -1,7 +1,8 @@
 import { Plus, Sparkles } from 'lucide-react'
-import { BLUE, BLUE_GRAD, GOLD_GRAD } from '../../AgendaData'
+import { BLUE, BLUE_GRAD, GOLD_GRAD, RED } from '../../AgendaData'
 import type { Appointment } from '../../AgendaData'
 import { fmtDate, typeColors, typeLabels } from '../data'
+import type { DayStatus } from '../data'
 
 interface DayCellProps {
   dt: Date | null
@@ -9,7 +10,7 @@ interface DayCellProps {
   lastRow?: boolean
   rowIdx?: number
   todayStr: string
-  getDayStatus: (ds: string) => { active: boolean; open: string; close: string }
+  getDayStatus: (ds: string) => DayStatus
   getApptsForDate: (ds: string) => Appointment[]
   publishedDates: Set<string>
   hoveredCol: number | null
@@ -26,6 +27,7 @@ export function DayCell({ dt, idx, lastRow, rowIdx = 0, todayStr, getDayStatus, 
   const ds = fmtDate(dt)
   const isT = ds === todayStr
   const st = getDayStatus(ds)
+  const isHoliday = !!st.holiday
   const appts = getApptsForDate(ds).sort((a, b) => a.startTime.localeCompare(b.startTime))
   const visible = appts.slice(0, 4)
   const hidden = appts.slice(4)
@@ -61,7 +63,10 @@ export function DayCell({ dt, idx, lastRow, rowIdx = 0, todayStr, getDayStatus, 
       {isPublished && (
         <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: GOLD_GRAD }} />
       )}
-      {isHoveredCell && hasNoAppts && (
+      {isHoliday && (
+        <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: RED }} title={st.holiday || undefined} />
+      )}
+      {isHoveredCell && hasNoAppts && !isHoliday && (
         <div className="absolute inset-0 z-10 flex items-center justify-center">
           <div className="flex items-center justify-center w-7 h-7 rounded-lg shadow-md" style={{ background: BLUE_GRAD }}>
             <Plus size={16} color="#fff" strokeWidth={3} />
@@ -75,7 +80,7 @@ export function DayCell({ dt, idx, lastRow, rowIdx = 0, todayStr, getDayStatus, 
       )}
       <div className="flex items-center justify-between mb-0.5">
         <span className="text-xs font-bold" style={{
-          color: isT ? '#fff' : st.active ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.2)',
+          color: isT ? '#fff' : isHoliday ? RED : st.active ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.2)',
           width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
           borderRadius: 6, background: isT ? BLUE_GRAD : 'transparent',
           ...(isHoveredCell && !isT ? { background: BLUE_GRAD, backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' } : {}),

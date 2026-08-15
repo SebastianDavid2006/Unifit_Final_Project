@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import { BLUE_GRAD, dayLabels } from '../../AgendaData'
 import type { Appointment } from '../../AgendaData'
+import type { DayStatus } from '../data'
 import { ViewHeader } from '../components/ViewHeader'
 import { DayCell } from '../components/DayCell'
 
@@ -17,7 +18,7 @@ interface MonthViewProps {
   month: number
   todayStr: string
   getMonthGrid: (year: number, month: number) => (Date | null)[][]
-  getDayStatus: (ds: string) => { active: boolean; open: string; close: string }
+  getDayStatus: (ds: string) => DayStatus
   getApptsForDate: (ds: string) => Appointment[]
   publishedDates: Set<string>
   hoveredCol: number | null

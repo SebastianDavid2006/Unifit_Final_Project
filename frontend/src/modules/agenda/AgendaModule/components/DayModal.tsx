@@ -1,19 +1,25 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, X } from 'lucide-react'
+import { CalendarDays, Plus, RotateCcw, X } from 'lucide-react'
 import { BLUE_GRAD, dayLabelsGetDay, RED } from '../../AgendaData'
 import type { Appointment } from '../../AgendaData'
 import { MESH_GRAD, typeColors, typeLabels } from '../data'
+import type { DayStatus } from '../data'
 
 interface DayModalProps {
   date: string | null
   onClose: () => void
-  status: { active: boolean; open: string; close: string } | null
+  status: DayStatus | null
+  holidayName: string | null
+  isOverridden: boolean
+  onOpenHoliday: () => void
+  onRevertHoliday: () => void
   appts: Appointment[]
   onAddAppointment: () => void
   onEdit: (a: Appointment) => void
 }
 
-export function DayModal({ date, onClose, status, appts, onAddAppointment, onEdit }: DayModalProps) {
+export function DayModal({ date, onClose, status, holidayName, isOverridden, onOpenHoliday, onRevertHoliday, appts, onAddAppointment, onEdit }: DayModalProps) {
+  const isHoliday = !!status?.holiday
   return (
     <AnimatePresence>
       {date && (
@@ -51,7 +57,9 @@ export function DayModal({ date, onClose, status, appts, onAddAppointment, onEdi
                   {status.open} – {status.close}
                 </p>
               ) : (
-                <p className="text-[11px] font-medium mb-4" style={{ color: RED }}>Cerrado</p>
+                <p className="text-[11px] font-medium mb-4" style={{ color: RED }}>
+                  {status.holiday || 'Cerrado'}
+                </p>
               ))}
               <div className="space-y-1.5 mb-4 max-h-[260px] overflow-y-auto">
                 {appts.length === 0 ? (
@@ -73,10 +81,22 @@ export function DayModal({ date, onClose, status, appts, onAddAppointment, onEdi
                   ))
                 )}
               </div>
-              <button onClick={onAddAppointment}
+              {holidayName && !isOverridden && (
+                <button onClick={onOpenHoliday}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all mb-2"
+                  style={{ background: '#fff', border: `1.5px solid ${RED}`, color: RED }}
+                ><CalendarDays size={13} /> Abrir este día</button>
+              )}
+              {holidayName && isOverridden && (
+                <button onClick={onRevertHoliday}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all mb-2"
+                  style={{ background: `${RED}0D`, border: `1.5px dashed ${RED}`, color: RED }}
+                ><RotateCcw size={13} /> Restaurar festivo</button>
+              )}
+              <button onClick={isHoliday ? undefined : onAddAppointment} disabled={isHoliday}
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
-                style={{ background: MESH_GRAD }}
-              ><Plus size={13} /> Agregar Cita</button>
+                style={{ background: MESH_GRAD, opacity: isHoliday ? 0.4 : 1, cursor: isHoliday ? 'not-allowed' : 'pointer' }}
+              ><Plus size={13} /> {isHoliday ? 'No disponible en día festivo' : 'Agregar Cita'}</button>
             </div>
           </motion.div>
         </motion.div>

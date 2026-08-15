@@ -7,6 +7,8 @@ import type { Appointment } from '../AgendaData'
 import {
   defaultAppointments, defaultWeeklyTemplate, fmtDate, getMonthGrid, getWeekDates, overlapsRange, typeLabels,
 } from './data'
+import type { DayStatus } from './data'
+import { getHoliday } from './holidays'
 import { Banner } from './components/Banner'
 import { DayModal } from './components/DayModal'
 import { AppointmentModal, type AppointmentType } from './components/AppointmentModal'
@@ -58,15 +60,17 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     return students.filter(s => s.name.toLowerCase().includes(q))
   }, [students, newApptStudent])
 
-  function getDayStatus(dateStr: string) {
+  function getDayStatus(dateStr: string): DayStatus {
     const dt = new Date(dateStr + 'T12:00:00')
     const dk = dayKey[dt.getDay()]
     const base = weeklyTemplate[dk] || { active: false, open: '08:00', close: '18:00' }
+    const holiday = getHoliday(dateStr)
     if (dayExceptions[dateStr]) {
       const ex = dayExceptions[dateStr]
-      return { active: ex.active, open: ex.open || base.open, close: ex.close || base.close }
+      return { active: ex.active, open: ex.open || base.open, close: ex.close || base.close, holiday: null }
     }
-    return base
+    if (holiday) return { active: false, open: base.open, close: base.close, holiday: holiday.name }
+    return { ...base, holiday: null }
   }
 
   function getApptsForDate(dateStr: string) {
@@ -75,6 +79,7 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
 
   function handleSaveAppointment() {
     if (!selectedDate) return
+    if (getDayStatus(selectedDate).holiday) return
     if (editingApptId) {
       setAppointments(prev => prev.map(a => a.id === editingApptId ? {
         ...a, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
@@ -114,6 +119,7 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
   }
 
   function handleSlotClick(dateStr: string, timeStr: string) {
+    if (getDayStatus(dateStr).holiday) return
     setSelectedDate(dateStr)
     const [h, m] = timeStr.split(':')
     const normalized = `${String(Number(h)).padStart(2, '0')}:${m.padStart(2, '0')}`
@@ -174,7 +180,7 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     while (current <= end) {
       const ds = fmtDate(current)
       const dk = dayKey[current.getDay()]
-      if (publishDays.includes(dk)) {
+      if (publishDays.includes(dk) && !getDayStatus(ds).holiday) {
         if (newDates.has(ds)) newDates.delete(ds)
         else newDates.add(ds)
       }
@@ -253,6 +259,18 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     ? `${dayLabelsGetDay[currentMonth.getDay()]} ${currentMonth.getDate()} de ${monthNames[currentMonth.getMonth()]}`
     : `${monthNames[month]} ${year}`
 
+  function openHoliday(ds: string) {
+    setDayExceptions(prev => ({ ...prev, [ds]: { active: true } }))
+  }
+
+  function revertHoliday(ds: string) {
+    setDayExceptions(prev => {
+      const next = { ...prev }
+      delete next[ds]
+      return next
+    })
+  }
+
   const handleSelectDate = (ds: string) => {
     setSelectedDate(ds)
     setDayModalDate(ds)
@@ -288,10 +306,10 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
       return <YearView fullscreen={fullscreen} {...headerProps} year={year} todayStr={todayStr} appointments={appointments} publishedDates={publishedDates} onSelectMonth={handleSelectMonth} />
     }
     if (viewMode === 'week') {
-      return <WeekView fullscreen={fullscreen} {...headerProps} weekDates={weekDates} todayStr={todayStr} publishedDates={publishedDates} hoveredCol={hoveredCol} hoveredHour={hoveredHour} setHoveredCol={setHoveredCol} setHoveredHour={setHoveredHour} getApptsForDate={getApptsForDate} onSlotClick={handleSlotClick} hoverSlots={!fullscreen} />
+      return <WeekView fullscreen={fullscreen} {...headerProps} weekDates={weekDates} todayStr={todayStr} publishedDates={publishedDates} getDayStatus={getDayStatus} hoveredCol={hoveredCol} hoveredHour={hoveredHour} setHoveredCol={setHoveredCol} setHoveredHour={setHoveredHour} getApptsForDate={getApptsForDate} onSlotClick={handleSlotClick} hoverSlots={!fullscreen} />
     }
     if (viewMode === 'day') {
-      return <DayView fullscreen={fullscreen} {...headerProps} currentMonth={currentMonth} getApptsForDate={getApptsForDate} onSlotClick={handleSlotClick} />
+      return <DayView fullscreen={fullscreen} {...headerProps} currentMonth={currentMonth} getDayStatus={getDayStatus} getApptsForDate={getApptsForDate} onSlotClick={handleSlotClick} />
     }
     return <MonthView fullscreen={fullscreen} {...headerProps} year={year} month={month} todayStr={todayStr} getMonthGrid={getMonthGrid} getDayStatus={getDayStatus} getApptsForDate={getApptsForDate} publishedDates={publishedDates} hoveredCol={hoveredCol} hoveredRow={hoveredRow} pressedCell={pressedCell} setHoveredCol={setHoveredCol} setHoveredRow={setHoveredRow} setPressedCell={setPressedCell} onSelectDate={handleSelectDate} />
   }
@@ -308,6 +326,10 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
         date={dayModalDate}
         onClose={() => setDayModalDate(null)}
         status={dayModalDate ? getDayStatus(dayModalDate) : null}
+        holidayName={dayModalDate ? getHoliday(dayModalDate)?.name ?? null : null}
+        isOverridden={!!(dayModalDate && dayExceptions[dayModalDate])}
+        onOpenHoliday={() => { if (dayModalDate) openHoliday(dayModalDate) }}
+        onRevertHoliday={() => { if (dayModalDate) revertHoliday(dayModalDate) }}
         appts={dayModalDate ? getApptsForDate(dayModalDate) : []}
         onAddAppointment={handleAddAppointmentFromModal}
         onEdit={handleEditAppointment}

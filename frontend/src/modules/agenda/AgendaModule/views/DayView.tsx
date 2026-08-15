@@ -1,6 +1,9 @@
 import { motion } from 'motion/react'
+import { CalendarDays } from 'lucide-react'
+import { RED } from '../../AgendaData'
 import type { Appointment } from '../../AgendaData'
 import { fmtDate, TIME_SLOTS_WEEK, typeColors } from '../data'
+import type { DayStatus } from '../data'
 import { ViewHeader } from '../components/ViewHeader'
 
 interface DayViewProps {
@@ -13,12 +16,15 @@ interface DayViewProps {
   isExpanded: boolean
   onToggleExpand: () => void
   currentMonth: Date
+  getDayStatus: (ds: string) => DayStatus
   getApptsForDate: (ds: string) => Appointment[]
   onSlotClick: (ds: string, t: string) => void
 }
 
-export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onPrev, onNext, isExpanded, onToggleExpand, currentMonth, getApptsForDate, onSlotClick }: DayViewProps) {
+export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onPrev, onNext, isExpanded, onToggleExpand, currentMonth, getDayStatus, getApptsForDate, onSlotClick }: DayViewProps) {
   const ds = fmtDate(currentMonth)
+  const holidayName = getDayStatus(ds).holiday || null
+  const isHoliday = !!holidayName
   const timeText = fullscreen ? 'text-[10px]' : 'text-[9px]'
   const apptText = fullscreen ? 'text-[11px]' : 'text-[10px]'
   const slots = TIME_SLOTS_WEEK.map(t => {
@@ -26,7 +32,7 @@ export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onP
     return (
       <div key={t} className="flex items-center gap-2 px-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)', minHeight: fullscreen ? 40 : 36, paddingTop: fullscreen ? 8 : 6, paddingBottom: fullscreen ? 8 : 6 }}>
         <div className={`w-14 font-bold flex-shrink-0 ${timeText}`} style={{ color: 'rgba(0,0,0,0.2)' }}>{t}</div>
-        <div className="flex-1 cursor-pointer" onClick={() => onSlotClick(ds, t)}>
+        <div className={`flex-1 ${isHoliday ? '' : 'cursor-pointer'}`} onClick={() => { if (!isHoliday) onSlotClick(ds, t) }}>
           {appts.map(a => (
             <div key={a.id} className={`rounded-md px-2 py-1 font-bold truncate ${apptText}`}
               style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `3px solid ${typeColors[a.type]}` }}
@@ -43,10 +49,18 @@ export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onP
     )
   })
 
+  const holidayBanner = holidayName && (
+    <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ background: `${RED}0D`, borderColor: `${RED}22` }}>
+      <CalendarDays size={14} style={{ color: RED, flexShrink: 0 }} />
+      <span className={`font-bold ${timeText}`} style={{ color: RED }}>Día festivo · {holidayName}</span>
+    </div>
+  )
+
   if (fullscreen) {
     return (
       <div className="rounded-2xl premium-card h-full flex flex-col">
         <ViewHeader shrink viewMode={viewMode} onViewModeChange={onViewModeChange} viewTitle={viewTitle} onPrev={onPrev} onNext={onNext} isExpanded={isExpanded} onToggleExpand={onToggleExpand} />
+        {holidayBanner}
         <div className="flex-1 overflow-auto">
           {slots}
         </div>
@@ -61,6 +75,7 @@ export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onP
       className="rounded-2xl premium-card"
     >
       <ViewHeader viewMode={viewMode} onViewModeChange={onViewModeChange} viewTitle={viewTitle} onPrev={onPrev} onNext={onNext} isExpanded={isExpanded} onToggleExpand={onToggleExpand} />
+      {holidayBanner}
       <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
         {slots}
       </div>
