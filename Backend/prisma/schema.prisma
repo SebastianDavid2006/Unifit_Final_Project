@@ -63,6 +63,11 @@ enum TipoAgenda {
 enum ModalidadEstudiante {
   presencial
   virtual
+}
+
+enum JornadaEstudiante {
+  diurna
+  nocturna
   finde
 }
 
@@ -83,7 +88,7 @@ enum EstadoEjercicio {
   inactivo
 }
 
-enum NivelEjercicio {
+enum NivelExperiencia {
   principiante
   intermedio
   avanzado
@@ -127,6 +132,13 @@ enum TipoAntecedente {
   psicologico
 }
 
+enum RutinaDuracion {
+  cuatro_semanas
+  ocho_semanas
+  doce_semanas
+  dieciseis_semanas
+}
+
 enum DiaSemana {
   lunes
   martes
@@ -134,6 +146,30 @@ enum DiaSemana {
   jueves
   viernes
   sabado
+}
+
+enum TipoDocPersonal {
+  legal
+  informe_medico
+  lesion_seguimiento
+}
+
+enum TipoDocLegal {
+  contrato_gym
+  tratamiento_datos
+}
+
+enum GrupoMuscular {
+  pecho
+  espalda
+  hombros
+  brazos
+  piernas
+  abdomen_core
+  cardio
+  general
+  tren_superior
+  tren_inferior
 }
 
 // USUARIO
@@ -151,7 +187,7 @@ model Usuario {
   fecha_nacimiento       DateTime?
   genero                 String?
   rol                    Rol           @default(usuario)
-  tipo_usuario            TipoUsuario?
+  tipo_usuario           TipoUsuario   @default(estudiante)
   estado                 EstadoUsuario @default(pendiente)
   password_hash          String?
   token_activacion       String?
@@ -165,6 +201,8 @@ model Usuario {
   parentesco_emergencia  String?
   fecha_creacion         DateTime      @default(now())
   fecha_modificacion     DateTime      @updatedAt
+  parq_realizado         Boolean  @default(false)
+  fecha_parq             DateTime?
 
   estudiante     Estudiante?
   profesor       Profesor?
@@ -172,7 +210,6 @@ model Usuario {
   acudiente_de   Acudiente?      // si este usuario es menor, su acudiente
 
   huella                Huella?
-  parq                  Parq[]
   aceptaciones          AceptacionDocumento[]
   valoraciones_creadas  Valoracion[]    @relation("ValoracionCreador")
   rutinas_creadas       Rutina[]        @relation("RutinaCreador")
@@ -180,9 +217,10 @@ model Usuario {
   asistencias           Asistencia[]
   agenda_usuario        Agenda[]        @relation("AgendaUsuario")
   agenda_creada         Agenda[]        @relation("AgendaCreador")
-  documentacion         Documentacion[]
+  cupos_creados         Cupo[]
+  documentos_personales DocumentoPersonal[]
   ejercicios            Ejercicio[]
-  maquinas               Maquina[]
+  maquinas              Maquina[]
   sesiones_rutina       SesionRutina[]
 }
 
@@ -239,8 +277,6 @@ model Acudiente {
   segundo_apellido   String?
   documento          String   @unique
   tipo_documento     TipoDocumento @default(CC)
-  fecha_nacimiento   DateTime?
-  genero             String?
   telefono_contacto  String?
   fecha_creacion     DateTime @default(now())
   fecha_modificacion DateTime @updatedAt
@@ -259,6 +295,7 @@ model Programa {
   fecha_modificacion DateTime      @updatedAt
 
   estudiantes Estudiante[]
+  @@unique([nombre, universidad])
 }
 
 model Cargo {
@@ -284,7 +321,7 @@ model Area {
 model Huella {
   id_huella      String   @id @default(uuid())
   id_usuario     String   @unique
-  id_sensor      Int
+  id_sensor      Int      @unique
   estado         Boolean  @default(true)
   fecha_creacion DateTime @default(now())
 
@@ -316,14 +353,12 @@ model Valoracion {
   proxima_valoracion         DateTime?
   objetivos                  ObjetivoUsuario[]
   objetivo_detalle           String?
-  nivel_actividad            NivelActividad?
+  nivel_actividad            NivelActividad
   tipo_antecedentes          TipoAntecedente[]
   observaciones_antecedentes String?
   observaciones_finales      String?
   dias_disponibles           DiaSemana[]
-  analisis_ia                String?
-  plan_entrenamiento         Json?
-  estado_ia                  String?
+  rutina                     Rutina?
   fecha_creacion             DateTime        @default(now())
         
   estudiante                 Estudiante         @relation(fields: [id_estudiante], references: [id_estudiante])
@@ -332,56 +367,48 @@ model Valoracion {
   medidas_corporales         MedidasCorporales?
 }
 
+model DatosMedicos {
+  id_datos              String  @id @default(uuid())
+  id_valoracion         String  @unique
+  presion_arterial      String
+  edad_metabolica       Float
+  agua_corporal         Float
+  resistencia_muscular  Float
+
+  valoracion Valoracion @relation(fields: [id_valoracion], references: [id_valoracion])
+}
+
 model MedidasCorporales {
   id_medidas     String @id @default(uuid())
   id_valoracion  String @unique
-  peso           Float?
-  estatura       Float?
-  imc            Float?
-  grasa_corporal Float?
-  masa_muscular  Float?
-  masa_magra     Float?
-  grasa_visceral Float?
+  peso           Float
+  estatura       Float
+  imc            Float
+  grasa_corporal Float
+  masa_muscular  Float
+  masa_magra     Float
+  grasa_visceral Float
 
   valoracion Valoracion @relation(fields: [id_valoracion], references: [id_valoracion])
 }
 
 // GIMNASIO: EJERCICIOS Y MÁQUINAS
 
-model GrupoMuscular {
-  id_grupo       String   @id @default(uuid())
-  nombre         String   @unique
-  fecha_creacion DateTime @default(now())
-
-  ejercicios EjercicioGrupo[]
-  maquinas   MaquinaGrupo[]
-}
-
 model Ejercicio {
   id_ejercicio       String @id @default(uuid())
   id_usuario         String
   nombre             String
   descripcion        String?
-  nivel              NivelEjercicio?
+  grupos_musculares  GrupoMuscular[]
+  nivel              NivelExperiencia @default(principiante)
   url_multimedia     String?
   estado             EstadoEjercicio  @default(activo)
   fecha_creacion     DateTime  @default(now())
   fecha_modificacion DateTime  @updatedAt
 
   usuario           Usuario  @relation(fields: [id_usuario], references: [id_usuario])
-  grupos            EjercicioGrupo[]
   maquinas          MaquinaEjercicio[]
   rutina_ejercicios RutinaEjercicio[]
-}
-
-model EjercicioGrupo {
-  id_ejercicio String
-  id_grupo     String
-
-  ejercicio Ejercicio     @relation(fields: [id_ejercicio], references: [id_ejercicio])
-  grupo     GrupoMuscular @relation(fields: [id_grupo], references: [id_grupo])
-
-  @@id([id_ejercicio, id_grupo])
 }
 
 model Maquina {
@@ -389,24 +416,15 @@ model Maquina {
   id_usuario         String
   nombre             String
   descripcion        String?
+  grupos_musculares  GrupoMuscular[]
+  nivel              NivelExperiencia @default(principiante)
   url_multimedia     String?
   estado             EstadoMaquina @default(disponible)
   fecha_creacion     DateTime      @default(now())
   fecha_modificacion DateTime      @updatedAt
 
   usuario    Usuario            @relation(fields: [id_usuario], references: [id_usuario])
-  grupos     MaquinaGrupo[]
   ejercicios MaquinaEjercicio[]
-}
-
-model MaquinaGrupo {
-  id_maquina String
-  id_grupo   String
-
-  maquina Maquina       @relation(fields: [id_maquina], references: [id_maquina])
-  grupo   GrupoMuscular @relation(fields: [id_grupo], references: [id_grupo])
-
-  @@id([id_maquina, id_grupo])
 }
 
 model MaquinaEjercicio {
@@ -425,7 +443,10 @@ model Rutina {
   id_rutina          String       @id @default(uuid())
   id_usuario         String
   id_creador         String
+  id_valoracion      String?      @unique
   nombre             String
+  duracion           RutinaDuracion?
+  nivel              NivelExperiencia @default(principiante)
   estado             EstadoRutina @default(activa)
   observaciones      String?
   fecha_creacion     DateTime     @default(now())
@@ -433,6 +454,7 @@ model Rutina {
 
   usuario    Usuario           @relation("RutinaUsuario", fields: [id_usuario], references: [id_usuario])
   creador    Usuario           @relation("RutinaCreador", fields: [id_creador], references: [id_usuario])
+  valoracion Valoracion?       @relation(fields: [id_valoracion], references: [id_valoracion])
   ejercicios RutinaEjercicio[]
   sesiones   SesionRutina[]
 }
@@ -443,14 +465,15 @@ model RutinaEjercicio {
   id_ejercicio        String
   dia_semana          DiaSemana
   series              Int?
-  repeticiones        Int?
-  descanso            Int?
-  orden                Int?
-  observaciones        String?
+  repeticiones_min    Int?
+  repeticiones_max    Int?
+  descanso            Int?  //segundos
+  orden               Int?
+  observaciones       String?
 
   rutina    Rutina    @relation(fields: [id_rutina], references: [id_rutina])
   ejercicio Ejercicio @relation(fields: [id_ejercicio], references: [id_ejercicio])
-}
+}    
 
 model SesionRutina {
   id_sesion      String             @id @default(uuid())
@@ -472,8 +495,10 @@ model Agenda {
   id_agenda          String       @id @default(uuid())
   id_usuario         String
   id_creador         String
+  id_cupo            String?      @unique
   fecha              DateTime
-  hora               String
+  hora_inicio        String
+  hora_fin           String
   tipo               TipoAgenda
   estado             EstadoAgenda @default(pendiente)
   observaciones      String?
@@ -482,6 +507,20 @@ model Agenda {
 
   usuario Usuario @relation("AgendaUsuario", fields: [id_usuario], references: [id_usuario])
   creador Usuario @relation("AgendaCreador", fields: [id_creador], references: [id_usuario])
+  cupo    Cupo?   @relation(fields: [id_cupo], references: [id_cupo])
+}
+
+model Cupo{
+  id_cupo        String @id @default(uuid())
+  id_creador     String 
+  fecha          DateTime
+  hora_inicio    String
+  hora_fin       String
+  reservado      Boolean @default(false)
+  fecha_creacion DateTime @default(now())
+
+  creador Usuario @relation(fields: [id_creador], references: [id_usuario])
+  agenda Agenda?
 }
 
 // DOCUMENTOS
@@ -489,7 +528,7 @@ model Agenda {
 model DocumentoLegal {
   id_doc_legal       String          @id @default(uuid())
   nombre             String
-  tipo               String?
+  tipo               TipoDocLegal
   version            String?
   url_pdf            String?
   estado             EstadoDocumento @default(vigente)
@@ -497,6 +536,18 @@ model DocumentoLegal {
   fecha_modificacion DateTime        @updatedAt
 
   aceptaciones AceptacionDocumento[]
+}
+
+model DocumentoPersonal {
+  id_doc_personal  String   @id @default(uuid())
+  id_usuario       String
+  nombre           String
+  tipo             TipoDocPersonal
+  url_archivo      String?
+  estado           String   @default("activo")
+  fecha_creacion   DateTime @default(now())
+
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
 }
 
 model AceptacionDocumento {
@@ -508,28 +559,6 @@ model AceptacionDocumento {
 
   documento DocumentoLegal @relation(fields: [id_doc_legal], references: [id_doc_legal])
   usuario   Usuario        @relation(fields: [id_usuario], references: [id_usuario])
-  parq      Parq?
-}
 
-model Parq {
-  id_parq            String   @id @default(uuid())
-  id_usuario         String
-  id_aceptacion      String   @unique
-  respuestas         Json
-  seguimiento_medico Boolean  @default(false)
-
-  usuario    Usuario             @relation(fields: [id_usuario], references: [id_usuario])
-  aceptacion AceptacionDocumento @relation(fields: [id_aceptacion], references: [id_aceptacion])
-}
-
-model Documentacion {
-  id_documentacion String   @id @default(uuid())
-  id_usuario       String
-  nombre           String
-  tipo             String?
-  url_archivo      String?
-  estado           String   @default("activo")
-  fecha_creacion   DateTime @default(now())
-
-  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
+  @@unique([id_doc_legal, id_usuario])
 }
