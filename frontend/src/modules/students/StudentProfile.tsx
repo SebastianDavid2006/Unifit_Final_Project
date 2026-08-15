@@ -52,9 +52,12 @@ import { OverviewTab } from '@/modules/students/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/tabs/ProgressTab'
 import { AssessmentTab } from '@/modules/students/tabs/AssessmentTab'
 import { DocumentsTab } from '@/modules/students/tabs/DocumentsTab'
+import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
 
 export { TABS } from './StudentProfileData'
 export function StudentProfile({ student, tab = 'overview', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
+  const [editable, setEditable] = useState<Student>(student)
+  useEffect(() => setEditable(student), [student])
   const [localTab, setLocalTab] = useState('overview')
   const [modalOpen, setModalOpen] = useState(false)
   const [showInfoModal, setShowInfoModal] = useState(false)
@@ -723,7 +726,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
               <div className="text-left h-full">
 
               {currentTab === 'overview' && (
-                <OverviewTab student={student} imc={imc} onShowInfo={() => setShowInfoModal(true)} />
+                <OverviewTab student={editable} imc={imc} onShowInfo={() => setShowInfoModal(true)} />
               )}
               {currentTab === 'progress' && (
                 <ProgressTab
@@ -880,7 +883,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                       title: 'Contacto',
                       icon: <ListView />,
                       fields: [
-                        { label: 'Email', value: student.email },
+                        { label: 'Email', value: editable.email },
                         { label: 'Teléfono', value: student.phone },
                         { label: 'Contacto de emergencia', value: student.contactName },
                         { label: 'Tel. contacto', value: student.contactPhone },
@@ -2800,7 +2803,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                         title: 'Información de contacto',
                         model: <TelephoneView />,
                         fields: [
-                          { label: 'Email', value: student.email },
+                          { label: 'Email', value: editable.email },
                           { label: 'Teléfono', value: student.phone },
                           { label: 'Contacto de emergencia', value: student.contactName },
                           { label: 'Parentesco', value: student.contactRelation || '—' },
@@ -2838,6 +2841,9 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                         </div>
                       </motion.div>
                     ))}
+                  </div>
+                  <div className="mt-4">
+                    <IdentityAccessCard student={editable} onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))} />
                   </div>
                 </div>
               </motion.div>
