@@ -1,4 +1,4 @@
-import { Plus, Sparkles } from 'lucide-react'
+import { Lock, Plus, Sparkles } from 'lucide-react'
 import { BLUE, BLUE_GRAD, GOLD_GRAD, RED } from '../../AgendaData'
 import type { Appointment } from '../../AgendaData'
 import { fmtDate, typeColors, typeLabels } from '../data'
@@ -36,7 +36,11 @@ export function DayCell({ dt, idx, lastRow, rowIdx = 0, todayStr, getDayStatus, 
   const isHoveredCell = hoveredCol === idx && hoveredRow === rowIdx
   const isPressed = pressedCell?.col === idx && pressedCell?.row === rowIdx
   let colBg = 'transparent'
-  if (isHoveredCell) {
+  if (isHoliday) {
+    colBg = isHoveredCell
+      ? 'linear-gradient(135deg, rgba(230,57,70,0.26) 0%, rgba(230,57,70,0.12) 50%, rgba(230,57,70,0.06) 100%)'
+      : 'linear-gradient(135deg, rgba(230,57,70,0.18) 0%, rgba(230,57,70,0.08) 50%, rgba(230,57,70,0.04) 100%)'
+  } else if (isHoveredCell) {
     colBg = 'rgba(18,112,183,0.06)'
   } else if (isT) {
     colBg = 'rgba(18,112,183,0.04)'
@@ -50,6 +54,7 @@ export function DayCell({ dt, idx, lastRow, rowIdx = 0, todayStr, getDayStatus, 
       onMouseDown={() => setPressedCell({ col: idx, row: rowIdx })}
       onMouseUp={() => setPressedCell(null)}
       className="day-cell-hover relative min-h-[100px] p-2 cursor-pointer"
+      title={isHoliday ? st.holiday || undefined : undefined}
       style={{
         background: colBg,
         boxShadow: 'none',
@@ -64,7 +69,10 @@ export function DayCell({ dt, idx, lastRow, rowIdx = 0, todayStr, getDayStatus, 
         <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: GOLD_GRAD }} />
       )}
       {isHoliday && (
-        <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: RED }} title={st.holiday || undefined} />
+        <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center gap-1 px-2 text-center">
+          <Lock size={20} strokeWidth={2.5} style={{ color: RED, opacity: isHoveredCell ? 0.7 : 0.55 }} />
+          <span className="text-[9px] font-extrabold leading-tight" style={{ color: RED, opacity: isHoveredCell ? 0.9 : 0.7 }}>{st.holiday}</span>
+        </div>
       )}
       {isHoveredCell && hasNoAppts && !isHoliday && (
         <div className="absolute inset-0 z-10 flex items-center justify-center">

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Activity, FileText, Edit, Trash2, GraduationCap, Shield } from 'lucide-react'
+import { Activity, FileText, GraduationCap, Shield } from 'lucide-react'
 import GlassSearch from '@/features/admin/components/GlassSearch'
 import FilterDropdown from '@/features/admin/components/FilterDropdown'
 import iconRunning from '@/assets/icons/animated/icon_running.gif'
@@ -76,14 +76,6 @@ export default function TrainersToolbar({
             >
               <FileText size={14} />
               Documentos
-            </motion.button>
-          </div>
-          <div className="flex items-center gap-2">
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: isPermissions ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.12)', backdropFilter: 'blur(24px) saturate(1.6)', border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}` }}>
-              <Edit size={15} style={{ color: isPermissions ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.4)' }} />
-            </motion.button>
-            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: isPermissions ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.12)', backdropFilter: 'blur(24px) saturate(1.6)', border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}` }}>
-              <Trash2 size={15} style={{ color: isPermissions ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.4)' }} />
             </motion.button>
           </div>
         </div>

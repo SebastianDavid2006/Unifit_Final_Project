@@ -24,10 +24,11 @@ interface WeekViewProps {
   setHoveredHour: (v: string | null) => void
   getApptsForDate: (ds: string) => Appointment[]
   onSlotClick: (ds: string, t: string) => void
+  onEditAppt: (a: Appointment) => void
   hoverSlots?: boolean
 }
 
-export function WeekView({ fullscreen, viewTitle, viewMode, onViewModeChange, onPrev, onNext, isExpanded, onToggleExpand, weekDates, todayStr, publishedDates, getDayStatus, hoveredCol, hoveredHour, setHoveredCol, setHoveredHour, getApptsForDate, onSlotClick, hoverSlots = true }: WeekViewProps) {
+export function WeekView({ fullscreen, viewTitle, viewMode, onViewModeChange, onPrev, onNext, isExpanded, onToggleExpand, weekDates, todayStr, publishedDates, getDayStatus, hoveredCol, hoveredHour, setHoveredCol, setHoveredHour, getApptsForDate, onSlotClick, onEditAppt, hoverSlots = true }: WeekViewProps) {
   const dayHeader = (
     <div className="grid grid-cols-8" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
       <div className="w-14" />
@@ -66,9 +67,10 @@ export function WeekView({ fullscreen, viewTitle, viewMode, onViewModeChange, on
             onMouseLeave={() => { setHoveredCol(null); if (hoverSlots) setHoveredHour(null) }}
             onClick={() => { if (appts.length === 0 && !isHoliday) onSlotClick(ds, t) }}>
             {appts.map(a => (
-              <div key={a.id} className="rounded px-1 py-0.5 text-[8px] font-bold truncate leading-tight"
+              <div key={a.id} className="rounded px-1 py-0.5 text-[8px] font-bold truncate leading-tight cursor-pointer hover:opacity-85 transition-opacity"
                 style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `2px solid ${typeColors[a.type]}` }}
-                title={`${a.startTime} – ${a.endTime} ${a.title}`}
+                title={`${a.startTime} – ${a.endTime} ${a.title}${a.studentName ? ' - ' + a.studentName : ''}`}
+                onClick={e => { e.stopPropagation(); onEditAppt(a) }}
               >{a.startTime} – {a.endTime} {a.title}</div>
             ))}
           </div>

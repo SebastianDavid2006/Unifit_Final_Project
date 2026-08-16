@@ -1,10 +1,12 @@
 ﻿import { useState, useRef, useEffect, useMemo, Component, type ReactNode, type RefObject } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  X, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink, ScanLine, User
+  X, Check, RefreshCw, ChevronLeft, ChevronRight, ExternalLink, ScanLine, User, Mail
 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import confetti from 'canvas-confetti'
+import DemoInbox from '@/shared/components/DemoInbox'
+import { createAccount, generateTempPassword, sendEmail } from '@/shared/mock/mockAuth'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
@@ -32,13 +34,16 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const [aceptaDatos, setAceptaDatos] = useState(false)
   const [aceptaContrato, setAceptaContrato] = useState(false)
   const [sigPos, setSigPos] = useState(0)
-  const [sigVersion, setSigVersion] = useState(0)
+  const [sigDone, setSigDone] = useState(false)
   const [aceptaParq, setAceptaParq] = useState(false)
   const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
   const [fingerprintStatus, setFingerprintStatus] = useState<FingerprintStatus>('idle')
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
+  const [showInbox, setShowInbox] = useState(false)
+  const [createdEmail, setCreatedEmail] = useState('')
+  const [createdName, setCreatedName] = useState('')
   const sigRef = useRef<SignatureCanvas>(null)
   const guardianRef = useRef<SignatureCanvas>(null)
 
@@ -50,6 +55,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       setAceptaDatos(false)
       setAceptaContrato(false)
       setSigPos(0)
+      setSigDone(false)
       setAceptaParq(false)
       setDocs(loadDocs())
       setFingerprintStatus('idle')
@@ -95,17 +101,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     if (step === 2) return aceptaDatos
     if (step === 3) return aceptaContrato
     if (step === 4) return aceptaParq
-    if (step === 5) {
-      if (sigRef.current?.isEmpty() ?? true) return false
-      if (isMinor) {
-        return !!form.nombreAcudiente &&
-          !!form.parentescoAcudiente &&
-          !!form.telefonoAcudiente &&
-          (form.parentescoAcudiente !== 'Otro' || !!form.otroParentescoAcudiente) &&
-          !(guardianRef.current?.isEmpty() ?? true)
-      }
-      return true
-    }
+    if (step === 5) return sigDone
     if (step === 6) return fingerprintStatus === 'captured'
     return true
   }
@@ -142,6 +138,17 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     return age < 18
   }, [form.fechaNac])
 
+  useEffect(() => {
+    if (step !== 5) return
+    const id = window.setInterval(() => {
+      const studentEmpty = sigRef.current?.isEmpty() ?? true
+      const guardianEmpty = isMinor ? (guardianRef.current?.isEmpty() ?? true) : false
+      const done = !studentEmpty && (isMinor ? !guardianEmpty : true)
+      setSigDone(prev => (prev === done ? prev : done))
+    }, 250)
+    return () => window.clearInterval(id)
+  }, [step, isMinor])
+
   const submitForm = () => {
     const signatureData = sigRef.current?.toDataURL()
     const payload = {
@@ -161,6 +168,26 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       huella: fingerprintStatus === 'captured' ? 'capturada' : null,
     }
     console.log('Nuevo estudiante:', payload)
+
+    const email = (form.email || `${(form.primerNombre || 'estudiante').toLowerCase()}@unifit.com`).trim()
+    const tempPassword = generateTempPassword()
+    const created = createAccount({
+      email,
+      password: tempPassword,
+      nombre: `${form.primerNombre || ''} ${form.primerApellido || ''}`.trim(),
+      estado: 'activo',
+      debeCambiarContrasena: true,
+      onboarding: { cita: true, firma: true, huella: true },
+    })
+    sendEmail(
+      email,
+      'Tus credenciales de acceso a UniFit',
+      `Hola${form.primerNombre ? ` ${form.primerNombre}` : ''}! Tu cuenta fue creada exitosamente. Tu usuario es tu correo electrónico (${email}) y te hemos enviado una contraseña temporal. Al ingresar por primera vez deberás cambiarla por una nueva.`,
+      tempPassword,
+    )
+    setCreatedEmail(email)
+    setCreatedName(created.nombre)
+
     setSuccess(true)
     confetti({
       particleCount: 120,
@@ -298,7 +325,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
               penColor="#1A1A1E"
               minWidth={1}
               maxWidth={2.5}
-              onEnd={() => setSigVersion(v => v + 1)}
               canvasProps={{
                 className: 'w-full',
                 style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },
@@ -924,20 +950,48 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.45, duration: 0.4 }}
-        className="text-xs font-medium mt-1 text-center"
+        className="text-xs font-medium mt-2 text-center max-w-xs leading-relaxed"
         style={{ color: 'rgba(0,0,0,0.35)' }}
       >
-        Los datos del estudiante han sido guardados en el sistema.
+        Las credenciales fueron enviadas al correo del estudiante.
       </motion.p>
-      <motion.button
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.3 }}
+        className="mt-3 rounded-2xl px-4 py-3 w-full max-w-xs"
+        style={{ background: 'rgba(18,112,183,0.06)', border: '1px solid rgba(18,112,183,0.2)' }}
+      >
+        <p className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.45)' }}>Cuéntale al estudiante</p>
+        <p className="text-xs mt-1 leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
+          Su usuario es su correo electrónico y una contraseña temporal le llegará por email. Al ingresar por primera vez deberá cambiarla.
+        </p>
+        {createdEmail && (
+          <p className="text-[10px] font-bold mt-2" style={{ color: '#1270B7' }}>{createdEmail}</p>
+        )}
+      </motion.div>
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.3 }}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.92 }}
+        onClick={() => setShowInbox(true)}
+        className="mt-4 flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
+        style={{ background: BLUE_GRAD }}
+      >
+        <Mail size={14} />
+        Ver correo demo
+      </motion.button>
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7, duration: 0.3 }}
         whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }}
         whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }}
         onClick={onClose}
-        className="mt-8 mb-10 px-8 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
-        style={{ background: GREEN_GRAD }}
+        className="mt-4 mb-10 px-8 py-3 rounded-2xl text-xs font-bold cursor-pointer"
+        style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.55)' }}
       >
         Cerrar
       </motion.button>
@@ -949,6 +1003,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   return (
     <AnimatePresence>
       {open && (
+        <>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1246,6 +1301,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
             </AnimatePresence>
           </motion.div>
         </motion.div>
+        <DemoInbox open={showInbox} onClose={() => setShowInbox(false)} />
+        </>
       )}
     </AnimatePresence>
   )

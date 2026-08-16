@@ -1,7 +1,7 @@
 import FormField from '../components/FormField'
 import FormSelect from '../components/FormSelect'
 import SectionTitle from '../components/SectionTitle'
-import { GENEROS, GRUPOS_SANGRE, TIPO_DOC } from '../data'
+import { GENEROS, GRUPOS_SANGRE, PARENTESCOS, TIPO_DOC } from '../data'
 import type { NewUserForm } from '../data'
 
 export default function PersonalInfoSection({ form, onChange }: {
@@ -41,10 +41,17 @@ export default function PersonalInfoSection({ form, onChange }: {
       </div>
 
       <SectionTitle title="Contacto de emergencia" />
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <FormField label="Nombre contacto" value={form.nombreContacto} onChange={v => onChange('nombreContacto', v)} />
         <FormField label="Teléfono contacto" value={form.telefonoContacto} onChange={v => onChange('telefonoContacto', v)} />
-        <FormField label="Parentesco" value={form.parentesco} onChange={v => onChange('parentesco', v)} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <FormSelect label="Parentesco" value={form.parentesco} onChange={v => onChange('parentesco', v)} options={PARENTESCOS} />
+        {form.parentesco === 'Otro' ? (
+          <FormField label="Especifique el parentesco" value={form.otroParentesco} onChange={v => onChange('otroParentesco', v)} required />
+        ) : (
+          <span />
+        )}
       </div>
     </div>
   )

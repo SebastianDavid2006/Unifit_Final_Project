@@ -19,9 +19,10 @@ interface DayViewProps {
   getDayStatus: (ds: string) => DayStatus
   getApptsForDate: (ds: string) => Appointment[]
   onSlotClick: (ds: string, t: string) => void
+  onEditAppt: (a: Appointment) => void
 }
 
-export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onPrev, onNext, isExpanded, onToggleExpand, currentMonth, getDayStatus, getApptsForDate, onSlotClick }: DayViewProps) {
+export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onPrev, onNext, isExpanded, onToggleExpand, currentMonth, getDayStatus, getApptsForDate, onSlotClick, onEditAppt }: DayViewProps) {
   const ds = fmtDate(currentMonth)
   const holidayName = getDayStatus(ds).holiday || null
   const isHoliday = !!holidayName
@@ -32,10 +33,11 @@ export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onP
     return (
       <div key={t} className="flex items-center gap-2 px-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.03)', minHeight: fullscreen ? 40 : 36, paddingTop: fullscreen ? 8 : 6, paddingBottom: fullscreen ? 8 : 6 }}>
         <div className={`w-14 font-bold flex-shrink-0 ${timeText}`} style={{ color: 'rgba(0,0,0,0.2)' }}>{t}</div>
-        <div className={`flex-1 ${isHoliday ? '' : 'cursor-pointer'}`} onClick={() => { if (!isHoliday) onSlotClick(ds, t) }}>
+        <div className={`flex-1 ${isHoliday ? '' : 'cursor-pointer'}`} onClick={() => { if (!isHoliday && appts.length === 0) onSlotClick(ds, t) }}>
           {appts.map(a => (
-            <div key={a.id} className={`rounded-md px-2 py-1 font-bold truncate ${apptText}`}
+            <div key={a.id} className={`rounded-md px-2 py-1 font-bold truncate ${apptText} cursor-pointer hover:opacity-85 transition-opacity`}
               style={{ background: `${typeColors[a.type]}18`, color: typeColors[a.type], borderLeft: `3px solid ${typeColors[a.type]}` }}
+              onClick={e => { e.stopPropagation(); onEditAppt(a) }}
             >
               <span>{a.startTime} – {a.endTime}</span> {a.title}
               {a.studentName && <span className="ml-1 font-medium" style={{ opacity: 0.7 }}>— {a.studentName}</span>}

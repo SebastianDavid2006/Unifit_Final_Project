@@ -19,7 +19,7 @@ export default function TrainersList({ paged, totalPages, currentPage, showFilte
       <BannerCard onOpenNewUser={onOpenNewUser} />
 
       <motion.div layout transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} style={{ filter: showFilters ? 'blur(4px)' : 'none', opacity: showFilters ? 0.5 : 1, transition: 'filter 0.3s ease, opacity 0.3s ease', pointerEvents: showFilters ? 'none' : 'auto' }}>
-        <div className="grid grid-cols-[1.9fr_1.1fr_0.8fr_1.3fr_auto] gap-4 px-4 mb-3">
+        <div className="grid grid-cols-[1.9fr_1.1fr_1.3fr_1.3fr_auto] gap-4 px-4 mb-3">
           {tableHeaders.map((h, i) => (
             <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
           ))}

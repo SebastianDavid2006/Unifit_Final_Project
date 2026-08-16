@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
+import coachCongratsImg from '@/assets/illustrations/characters/coach_2/coach_2_congratulations.webp'
 import { GREEN_GRAD } from '../data'
 
 export default function SuccessScreen({ onClose }: { onClose: () => void }) {

@@ -306,10 +306,10 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
       return <YearView fullscreen={fullscreen} {...headerProps} year={year} todayStr={todayStr} appointments={appointments} publishedDates={publishedDates} onSelectMonth={handleSelectMonth} />
     }
     if (viewMode === 'week') {
-      return <WeekView fullscreen={fullscreen} {...headerProps} weekDates={weekDates} todayStr={todayStr} publishedDates={publishedDates} getDayStatus={getDayStatus} hoveredCol={hoveredCol} hoveredHour={hoveredHour} setHoveredCol={setHoveredCol} setHoveredHour={setHoveredHour} getApptsForDate={getApptsForDate} onSlotClick={handleSlotClick} hoverSlots={!fullscreen} />
+      return <WeekView fullscreen={fullscreen} {...headerProps} weekDates={weekDates} todayStr={todayStr} publishedDates={publishedDates} getDayStatus={getDayStatus} hoveredCol={hoveredCol} hoveredHour={hoveredHour} setHoveredCol={setHoveredCol} setHoveredHour={setHoveredHour} getApptsForDate={getApptsForDate} onSlotClick={handleSlotClick} onEditAppt={handleEditAppointment} hoverSlots={!fullscreen} />
     }
     if (viewMode === 'day') {
-      return <DayView fullscreen={fullscreen} {...headerProps} currentMonth={currentMonth} getDayStatus={getDayStatus} getApptsForDate={getApptsForDate} onSlotClick={handleSlotClick} />
+      return <DayView fullscreen={fullscreen} {...headerProps} currentMonth={currentMonth} getDayStatus={getDayStatus} getApptsForDate={getApptsForDate} onSlotClick={handleSlotClick} onEditAppt={handleEditAppointment} />
     }
     return <MonthView fullscreen={fullscreen} {...headerProps} year={year} month={month} todayStr={todayStr} getMonthGrid={getMonthGrid} getDayStatus={getDayStatus} getApptsForDate={getApptsForDate} publishedDates={publishedDates} hoveredCol={hoveredCol} hoveredRow={hoveredRow} pressedCell={pressedCell} setHoveredCol={setHoveredCol} setHoveredRow={setHoveredRow} setPressedCell={setPressedCell} onSelectDate={handleSelectDate} />
   }

@@ -51,14 +51,14 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
   const currentPage = Math.min(page, totalPages)
   const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
-  function handleNewUserSuccess(user: { name: string; email: string; phone: string; role: string }) {
+  function handleNewUserSuccess(user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string }) {
     const initials = user.name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
     const newTrainer: Trainer = {
       id: Math.max(0, ...trainers.map(t => t.id)) + 1,
       name: user.name,
       email: user.email,
       phone: user.phone,
-      document: `CC ${1000000000 + Math.max(0, ...trainers.map(t => t.id)) + 1}`,
+      document: user.document,
       speciality: user.role === 'admin' ? 'Administración del Sistema' : 'Entrenamiento General',
       role: user.role === 'admin' ? 'admin' : 'trainer',
       students: 0,
@@ -68,6 +68,13 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
       joinedAt: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }),
       schedule: 'Lun-Vie 8AM-4PM',
       certifications: user.role === 'admin' ? ['Gestión de Plataforma'] : ['Entrenamiento Funcional'],
+      contactName: user.contactName,
+      contactPhone: user.contactPhone,
+      contactRelation: user.contactRelation,
+      birthDate: user.birthDate,
+      gender: user.gender,
+      eps: user.eps,
+      bloodType: user.bloodType,
     }
     setTrainers(prev => [newTrainer, ...prev])
   }

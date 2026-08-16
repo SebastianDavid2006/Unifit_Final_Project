@@ -8,17 +8,6 @@ export default function TrainerDashboard() {
   return (
     <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
       <style>{`
-        .text-gradient-warm {
-          background: linear-gradient(120deg, #F43843 0%, #FF9F0A 35%, #1270B7 100%);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-        }
-        .stat-value {
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-        }
         .gradient-border {
           border: 1.5px solid rgba(255,255,255,0.75);
         }

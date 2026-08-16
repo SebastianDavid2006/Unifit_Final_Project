@@ -18,4 +18,4 @@ export const statusMeta = {
   inactive: { label: 'Inactivo', color: '#E31B23', bg: 'rgba(244,67,54,0.12)' },
 }
 
-export const tableHeaders = ['Nombre', 'Cargo', 'Estudiantes', 'Estado']
+export const tableHeaders = ['Nombre', 'Cargo', 'Estado', 'Fecha de creación']

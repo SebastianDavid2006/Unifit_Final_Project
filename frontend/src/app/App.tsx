@@ -4,8 +4,10 @@ import { LoginPage } from '@/auth/pages/LoginPage'
 import { RegisterPage } from '@/auth/pages/RegisterPage'
 import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
 import { StudentPage } from '@/features/student/pages/StudentPage'
+import StudentOnboardingGate from '@/features/student/StudentOnboardingGate'
 import { AdminPage } from '@/features/admin/pages/AdminPage'
 import BackgroundDecor from '@/components/BackgroundDecor'
+import type { MockSession } from '@/shared/mock/mockAuth'
 
 type Platform = 'trainer' | 'student' | 'admin'
 
@@ -40,6 +42,7 @@ function ParticleField() {
 
 export default function App() {
   const [screen, setScreen] = useState<'login' | 'register' | Platform>('login')
+  const [studentSession, setStudentSession] = useState<MockSession | null>(null)
 
   return (
     <div
@@ -70,7 +73,10 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <LoginPage onSelect={(platform) => setScreen(platform)} onRegister={() => setScreen('register')} />
+              <LoginPage onSelect={(platform, session) => {
+                if (platform === 'student' && session) setStudentSession(session)
+                setScreen(platform)
+              }} onRegister={() => setScreen('register')} />
             </motion.div>
           )}
           {screen === 'register' && (
@@ -106,7 +112,11 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <StudentPage />
+              {studentSession ? (
+                <StudentOnboardingGate session={studentSession} onLogout={() => { setStudentSession(null); setScreen('login') }} />
+              ) : (
+                <StudentPage />
+              )}
             </motion.div>
           )}
           {screen === 'admin' && (

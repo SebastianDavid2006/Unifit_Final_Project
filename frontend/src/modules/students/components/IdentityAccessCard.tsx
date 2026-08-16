@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Fingerprint, LockKeyhole, Pencil, PenLine, X } from 'lucide-react'
+import { Fingerprint, LockKeyhole, PenLine, X } from 'lucide-react'
 import type SignatureCanvas from 'react-signature-canvas'
 import type { Student } from '../StudentProfileData'
 import { SignaturePad } from './SignaturePad'
@@ -13,14 +13,12 @@ interface Props {
 
 const BLUE = '#1270B7'
 const GREEN = '#22C55E'
-const RED = '#F43843'
+const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
+const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 
 type FingerprintStatus = 'idle' | 'scanning' | 'captured'
 
 export function IdentityAccessCard({ student, onUpdate }: Props) {
-  const [editingEmail, setEditingEmail] = useState(false)
-  const [emailDraft, setEmailDraft] = useState(student.email || '')
-  const [emailError, setEmailError] = useState(false)
   const [sigOpen, setSigOpen] = useState(false)
   const [fpOpen, setFpOpen] = useState(false)
   const [fpStatus, setFpStatus] = useState<FingerprintStatus>('idle')
@@ -30,17 +28,6 @@ export function IdentityAccessCard({ student, onUpdate }: Props) {
   useEffect(() => () => {
     if (fpTimer.current) window.clearTimeout(fpTimer.current)
   }, [])
-
-  const saveEmail = () => {
-    const v = emailDraft.trim()
-    if (!v || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
-      setEmailError(true)
-      return
-    }
-    onUpdate({ email: v })
-    setEditingEmail(false)
-    setEmailError(false)
-  }
 
   const saveSignature = () => {
     const data = sigRef.current?.toDataURL()
@@ -86,50 +73,11 @@ export function IdentityAccessCard({ student, onUpdate }: Props) {
             <div className="w-1 h-6 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
             <p className="text-sm font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad y acceso</p>
           </div>
-          <p className="text-[11px] mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Edita el correo, la firma y la huella digital</p>
+          <p className="text-[11px] mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Edita la firma y la huella digital</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl p-3.5" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.05)' }}>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.4)' }}>Correo</p>
-            {!editingEmail && (
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => { setEmailDraft(student.email || ''); setEditingEmail(true); setEmailError(false) }}
-                className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer"
-                style={{ background: 'rgba(18,112,183,0.08)', color: BLUE }}
-              >
-                <Pencil size={12} />
-              </motion.button>
-            )}
-          </div>
-          {editingEmail ? (
-            <div>
-              <input
-                value={emailDraft}
-                onChange={e => { setEmailDraft(e.target.value); setEmailError(false) }}
-                autoFocus
-                className="w-full rounded-lg px-2.5 py-2 text-xs font-semibold outline-none"
-                style={{ background: '#fff', border: `1px solid ${emailError ? RED : 'rgba(18,112,183,0.25)'}`, color: '#0D1B2A' }}
-              />
-              {emailError && <p className="text-[9px] mt-1 font-bold" style={{ color: RED }}>Correo inválido</p>}
-              <div className="flex gap-1.5 mt-2">
-                <button onClick={saveEmail} className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-[10px] font-bold text-white cursor-pointer" style={{ background: BLUE }}>
-                  <Check size={11} /> Guardar
-                </button>
-                <button onClick={() => setEditingEmail(false)} className="flex-1 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer" style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.5)' }}>
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm font-semibold break-all" style={{ color: '#0D1B2A' }}>{student.email || '—'}</p>
-          )}
-        </div>
-
+      <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl p-3.5 flex flex-col" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.05)' }}>
           <p className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color: 'rgba(0,0,0,0.4)' }}>Firma</p>
           <div className="flex-1 flex items-center justify-center mb-2.5 min-h-[48px]">
@@ -141,8 +89,8 @@ export function IdentityAccessCard({ student, onUpdate }: Props) {
               </svg>
             )}
           </div>
-          <button onClick={() => setSigOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold cursor-pointer" style={{ background: 'rgba(18,112,183,0.08)', color: BLUE }}>
-            <PenLine size={11} /> {student.firma ? 'Editar firma' : 'Firmar ahora'}
+          <button onClick={() => setSigOpen(true)} className="self-center inline-flex items-center gap-1.5 px-5 py-2 rounded-3xl text-xs font-bold text-white cursor-pointer" style={{ background: BLUE_GRAD, boxShadow: '0 4px 16px rgba(18,112,183,0.35)' }}>
+            <PenLine size={13} /> {student.firma ? 'Editar firma' : 'Firmar ahora'}
           </button>
         </div>
 
@@ -156,8 +104,8 @@ export function IdentityAccessCard({ student, onUpdate }: Props) {
           <div className="flex-1 flex items-center justify-center py-2 mb-2.5">
             <Fingerprint size={40} strokeWidth={1.5} style={{ color: student.huella ? GREEN : 'rgba(0,0,0,0.15)' }} />
           </div>
-          <button onClick={() => { setFpStatus('idle'); setFpOpen(true) }} className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-[10px] font-bold text-white cursor-pointer" style={{ background: student.huella ? GREEN : RED }}>
-            <Fingerprint size={11} /> {student.huella ? 'Actualizar huella' : 'Capturar huella'}
+          <button onClick={() => { setFpStatus('idle'); setFpOpen(true) }} className="self-center inline-flex items-center gap-1.5 px-5 py-2 rounded-3xl text-xs font-bold text-white cursor-pointer" style={{ background: GREEN_BLUE_GRAD, boxShadow: '0 4px 16px rgba(18,112,183,0.35)' }}>
+            <Fingerprint size={13} /> {student.huella ? 'Actualizar huella' : 'Capturar huella'}
           </button>
         </div>
       </div>

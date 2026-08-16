@@ -1,4 +1,4 @@
-import { User, FileText, Shield, ScanLine } from 'lucide-react'
+import { User, FileText, Shield, ScanLine, ClipboardCheck } from 'lucide-react'
 
 export const BLUE = '#1270B7'
 export const RED = '#F43843'
@@ -12,20 +12,22 @@ export const GENEROS = ['Masculino', 'Femenino', 'Otro']
 export const GRUPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 export const MODALIDADES = ['Presencial', 'Virtual']
 export const JORNADAS = ['Mañana', 'Tarde', 'Noche', 'Completa']
+export const PARENTESCOS = ['Padre', 'Madre', 'Hermano(a)', 'Abuelo(a)', 'Tío(a)', 'Primo(a)', 'Otro']
 
 export const STEPS = [
   { num: 1, label: 'Información personal', icon: User },
   { num: 2, label: 'Tratamiento de datos', icon: FileText },
   { num: 3, label: 'Contrato', icon: FileText },
-  { num: 4, label: 'Rol del usuario', icon: Shield },
-  { num: 5, label: 'Huella digital', icon: ScanLine },
+  { num: 4, label: 'PAR-Q', icon: ClipboardCheck },
+  { num: 5, label: 'Rol del usuario', icon: Shield },
+  { num: 6, label: 'Huella digital', icon: ScanLine },
 ]
 
 export const INITIAL_FORM = {
   primerNombre: '', segundoNombre: '', primerApellido: '', segundoApellido: '',
   tipoDoc: 'CC', numDoc: '', fechaNac: '', genero: 'Masculino',
   eps: '', grupoSanguineo: 'O+', email: '', telefono: '',
-  nombreContacto: '', telefonoContacto: '', parentesco: '',
+  nombreContacto: '', telefonoContacto: '', parentesco: '', otroParentesco: '',
 }
 
 export type NewUserForm = typeof INITIAL_FORM

@@ -57,6 +57,8 @@ export interface Student {
   nivelFormacion?: string
   area?: string
   cargo?: string
+  firma?: string
+  huella?: string
 }
 
 export const RED = '#E63946'

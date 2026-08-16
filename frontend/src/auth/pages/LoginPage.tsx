@@ -2,12 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { motion } from 'motion/react'
 import { User, Lock, Eye, EyeOff, UserPlus, ArrowRight } from 'lucide-react'
 import { LoginBackground } from '@/auth/components/LoginBackground'
+import { mockLogin, type MockSession } from '@/shared/mock/mockAuth'
 import logotipo from '@/assets/logo/logo.webp'
 import universidadLogo from '@/assets/logo/universitaria_de_colombia.webp'
 import secundarioLogo from '@/assets/logo/universitaria_de_bogota.webp'
 
 interface LoginPageProps {
-  onSelect: (platform: 'trainer' | 'student' | 'admin') => void
+  onSelect: (platform: 'trainer' | 'student' | 'admin', session?: MockSession) => void
   onRegister: () => void
 }
 
@@ -34,7 +35,8 @@ export function LoginPage({ onSelect, onRegister }: LoginPageProps) {
     const p = contraseña.trim()
     if (u === 'admin' && p === 'admin123') return onSelect('admin')
     if (u === 'entrenador' && p === 'entrenador123') return onSelect('trainer')
-    if (u === 'estudiante' && p === 'estudiante123') return onSelect('student')
+    const session = mockLogin(u, p)
+    if (session && session.user.rol === 'estudiante') return onSelect('student', session)
     setError('Credenciales incorrectas')
     setShake(true)
     setTimeout(() => setShake(false), 500)
