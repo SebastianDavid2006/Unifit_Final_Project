@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Maximize2, X } from 'lucide-react'
+import { Maximize2, X, Fingerprint, FileSignature, LockKeyhole, PenLine } from 'lucide-react'
 import type { Trainer } from '@/data/trainers'
 import DetailCard from '../components/DetailCard'
 import FieldList from '../components/FieldList'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
-import { TrophyView } from '@/assets/models/ui/objects/trophy/TrophyModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
 import { ListView } from '@/assets/models/ui/objects/list/ListModel'
-import { ClockView } from '@/assets/models/ui/objects/clock/ClockModel'
-import { DocumentView } from '@/assets/models/ui/objects/document/DocumentModel'
-import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
+import { DocumentView } from '@/assets/models/ui/objects/document/DocumentModel'
 import { BLUE, RED } from '../data'
+
+const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
+const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
+const GREEN = '#22C55E'
 
 export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
   const [showInfoModal, setShowInfoModal] = useState(false)
@@ -54,42 +55,67 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
             <p className="text-sm font-medium text-center relative z-10" style={{ color: 'rgba(0,0,0,0.4)' }}>{trainer.speciality}</p>
           </div>
 
-          <DetailCard gridColumn="3" gridRow="1" accent={BLUE} title="Rendimiento" model={<TrophyView />}>
-            <div className="flex items-center gap-5">
-              <div className="relative flex-shrink-0" style={{ width: 96, height: 96 }}>
-                <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-                  <defs>
-                    <linearGradient id="trainerScoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#30D158" />
-                      <stop offset="100%" stopColor="#00C7BE" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="url(#trainerScoreGrad)" strokeWidth="2.8" strokeLinecap="round" strokeDasharray={`${trainer.rating * 0.999} ${100 - trainer.rating * 0.999}`} />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-2xl font-extrabold" style={{ background: 'linear-gradient(90deg, #30D158, #00C7BE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{trainer.rating}%</p>
-                </div>
+          {/* Tarjeta Identidad y Acceso */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-[28px] p-5"
+            style={{
+              gridColumn: '3',
+              gridRow: '1',
+              background: 'linear-gradient(145deg, rgba(18,112,183,0.09) 0%, rgba(18,112,183,0.03) 55%, rgba(255,255,255,0.6) 100%)',
+              boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 16px rgba(18,112,183,0.06)',
+              border: '1px solid rgba(255,255,255,0.4)',
+            }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.10)', color: BLUE }}>
+                <LockKeyhole size={18} />
               </div>
-              <div className="flex flex-col flex-1 gap-3">
-                {[
-                  { label: 'Efectividad', value: trainer.rating, gradient: 'linear-gradient(90deg, #30D158, #00C7BE)' },
-                  { label: 'Retención', value: Math.min(100, trainer.rating + 3), gradient: 'linear-gradient(90deg, #FF9500, #FFCC02)' },
-                  { label: 'Carga laboral', value: Math.min(100, trainer.students * 3 + 10), gradient: 'linear-gradient(90deg, #FF6B8A, #FF375F)' },
-                ].map(m => (
-                  <div key={m.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-[10px] font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{m.label}</p>
-                      <p className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{m.value}%</p>
-                    </div>
-                    <div className="w-full h-2 rounded-full" style={{ background: 'rgba(0,0,0,0.05)' }}>
-                      <div className="h-full rounded-full" style={{ width: `${m.value}%`, background: m.gradient }} />
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
+                  <p className="text-sm font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad y acceso</p>
+                </div>
+                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Edita la firma y la huella digital</p>
               </div>
             </div>
-          </DetailCard>
+
+            <div className="space-y-3">
+              {/* Box Firma */}
+              <div className="rounded-xl p-3 flex flex-col" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.05)' }}>
+                <p className="text-[9px] font-bold uppercase tracking-wide mb-2" style={{ color: 'rgba(0,0,0,0.4)' }}>Firma</p>
+                <div className="flex items-center justify-center mb-2.5 min-h-[40px]">
+                  {trainer.firma ? (
+                    <img src={trainer.firma} alt="firma" className="max-h-10" />
+                  ) : (
+                    <svg viewBox="0 0 400 120" className="w-full h-auto opacity-20" style={{ maxHeight: 40 }}>
+                      <path d="M30,90 C40,50 60,30 80,40 C100,50 95,75 110,65 C125,55 130,35 150,30 C170,25 180,50 195,55 C210,60 220,40 240,35 C260,30 270,55 280,60 C290,65 300,45 320,50 C340,55 345,70 355,65 C365,60 370,50 380,55" fill="none" stroke="#0D1B2A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+                <button className="self-center inline-flex items-center gap-1.5 px-4 py-1.5 rounded-3xl text-[10px] font-bold text-white cursor-pointer" style={{ background: BLUE_GRAD, boxShadow: '0 4px 12px rgba(18,112,183,0.25)' }}>
+                  <PenLine size={12} /> {trainer.firma ? 'Editar firma' : 'Firmar ahora'}
+                </button>
+              </div>
+
+              {/* Box Huella */}
+              <div className="rounded-xl p-3 flex flex-col" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.05)' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[9px] font-bold uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.4)' }}>Huella digital</p>
+                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md" style={{ background: trainer.huella ? 'rgba(34,197,94,0.12)' : 'rgba(0,0,0,0.05)', color: trainer.huella ? GREEN : 'rgba(0,0,0,0.35)' }}>
+                    {trainer.huella ? 'Capturada ✓' : 'Sin capturar'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-center py-1 mb-2">
+                  <Fingerprint size={32} strokeWidth={1.5} style={{ color: trainer.huella ? GREEN : 'rgba(0,0,0,0.15)' }} />
+                </div>
+                <button className="self-center inline-flex items-center gap-1.5 px-4 py-1.5 rounded-3xl text-[10px] font-bold text-white cursor-pointer" style={{ background: GREEN_BLUE_GRAD, boxShadow: '0 4px 12px rgba(18,112,183,0.25)' }}>
+                  <Fingerprint size={12} /> {trainer.huella ? 'Actualizar huella' : 'Capturar huella'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
 
           <DetailCard gridColumn="1" gridRow="2" accent={RED} title="Contacto" model={<TelephoneView />}>
             <FieldList fields={[
@@ -116,10 +142,10 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
             </div>
           </DetailCard>
 
-          <DetailCard gridColumn="1" gridRow="3" accent={RED} title="Horario" model={<ClockView />}>
+          <DetailCard gridColumn="1" gridRow="3" accent={RED} title="Información Médica" model={<StethoscopeView />}>
             <FieldList fields={[
-              { label: 'Jornada', value: trainer.schedule },
-              { label: 'Días laborales', value: trainer.schedule.split(' ')[0] },
+              { label: 'EPS', value: trainer.eps },
+              { label: 'Grupo sanguíneo', value: trainer.bloodType },
             ]} />
           </DetailCard>
 

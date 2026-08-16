@@ -20,6 +20,8 @@ export interface Trainer {
   gender: string
   eps: string
   bloodType: string
+  firma?: string
+  huella?: string
 }
 
 export const initialTrainers: Trainer[] = [
