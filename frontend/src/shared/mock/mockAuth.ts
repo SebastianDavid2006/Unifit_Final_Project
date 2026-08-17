@@ -40,12 +40,12 @@ function seedUsers(): Record<string, MockUser> {
   return {
     'entrenador': {
       id: 'u-trainer', email: 'entrenador', password: 'entrenador123', rol: 'entrenador',
-      estado: 'activo', debeCambiarContrasena: true,
+      estado: 'activo', debeCambiarContrasena: false,
       onboarding: { cita: true, firma: true, huella: true }, nombre: 'Entrenador',
     },
     'admin': {
       id: 'u-admin', email: 'admin', password: 'admin123', rol: 'admin',
-      estado: 'activo', debeCambiarContrasena: true,
+      estado: 'activo', debeCambiarContrasena: false,
       onboarding: { cita: true, firma: true, huella: true }, nombre: 'Administrador',
     },
     'test': {
