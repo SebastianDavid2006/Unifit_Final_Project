@@ -214,7 +214,7 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
         <div className="relative flex items-center justify-center">
           <motion.img
             src={coachImg}
-            alt="te faltan 3 pasos"
+            alt="completa tu registro"
             className="w-[260px] h-[260px] sm:w-[360px] sm:h-[360px] object-contain object-bottom relative z-10"
             style={{
               WebkitMaskImage: 'linear-gradient(180deg, black 45%, transparent 100%)',
@@ -225,12 +225,12 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
             transition={{ type: 'spring', stiffness: 260, damping: 16 }}
           />
         </div>
-        <h2 className="text-xl sm:text-2xl font-extrabold mt-4" style={{ color: '#fff' }}>Te faltan 3 pasos</h2>
+        <h2 className="text-xl sm:text-2xl font-extrabold mt-4" style={{ color: '#fff' }}>Para completar tu registro</h2>
         <p className="text-sm font-bold mt-3" style={{ color: '#7ec8e3' }}>
-          Te faltan solo 3 pasos para tu acceso completo
+          Agenda tu cita y firma tu contrato
         </p>
         <p className="text-xs mt-3 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.6)' }}>
-          Agenda tu cita para capturar tu huella digital y tu firma. Así quedas listo para entrenar.
+          Elige el día y la hora para firmar el contrato, capturar tu huella y activar tu app. Así quedarás listo para entrenar.
         </p>
       </div>
 
