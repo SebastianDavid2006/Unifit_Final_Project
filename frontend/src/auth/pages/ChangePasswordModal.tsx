@@ -12,7 +12,6 @@ interface ChangePasswordModalProps {
 
 export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
   const isMobile = useIsMobile()
-  const [currentPass, setCurrentPass] = useState('')
   const [newPass, setNewPass] = useState('')
   const [confirmPass, setConfirmPass] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -26,11 +25,6 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (!currentPass) {
-      setError('Ingresa tu contraseña actual')
-      triggerShake()
-      return
-    }
     if (newPass.length < 6) {
       setError('La nueva contraseña debe tener al menos 6 caracteres')
       triggerShake()
@@ -38,11 +32,6 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
     }
     if (newPass !== confirmPass) {
       setError('Las contraseñas no coinciden')
-      triggerShake()
-      return
-    }
-    if (newPass === currentPass) {
-      setError('La nueva contraseña debe ser diferente a la actual')
       triggerShake()
       return
     }
@@ -76,26 +65,6 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
           </p>
         </div>
 
-        <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>CONTRASEÑA ACTUAL</label>
-        <div className="flex items-center gap-3 px-5 rounded-2xl mb-4 h-14" style={{
-          background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(255,255,255,0.12)',
-        }}>
-          <Lock size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />
-          <input
-            type={showPass ? 'text' : 'password'}
-            value={currentPass}
-            onChange={e => setCurrentPass(e.target.value)}
-            placeholder="••••••••"
-            className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-white/30"
-          />
-          <button type="button" onClick={() => setShowPass(!showPass)} className="flex items-center justify-center cursor-pointer">
-            {showPass
-              ? <EyeOff size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />
-              : <Eye size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />}
-          </button>
-        </div>
-
         <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>NUEVA CONTRASEÑA</label>
         <div className="flex items-center gap-3 px-5 rounded-2xl mb-4 h-14" style={{
           background: 'rgba(255,255,255,0.08)',
@@ -109,6 +78,11 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
             placeholder="••••••••"
             className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-white/30"
           />
+          <button type="button" onClick={() => setShowPass(!showPass)} className="flex items-center justify-center cursor-pointer">
+            {showPass
+              ? <EyeOff size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />
+              : <Eye size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />}
+          </button>
         </div>
 
         <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>CONFIRMAR NUEVA CONTRASEÑA</label>
