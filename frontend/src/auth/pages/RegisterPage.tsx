@@ -21,9 +21,7 @@ const DARK_BG = '#0A0A14'
 let persistedPreview: 'celular' | 'desktop' | 'auto' = 'auto'
 
 const FORM_STEPS = [
-  { num: 1, label: 'Información' },
-  { num: 2, label: 'Tratamiento de datos' },
-  { num: 3, label: 'Contrato' },
+  { num: 1, label: 'Información personal' },
 ]
 
 type Phase = 'intro' | 'form' | 'success'
@@ -150,8 +148,6 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       }
       return true
     }
-    if (step === 2) return aceptaDatos
-    if (step === 3) return aceptaContrato
     return true
   }
 
@@ -161,12 +157,8 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       setTimeout(() => setShake(false), 500)
       return
     }
-    if (step < FORM_STEPS.length) {
-      setStep(p => p + 1)
-    } else {
-      createMockAccount()
-      setPhase('success')
-    }
+    createMockAccount()
+    setPhase('success')
   }
 
   const createMockAccount = () => {
@@ -515,22 +507,11 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             <ArrowLeft size={14} />
             {step === 1 ? 'Salir' : 'Atrás'}
           </motion.button>
-          {step === FORM_STEPS.length ? (
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowContractExpand(true)}
-              title="Expandir documento"
-              className="flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer justify-self-center"
-              style={{ background: 'rgba(255,255,255,0.08)', color: '#7ec8e3', border: '1px solid rgba(126,200,227,0.25)' }}
-              animate={{ scale: [1, 1.12, 1] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <Maximize2 size={15} />
-            </motion.button>
-          ) : (
-            <span />
-          )}
+            {step === FORM_STEPS.length ? (
+              <span />
+            ) : (
+              <span />
+            )}
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -538,7 +519,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer justify-self-end"
             style={{ background: BLUE_GRAD }}
           >
-            {step === FORM_STEPS.length ? 'Finalizar' : 'Siguiente'}
+            Finalizar
             <ArrowRight size={14} />
           </motion.button>
         </div>
