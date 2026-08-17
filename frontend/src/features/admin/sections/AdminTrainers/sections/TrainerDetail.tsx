@@ -377,14 +377,16 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
               </div>
 
               {/* Footer */}
+              {!signatureSuccess && (
               <div className="flex-shrink-0 p-6 pt-4 flex items-center justify-between" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', background: 'rgba(255,255,255,0.8)' }}>
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => { setShowSignatureModal(false); setSignatureDrawn(false); sigRef.current?.clear(); setSignatureSuccess(false); }} className="px-5 py-2.5 rounded-xl text-xs font-medium cursor-pointer" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}>
                   Cancelar
                 </motion.button>
-                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => { if (!signatureDrawn && !signatureSuccess) return; if (signatureSuccess) { setShowSignatureModal(false); setSignatureDrawn(false); sigRef.current?.clear(); setSignatureSuccess(false); return; } setSignatureSuccess(true); }} className="px-5 py-2.5 rounded-xl text-xs font-bold text-white" style={{ background: (signatureDrawn || signatureSuccess) ? (signatureSuccess ? GREEN_BLUE_GRAD : BLUE_GRAD) : 'rgba(0,0,0,0.1)', cursor: (signatureDrawn || signatureSuccess) ? 'pointer' : 'not-allowed' }}>
-                  Finalizar
+                <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => { if (!signatureDrawn) return; setSignatureSuccess(true); }} className="px-5 py-2.5 rounded-xl text-xs font-bold text-white" style={{ background: signatureDrawn ? BLUE_GRAD : 'rgba(0,0,0,0.1)', cursor: signatureDrawn ? 'pointer' : 'not-allowed' }}>
+                  Siguiente →
                 </motion.button>
               </div>
+              )}
             </motion.div>
           </motion.div>
         )}
@@ -426,11 +428,12 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
               <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
                 {fingerprintSuccess ? (
                   <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center gap-3">
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center mb-2" style={{ background: 'rgba(34,197,94,0.12)' }}>
-                      <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 15 }} className="text-3xl">✓</motion.span>
-                    </div>
+                    <motion.img src={checkSuccessImg} alt="éxito" className="w-28 h-auto object-contain" animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }} />
                     <p className="text-lg font-bold" style={{ color: '#1A1A1E' }}>Huella registrada</p>
                     <p className="text-xs font-medium text-center max-w-[260px]" style={{ color: 'rgba(0,0,0,0.45)' }}>La huella digital de {trainer.name} ha sido capturada exitosamente.</p>
+                    <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => { setShowFingerprintModal(false); setFingerprintStatus('idle'); setFingerprintSuccess(false); }} className="mt-4 px-8 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: GREEN_BLUE_GRAD }}>
+                      Finalizar
+                    </motion.button>
                   </motion.div>
                 ) : (
                 <>
@@ -481,6 +484,7 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
               </div>
 
               {/* Footer */}
+              {!fingerprintSuccess && (
               <div className="flex-shrink-0 p-6 pt-4 flex items-center justify-between" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', background: 'rgba(255,255,255,0.8)' }}>
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => { setShowFingerprintModal(false); setFingerprintStatus('idle'); setFingerprintSuccess(false); }} className="px-5 py-2.5 rounded-xl text-xs font-medium cursor-pointer" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}>
                   Cerrar
@@ -496,18 +500,14 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
                       <RefreshCw size={16} className="animate-spin" /> Escaneando...
                     </motion.button>
                   )}
-                  {fingerprintStatus === 'captured' && !fingerprintSuccess && (
-                    <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => setFingerprintSuccess(true)} className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: GREEN_BLUE_GRAD, boxShadow: '0 4px 16px rgba(18,112,183,0.35)' }}>
-                      Finalizar
-                    </motion.button>
-                  )}
-                  {fingerprintSuccess && (
-                    <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => { setShowFingerprintModal(false); setFingerprintStatus('idle'); setFingerprintSuccess(false); }} className="px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: GREEN_BLUE_GRAD }}>
-                      Cerrar
+                  {fingerprintStatus === 'captured' && (
+                    <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => setFingerprintSuccess(true)} className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: BLUE_GRAD }}>
+                      Siguiente →
                     </motion.button>
                   )}
                 </div>
               </div>
+              )}
             </motion.div>
           </motion.div>
         )}
