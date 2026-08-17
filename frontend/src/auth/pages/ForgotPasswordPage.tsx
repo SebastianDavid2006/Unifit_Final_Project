@@ -390,6 +390,7 @@ export function ForgotPasswordPage({ onBack, onDone }: ForgotPasswordPageProps) 
                   borderRadius: 32,
                 }}
               >
+                {backButton(16)}
                 <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-10 py-6 flex flex-col justify-center">
                   {formContent}
                 </div>
