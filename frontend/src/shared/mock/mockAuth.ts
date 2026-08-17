@@ -94,6 +94,16 @@ function initIfNeeded() {
   const users = readUsers()
   if (Object.keys(users).length === 0) {
     writeUsers(seedUsers())
+  } else {
+    const seeds = seedUsers()
+    let changed = false
+    for (const [key, seed] of Object.entries(seeds)) {
+      if (!users[key]) {
+        users[key] = seed
+        changed = true
+      }
+    }
+    if (changed) writeUsers(users)
   }
 }
 
