@@ -549,7 +549,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
           Tus credenciales de acceso fueron enviadas a tu correo electrónico.
         </p>
         <p className="text-xs mt-2 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          Revisa tu bandeja de entrada y activa tu cuenta para comenzar a entrenar.
+          Revisa tu bandeja de entrada para completar tu proceso de registro.
         </p>
       </div>
 
