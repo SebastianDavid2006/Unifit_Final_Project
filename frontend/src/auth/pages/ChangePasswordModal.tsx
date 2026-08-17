@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from 'lucide-react'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
+import { findUserByEmail } from '@/shared/mock/mockAuth'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const DARK_BG = '#0A0A14'
@@ -17,6 +18,7 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [shake, setShake] = useState(false)
+  const [tempPass, setTempPass] = useState('test')
 
   const triggerShake = () => {
     setShake(true)
@@ -63,6 +65,10 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
           <p className="text-[11px] mt-1.5 font-medium text-center max-w-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
             Por seguridad, debes cambiar tu contraseña temporal antes de continuar.
           </p>
+          <div className="flex items-center gap-2 mt-3 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <span>Contraseña temporal:</span>
+            <span style={{ color: '#7ec8e3', fontWeight: 'bold' }}>{tempPass}</span>
+          </div>
         </div>
 
         <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>NUEVA CONTRASEÑA</label>
