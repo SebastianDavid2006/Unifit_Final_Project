@@ -483,7 +483,22 @@ const renderPending = () => {
                 background: 'linear-gradient(180deg, rgba(8,12,28,0.5) 0%, rgba(8,12,28,0.7) 50%, rgba(8,12,28,0.85) 100%)',
               }} />
               <div className="relative z-10 size-full flex items-center justify-center overflow-hidden" style={{ padding: 20 }}>
-                {phaseContent}
+                <motion.div
+                  initial={{ opacity: 0, y: 30, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative w-full max-w-3xl h-full flex flex-col"
+                  style={{
+                    background: 'rgba(10,14,24,0.78)',
+                    backdropFilter: 'blur(28px) saturate(1.6)',
+                    WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    boxShadow: '0 24px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
+                    borderRadius: 32,
+                  }}
+                >
+                  {phaseContent}
+                </motion.div>
               </div>
             </div>
           ) : (
