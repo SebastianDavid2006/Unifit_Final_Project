@@ -50,7 +50,18 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
             </div>
             <h2 className="text-[#0D1B2A] text-2xl font-bold text-center mb-2 relative z-10">{trainer.name}</h2>
             <img src={coach2Gif} alt="coach" className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[680px] z-0 pointer-events-none" style={{ maskImage: 'linear-gradient(to bottom, black 40%, transparent 95%)', WebkitMaskImage: 'linear-gradient(to bottom, black 40%, transparent 95%)' }} />
-            <button onClick={() => setShowInfoModal(true)} className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 px-6 py-2.5 rounded-2xl text-sm font-bold text-white cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl" style={{ background: `radial-gradient(circle at 82% 12%, rgba(230,0,18,0.95) 0%, transparent 60%), radial-gradient(circle at 18% 12%, rgba(91,37,133,0.95) 0%, transparent 60%), radial-gradient(circle at 8% 55%, rgba(0,160,233,0.9) 0%, transparent 55%), radial-gradient(circle at 15% 92%, rgba(0,168,143,0.9) 0%, transparent 55%), radial-gradient(circle at 50% 90%, rgba(255,241,0,0.9) 0%, transparent 60%), radial-gradient(circle at 88% 92%, rgba(243,152,0,0.9) 0%, transparent 55%), #1A0B2E`, boxShadow: '0 4px 24px rgba(0,0,0,0.35)' }}>
+            <button onClick={() => setShowInfoModal(true)} className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 px-6 py-2.5 rounded-2xl text-sm font-bold text-white cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl" style={{
+              background: `
+                radial-gradient(at 20% 20%, #F43843 0%, transparent 50%),
+                radial-gradient(at 80% 15%, #1270B7 0%, transparent 50%),
+                radial-gradient(at 50% 80%, #F1C827 0%, transparent 60%),
+                radial-gradient(at 30% 60%, #F43843 0%, transparent 40%),
+                radial-gradient(at 70% 70%, #1270B7 0%, transparent 40%),
+                #F43843
+              `,
+              backgroundSize: '150% 150%',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
+            }}>
               Ver información
             </button>
           </div>
