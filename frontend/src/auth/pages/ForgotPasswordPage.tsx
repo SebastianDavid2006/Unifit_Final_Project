@@ -458,8 +458,8 @@ export function ForgotPasswordPage({ onBack, onDone }: ForgotPasswordPageProps) 
               WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
             }}
           >
-            {backButton(16)}
-            <div className="flex-1 min-h-0 w-full max-w-3xl mx-auto flex flex-col">
+            <div className="flex-1 min-h-0 w-full max-w-3xl mx-auto flex flex-col relative">
+              {backButton(16)}
               <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-10 py-6 flex flex-col justify-center">
                 {formContent}
               </div>
