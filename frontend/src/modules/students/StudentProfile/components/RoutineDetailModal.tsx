@@ -23,7 +23,7 @@ export function RoutineDetailModal({ isOpen, assessment, routine, viewRoutineDay
             <Dumbbell size={20} style={{ color: '#30D158' }} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>{routine?.name ?? assessment.routine}</h3>
+            <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>{routine?.name ?? assessment?.routine ?? 'Sin rutina'}</h3>
             <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{assessment.date} · Asociada a la valoración</p>
           </div>
         </div>
