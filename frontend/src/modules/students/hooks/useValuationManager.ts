@@ -7,6 +7,7 @@ import { numOnly } from '../StudentProfileData'
 interface UseValuationManagerDeps {
   student: Student
   valuationForm: ValuationForm
+  setValuationForm: (f: ValuationForm) => void
   confirmCancel: 'valuation' | 'routine' | 'ai' | null
   setShowNewValuationModal: (v: boolean) => void
   setValuationSuccess: (v: boolean) => void
@@ -35,6 +36,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
   const {
     student,
     valuationForm,
+    setValuationForm,
     setShowNewValuationModal,
     setValuationSuccess,
     setValuationStep,
@@ -81,9 +83,9 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
       diasDisponibles: a.diasDisponibles ?? [],
       observacionesFinales: a.observacionesFinales ?? '',
     }
-    deps.setValuationForm(form)
+    setValuationForm(form)
     return form
-  }, [deps.setValuationForm])
+  }, [setValuationForm])
 
   const cancelAiRoutine = useCallback(() => {
     if (aiIntervalRef.current !== null) {

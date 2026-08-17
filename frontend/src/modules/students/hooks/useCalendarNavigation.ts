@@ -1,9 +1,7 @@
 import { useCallback } from 'react'
-import type { Student } from '../StudentProfileData'
+import { monthNames } from '../StudentProfileData'
 
 export function useCalendarNavigation() {
-  const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-
   const getWeekStart = useCallback((d: Date) => {
     const r = new Date(d)
     const day = r.getDay()

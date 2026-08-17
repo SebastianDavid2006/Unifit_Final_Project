@@ -544,9 +544,12 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             transition={{ type: 'spring', stiffness: 260, damping: 16 }}
           />
         </div>
-        <h2 className="text-xl sm:text-2xl font-extrabold" style={{ color: '#fff' }}>¡Cuenta creada exitosamente!</h2>
-        <p className="text-sm font-bold mt-4 leading-relaxed" style={{ color: '#7ec8e3' }}>
-          Tu usuario es tu correo electrónico y te hemos enviado una contraseña temporal.
+        <h2 className="text-xl sm:text-2xl font-extrabold" style={{ color: '#fff' }}>¡Bienvenido a UniFit!</h2>
+        <p className="text-sm font-bold mt-3 leading-relaxed" style={{ color: '#7ec8e3' }}>
+          Tus credenciales de acceso fueron enviadas a tu correo electrónico.
+        </p>
+        <p className="text-xs mt-2 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          Revisa tu bandeja de entrada y activa tu cuenta para comenzar a entrenar.
         </p>
       </div>
 

@@ -34,7 +34,6 @@ import assessmentSceneImg from '@/assets/scenes/physical_assessment.webp'
 import routineSceneImg from '@/assets/scenes/physical_routine.webp'
 import { meshInputBg, meshInputHover, muscleIcons } from '@/data/constants'
 import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine, RoutineRow } from './aiRoutine'
-import { exerciseCatalog } from '@/data/exercises'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import routineGenLottie from '@/assets/icons/animated/ai/routine_generation.lottie?url'
 import musculoIcon from '@/assets/icons/anatomy/musculoskeletal.webp'
@@ -43,7 +42,7 @@ import brainIcon from '@/assets/icons/anatomy/brain.webp'
 import cardioHealthIcon from '@/assets/icons/anatomy/cardio.webp'
 import liverIcon from '@/assets/icons/anatomy/liver.webp'
 import mindIcon from '@/assets/icons/health/mind.webp'
-import { assessmentItems, cardStyle, emptyValuationForm, monthNames, numOnly, routineExercises, ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from './StudentProfileData'
+import { assessmentItems, cardStyle, emptyValuationForm, monthNames, numOnly } from './StudentProfileData'
 import type { Student, ValuationForm } from './StudentProfileData'
 import { OverviewTab } from '@/modules/students/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/tabs/ProgressTab'
@@ -53,6 +52,7 @@ import { IdentityAccessCard } from '@/modules/students/components/IdentityAccess
 import { useCalendarNavigation } from './hooks/useCalendarNavigation'
 import { useMeshInput } from './hooks/useMeshInput'
 import { useValuationManager } from './hooks/useValuationManager'
+import { useRoutineManager } from './hooks/useRoutineManager'
 
 export { TABS } from './StudentProfileData'
 export function StudentProfile({ student, tab = 'overview', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
@@ -133,6 +133,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   } = useValuationManager({
     student,
     valuationForm,
+    setValuationForm,
     confirmCancel,
     setShowNewValuationModal,
     setValuationSuccess,
@@ -157,27 +158,56 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
     aiIntervalRef,
   })
 
-  const updateRoutineRow = (id: string, patch: Partial<RoutineRow>) =>
-    setRoutineRows(prev => prev.map(r => (r.id === id ? { ...r, ...patch } : r)))
+  const {
+    WEEK_DAYS,
+    ROUTINE_CATEGORIES,
+    ROUTINE_MUSCLE_TO_CAT,
+    exerciseCatalog,
+    routineDayList,
+    routineDayTotalPages,
+    routineDayCurrentPage,
+    pagedRoutineDays,
+    routineDayPageNumbers,
+    defaultRoutineDay,
+    updateRoutineRow,
+    removeRoutineRow,
+    addRoutineRow,
+    addRoutineDay,
+    removeRoutineDay,
+  } = useRoutineManager({
+    routineForm,
+    setRoutineForm,
+    routineRows,
+    setRoutineRows,
+    routineDays,
+    setRoutineDays,
+    selectedRoutineDay,
+    setSelectedRoutineDay,
+    viewRoutineDay,
+    setViewRoutineDay,
+    routineDropdown,
+    setRoutineDropdown,
+    routineDayPage,
+    setRoutineDayPage,
+    showRoutineViewModal,
+    setShowRoutineViewModal,
+    showNewRoutineModal,
+    setShowNewRoutineModal,
+    routineSuccess,
+    setRoutineSuccess,
+    routineStep,
+    setRoutineStep,
+    routineViewMode,
+    setRoutineViewMode,
+    routineFromAssessment,
+    routineSnapshot,
+    setRoutineSnapshot,
+    routineFromAI,
+    showAddDayMenu,
+    setShowAddDayMenu,
+    valuationDiasDisponibles: valuationForm.diasDisponibles,
+  })
 
-  const removeRoutineRow = (id: string) =>
-    setRoutineRows(prev => prev.filter(r => r.id !== id))
-
-  const addRoutineRow = (day?: string) => {
-    const d = day || defaultRoutineDay() || 'Lunes'
-    setRoutineRows(prev => [...prev, {
-      id: `r-${Date.now()}`,
-      dia: d,
-      muscle: '',
-      name: '',
-      sets: '3',
-      reps: '10-12',
-      rest: '60 s',
-      weight: '',
-    }])
-  }
-
-  const WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
   const ASSESSMENT_PAGE_SIZE = 6
   const assessmentTotalPages = Math.max(1, Math.ceil(assessmentItems.length / ASSESSMENT_PAGE_SIZE))
   const assessmentCurrentPage = Math.min(assessmentPage, assessmentTotalPages)
@@ -189,44 +219,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
       <span className="text-sm font-bold text-right" style={{ color: color ?? '#0D1B2A' }}>{value}</span>
     </div>
   )
-  const sourceDays = valuationForm.diasDisponibles.length > 0 ? valuationForm.diasDisponibles : routineRows.map(r => r.dia)
   const routineEdited = routineSnapshot !== '' && JSON.stringify({ form: routineForm, rows: routineRows }) !== routineSnapshot
-  const routineDayList = routineDays.length ? routineDays : (() => {
-    const days = [...new Set(WEEK_DAYS.filter(d => sourceDays.includes(d) || routineRows.some(r => r.dia === d)))]
-    return days.length ? days : WEEK_DAYS
-  })()
-  const ROUTINE_DAY_PAGE_SIZE = 6
-  const routineDayTotalPages = Math.max(1, Math.ceil(routineDayList.length / ROUTINE_DAY_PAGE_SIZE))
-  const routineDayCurrentPage = Math.min(routineDayPage, routineDayTotalPages)
-  const pagedRoutineDays = routineDayList.slice((routineDayCurrentPage - 1) * ROUTINE_DAY_PAGE_SIZE, routineDayCurrentPage * ROUTINE_DAY_PAGE_SIZE)
-  const routineDayPageNumbers = Array.from({ length: routineDayTotalPages }, (_, i) => i + 1)
-  const defaultRoutineDay = () => routineDayList.find(d => routineRows.some(r => r.dia === d)) ?? routineDayList[0]
-
-  const addRoutineDay = (day: string) => {
-    setRoutineDays(d => [...d, day])
-    if (!routineRows.some(r => r.dia === day)) {
-      const stamp = Date.now()
-      const defaults = routineExercises.slice(0, 2).map((ex, ei) => ({
-        id: `ad-${stamp}-${ei}`,
-        dia: day,
-        muscle: ex.muscle,
-        name: ex.name,
-        sets: String(ex.sets),
-        reps: ex.reps,
-        rest: '60 s',
-        weight: ex.weight,
-      }))
-      setRoutineRows(p => [...p, ...defaults])
-    }
-    setSelectedRoutineDay(day)
-    setShowAddDayMenu(false)
-  }
-  const removeRoutineDay = (day: string) => {
-    if (routineDayList.length <= 1) return
-    setRoutineDays(d => d.filter(x => x !== day))
-    setRoutineRows(p => p.filter(r => r.dia !== day))
-    setShowAddDayMenu(false)
-  }
 
   const ROUTINE_DAY_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 
