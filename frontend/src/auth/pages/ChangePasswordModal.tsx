@@ -2,8 +2,8 @@ import { useState, type FormEvent, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from 'lucide-react'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
-import welcomeDesktop from '@/assets/scenes/videos/desktop/welcome_desktop.mp4'
-import welcomeMobile from '@/assets/scenes/videos/mobile/welcome_mobile.mp4'
+import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
+import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const DARK_BG = '#0A0A14'
@@ -285,6 +285,6 @@ const viewToolbar = (
       >
         {v === 'celular' ? 'Celular' : v === 'desktop' ? 'Desktop' : 'Auto'}
       </button>
-    ))}
+    ))
   </div>
 )
