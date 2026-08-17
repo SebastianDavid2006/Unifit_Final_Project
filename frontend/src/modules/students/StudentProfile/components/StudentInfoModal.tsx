@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { X } from 'lucide-react'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'

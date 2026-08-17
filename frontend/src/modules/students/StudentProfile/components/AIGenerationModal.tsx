@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { X, Loader2 } from 'lucide-react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import routineGenLottie from '@/assets/icons/animated/ai/routine_generation.lottie?url'

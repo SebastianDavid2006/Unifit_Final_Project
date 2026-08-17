@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import assessmentSceneImg from '@/assets/scenes/physical_assessment.webp'
 import routineSceneImg from '@/assets/scenes/physical_routine.webp'
 
