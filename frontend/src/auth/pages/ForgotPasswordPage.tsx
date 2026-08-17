@@ -173,18 +173,6 @@ export function ForgotPasswordPage({ onBack, onDone }: ForgotPasswordPageProps) 
                 Enviar código
                 <ArrowRight size={16} />
               </motion.button>
-
-              <motion.button
-                type="button"
-                onClick={onBack}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full mt-3 h-12 rounded-2xl text-sm font-medium text-white/70 flex items-center justify-center gap-1.5 cursor-pointer transition-colors hover:text-white"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <ArrowLeft size={14} />
-                Volver
-              </motion.button>
             </motion.div>
           )}
 
@@ -235,18 +223,6 @@ export function ForgotPasswordPage({ onBack, onDone }: ForgotPasswordPageProps) 
               >
                 Verificar código
                 <ArrowRight size={16} />
-              </motion.button>
-
-              <motion.button
-                type="button"
-                onClick={() => setStep('email')}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full mt-3 h-12 rounded-2xl text-sm font-medium text-white/70 flex items-center justify-center gap-1.5 cursor-pointer transition-colors hover:text-white"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <ArrowLeft size={14} />
-                Volver
               </motion.button>
             </motion.div>
           )}
@@ -309,18 +285,6 @@ export function ForgotPasswordPage({ onBack, onDone }: ForgotPasswordPageProps) 
               >
                 Guardar contraseña
                 <ArrowRight size={16} />
-              </motion.button>
-
-              <motion.button
-                type="button"
-                onClick={() => setStep('code')}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full mt-3 h-12 rounded-2xl text-sm font-medium text-white/70 flex items-center justify-center gap-1.5 cursor-pointer transition-colors hover:text-white"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                <ArrowLeft size={14} />
-                Volver
               </motion.button>
             </motion.div>
           )}
