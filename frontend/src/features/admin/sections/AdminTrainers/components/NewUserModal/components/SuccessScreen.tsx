@@ -55,7 +55,7 @@ export default function SuccessScreen({ onClose }: { onClose: () => void }) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.4 }}
-        className="text-lg font-bold text-center"
+        className="text-2xl font-bold text-center"
         style={{ color: '#1A1A1E' }}
       >
         ¡Usuario registrado exitosamente!
@@ -64,10 +64,10 @@ export default function SuccessScreen({ onClose }: { onClose: () => void }) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.45, duration: 0.4 }}
-        className="text-xs font-medium mt-1 text-center"
-        style={{ color: 'rgba(0,0,0,0.35)' }}
+        className="text-xs font-semibold mt-3 text-center max-w-sm leading-relaxed"
+        style={{ color: '#555' }}
       >
-        Los datos del usuario han sido guardados en el sistema.
+        Se ha enviado un correo con las credenciales para comenzar su experiencia en UNIFIT.
       </motion.p>
       <motion.button
         initial={{ opacity: 0, y: 10 }}

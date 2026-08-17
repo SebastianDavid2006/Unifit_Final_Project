@@ -22,7 +22,7 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
   return (
     <div className="relative z-10 p-8 overflow-hidden">
       <div className="w-full">
-        <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
+        <div className="grid gap-2 items-stretch" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
           <DetailCard gridColumn="1" gridRow="1" accent={RED} title="Información General" model={<StudentCardView />}>
             <div className="flex items-start justify-between">
               <FieldList fields={[
