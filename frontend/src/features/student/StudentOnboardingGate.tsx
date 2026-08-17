@@ -468,77 +468,73 @@ const renderPending = () => {
       {viewToolbar}
 
       <div className="flex-1 min-h-0 relative">
-        {phase === 'pending' ? (
-          (() => {
-            const pendingVideoSrc = isPhonePreview ? registrationPendingMobile : registrationPendingDesktop
-            return (
-              <div className="absolute inset-0 overflow-hidden">
-                <video
-                  src={pendingVideoSrc}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0" style={{
-                  background: isPhonePreview
-                    ? 'linear-gradient(180deg, rgba(8,12,28,0.7) 0%, rgba(8,12,28,0.85) 100%)'
-                    : 'linear-gradient(180deg, rgba(8,12,28,0.5) 0%, rgba(8,12,28,0.7) 50%, rgba(8,12,28,0.85) 100%)',
-                }} />
-                <div className="relative z-10 size-full flex items-center justify-center overflow-hidden" style={{ padding: 20 }}>
-                  {phaseContent}
-                </div>
-              </div>
-            )
-          })()
-        ) : isDesktopVideo ? (
-          <div className="absolute inset-0 overflow-hidden" style={{ background: DARK_BG }}>
-            <video
-              src={welcomeDesktop}
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute inset-0" style={{
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-            }} />
-            <div className="absolute inset-0" style={{
-              background: 'linear-gradient(115deg, rgba(8,12,28,0.55) 0%, rgba(8,12,28,0.3) 45%, rgba(8,12,28,0.16) 100%)',
-            }} />
-            <div className="relative z-10 size-full flex items-center justify-center overflow-hidden" style={{ padding: 20 }}>
-              <motion.div
-                initial={{ opacity: 0, y: 30, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="relative w-full max-w-3xl h-full flex flex-col"
-                style={{
-                  background: 'rgba(10,14,24,0.78)',
-                  backdropFilter: 'blur(28px) saturate(1.6)',
-                  WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
-                  borderRadius: 32,
-                }}
-              >
+        {isDesktopVideo ? (
+          phase === 'pending' ? (
+            <div className="absolute inset-0 overflow-hidden" style={{ background: DARK_BG }}>
+              <video
+                src={registrationPendingDesktop}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0" style={{
+                background: 'linear-gradient(180deg, rgba(8,12,28,0.5) 0%, rgba(8,12,28,0.7) 50%, rgba(8,12,28,0.85) 100%)',
+              }} />
+              <div className="relative z-10 size-full flex items-center justify-center overflow-hidden" style={{ padding: 20 }}>
                 {phaseContent}
-              </motion.div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="absolute inset-0 overflow-hidden" style={{ background: DARK_BG }}>
+              <video
+                src={welcomeDesktop}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0" style={{
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+              }} />
+              <div className="absolute inset-0" style={{
+                background: 'linear-gradient(115deg, rgba(8,12,28,0.55) 0%, rgba(8,12,28,0.3) 45%, rgba(8,12,28,0.16) 100%)',
+              }} />
+              <div className="relative z-10 size-full flex items-center justify-center overflow-hidden" style={{ padding: 20 }}>
+                <motion.div
+                  initial={{ opacity: 0, y: 30, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative w-full max-w-3xl h-full flex flex-col"
+                  style={{
+                    background: 'rgba(10,14,24,0.78)',
+                    backdropFilter: 'blur(28px) saturate(1.6)',
+                    WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    boxShadow: '0 24px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
+                    borderRadius: 32,
+                  }}
+                >
+                  {phaseContent}
+                </motion.div>
+              </div>
+            </div>
+          )
         ) : isPhonePreview ? (
           <motion.div
             key="phone"
             initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative flex flex-col overflow-hidden mx-auto"
+            className="relative flex flex-col mx-auto"
             style={isMobile ? {
               width: '100%',
               height: '100%',
               background: DARK_BG,
+              overflow: 'hidden',
             } : {
               width: 390,
               height: 720,
@@ -546,6 +542,7 @@ const renderPending = () => {
               background: DARK_BG,
               border: '10px solid rgba(255,255,255,0.06)',
               boxShadow: '0 60px 140px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.05)',
+              overflow: 'hidden',
             }}
           >
             {!isMobile && (
@@ -553,32 +550,32 @@ const renderPending = () => {
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-2.5 rounded-full" style={{ background: '#151520' }} />
               </div>
             )}
-              <div className="absolute inset-0 overflow-hidden" style={{ background: '#000' }}>
-                <video
-                  src={phase === 'pending' ? registrationPendingMobile : welcomeMobile}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                {phase === 'pending' ? (
+            <div className="absolute inset-0 overflow-hidden" style={{ background: '#000' }}>
+              <video
+                src={phase === 'pending' ? registrationPendingMobile : welcomeMobile}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {phase === 'pending' ? (
+                <div className="absolute inset-0" style={{
+                  background: 'linear-gradient(180deg, rgba(8,12,28,0.75) 0%, rgba(8,12,28,0.9) 100%)',
+                }} />
+              ) : (
+                <>
                   <div className="absolute inset-0" style={{
-                    background: 'linear-gradient(180deg, rgba(8,12,28,0.75) 0%, rgba(8,12,28,0.9) 100%)',
+                    backdropFilter: 'blur(14px)',
+                    WebkitBackdropFilter: 'blur(14px)',
                   }} />
-                ) : (
-                  <>
-                    <div className="absolute inset-0" style={{
-                      backdropFilter: 'blur(14px)',
-                      WebkitBackdropFilter: 'blur(14px)',
-                    }} />
-                    <div className="absolute inset-0" style={{
-                      background: 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)',
-                    }} />
-                  </>
-                )}
-              </div>
-          {backButton(isMobile ? 12 : 36)}
+                  <div className="absolute inset-0" style={{
+                    background: 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)',
+                  }} />
+                </>
+              )}
+            </div>
+            {backButton(isMobile ? 12 : 36)}
             <div className="relative z-10 flex flex-col flex-1 min-h-0">
               {phaseContent}
             </div>
