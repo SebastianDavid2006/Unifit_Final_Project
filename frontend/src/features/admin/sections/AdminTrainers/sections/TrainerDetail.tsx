@@ -60,18 +60,19 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-[28px] p-5"
+            className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02]"
             style={{
               gridColumn: '3',
               gridRow: '1',
-              background: 'linear-gradient(145deg, rgba(18,112,183,0.09) 0%, rgba(18,112,183,0.03) 55%, rgba(255,255,255,0.6) 100%)',
-              boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 16px rgba(18,112,183,0.06)',
-              border: '1px solid rgba(255,255,255,0.4)',
+              background: 'rgba(255,255,255,0.5)',
+              borderRadius: 28,
+              padding: 20,
             }}
           >
-            <div className="flex flex-col items-start gap-2 px-4 py-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: BLUE }}>Identidad</p>
-              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Edita la firma y la huella digital</p>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.3)' }} />
+              <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad</p>
+            </div>
               <div className="grid grid-cols-2 gap-3">
                 {/* Box Firma */}
                 <div className="rounded-xl p-3 flex flex-col" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.05)' }}>
@@ -106,7 +107,6 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
                   </button>
                 </div>
               </div>
-            </div>
           </motion.div>
 
           <DetailCard gridColumn="1" gridRow="2" accent={RED} title="Contacto" model={<TelephoneView />}>
