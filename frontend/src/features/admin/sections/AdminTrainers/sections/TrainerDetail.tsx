@@ -54,6 +54,9 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
               {trainer.avatar}
             </div>
             <h2 className="text-[#0D1B2A] text-2xl font-bold text-center mb-2 relative z-10">{trainer.name}</h2>
+            <div className="relative z-10 w-full flex-1 flex justify-center items-end">
+              <img src={coach2Gif} alt="coach" className="w-[420px] h-full object-cover object-bottom" style={{ maskImage: 'linear-gradient(to bottom, black 50%, transparent 90%)', WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 90%)' }} />
+            </div>
           </div>
 
           {/* Tarjeta Identidad y Acceso */}
