@@ -8,8 +8,11 @@ import SchedulePicker from '@/modules/agenda/SchedulePicker'
 import { updateUser, type MockSession, type MockUser } from '@/shared/mock/mockAuth'
 import logotipo from '@/assets/logo/logo.webp'
 import coachImg from '@/assets/illustrations/characters/coach/coach_missing_fingerprint_and_signature.webp'
+import appointmentSuccessImg from '@/assets/illustrations/characters/coach/Appointment_successfully_scheduled.webp'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
+import registrationPendingDesktop from '@/assets/scenes/videos/desktop/registration_pending_dekstop.mp4'
+import registrationPendingMobile from '@/assets/scenes/videos/mobile/registration_pending_mobile.mp4'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 const RED = '#E63946'
@@ -322,20 +325,22 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
     </div>
   )
 
-  const renderPending = () => (
-    <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center min-h-0">
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5" style={{ background: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.3)' }}>
-          <Clock size={34} style={{ color: YELLOW }} />
-        </div>
-        <h2 className="text-xl font-extrabold" style={{ color: '#fff' }}>Tu registro está en curso</h2>
-        <p className="text-xs mt-3 leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+const renderPending = () => {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-full py-8 px-4">
+        <h2 className="text-xl font-extrabold text-center mb-3" style={{ color: '#fff' }}>
+          Tu registro está en curso
+        </h2>
+        <p className="text-xs mt-2 text-center max-w-xs mx-auto" style={{ color: 'rgba(255,255,255,0.55)' }}>
           {pendingSteps().length > 0
             ? `Aún te falta: ${pendingSteps().join(', ')}. Asiste a tu cita para completarlos y habilitar tu app.`
             : 'Completa los pasos pendientes para habilitar tu app.'}
         </p>
         {user.cita && (
-          <div className="mt-6 rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="mt-4 rounded-2xl px-4 py-3 flex items-center gap-3 relative" style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.06)',
+          }}>
             <Clock size={16} style={{ color: YELLOW }} />
             <div className="text-left">
               <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Tu cita</p>
@@ -343,29 +348,20 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
             </div>
           </div>
         )}
-        <p className="text-[10px] mt-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          (Demo: el entrenador captura firma y huella en la cita. Cuando lo haga, vuelve a ingresar.)
-        </p>
-      </div>
-
-      <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
-          <span />
-          <span />
+        <div className="mt-6 flex w-full justify-center">
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer justify-self-end"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
             style={{ background: BLUE_GRAD }}
           >
             Volver al inicio
-            <ArrowRight size={14} />
           </motion.button>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   const phaseContent = (
     <AnimatePresence mode="wait">
@@ -437,7 +433,7 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
     </AnimatePresence>
   )
 
-  const backButton = (top: number) => phase !== 'app' && (
+  const backButton = (top: number) => phase !== 'app' && phase !== 'pending' && (
     <button
       onClick={onLogout}
       className="absolute z-40 w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
@@ -472,7 +468,31 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
       {viewToolbar}
 
       <div className="flex-1 min-h-0 relative">
-        {isDesktopVideo ? (
+        {phase === 'pending' ? (
+          (() => {
+            const pendingVideoSrc = isPhonePreview ? registrationPendingMobile : registrationPendingDesktop
+            return (
+              <div className="absolute inset-0 overflow-hidden">
+                <video
+                  src={pendingVideoSrc}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0" style={{
+                  background: isPhonePreview
+                    ? 'linear-gradient(180deg, rgba(8,12,28,0.7) 0%, rgba(8,12,28,0.85) 100%)'
+                    : 'linear-gradient(180deg, rgba(8,12,28,0.5) 0%, rgba(8,12,28,0.7) 50%, rgba(8,12,28,0.85) 100%)',
+                }} />
+                <div className="relative z-10 size-full flex items-center justify-center overflow-hidden" style={{ padding: 20 }}>
+                  {phaseContent}
+                </div>
+              </div>
+            )
+          })()
+        ) : isDesktopVideo ? (
           <div className="absolute inset-0 overflow-hidden" style={{ background: DARK_BG }}>
             <video
               src={welcomeDesktop}
@@ -533,24 +553,32 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-2.5 rounded-full" style={{ background: '#151520' }} />
               </div>
             )}
-            <div className="absolute inset-0 overflow-hidden" style={{ background: '#000' }}>
-              <video
-                src={welcomeMobile}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div className="absolute inset-0" style={{
-                backdropFilter: 'blur(14px)',
-                WebkitBackdropFilter: 'blur(14px)',
-              }} />
-              <div className="absolute inset-0" style={{
-                background: 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)',
-              }} />
-            </div>
-            {backButton(isMobile ? 12 : 36)}
+              <div className="absolute inset-0 overflow-hidden" style={{ background: '#000' }}>
+                <video
+                  src={phase === 'pending' ? registrationPendingMobile : welcomeMobile}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                {phase === 'pending' ? (
+                  <div className="absolute inset-0" style={{
+                    background: 'linear-gradient(180deg, rgba(8,12,28,0.75) 0%, rgba(8,12,28,0.9) 100%)',
+                  }} />
+                ) : (
+                  <>
+                    <div className="absolute inset-0" style={{
+                      backdropFilter: 'blur(14px)',
+                      WebkitBackdropFilter: 'blur(14px)',
+                    }} />
+                    <div className="absolute inset-0" style={{
+                      background: 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)',
+                    }} />
+                  </>
+                )}
+              </div>
+          {backButton(isMobile ? 12 : 36)}
             <div className="relative z-10 flex flex-col flex-1 min-h-0">
               {phaseContent}
             </div>

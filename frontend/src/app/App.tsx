@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { LoginPage } from '@/auth/pages/LoginPage'
 import { RegisterPage } from '@/auth/pages/RegisterPage'
+import { ForgotPasswordPage } from '@/auth/pages/ForgotPasswordPage'
 import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
 import { StudentPage } from '@/features/student/pages/StudentPage'
 import StudentOnboardingGate from '@/features/student/StudentOnboardingGate'
@@ -41,7 +42,7 @@ function ParticleField() {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<'login' | 'register' | Platform>('login')
+  const [screen, setScreen] = useState<'login' | 'register' | 'forgot' | Platform>('login')
   const [studentSession, setStudentSession] = useState<MockSession | null>(null)
 
   return (
@@ -76,7 +77,19 @@ export default function App() {
               <LoginPage onSelect={(platform, session) => {
                 if (platform === 'student' && session) setStudentSession(session)
                 setScreen(platform)
-              }} onRegister={() => setScreen('register')} />
+              }} onRegister={() => setScreen('register')} onForgot={() => setScreen('forgot')} />
+            </motion.div>
+          )}
+          {screen === 'forgot' && (
+            <motion.div
+              key="forgot"
+              className="size-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+                <ForgotPasswordPage onBack={() => setScreen('login')} onDone={() => setScreen('login')} />
             </motion.div>
           )}
           {screen === 'register' && (

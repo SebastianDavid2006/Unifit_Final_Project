@@ -10,6 +10,7 @@ import secundarioLogo from '@/assets/logo/universitaria_de_bogota.webp'
 interface LoginPageProps {
   onSelect: (platform: 'trainer' | 'student' | 'admin', session?: MockSession) => void
   onRegister: () => void
+  onForgot: () => void
 }
 
 const MESH_BUTTON = `
@@ -22,7 +23,7 @@ const MESH_BUTTON = `
   #1A0B2E
 `
 
-export function LoginPage({ onSelect, onRegister }: LoginPageProps) {
+export function LoginPage({ onSelect, onRegister, onForgot }: LoginPageProps) {
   const [usuario, setUsuario] = useState('entrenador')
   const [contraseña, setContraseña] = useState('entrenador123')
   const [showPass, setShowPass] = useState(false)
@@ -121,7 +122,7 @@ export function LoginPage({ onSelect, onRegister }: LoginPageProps) {
             <div className="flex justify-end -mt-4 mb-6">
               <button
                 type="button"
-                onClick={() => {}}
+                onClick={onForgot}
                 className="text-xs font-semibold cursor-pointer transition-colors hover:underline"
                 style={{ color: 'rgba(255,255,255,0.55)' }}
               >

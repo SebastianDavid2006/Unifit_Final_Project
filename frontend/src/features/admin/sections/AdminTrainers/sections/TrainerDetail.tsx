@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Maximize2, X, Fingerprint, FileSignature, LockKeyhole, PenLine } from 'lucide-react'
 import type { Trainer } from '@/data/trainers'
@@ -9,6 +9,7 @@ import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneMod
 import { ListView } from '@/assets/models/ui/objects/list/ListModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { DocumentView } from '@/assets/models/ui/objects/document/DocumentModel'
+import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { BLUE, RED } from '../data'
 import coach2Gif from '@/assets/illustrations/characters/coach_2/animated/coach_2.gif'
 
@@ -291,7 +292,7 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
                             <p className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{f.label}</p>
                             <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{f.value || '—'}</p>
                           </div>
-                        ))
+                        ))}
                       </div>
                     </motion.div>
                   ))}

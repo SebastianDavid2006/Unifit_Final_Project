@@ -19,7 +19,6 @@ import { ScalesOfJusticeView } from '@/assets/models/ui/objects/scales_of_justic
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { KitView } from '@/assets/models/ui/objects/kit/KitModel'
 import { TrashView } from '@/assets/models/ui/actions/trash/TrashModel'
-import fireGif from '@/assets/icons/animated/fire.gif'
 import editGif from '@/assets/icons/animated/actions/edit.gif'
 import viewGif from '@/assets/icons/animated/actions/view.gif'
 import weightLossIcon from '@/assets/icons/objects/metric_belt.webp'
@@ -31,11 +30,9 @@ import otroIcon from '@/assets/icons/ui/star.webp'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
 import coachMagicImg from '@/assets/illustrations/characters/coach/coach_magic.png'
 import calendarImg from '@/assets/icons/objects/calendar.webp'
-import listImg from '@/assets/icons/objects/list.webp'
 import assessmentSceneImg from '@/assets/scenes/physical_assessment.webp'
 import routineSceneImg from '@/assets/scenes/physical_routine.webp'
-import physicalAssessmentImg from '@/assets/illustrations/modules/physical_assessment.webp'
-import { GREEN_GRAD, meshInputBg, meshInputHover, muscleIcons } from '@/data/constants'
+import { meshInputBg, meshInputHover, muscleIcons } from '@/data/constants'
 import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine, RoutineRow } from './aiRoutine'
 import { exerciseCatalog } from '@/data/exercises'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
@@ -46,13 +43,16 @@ import brainIcon from '@/assets/icons/anatomy/brain.webp'
 import cardioHealthIcon from '@/assets/icons/anatomy/cardio.webp'
 import liverIcon from '@/assets/icons/anatomy/liver.webp'
 import mindIcon from '@/assets/icons/health/mind.webp'
-import { assessmentItems, cardStyle, emptyValuationForm, monthNames, routineExercises, ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from './StudentProfileData'
+import { assessmentItems, cardStyle, emptyValuationForm, monthNames, numOnly, routineExercises, ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from './StudentProfileData'
 import type { Student, ValuationForm } from './StudentProfileData'
 import { OverviewTab } from '@/modules/students/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/tabs/ProgressTab'
 import { AssessmentTab } from '@/modules/students/tabs/AssessmentTab'
 import { DocumentsTab } from '@/modules/students/tabs/DocumentsTab'
 import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
+import { useCalendarNavigation } from './hooks/useCalendarNavigation'
+import { useMeshInput } from './hooks/useMeshInput'
+import { useValuationManager } from './hooks/useValuationManager'
 
 export { TABS } from './StudentProfileData'
 export function StudentProfile({ student, tab = 'overview', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
@@ -112,118 +112,50 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
     antecedentesSalud: [] as string[], observacionesEntrenador: '',
     diasDisponibles: [] as string[], observacionesFinales: '',
   })
-  const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
-  const getWeekStart = (d: Date) => { const r = new Date(d); const day = r.getDay(); r.setDate(r.getDate() - (day === 0 ? 6 : day - 1)); return r }
-  const getWeekEnd = (d: Date) => { const r = new Date(getWeekStart(d)); r.setDate(r.getDate() + 6); return r }
-  const formatWeekRange = (d: Date) => {
-    const start = getWeekStart(d), end = getWeekEnd(d)
-    return `${start.getDate()} ${monthNames[start.getMonth()].slice(0,3)} — ${end.getDate()} ${monthNames[end.getMonth()].slice(0,3)} ${start.getFullYear()}`
-  }
-  const prevPeriod = () => setCurrentDate(d => {
-    const r = new Date(d)
-    if (vistaCalendario === 'semana') r.setDate(r.getDate() - 7)
-    else if (vistaCalendario === 'año') r.setFullYear(r.getFullYear() - 1)
-    else r.setMonth(r.getMonth() - 1)
-    return r
-  })
-  const nextPeriod = () => setCurrentDate(d => {
-    const r = new Date(d)
-    if (vistaCalendario === 'semana') r.setDate(r.getDate() + 7)
-    else if (vistaCalendario === 'año') r.setFullYear(r.getFullYear() + 1)
-    else r.setMonth(r.getMonth() + 1)
-    return r
-  })
+
+  // Hooks
+  const calendarNav = useCalendarNavigation()
+  const meshInput = useMeshInput()
+
+const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   const currentTab = tab ?? localTab
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
 
-  const startAiRoutine = () => {
-    setShowNewValuationModal(false)
-    setValuationSuccess(false)
-    setValuationViewMode(false)
-    setRoutineViewMode(false)
-    setRoutineFromAssessment(false)
-    setRoutineSnapshot('')
-    setRoutineFromAI(true)
-    setAiGenerating(true)
-    setAiGenStep(0)
-    let step = 0
-    const interval = window.setInterval(() => {
-      step += 1
-      if (step >= AI_GENERATION_STEPS.length) {
-        window.clearInterval(interval)
-        aiIntervalRef.current = null
-        const routine = buildAiRoutine({
-          nivelActividad: valuationForm.nivelActividad,
-          objetivoTarjetas: valuationForm.objetivoTarjetas,
-          objetivoDetalle: valuationForm.objetivoDetalle,
-          peso: valuationForm.peso,
-          estatura: valuationForm.estatura,
-          imc: valuationForm.imc,
-          grasaCorporal: valuationForm.grasaCorporal,
-          masaMuscular: valuationForm.masaMuscular,
-          presionArterial: valuationForm.presionArterial,
-          resistenciaMuscular: valuationForm.resistenciaMuscular,
-          antecedentesSalud: valuationForm.antecedentesSalud,
-          observacionesEntrenador: valuationForm.observacionesEntrenador,
-          diasDisponibles: valuationForm.diasDisponibles,
-          observacionesFinales: valuationForm.observacionesFinales,
-          studentName: student.firstName,
-        })
-        setAiGeneratedRoutine(routine)
-        setRoutineForm({
-          name: routine.name,
-          description: routine.description,
-          duration: routine.duration,
-          frequency: routine.frequency,
-          level: routine.level,
-        })
-        setRoutineRows(routine.rows)
-        setSelectedRoutineDay(routine.rows.length ? routine.rows[0].dia : null)
-        setRoutineDayPage(1)
-        setRoutineDays([...new Set(routine.rows.map(r => r.dia))])
-        setRoutineStep(1)
-        setTimeout(() => {
-          setAiGenerating(false)
-          setShowNewRoutineModal(true)
-        }, 900)
-        return
-      }
-      setAiGenStep(step)
-    }, 900)
-    aiIntervalRef.current = interval
-  }
-
-  const cancelAiRoutine = () => {
-    if (aiIntervalRef.current !== null) {
-      window.clearInterval(aiIntervalRef.current)
-      aiIntervalRef.current = null
-    }
-    setConfirmCancel(null)
-    setAiGenerating(false)
-  }
-
-  const handleConfirmCancel = () => {
-    if (confirmCancel === 'ai') {
-      cancelAiRoutine()
-    } else if (confirmCancel === 'valuation') {
-      setShowNewValuationModal(false)
-      setValuationSuccess(false)
-      setValuationStep(1)
-      setValuationViewMode(false)
-    } else if (confirmCancel === 'routine') {
-      setShowNewRoutineModal(false)
-      setRoutineStep(1)
-      setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
-      setRoutineRows([])
-      setSelectedRoutineDay(null)
-      setRoutineDayPage(1)
-      setAiGeneratedRoutine(null)
-      setRoutineViewMode(false)
-    }
-    setConfirmCancel(null)
-  }
+  const {
+    numOnly: _numOnly,
+    loadAssessmentIntoForm,
+    cancelAiRoutine,
+    handleConfirmCancel,
+    startAiRoutine,
+    openRoutineFromAssessment,
+  } = useValuationManager({
+    student,
+    valuationForm,
+    confirmCancel,
+    setShowNewValuationModal,
+    setValuationSuccess,
+    setValuationStep,
+    setValuationViewMode,
+    setRoutineViewMode,
+    setRoutineFromAssessment,
+    setRoutineSnapshot,
+    setRoutineFromAI,
+    setAiGenerating,
+    setAiGenStep,
+    setAiGeneratedRoutine,
+    setRoutineForm,
+    setRoutineRows,
+    setSelectedRoutineDay,
+    setRoutineDayPage,
+    setRoutineDays,
+    setRoutineStep,
+    setRoutineSuccess,
+    setShowNewRoutineModal,
+    setConfirmCancel,
+    aiIntervalRef,
+  })
 
   const updateRoutineRow = (id: string, patch: Partial<RoutineRow>) =>
     setRoutineRows(prev => prev.map(r => (r.id === id ? { ...r, ...patch } : r)))
@@ -245,19 +177,6 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
     }])
   }
 
-  function enterMesh(el: HTMLElement) {
-    if (el !== document.activeElement) { el.style.background = meshInputHover; el.style.borderColor = 'rgba(0,0,0,0.06)' }
-  }
-  function leaveMesh(el: HTMLElement) {
-    if (el !== document.activeElement) { el.style.background = meshInputBg; el.style.borderColor = 'transparent' }
-  }
-  function focusMesh(el: HTMLElement) {
-    el.style.borderColor = '#1270B7'; el.style.background = meshInputHover; el.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)'
-  }
-  function blurMesh(el: HTMLElement) {
-    el.style.borderColor = 'transparent'; el.style.background = meshInputBg; el.style.boxShadow = 'none'
-  }
-
   const WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
   const ASSESSMENT_PAGE_SIZE = 6
   const assessmentTotalPages = Math.max(1, Math.ceil(assessmentItems.length / ASSESSMENT_PAGE_SIZE))
@@ -270,62 +189,6 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
       <span className="text-sm font-bold text-right" style={{ color: color ?? '#0D1B2A' }}>{value}</span>
     </div>
   )
-  const numOnly = (s: any) => String(s ?? '').replace(/[^\d.]/g, '')
-  const loadAssessmentIntoForm = (a: any) => {
-    const metric = (label: string) => a.metrics?.find((m: any) => m.label === label)?.value ?? ''
-    setValuationForm({
-      nivelActividad: a.nivelActividad ?? '',
-      objetivoTarjetas: a.objetivoTarjetas ?? [],
-      objetivoDetalle: a.objetivoDetalle ?? '',
-      peso: numOnly(metric('Peso')),
-      estatura: numOnly(a.estatura),
-      imc: numOnly(metric('IMC')),
-      grasaCorporal: numOnly(metric('Grasa Corporal')),
-      masaMuscular: numOnly(metric('Masa Muscular')),
-      masaMagra: numOnly(a.masaMagra),
-      grasaVisceral: numOnly(a.grasaVisceral),
-      presionArterial: a.presionArterial ?? '',
-      edadMetabolica: numOnly(a.edadMetabolica),
-      aguaCorporal: numOnly(a.aguaCorporal),
-      resistenciaMuscular: a.resistenciaMuscular ?? '',
-      antecedentesSalud: a.antecedentesSalud ?? [],
-      observacionesEntrenador: a.observacionesEntrenador ?? '',
-      diasDisponibles: a.diasDisponibles ?? [],
-      observacionesFinales: a.observacionesFinales ?? '',
-    })
-  }
-  const openRoutineFromAssessment = (a: any) => {
-    loadAssessmentIntoForm(a)
-    setRoutineFromAssessment(true)
-    setRoutineFromAI(false)
-    const days = (a.diasDisponibles?.length ? a.diasDisponibles : ['Lunes', 'Miércoles', 'Viernes']) as string[]
-    const perDay = Math.max(2, Math.ceil(routineExercises.length / days.length))
-    const rows: RoutineRow[] = []
-    days.forEach((dia, di) => {
-      const chunk = routineExercises.slice(di * perDay, (di + 1) * perDay)
-      chunk.forEach((ex, ei) => {
-        rows.push({ id: `rv-${di}-${ei}`, dia, muscle: ex.muscle, name: ex.name, sets: String(ex.sets), reps: ex.reps, rest: '60 s', weight: ex.weight })
-      })
-    })
-    const routineObj: AiRoutine = {
-      name: a.routine ?? 'Rutina personalizada',
-      description: `Rutina asociada a la valoración del estudiante: ${days.length} días por semana.`,
-      duration: '8 semanas',
-      frequency: `${days.length} días/semana`,
-      level: 'Intermedio',
-      rows,
-    }
-    setAiGeneratedRoutine(routineObj)
-    setRoutineForm({ name: routineObj.name, description: routineObj.description, duration: routineObj.duration, frequency: routineObj.frequency, level: routineObj.level })
-    setRoutineRows(rows)
-    setSelectedRoutineDay(rows.length ? rows[0].dia : null)
-    setRoutineDayPage(1)
-    setRoutineDays(days)
-    setRoutineSnapshot(JSON.stringify({ form: { name: routineObj.name, description: routineObj.description, duration: routineObj.duration, frequency: routineObj.frequency, level: routineObj.level }, rows }))
-    setRoutineStep(2)
-    setRoutineSuccess(false)
-    setShowNewRoutineModal(true)
-  }
   const sourceDays = valuationForm.diasDisponibles.length > 0 ? valuationForm.diasDisponibles : routineRows.map(r => r.dia)
   const routineEdited = routineSnapshot !== '' && JSON.stringify({ form: routineForm, rows: routineRows }) !== routineSnapshot
   const routineDayList = routineDays.length ? routineDays : (() => {
@@ -425,10 +288,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
           onClick={() => { if (!routineViewMode) setRoutineDropdown(open ? null : { id: row.id, field: 'muscle' }) }}
           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold outline-none cursor-pointer transition-all duration-200"
           style={{ background: meshInputBg, border: '1px solid transparent', color: row.muscle ? '#0D1B2A' : 'rgba(0,0,0,0.35)' }}
-          onMouseEnter={e => enterMesh(e.currentTarget)}
-          onMouseLeave={e => leaveMesh(e.currentTarget)}
-          onFocus={e => focusMesh(e.currentTarget)}
-          onBlur={e => blurMesh(e.currentTarget)}
+          onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+          onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+          onFocus={e => meshInput.focusMesh(e.currentTarget)}
+          onBlur={e => meshInput.blurMesh(e.currentTarget)}
         >
           {icon ? (
             <img src={icon} alt="" className="w-4 h-4 flex-shrink-0" />
@@ -512,10 +375,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
             color: row.name ? '#0D1B2A' : 'rgba(0,0,0,0.35)',
             opacity: row.muscle ? 1 : 0.6,
           }}
-          onMouseEnter={e => enterMesh(e.currentTarget)}
-          onMouseLeave={e => leaveMesh(e.currentTarget)}
-          onFocus={e => focusMesh(e.currentTarget)}
-          onBlur={e => blurMesh(e.currentTarget)}
+          onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+          onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+          onFocus={e => meshInput.focusMesh(e.currentTarget)}
+          onBlur={e => meshInput.blurMesh(e.currentTarget)}
         >
           <Dumbbell size={13} style={{ color: row.name ? '#1270B7' : 'rgba(0,0,0,0.3)' }} className="flex-shrink-0" />
           <span className="flex-1 truncate text-left">{row.name || 'Ejercicio'}</span>
@@ -738,11 +601,11 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                   setHoveredCell={setHoveredCell}
                   currentDate={currentDate}
                   setCurrentDate={setCurrentDate}
-                  prevPeriod={prevPeriod}
-                  nextPeriod={nextPeriod}
-                  formatWeekRange={formatWeekRange}
+                  prevPeriod={calendarNav.prevPeriod}
+                  nextPeriod={calendarNav.nextPeriod}
+                  formatWeekRange={calendarNav.formatWeekRange}
                   monthNames={monthNames}
-                  getWeekStart={getWeekStart}
+                  getWeekStart={calendarNav.getWeekStart}
                 />
               )}
               {currentTab === 'assessment' && (
@@ -2296,10 +2159,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                                     readOnly={routineViewMode}
                                     onChange={e => updateRoutineRow(row.id, { sets: e.target.value })}
                                     placeholder="Series"
-                                    onMouseEnter={e => enterMesh(e.currentTarget)}
-                                    onMouseLeave={e => leaveMesh(e.currentTarget)}
-                                    onFocus={e => focusMesh(e.currentTarget)}
-                                    onBlur={e => blurMesh(e.currentTarget)}
+                                    onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+                                    onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+                                    onFocus={e => meshInput.focusMesh(e.currentTarget)}
+                                    onBlur={e => meshInput.blurMesh(e.currentTarget)}
                                     className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
                                     style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
                                   />
@@ -2312,10 +2175,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                                       readOnly={routineViewMode}
                                       onChange={e => updateRoutineRow(row.id, { reps: `${e.target.value}-${(row.reps.split('-')[1] ?? '').trim()}` })}
                                       placeholder="Mín"
-                                      onMouseEnter={e => enterMesh(e.currentTarget)}
-                                      onMouseLeave={e => leaveMesh(e.currentTarget)}
-                                      onFocus={e => focusMesh(e.currentTarget)}
-                                      onBlur={e => blurMesh(e.currentTarget)}
+                                      onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+                                      onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+                                      onFocus={e => meshInput.focusMesh(e.currentTarget)}
+                                      onBlur={e => meshInput.blurMesh(e.currentTarget)}
                                       className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
                                       style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
                                     />
@@ -2325,10 +2188,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                                       readOnly={routineViewMode}
                                       onChange={e => updateRoutineRow(row.id, { reps: `${(row.reps.split('-')[0] ?? '').trim()}-${e.target.value}` })}
                                       placeholder="Máx"
-                                      onMouseEnter={e => enterMesh(e.currentTarget)}
-                                      onMouseLeave={e => leaveMesh(e.currentTarget)}
-                                      onFocus={e => focusMesh(e.currentTarget)}
-                                      onBlur={e => blurMesh(e.currentTarget)}
+                                      onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+                                      onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+                                      onFocus={e => meshInput.focusMesh(e.currentTarget)}
+                                      onBlur={e => meshInput.blurMesh(e.currentTarget)}
                                       className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
                                       style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
                                     />
@@ -2342,10 +2205,10 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
                                       readOnly={routineViewMode}
                                       onChange={e => updateRoutineRow(row.id, { rest: e.target.value ? `${e.target.value} s` : '' })}
                                       placeholder="Segundos"
-                                      onMouseEnter={e => enterMesh(e.currentTarget)}
-                                      onMouseLeave={e => leaveMesh(e.currentTarget)}
-                                      onFocus={e => focusMesh(e.currentTarget)}
-                                      onBlur={e => blurMesh(e.currentTarget)}
+                                      onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+                                      onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+                                      onFocus={e => meshInput.focusMesh(e.currentTarget)}
+                                      onBlur={e => meshInput.blurMesh(e.currentTarget)}
                                       className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
                                       style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
                                     />

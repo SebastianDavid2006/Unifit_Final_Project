@@ -18,8 +18,8 @@ interface Props {
   setHoveredCell: (v: { w: number; d: number } | null) => void
   currentDate: Date
   setCurrentDate: (v: Date) => void
-  prevPeriod: () => void
-  nextPeriod: () => void
+  prevPeriod: (vista: 'semana' | 'mes' | 'año', date: Date) => void
+  nextPeriod: (vista: 'semana' | 'mes' | 'año', date: Date) => void
   formatWeekRange: (d: Date) => string
   monthNames: string[]
   getWeekStart: (d: Date) => Date
@@ -134,11 +134,11 @@ export function ProgressTab(props: Props) {
                         ))}
                       </div>
                       <div className="flex items-center gap-1 flex-1 justify-end">
-                        <button onClick={prevPeriod} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all flex-shrink-0" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
+                        <button onClick={() => prevPeriod(vistaCalendario, currentDate)} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all flex-shrink-0" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>‹</button>
                         <span className="text-sm font-bold px-1 text-center min-w-[160px]" style={{ color: '#0D1B2A' }}>
                           {vistaCalendario === 'semana' ? formatWeekRange(currentDate) : vistaCalendario === 'mes' ? `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}` : `${currentDate.getFullYear()}`}
                         </span>
-                        <button onClick={nextPeriod} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all flex-shrink-0" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
+                        <button onClick={() => nextPeriod(vistaCalendario, currentDate)} onMouseEnter={(e) => { e.currentTarget.style.background = RED_GRAD; e.currentTarget.style.color = '#FFFFFF' }} onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = 'rgba(0,0,0,0.3)' }} className="w-8 h-8 rounded-lg flex items-center justify-center text-lg font-bold transition-all flex-shrink-0" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}>›</button>
                       </div>
                     </div>
 

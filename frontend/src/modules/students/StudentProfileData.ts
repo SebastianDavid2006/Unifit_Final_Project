@@ -117,6 +117,8 @@ export const emptyValuationForm = {
 
 export const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
+export const numOnly = (s: any) => String(s ?? '').replace(/[^\d.]/g, '')
+
 export type ValuationForm = typeof emptyValuationForm
 
 export const assessmentItems = [
