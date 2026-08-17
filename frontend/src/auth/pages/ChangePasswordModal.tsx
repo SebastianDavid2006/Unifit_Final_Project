@@ -13,7 +13,7 @@ interface ChangePasswordModalProps {
 }
 
 type PreviewMode = 'celular' | 'desktop' | 'auto'
-const persistedPreview = 'auto'
+let persistedPreview = 'auto'
 
 export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
   const isMobile = useIsMobile()
