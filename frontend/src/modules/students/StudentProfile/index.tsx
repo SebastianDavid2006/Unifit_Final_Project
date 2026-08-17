@@ -33,7 +33,7 @@ import calendarImg from '@/assets/icons/objects/calendar.webp'
 import assessmentSceneImg from '@/assets/scenes/physical_assessment.webp'
 import routineSceneImg from '@/assets/scenes/physical_routine.webp'
 import { meshInputBg, meshInputHover, muscleIcons } from '@/data/constants'
-import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine, RoutineRow } from './aiRoutine'
+import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine, RoutineRow } from '../aiRoutine'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import routineGenLottie from '@/assets/icons/animated/ai/routine_generation.lottie?url'
 import musculoIcon from '@/assets/icons/anatomy/musculoskeletal.webp'
@@ -42,8 +42,8 @@ import brainIcon from '@/assets/icons/anatomy/brain.webp'
 import cardioHealthIcon from '@/assets/icons/anatomy/cardio.webp'
 import liverIcon from '@/assets/icons/anatomy/liver.webp'
 import mindIcon from '@/assets/icons/health/mind.webp'
-import { assessmentItems, cardStyle, emptyValuationForm, monthNames, numOnly } from './StudentProfileData'
-import type { Student, ValuationForm } from './StudentProfileData'
+import { assessmentItems, cardStyle, emptyValuationForm, monthNames, numOnly } from '../StudentProfileData'
+import type { Student, ValuationForm } from '../StudentProfileData'
 import { OverviewTab } from '@/modules/students/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/tabs/ProgressTab'
 import { AssessmentTab } from '@/modules/students/tabs/AssessmentTab'
@@ -53,8 +53,18 @@ import { useCalendarNavigation } from './hooks/useCalendarNavigation'
 import { useMeshInput } from './hooks/useMeshInput'
 import { useValuationManager } from './hooks/useValuationManager'
 import { useRoutineManager } from './hooks/useRoutineManager'
+import { SignatureModal } from './components/SignatureModal'
+import { DeleteDocumentModal } from './components/DeleteDocumentModal'
+import { DocumentViewerModal } from './components/DocumentViewerModal'
+import { CancelConfirmModal } from './components/CancelConfirmModal'
+import { StudentInfoModal } from './components/StudentInfoModal'
+import { ValuationDetailModal } from './components/ValuationDetailModal'
+import { AssessmentChoiceModal } from './components/AssessmentChoiceModal'
+import { AIGenerationModal } from './components/AIGenerationModal'
+import { RoutineSuccessModal } from './components/RoutineSuccessModal'
+import { RoutineDetailModal } from './components/RoutineDetailModal'
 
-export { TABS } from './StudentProfileData'
+export { TABS } from '../StudentProfileData'
 export function StudentProfile({ student, tab = 'overview', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
   const [editable, setEditable] = useState<Student>(student)
   useEffect(() => setEditable(student), [student])
@@ -633,63 +643,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
         </AnimatePresence>
 
         {/* Modal firma */}
-        <AnimatePresence>
-          {signatureModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-6"
-              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
-              onClick={() => setSignatureModalOpen(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-lg rounded-3xl p-6"
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
-                }}
-              >
-                <div className="flex items-center justify-between mb-5">
-                  <div>
-                    <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Firma del Estudiante</h3>
-                    <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Contrato Firmado</p>
-                  </div>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setSignatureModalOpen(false)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                  </motion.button>
-                </div>
-                <div className="rounded-2xl p-6 flex flex-col items-center justify-center" style={{ background: 'rgba(0,0,0,0.02)', border: '1px dashed rgba(0,0,0,0.08)' }}>
-                  <svg viewBox="0 0 400 120" className="w-full h-auto" style={{ maxHeight: 120 }}>
-                    <path d="M30,90 C40,50 60,30 80,40 C100,50 95,75 110,65 C125,55 130,35 150,30 C170,25 180,50 195,55 C210,60 220,40 240,35 C260,30 270,55 280,60 C290,65 300,45 320,50 C340,55 345,70 355,65 C365,60 370,50 380,55"
-                      fill="none" stroke="#0D1B2A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <line x1="30" y1="100" x2="380" y2="100" stroke="rgba(0,0,0,0.1)" strokeWidth="1" strokeDasharray="4 3" />
-                  </svg>
-                </div>
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: 'rgba(48,209,88,0.12)', color: '#30D158' }}>Firmado</span>
-                    <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>15 Ene 2026 - 10:32 AM</span>
-                  </div>
-                  <button
-                    className="px-4 py-2 rounded-xl text-[11px] font-semibold transition-all"
-                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
-                    onClick={() => setSignatureModalOpen(false)}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <SignatureModal isOpen={signatureModalOpen} onClose={() => setSignatureModalOpen(false)} />
         </div>
 
         {/* Modal información completa */}
@@ -795,118 +749,20 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
         </AnimatePresence>
 
         {/* Modal visor de documento */}
-        <AnimatePresence>
-          {fileModalOpen && fileModalData && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[60] flex items-center justify-center p-6"
-              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
-              onClick={() => setFileModalOpen(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-2xl rounded-3xl overflow-hidden"
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
-                }}
-              >
-                <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(230,57,70,0.08)' }}>
-                      <FileText size={16} style={{ color: '#E63946' }} />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{fileModalData.name}</h3>
-                      <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.35)' }}>{fileModalData.date} · PDF</p>
-                    </div>
-                  </div>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setFileModalOpen(false)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                  </motion.button>
-                </div>
-                  <div className="p-6 flex flex-col items-center justify-center min-h-[300px]" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                    <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(230,57,70,0.06)' }}>
-                      <FileText size={36} style={{ color: '#E63946' }} />
-                    </div>
-                    <p className="text-sm font-semibold mb-1" style={{ color: '#0D1B2A' }}>Vista previa del documento</p>
-                    <p className="text-xs text-center max-w-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>Este es un documento firmado electrónicamente.</p>
-                    <div className="flex gap-2 mt-6">
-                      <button className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2" style={{ background: '#E63946', color: '#FFFFFF' }}>
-                        <Download size={14} /> Descargar
-                      </button>
-                      <button className="px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2" style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}>
-                        <Upload size={14} /> Reemplazar
-                      </button>
-                      <button onClick={() => { setFileModalOpen(false); setDeleteDocName(fileModalData?.name || ''); setDeleteModalOpen(true) }} className="px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2" style={{ background: 'rgba(230,57,70,0.08)', color: '#E63946', border: '1px solid rgba(230,57,70,0.15)' }}>
-                        <Trash2 size={14} /> Eliminar
-                      </button>
-                    </div>
-                  </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <DocumentViewerModal
+          isOpen={fileModalOpen && !!fileModalData}
+          fileData={fileModalData}
+          onClose={() => setFileModalOpen(false)}
+          onDelete={(name) => { setFileModalOpen(false); setDeleteDocName(name); setDeleteModalOpen(true) }}
+        />
 
         {/* Modal eliminar documento */}
-        <AnimatePresence>
-          {deleteModalOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[70] flex items-center justify-center p-6"
-              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
-              onClick={() => setDeleteModalOpen(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-md rounded-3xl p-6 flex flex-col items-center text-center"
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
-                }}
-              >
-                <div className="w-14 h-14 mb-4">
-                  <TrashView />
-                </div>
-                <h3 className="text-base font-bold mb-1" style={{ color: '#0D1B2A' }}>¿Eliminar documento?</h3>
-                <p className="text-sm mb-6" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                  Esta acción no se puede deshacer.
-                </p>
-                <div className="flex gap-2.5 w-full">
-                  <button
-                    onClick={() => setDeleteModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all"
-                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={() => setDeleteModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all"
-                    style={{ background: '#E63946', color: '#FFFFFF' }}
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <DeleteDocumentModal
+          isOpen={deleteModalOpen}
+          docName={deleteDocName}
+          onConfirm={() => setDeleteModalOpen(false)}
+          onCancel={() => setDeleteModalOpen(false)}
+        />
 
         {/* Modal nueva valoración */}
         <AnimatePresence>
@@ -1561,282 +1417,22 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
         </AnimatePresence>
 
         {/* Modal detalle de valoración */}
-        <AnimatePresence>
-          {showValuationModal && selectedAssessment && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-6"
-              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
-              onClick={() => setShowValuationModal(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, filter: 'blur(6px)' }}
-                animate={{ opacity: 1, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, filter: 'blur(6px)' }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-xl rounded-3xl p-6 flex flex-col"
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
-                  maxHeight: '86vh',
-                }}
-              >
-                <div className="flex items-center justify-between mb-5 flex-shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${selectedAssessment.color}15` }}>
-                      <BarChart2 size={20} style={{ color: selectedAssessment.color }} />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Valoración {selectedAssessment.type}</h3>
-                      <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{selectedAssessment.date} · {selectedAssessment.evaluator}</p>
-                    </div>
-                  </div>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowValuationModal(false)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                  </motion.button>
-                </div>
-
-                <div className="overflow-y-auto space-y-4 flex-1 pr-1" style={{ scrollbarWidth: 'thin', maxHeight: '60vh' }}>
-                  <div className="flex items-center gap-4">
-                    <div className="relative flex-shrink-0" style={{ width: 88, height: 88 }}>
-                      <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-                        <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
-                        <circle cx="18" cy="18" r="15.9" fill="none" stroke={selectedAssessment.color} strokeWidth="2.8" strokeLinecap="round"
-                          strokeDasharray={`${selectedAssessment.score * 0.999} ${100 - selectedAssessment.score * 0.999}`} />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <p className="text-lg font-extrabold" style={{ color: selectedAssessment.color }}>{selectedAssessment.score}%</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <div className="rounded-xl px-3 py-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                        <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Nivel de actividad física</p>
-                        <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{selectedAssessment.nivelActividad}</p>
-                      </div>
-                      <div className="rounded-xl px-3 py-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                        <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Evaluador</p>
-                        <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{selectedAssessment.evaluator}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Objetivos</p>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {selectedAssessment.objetivoTarjetas.map((o: string) => (
-                        <span key={o} className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #1270B7, #7ec8e3)' }}>{o}</span>
-                      ))}
-                    </div>
-                    <div className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(212,175,55,0.25)' }}>
-                      <p className="text-[11px] font-semibold italic leading-relaxed" style={{ color: '#B8860B' }}>"{selectedAssessment.objetivoDetalle}"</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Medidas corporales</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {selectedAssessment.metrics.map((m: any) => (
-                        <div key={m.label} className="rounded-xl p-3 flex items-center justify-between" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                          <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{m.label}</span>
-                          <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{m.value}</span>
-                        </div>
-                      ))}
-                      {valuationStat('Estatura', selectedAssessment.estatura)}
-                      {valuationStat('Masa magra', selectedAssessment.masaMagra)}
-                      {valuationStat('Grasa visceral', selectedAssessment.grasaVisceral, '#E63946')}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Evaluación clínica</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {valuationStat('Presión arterial', selectedAssessment.presionArterial)}
-                      {valuationStat('Edad metabólica', `${selectedAssessment.edadMetabolica} años`)}
-                      {valuationStat('Agua corporal', selectedAssessment.aguaCorporal)}
-                      {valuationStat('Resistencia muscular', selectedAssessment.resistenciaMuscular)}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Antecedentes de salud</p>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {selectedAssessment.antecedentesSalud.length === 0 ? (
-                        <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.35)' }}>Sin antecedentes registrados</span>
-                      ) : selectedAssessment.antecedentesSalud.map((a: string) => (
-                        <span key={a} className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #E63946, #FF8FA3)' }}>{a}</span>
-                      ))}
-                    </div>
-                    <div className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                      <p className="text-[11px] font-medium leading-relaxed" style={{ color: 'rgba(0,0,0,0.6)' }}>{selectedAssessment.observacionesEntrenador}</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Plan de entrenamiento</p>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {selectedAssessment.diasDisponibles.map((d: string) => (
-                        <span key={d} className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #1A8A3F, #30D158)' }}>{d}</span>
-                      ))}
-                    </div>
-                    <div className="rounded-xl px-3 py-2.5 flex items-center gap-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                      <Dumbbell size={14} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                      <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{selectedAssessment.routine}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Observaciones finales</p>
-                    <div className="rounded-xl px-3 py-2.5" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                      <p className="text-[11px] font-medium leading-relaxed" style={{ color: 'rgba(0,0,0,0.6)' }}>{selectedAssessment.observacionesFinales}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 flex justify-end flex-shrink-0" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                  <button
-                    onClick={() => setShowValuationModal(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
-                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <ValuationDetailModal
+          isOpen={!!(showValuationModal && selectedAssessment)}
+          assessment={selectedAssessment}
+          onClose={() => setShowValuationModal(false)}
+        />
 
         {/* Modal detalle de rutina */}
-        <AnimatePresence>
-          {showRoutineViewModal && selectedAssessment && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-6"
-              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
-              onClick={() => setShowRoutineViewModal(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, filter: 'blur(6px)' }}
-                animate={{ opacity: 1, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, filter: 'blur(6px)' }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-3xl rounded-3xl p-6 flex flex-col"
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.12)',
-                }}
-              >
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(48,209,88,0.12)' }}>
-                      <Dumbbell size={20} style={{ color: '#30D158' }} />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>{currentRoutine?.name ?? selectedAssessment.routine}</h3>
-                      <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{selectedAssessment.date} · Asociada a la valoración</p>
-                    </div>
-                  </div>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowRoutineViewModal(false)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                    <X size={16} style={{ color: 'rgba(0,0,0,0.4)' }} />
-                  </motion.button>
-                </div>
-
-                {currentRoutine && currentRoutine.rows.length > 0 ? (
-                  (() => {
-                    const viewDays = [...new Set(currentRoutine.rows.map(r => r.dia))]
-                    const activeDay = viewRoutineDay && viewDays.includes(viewRoutineDay) ? viewRoutineDay : viewDays[0]
-                    const selDayRows = currentRoutine.rows.filter(r => r.dia === activeDay)
-                    return (
-                      <div className="flex flex-col min-h-0 flex-1">
-                        <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `repeat(${viewDays.length}, minmax(0, 1fr))` }}>
-                          {viewDays.map(day => renderRoutineDayCard(
-                            day,
-                            day === activeDay,
-                            currentRoutine.rows.some(r => r.dia === day),
-                            () => setViewRoutineDay(day),
-                          ))}
-                        </div>
-                        <div className="rounded-2xl p-4 space-y-2 overflow-y-auto min-h-[180px]" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', maxHeight: 340, scrollbarWidth: 'thin' }}>
-                          {selDayRows.length === 0 ? (
-                            <p className="text-xs text-center py-4" style={{ color: 'rgba(0,0,0,0.4)' }}>Sin ejercicios para este día.</p>
-                          ) : selDayRows.map((ex, i) => (
-                            <motion.div
-                              key={ex.id}
-                              initial={{ opacity: 0, y: 6 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: i * 0.03 }}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                              style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.85)' : 'transparent' }}
-                            >
-                              <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ background: 'rgba(48,209,88,0.15)', color: '#1A8A3F' }}>{i + 1}</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold truncate" style={{ color: '#0D1B2A' }}>{ex.name}</p>
-                                <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>{ex.muscle}</p>
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                <p className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{ex.sets} × {ex.reps}</p>
-                                <p className="text-[10px]" style={{ color: 'rgba(0,0,0,0.4)' }}>Descanso {ex.rest}</p>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  })()
-                ) : (
-                  <div className="space-y-2">
-                    <div className="grid gap-3 px-1 mb-2" style={{ gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr' }}>
-                      {['Ejercicio', 'Series', 'Repeticiones', 'Peso', 'Calorías'].map(h => (
-                        <div key={h} className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{h}</div>
-                      ))}
-                    </div>
-                    {routineExercises.map((ex, i) => (
-                      <motion.div
-                        key={ex.name}
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.04 }}
-                        className="grid gap-3 items-center px-3 py-2.5 rounded-xl"
-                        style={{
-                          gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr',
-                          background: i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
-                        }}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.name}</span>
-                        </div>
-                        <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{ex.sets}</span>
-                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.reps}</span>
-                        <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.weight}</span>
-                        <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.calories}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-5 pt-4 flex justify-end" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                  <button
-                    onClick={() => setShowRoutineViewModal(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
-                    style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <RoutineDetailModal
+          isOpen={!!(showRoutineViewModal && selectedAssessment)}
+          assessment={selectedAssessment}
+          routine={currentRoutine}
+          viewRoutineDay={viewRoutineDay}
+          setViewRoutineDay={setViewRoutineDay}
+          renderRoutineDayCard={renderRoutineDayCard}
+          onClose={() => setShowRoutineViewModal(false)}
+        />
 
         {/* Modal nueva rutina */}
         <AnimatePresence>
@@ -2382,330 +1978,28 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
         </AnimatePresence>
 
         {/* Modal generando rutina con IA */}
-        <AnimatePresence>
-          {aiGenerating && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-              style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)' }}
-            >
-              <motion.div
-                initial={{ opacity: 0, filter: 'blur(6px)' }}
-                animate={{ opacity: 1, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, filter: 'blur(6px)' }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-lg rounded-3xl p-8 pt-6 flex flex-col items-center relative"
-                style={{
-                  background: 'linear-gradient(180deg, #F3E8FF 0%, #FFFFFF 100%)',
-                  border: '1px solid rgba(191,90,242,0.12)',
-                  boxShadow: '0 24px 80px rgba(124,58,237,0.18)',
-                }}
-              >
-                <div className="absolute top-4 right-4">
-                  <motion.button
-                    whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setConfirmCancel('ai')}
-                    className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                    style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.3)' }}
-                  >
-                    <X size={16} />
-                  </motion.button>
-                </div>
-                <div className="relative flex-shrink-0 w-56 h-56 flex items-center justify-center pointer-events-none">
-                  {[...Array(24)].map((_, i) => {
-                    const angle = (i / 24) * 360
-                    const rad = (angle * Math.PI) / 180
-                    return (
-                      <motion.span
-                        key={i}
-                        className="absolute pointer-events-none text-lg select-none"
-                        style={{ color: '#BF5AF2' }}
-                        animate={{
-                          x: [0, Math.cos(rad) * (120 + (i % 6) * 20)],
-                          y: [0, Math.sin(rad) * (120 + (i % 6) * 20)],
-                          opacity: [0, 1, 0],
-                          scale: [0, 1.4, 0],
-                        }}
-                        transition={{
-                          duration: 2.5 + (i % 4) * 0.3,
-                          repeat: Infinity,
-                          delay: i * 0.07,
-                          ease: 'easeOut',
-                        }}
-                      >
-                        ✦
-                      </motion.span>
-                    )
-                  })}
-                  <div className="relative z-10 w-56 h-56 flex items-center justify-center">
-                    <DotLottieReact
-                      src={routineGenLottie}
-                      loop
-                      autoplay
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  </div>
-                </div>
-                <h3
-                  className="text-[2rem] leading-[1.1] font-extrabold tracking-tight text-center mt-2"
-                  style={{
-                    background: 'linear-gradient(135deg, #BF5AF2, #F472B6)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  }}
-                >
-                  Cargando rutina con IA
-                </h3>
-                <p className="text-xs font-medium text-center mt-1.5" style={{ color: '#8B5CF6' }}>
-                  Analizando la valoración de {student.firstName}
-                </p>
-                <div className="flex items-center justify-center gap-2 mt-3 min-h-5">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={aiGenStep}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.25, ease: 'easeOut' }}
-                      className="flex items-center gap-2"
-                    >
-                      <Loader2 size={13} color="#7C3AED" className="animate-spin flex-shrink-0" />
-                      <p className="text-xs font-bold" style={{ color: '#6D28D9' }}>{AI_GENERATION_STEPS[aiGenStep]}</p>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-
-                <div className="w-full mt-6 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(191,90,242,0.12)' }}>
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: 'linear-gradient(90deg, #C084FC, #F472B6)' }}
-                    animate={{ width: `${((aiGenStep + 1) / AI_GENERATION_STEPS.length) * 100}%` }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                  />
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <AIGenerationModal
+          isOpen={aiGenerating}
+          studentName={student.firstName}
+          onCancel={() => setConfirmCancel('ai')}
+        />
 
         {/* Confirmación cancelar proceso */}
-        <AnimatePresence>
-          {confirmCancel && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[110] flex items-center justify-center p-6"
-              style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)' }}
-              onClick={() => setConfirmCancel(null)}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.92, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.92, y: 10 }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-sm rounded-3xl p-7 flex flex-col items-center text-center relative"
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid rgba(124,58,237,0.12)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
-                }}
-              >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4"
-                  style={{ background: 'rgba(244,56,67,0.1)' }}>
-                  <AlertTriangle size={22} color="#F43843" />
-                </div>
-                <p className="text-base font-bold" style={{ color: '#1A1A1E' }}>
-                  ¿Seguro que deseas cancelar el proceso?
-                </p>
-                <p className="text-xs font-medium mt-1.5" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                  {confirmCancel === 'ai'
-                    ? 'La rutina generada hasta ahora no se guardará.'
-                    : 'Los datos ingresados no se guardarán.'}
-                </p>
-                <div className="flex items-center gap-2.5 mt-6 w-full">
-                  <button
-                    onClick={() => setConfirmCancel(null)}
-                    className="flex-1 px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
-                    style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.6)' }}
-                  >
-                    Seguir
-                  </button>
-                  <button
-                    onClick={handleConfirmCancel}
-                    className="flex-1 px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
-                    style={{ background: 'linear-gradient(135deg, #FF6B6B, #E63946)' }}
-                  >
-                    Sí, cancelar
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <CancelConfirmModal
+          isOpen={!!confirmCancel}
+          type={confirmCancel ?? 'valuation'}
+          onConfirm={handleConfirmCancel}
+          onCancel={() => setConfirmCancel(null)}
+        />
 
         {/* ── Info completa (modal por categorías) ─────────── */}
-        <AnimatePresence>
-          {showInfoModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[115] flex items-center justify-center p-6"
-              style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)' }}
-              onClick={() => setShowInfoModal(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 12 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                onClick={e => e.stopPropagation()}
-                className="w-full max-w-5xl max-h-[85vh] flex flex-col rounded-[28px] relative overflow-hidden"
-                style={{
-                  background: 'rgba(255,255,255,0.96)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255,255,255,0.6)',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
-                }}
-              >
-                {/* Header */}
-                <div className="flex-shrink-0 flex items-center justify-between px-7 pt-6 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{
-                      background: student.risk === 'high'
-                        ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
-                        : student.risk === 'medium'
-                        ? 'linear-gradient(135deg, #FF9500, #E68600)'
-                        : 'linear-gradient(135deg, #30D158, #20A040)',
-                      fontSize: 14,
-                    }}>
-                      {student.avatar}
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-extrabold" style={{ color: '#0D1B2A' }}>
-                        {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
-                      </h2>
-                      <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                        {student.faculty || student.program} · {student.institution}
-                      </p>
-                    </div>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setShowInfoModal(false)}
-                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
-                    style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}
-                  >
-                    <X size={16} />
-                  </motion.button>
-                </div>
-
-                {/* Categorías */}
-                <div className="flex-1 min-h-0 overflow-y-auto px-7 py-6" style={{ scrollbarWidth: 'thin' }}>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      {
-                        title: 'Información personal',
-                        model: <StudentCardView />,
-                        fields: [
-                          { label: 'Primer nombre', value: student.firstName },
-                          { label: 'Segundo nombre', value: student.secondName || '—' },
-                          { label: 'Primer apellido', value: student.lastName },
-                          { label: 'Segundo apellido', value: student.secondLastName || '—' },
-                          { label: 'Documento', value: `${student.documentType}. ${student.documentNumber}` },
-                          { label: 'Fecha de nacimiento', value: student.birthDate },
-                          { label: 'Género', value: student.gender },
-                          { label: 'Edad', value: `${Math.abs(new Date(student.birthDate.split('/').reverse().join('-')).getFullYear() - new Date().getFullYear())} años` },
-                        ],
-                      },
-                      {
-                        title: student.role === 'profesor' || student.role === 'administrador' ? 'Información laboral' : 'Información académica',
-                        model: <CapView />,
-                        fields:
-                          student.role === 'profesor' || student.role === 'administrador'
-                            ? [
-                                { label: 'Área', value: student.area || '—' },
-                                { label: 'Cargo', value: student.cargo || '—' },
-                              ]
-                            : [
-                                { label: 'Número carnet', value: student.carnetId },
-                                { label: 'Estado', value: student.graduationStatus },
-                                { label: 'Institución', value: student.institution },
-                                { label: 'Modalidad', value: student.modality },
-                                { label: 'Nivel de formación', value: student.nivelFormacion || 'Técnicos' },
-                                { label: 'Carrera', value: student.faculty || student.program },
-                                { label: 'Semestre', value: student.semester || `${student.semestre}` },
-                                { label: 'Jornada', value: student.jornada },
-                              ],
-                      },
-                      {
-                        title: 'Información médica',
-                        model: <StethoscopeView />,
-                        fields: [
-                          { label: 'EPS', value: student.eps },
-                          { label: 'Grupo sanguíneo', value: student.bloodType },
-                        ],
-                      },
-                      {
-                        title: 'Información de contacto',
-                        model: <TelephoneView />,
-                        fields: [
-                          { label: 'Email', value: editable.email },
-                          { label: 'Teléfono', value: student.phone },
-                          { label: 'Contacto de emergencia', value: student.contactName },
-                          { label: 'Parentesco', value: student.contactRelation || '—' },
-                          { label: 'Teléfono de emergencia', value: student.contactPhone },
-                        ],
-                      },
-                    ].map((cat, ci) => (
-                      <motion.div
-                        key={cat.title}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.05 + ci * 0.06 }}
-                        className="rounded-2xl p-5 flex flex-col"
-                        style={{
-                          background: 'linear-gradient(145deg, rgba(18,112,183,0.09) 0%, rgba(18,112,183,0.03) 55%, rgba(255,255,255,0.6) 100%)',
-                          boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 16px rgba(18,112,183,0.06)',
-                        }}
-                      >
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden" style={{ background: 'rgba(18,112,183,0.10)' }}>
-                            {cat.model}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-1 h-6 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
-                            <p className="text-sm font-extrabold capitalize" style={{ color: '#0D1B2A' }}>{cat.title}</p>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-x-5 gap-y-3 flex-1">
-                          {cat.fields.map(f => (
-                            <div key={f.label} className="flex flex-col">
-                              <p className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{f.label}</p>
-                              <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{f.value}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    <IdentityAccessCard student={editable} onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))} />
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <StudentInfoModal
+          isOpen={showInfoModal}
+          student={student}
+          editable={editable}
+          onClose={() => setShowInfoModal(false)}
+          onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))}
+        />
     </div>
     </>
   )

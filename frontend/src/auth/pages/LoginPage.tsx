@@ -34,13 +34,15 @@ export function LoginPage({ onSelect, onRegister, onForgot }: LoginPageProps) {
     e.preventDefault()
     const u = usuario.trim().toLowerCase()
     const p = contraseña.trim()
-    if (u === 'admin' && p === 'admin123') return onSelect('admin')
-    if (u === 'entrenador' && p === 'entrenador123') return onSelect('trainer')
     const session = mockLogin(u, p)
-    if (session && session.user.rol === 'estudiante') return onSelect('student', session)
-    setError('Credenciales incorrectas')
-    setShake(true)
-    setTimeout(() => setShake(false), 500)
+    if (!session) {
+      setError('Credenciales incorrectas')
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
+      return
+    }
+    const role = session.user.rol === 'estudiante' ? 'student' : session.user.rol === 'admin' ? 'admin' : 'trainer'
+    onSelect(role, session)
   }
 
   return (

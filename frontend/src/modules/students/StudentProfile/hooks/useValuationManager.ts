@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
-import type { Student, ValuationForm, RoutineRow } from '../StudentProfileData'
-import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine } from '../aiRoutine'
-import { routineExercises } from '../StudentProfileData'
-import { numOnly } from '../StudentProfileData'
+import type { Student, ValuationForm, RoutineRow } from '../../StudentProfileData'
+import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine } from '../../aiRoutine'
+import { routineExercises } from '../../StudentProfileData'
+import { numOnly } from '../../StudentProfileData'
 
 interface UseValuationManagerDeps {
   student: Student

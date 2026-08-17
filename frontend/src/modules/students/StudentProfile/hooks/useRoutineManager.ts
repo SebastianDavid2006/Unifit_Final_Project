@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
-import type { RoutineRow } from '../aiRoutine'
+import type { RoutineRow } from '../../aiRoutine'
 import { exerciseCatalog } from '@/data/exercises'
-import { routineExercises, ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from '../StudentProfileData'
+import { routineExercises, ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from '../../StudentProfileData'
 
 const WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const ROUTINE_DAY_PAGE_SIZE = 6
