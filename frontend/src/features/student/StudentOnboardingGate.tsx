@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  Lock, KeyRound, CalendarCheck, Clock, ChevronRight, ArrowLeft, ArrowRight, Eye, EyeOff,
+  CalendarCheck, Clock, ChevronRight, ArrowLeft, ArrowRight,
 } from 'lucide-react'
 import { StudentPage } from './pages/StudentPage'
 import SchedulePicker from '@/modules/agenda/SchedulePicker'
@@ -15,7 +15,6 @@ import registrationPendingDesktop from '@/assets/scenes/videos/desktop/registrat
 import registrationPendingMobile from '@/assets/scenes/videos/mobile/registration_pending_mobile.mp4'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
-const RED = '#E63946'
 const BLUE = '#007AFF'
 const YELLOW = '#F5A623'
 const GREEN = '#30D158'
@@ -27,12 +26,7 @@ interface Props {
   onLogout: () => void
 }
 
-type Phase = 'changePassword' | 'steps' | 'agenda' | 'agendada' | 'pending' | 'app'
-
-const PHASE_STEPS = [
-  { num: 1, label: 'Contraseña' },
-  { num: 2, label: 'Agenda tu cita' },
-]
+type Phase = 'steps' | 'agenda' | 'agendada' | 'pending' | 'app'
 
 let persistedPreview: 'celular' | 'desktop' | 'auto' = 'auto'
 
@@ -41,7 +35,6 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
   const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>(persistedPreview)
   const [user, setUser] = useState<MockUser>(session.user)
   const [phase, setPhase] = useState<Phase>(() => {
-    if (session.user.debeCambiarContrasena) return 'changePassword'
     if (!session.user.onboarding.cita) return 'steps'
     if (!session.user.onboarding.firma || !session.user.onboarding.huella) return 'pending'
     return 'app'
@@ -49,48 +42,6 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
 
   const isDesktopVideo = previewMode === 'desktop'
   const isPhonePreview = previewMode === 'celular' || (previewMode === 'auto' && isMobile)
-
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [showPass, setShowPass] = useState(false)
-  const [shake, setShake] = useState(false)
-  const [newPassError, setNewPassError] = useState('')
-
-  const triggerShake = () => {
-    setShake(true)
-    setTimeout(() => setShake(false), 400)
-  }
-
-  const handleNext = () => {
-    if (phase === 'changePassword') {
-      if (password && password.length < 6) {
-        setNewPassError('La contraseña debe tener al menos 6 caracteres')
-        triggerShake()
-        return
-      }
-      if (password && password !== confirm) {
-        setNewPassError('Las contraseñas no coinciden')
-        triggerShake()
-        return
-      }
-      const updated = updateUser(user.email, {
-        ...(password ? { password } : {}),
-        debeCambiarContrasena: false,
-      })
-      if (updated) {
-        setUser(updated)
-        setPassword('')
-        setConfirm('')
-        setNewPassError('')
-        setPhase(!updated.onboarding.cita ? 'steps' : 'pending')
-      }
-      return
-    }
-  }
-
-  const handlePrev = () => {
-    if (phase === 'changePassword') onLogout()
-  }
 
   const handleAgendaConfirm = (fecha: string, hora: string) => {
     const updated = updateUser(user.email, {
@@ -110,103 +61,6 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
     if (!user.onboarding.huella) missing.push('capturar tu huella')
     return missing
   }
-
-  const renderChangePassword = () => (
-    <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex-shrink-0 flex flex-col items-center pt-6 pb-3">
-        <img src={logotipo} alt="UNIFIT" style={{ height: 44, objectFit: 'contain' }} />
-        <p className="text-[15px] font-extrabold mt-2" style={{ color: '#fff' }}>Crea tu contraseña</p>
-        <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-          Es tu primera vez ingresando. Elige una contraseña nueva.
-        </p>
-      </div>
-
-      <div className="flex-shrink-0 px-5 pb-1">
-        <div className="flex items-center justify-center gap-1.5 mb-2">
-          {PHASE_STEPS.map(s => (
-            <motion.div
-              key={s.num}
-              animate={{
-                width: s.num === 1 ? 18 : 7,
-                background: s.num === 1 ? BLUE_GRAD : 'rgba(255,255,255,0.12)',
-              }}
-              transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-              className="rounded-full"
-              style={{ height: 6 }}
-            />
-          ))}
-        </div>
-        <span className="text-sm font-bold text-center block mb-2" style={{ color: '#fff' }}>
-          Contraseña
-        </span>
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto px-5 py-1">
-        <motion.div
-          animate={shake ? { x: [0, -6, 6, -6, 6, 0] } : {}}
-          transition={{ duration: 0.4 }}
-          className="space-y-4"
-        >
-          <div className="flex items-center gap-3 px-4 rounded-2xl h-14" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <Lock size={17} style={{ color: 'rgba(255,255,255,0.45)' }} />
-            <input
-              type={showPass ? 'text' : 'password'}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Nueva contraseña"
-              className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-white/30"
-            />
-            <button onClick={() => setShowPass(!showPass)} className="cursor-pointer" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              {showPass ? <EyeOff size={17} /> : <Eye size={17} />}
-            </button>
-          </div>
-
-          <div className="flex items-center gap-3 px-4 rounded-2xl h-14" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <Lock size={17} style={{ color: 'rgba(255,255,255,0.45)' }} />
-            <input
-              type={showPass ? 'text' : 'password'}
-              value={confirm}
-              onChange={e => setConfirm(e.target.value)}
-              placeholder="Confirmar contraseña"
-              className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-white/30"
-            />
-          </div>
-
-          {newPassError && (
-            <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-xs font-bold" style={{ color: RED }}>
-              {newPassError}
-            </motion.p>
-          )}
-        </motion.div>
-      </div>
-
-      <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handlePrev}
-            className="flex items-center gap-1 px-3.5 py-2.5 rounded-xl text-xs font-medium cursor-pointer justify-self-start"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
-          >
-            <ArrowLeft size={14} />
-            Salir
-          </motion.button>
-          <span />
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleNext}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer justify-self-end"
-            style={{ background: BLUE_GRAD }}
-          >
-            Siguiente
-            <ArrowRight size={14} />
-          </motion.button>
-        </div>
-      </div>
-    </div>
-  )
 
   const renderSteps = () => (
     <div className="flex flex-col flex-1 min-h-0">
@@ -365,18 +219,6 @@ const renderPending = () => {
 
   const phaseContent = (
     <AnimatePresence mode="wait">
-      {phase === 'changePassword' && (
-        <motion.div
-          key="changePassword"
-          initial={{ opacity: 0, x: 14 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -14 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col flex-1 min-h-0"
-        >
-          {renderChangePassword()}
-        </motion.div>
-      )}
       {phase === 'steps' && (
         <motion.div
           key="steps"

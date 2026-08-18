@@ -1,21 +1,23 @@
 import { useState, type FormEvent, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Lock, Eye, EyeOff, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
+import logotipo from '@/assets/logo/logo.webp'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const DARK_BG = '#0A0A14'
 
 interface ChangePasswordModalProps {
   onSuccess: () => void
+  onBack: () => void
 }
 
 type PreviewMode = 'celular' | 'desktop' | 'auto'
 let persistedPreview = 'auto'
 
-export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
+export function ChangePasswordModal({ onSuccess, onBack }: ChangePasswordModalProps) {
   const isMobile = useIsMobile()
   const [previewMode, setPreviewMode] = useState<PreviewMode>(persistedPreview)
   const changePreviewMode = (v: PreviewMode) => {
@@ -39,17 +41,6 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (newPass.length < 6) {
-      setError('La nueva contraseña debe tener al menos 6 caracteres')
-      triggerShake()
-      return
-    }
-    if (newPass !== confirmPass) {
-      setError('Las contraseñas no coinciden')
-      triggerShake()
-      return
-    }
-    setError('')
     onSuccess()
   }
 
@@ -71,7 +62,7 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
             className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
             style={{ background: 'rgba(126,200,227,0.12)', border: '1px solid rgba(126,200,227,0.25)' }}
           >
-            <ShieldCheck size={28} style={{ color: '#7ec8e3' }} />
+            <img src={logotipo} alt="UNIFIT" className="w-9 h-9 object-contain" />
           </motion.div>
           <h2 className="text-xl font-extrabold text-center" style={{ color: '#fff' }}>Cambia tu contraseña</h2>
           <p className="text-[11px] mt-1.5 font-medium text-center max-w-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
@@ -169,6 +160,16 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
     </div>
   )
 
+  const backButton = (top: number) => (
+    <button
+      onClick={onBack}
+      className="absolute z-50 w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
+      style={{ top, left: 16, color: 'rgba(255,255,255,0.5)' }}
+    >
+      <ArrowLeft size={16} />
+    </button>
+  )
+
   return (
     <div className="relative size-full flex flex-col" style={{ background: DARK_BG }}>
       {viewToolbar}
@@ -190,6 +191,7 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
             <div className="absolute inset-0" style={{
               background: 'linear-gradient(115deg, rgba(8,12,28,0.55) 0%, rgba(8,12,28,0.3) 45%, rgba(8,12,28,0.16) 100%)',
             }} />
+            {backButton(16)}
             <div className="relative z-10 size-full flex items-center justify-center overflow-hidden" style={{ padding: 20 }}>
               <motion.div
                 initial={{ opacity: 0, y: 30, scale: 0.98 }}
@@ -249,10 +251,11 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
                 backdropFilter: 'blur(14px)',
                 WebkitBackdropFilter: 'blur(14px)',
               }} />
-              <div className="absolute inset-0" style={{
-                background: 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)',
-              }} />
+<div className="absolute inset-0" style={{
+              background: 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)',
+            }} />
             </div>
+            {backButton(isMobile ? 12 : 36)}
             <div className="relative z-10 flex flex-col flex-1 min-h-0">
               <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 flex flex-col justify-center">
                 {formContent}
@@ -272,6 +275,7 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
               WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
             }}
           >
+            {backButton(16)}
             <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 flex flex-col justify-center">
               {formContent}
             </div>

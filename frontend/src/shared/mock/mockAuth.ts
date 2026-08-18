@@ -55,7 +55,7 @@ function seedUsers(): Record<string, MockUser> {
     },
     'estudiante': {
       id: 'u-st1', email: 'estudiante', password: 'estudiante123', rol: 'estudiante',
-      estado: 'en_proceso', debeCambiarContrasena: false,
+      estado: 'en_proceso', debeCambiarContrasena: true,
       onboarding: { cita: false, firma: false, huella: false }, nombre: 'Estudiante Demo',
     },
     'estudiante2': {
@@ -142,6 +142,9 @@ export function mockLogin(identifier: string, password: string): MockSession | n
     const fresh = seedUsers()['estudiante']
     updateUser(fresh.email, fresh)
     return { user: { ...fresh }, token: `mock-token-${fresh.id}-${Date.now()}` }
+  }
+  if (user.id === 'u-test') {
+    return { user: { ...user, debeCambiarContrasena: true }, token: `mock-token-${user.id}-${Date.now()}` }
   }
   return { user: { ...user }, token: `mock-token-${user.id}-${Date.now()}` }
 }

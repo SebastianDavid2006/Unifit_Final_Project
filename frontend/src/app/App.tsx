@@ -124,12 +124,12 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <ChangePasswordModal onSuccess={() => {
+              <ChangePasswordModal onBack={() => setScreen('login')} onSuccess={() => {
                 if (pendingSession) {
                   updateUser(pendingSession.user.email, { debeCambiarContrasena: false })
                 }
                 if (pendingPlatform === 'student' && pendingSession) {
-                  setStudentSession(pendingSession)
+                  setStudentSession({ ...pendingSession, user: { ...pendingSession.user, debeCambiarContrasena: false } })
                 }
                 setPendingSession(null)
                 setPendingPlatform(null)
