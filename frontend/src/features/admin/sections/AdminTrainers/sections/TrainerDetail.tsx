@@ -9,7 +9,6 @@ import { StudentCardView } from '@/assets/models/ui/objects/student_card/Student
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
 import { ListView } from '@/assets/models/ui/objects/list/ListModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
-import { DocumentView } from '@/assets/models/ui/objects/document/DocumentModel'
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { BLUE, RED } from '../data'
 import coach2Gif from '@/assets/illustrations/characters/coach_2/animated/coach_2.gif'
@@ -198,20 +197,12 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             ]} labelMb={1} itemPb={8} />
 </DetailCard>
 
-          <DetailCard gridColumn="3" gridRow="2" accent={BLUE} title="Estadísticas" model={<ListView />}>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: 'Estudiantes', value: `${trainer.students}` },
-                { label: 'Horario', value: trainer.schedule },
-                { label: 'Antigüedad', value: trainer.joinedAt },
-                { label: 'Evaluación', value: `${trainer.rating}/100` },
-              ].map(m => (
-                <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(0,0,0,0.02)' }}>
-                  <p className="text-sm font-extrabold" style={{ color: '#0D1B2A' }}>{m.value}</p>
-                  <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
-                </div>
-              ))}
-            </div>
+          <DetailCard gridColumn="3" gridRow="2" accent={BLUE} title="Acceso y permisos">
+            <FieldList fields={[
+              { key: 'role', label: 'Rol', value: trainer.role === 'admin' ? 'Administrador' : 'Entrenador' },
+              { key: 'accessLevel', label: 'Nivel de acceso', value: trainer.accessLevel },
+              { key: 'lastAccess', label: 'Último acceso', value: trainer.lastAccess },
+            ]} />
           </DetailCard>
 
 <DetailCard gridColumn="1" gridRow="3" accent={RED} title="Información Médica" model={<StethoscopeView />}>
@@ -221,27 +212,13 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             ]} />
 </DetailCard>
 
-          <div className="rounded-[28px] p-5 relative overflow-hidden" style={{ gridColumn: '3', gridRow: '3', background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: 'linear-gradient(110deg, transparent 25%, rgba(255,215,0,0.15) 37%, rgba(255,255,255,0.4) 50%, rgba(255,215,0,0.15) 63%, transparent 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 3s ease-in-out infinite',
-            }} />
-            <div className="relative z-10">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(212,175,55,0.5)' }} />
-                <div className="w-8 h-8 flex-shrink-0"><DocumentView /></div>
-                <p className="text-lg font-extrabold capitalize" style={{ color: '#B8860B' }}>Certificaciones</p>
-              </div>
-              <div className="space-y-2">
-                {trainer.certifications.map((cert, i) => (
-                  <div key={i} className="rounded-2xl p-3" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.15)' }}>
-                    <p className="text-sm font-bold" style={{ color: '#B8860B' }}>{cert}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <DetailCard gridColumn="3" gridRow="3" accent={BLUE} title="Actividades recientes" model={<ListView />}>
+            <FieldList fields={trainer.recentActivities.slice(0, 3).map((act, i) => ({
+              key: `activity-${i}`,
+              label: act.date,
+              value: act.action,
+            }))} />
+          </DetailCard>
         </div>
       </div>
 
