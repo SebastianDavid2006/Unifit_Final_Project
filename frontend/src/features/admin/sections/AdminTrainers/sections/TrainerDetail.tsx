@@ -34,13 +34,13 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
     <div className="relative z-10 p-8 overflow-hidden">
       <div className="w-full">
         <div className="grid gap-2 items-stretch" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
-          <DetailCard gridColumn="1" gridRow="1" accent={RED} title="Información General" model={<StudentCardView />}>
+<DetailCard gridColumn="1" gridRow="1" accent={RED} title="Información General" model={<StudentCardView />}>
             <FieldList fields={[
               { label: 'Documento', value: trainer.document },
               { label: 'Fecha de nacimiento', value: trainer.birthDate },
               { label: 'Género', value: trainer.gender },
-            ]} />
-          </DetailCard>
+            ]} editable={editMode} />
+</DetailCard>
 
           <div className="flex flex-col items-center relative" style={{ gridColumn: '2', gridRow: '1 / 4', paddingTop: 16, alignSelf: 'stretch', overflow: 'visible' }}>
             <div className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3 relative z-10" style={{
@@ -120,14 +120,14 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
               </div>
           </motion.div>
 
-          <DetailCard gridColumn="1" gridRow="2" accent={RED} title="Contacto" model={<TelephoneView />}>
+<DetailCard gridColumn="1" gridRow="2" accent={RED} title="Contacto" model={<TelephoneView />}>
             <FieldList fields={[
               { label: 'Email', value: trainer.email },
               { label: 'Teléfono', value: trainer.phone },
               { label: 'Contacto de emergencia', value: trainer.contactName },
               { label: 'Tel. contacto', value: trainer.contactPhone },
-            ]} labelMb={1} itemPb={8} />
-          </DetailCard>
+            ]} labelMb={1} itemPb={8} editable={editMode} />
+</DetailCard>
 
           <DetailCard gridColumn="3" gridRow="2" accent={BLUE} title="Estadísticas" model={<ListView />}>
             <div className="grid grid-cols-2 gap-2">
@@ -145,12 +145,12 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
             </div>
           </DetailCard>
 
-          <DetailCard gridColumn="1" gridRow="3" accent={RED} title="Información Médica" model={<StethoscopeView />}>
+<DetailCard gridColumn="1" gridRow="3" accent={RED} title="Información Médica" model={<StethoscopeView />}>
             <FieldList fields={[
               { label: 'EPS', value: trainer.eps },
               { label: 'Grupo sanguíneo', value: trainer.bloodType },
-            ]} />
-          </DetailCard>
+            ]} editable={editMode} />
+</DetailCard>
 
           <div className="rounded-[28px] p-5 relative overflow-hidden" style={{ gridColumn: '3', gridRow: '3', background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
             <div className="absolute inset-0 pointer-events-none" style={{
