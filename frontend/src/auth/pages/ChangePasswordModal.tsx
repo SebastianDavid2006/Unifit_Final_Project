@@ -23,7 +23,7 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
     setPreviewMode(v)
   }
 
-  const isDesktopVideo = previewMode === 'desktop'
+  const isDesktopVideo = previewMode === 'desktop' || (previewMode === 'auto' && !isMobile)
   const isPhonePreview = previewMode === 'celular' || (previewMode === 'auto' && isMobile)
 
   const [newPass, setNewPass] = useState('')
@@ -149,8 +149,29 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
     </motion.div>
   )
 
+  const viewToolbar = (
+    <div className="flex-shrink-0 flex items-center justify-center gap-1 z-50 pt-3 pb-2">
+      <span className="text-[9px] font-bold uppercase tracking-widest mr-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Vista</span>
+      {(['celular', 'desktop', 'auto'] as const).map(v => (
+        <button
+          key={v}
+          onClick={() => changePreviewMode(v)}
+          className="px-3 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer"
+          style={{
+            background: previewMode === v ? 'rgba(255,255,255,0.14)' : 'transparent',
+            border: previewMode === v ? '1px solid rgba(255,255,255,0.22)' : '1px solid transparent',
+            color: previewMode === v ? '#FFFFFF' : 'rgba(255,255,255,0.35)',
+          }}
+        >
+          {v === 'celular' ? 'Celular' : v === 'desktop' ? 'Desktop' : 'Auto'}
+        </button>
+      ))}
+    </div>
+  )
+
   return (
     <div className="relative size-full flex flex-col" style={{ background: DARK_BG }}>
+      {viewToolbar}
       <div className="flex-1 min-h-0 relative">
         {isDesktopVideo ? (
           <div className="absolute inset-0 overflow-hidden" style={{ background: DARK_BG }}>
@@ -232,6 +253,11 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
                 background: 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)',
               }} />
             </div>
+            <div className="relative z-10 flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 flex flex-col justify-center">
+                {formContent}
+              </div>
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -246,6 +272,9 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
               WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
             }}
           >
+            <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 flex flex-col justify-center">
+              {formContent}
+            </div>
           </motion.div>
         )}
       </div>
