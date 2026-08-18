@@ -165,6 +165,18 @@ export function LoginPage({ onSelect, onRegister, onForgot }: LoginPageProps) {
               <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.4)' }}>o</span>
               <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.15)' }} />
             </div>
+            <button
+              type="button"
+              onClick={() => { localStorage.removeItem('unifit_demo_users'); localStorage.removeItem('unifit_demo_inbox'); alert('Mock reiniciado. Recarga la página.') }}
+              className="w-full h-14 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '2px solid rgba(126,200,227,0.25)',
+                color: '#fff',
+              }}
+            >
+              🔄 Reiniciar mock auth
+            </button>
 
             <motion.button
               type="button"
