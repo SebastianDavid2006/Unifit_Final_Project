@@ -1,4 +1,4 @@
-﻿import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { Check, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { ClockView } from '@/assets/models/ui/objects/clock/ClockModel'
 import { ListView } from '@/assets/models/ui/objects/list/ListModel'

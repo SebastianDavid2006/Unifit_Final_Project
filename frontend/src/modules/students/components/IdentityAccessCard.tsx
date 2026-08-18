@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { Fingerprint, LockKeyhole, PenLine, X } from 'lucide-react'
 import type SignatureCanvas from 'react-signature-canvas'
 import type { Student } from '../StudentProfileData'
