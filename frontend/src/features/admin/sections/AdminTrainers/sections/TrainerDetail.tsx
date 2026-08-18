@@ -1,6 +1,6 @@
 ﻿import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Fingerprint, PenLine, RefreshCw, ScanLine } from 'lucide-react'
+import { X, Fingerprint, PenLine, RefreshCw, ScanLine, Check, Power, AlertTriangle } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import type { Trainer } from '@/data/trainers'
 import DetailCard from '../components/DetailCard'
@@ -26,6 +26,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
   const [showSignatureModal, setShowSignatureModal] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<Record<string, string> | null>(null)
+  const [confirm, setConfirm] = useState<'save' | 'status' | null>(null)
   const [showFingerprintModal, setShowFingerprintModal] = useState(false)
   const [fingerprintStatus, setFingerprintStatus] = useState<'idle' | 'scanning' | 'captured'>('idle')
   const [fingerprintSuccess, setFingerprintSuccess] = useState(false)
@@ -82,13 +83,21 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
     setDraft(null)
   }
 
-  function cancelEdit() {
-    setDraft(null)
-    setEditMode(false)
-  }
-
   function handleDraftChange(key: string, value: string) {
     setDraft(prev => (prev ? { ...prev, [key]: value } : prev))
+  }
+
+  function toggleStatus() {
+    setTrainer(prev => ({ ...prev, status: prev.status === 'active' ? 'inactive' : 'active' }))
+  }
+
+  function handleConfirm() {
+    if (confirm === 'save') {
+      saveDraft()
+    } else if (confirm === 'status') {
+      toggleStatus()
+    }
+    setConfirm(null)
   }
   return (
     <div className="relative z-10 p-8 overflow-hidden">
@@ -99,7 +108,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
               { key: 'document', label: 'Documento', value: trainer.document },
               { key: 'birthDate', label: 'Fecha de nacimiento', value: trainer.birthDate },
               { key: 'gender', label: 'Género', value: trainer.gender },
-            ]} editable={editMode && !!draft} values={draft ?? {}} onChange={handleDraftChange} />
+            ]} />
 </DetailCard>
 
           <div className="flex flex-col items-center relative" style={{ gridColumn: '2', gridRow: '1 / 4', paddingTop: 16, alignSelf: 'stretch', overflow: 'visible' }}>
@@ -186,7 +195,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
               { key: 'phone', label: 'Teléfono', value: trainer.phone },
               { key: 'contactName', label: 'Contacto de emergencia', value: trainer.contactName },
               { key: 'contactPhone', label: 'Tel. contacto', value: trainer.contactPhone },
-            ]} labelMb={1} itemPb={8} editable={editMode && !!draft} values={draft ?? {}} onChange={handleDraftChange} />
+            ]} labelMb={1} itemPb={8} />
 </DetailCard>
 
           <DetailCard gridColumn="3" gridRow="2" accent={BLUE} title="Estadísticas" model={<ListView />}>
@@ -209,7 +218,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             <FieldList fields={[
               { key: 'eps', label: 'EPS', value: trainer.eps },
               { key: 'bloodType', label: 'Grupo sanguíneo', value: trainer.bloodType },
-            ]} editable={editMode && !!draft} values={draft ?? {}} onChange={handleDraftChange} />
+            ]} />
 </DetailCard>
 
           <div className="rounded-[28px] p-5 relative overflow-hidden" style={{ gridColumn: '3', gridRow: '3', background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
@@ -276,55 +285,89 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
                   <div>
                     <h2 className="text-lg font-extrabold" style={{ color: '#0D1B2A' }}>{trainer.name}</h2>
                     <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                      {trainer.role === 'admin' ? 'Administrador' : 'Entrenador'} · {trainer.speciality}
+                      {trainer.role === 'admin' ? 'Administrador' : 'Entrenador'}
                     </p>
                   </div>
-                  {editMode && draft ? (
-                    <div className="flex items-center gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={cancelEdit}
-                        className="px-3 py-2 rounded-xl text-sm font-bold cursor-pointer"
-                        style={{ background: 'rgba(0,0,0,0.06)', color: 'rgba(0,0,0,0.5)' }}
-                      >
-                        Cancelar
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={saveDraft}
-                        className="px-3 py-2 rounded-xl text-sm font-bold text-white cursor-pointer"
-                        style={{ background: GREEN_BLUE_GRAD }}
-                      >
-                        Guardar
-                      </motion.button>
-                    </div>
-                  ) : (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={startEdit}
-                    className="px-3 py-2 rounded-xl text-sm font-bold text-white cursor-pointer"
-                    style={{ background: BLUE_GRAD }}
-                  >
-                    Editar
-                  </motion.button>
-                  )}
                 </div>
-                <motion.button
-                  whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => { setShowInfoModal(false); setEditMode(false); setDraft(null); }}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
-                  style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}
-                >
-                  <X size={16} />
-                </motion.button>
+                <div className="flex items-center gap-2">
+                  <AnimatePresence mode="wait" initial={false}>
+                    {editMode && draft ? (
+                      <motion.div
+                        key="edit"
+                        initial={{ opacity: 0, filter: 'blur(4px)' }}
+                        animate={{ opacity: 1, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, filter: 'blur(4px)' }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex items-center gap-2"
+                      >
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setConfirm('status')}
+                          title={trainer.status === 'active' ? 'Desactivar cuenta' : 'Activar cuenta'}
+                          className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
+                          style={trainer.status === 'active'
+                            ? { background: 'rgba(244,56,67,0.1)', color: '#F43843' }
+                            : { background: 'rgba(34,197,94,0.12)', color: '#22C55E' }}
+                        >
+                          <Power size={16} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setConfirm('save')}
+                          title="Guardar"
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer"
+                          style={{ background: GREEN_BLUE_GRAD }}
+                        >
+                          <Check size={16} />
+                        </motion.button>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="view"
+                        initial={{ opacity: 0, filter: 'blur(4px)' }}
+                        animate={{ opacity: 1, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, filter: 'blur(4px)' }}
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex items-center gap-2"
+                      >
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={startEdit}
+                          title="Editar"
+                          className="w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer"
+                          style={{ background: BLUE_GRAD, boxShadow: '0 4px 12px rgba(18,112,183,0.25)' }}
+                        >
+                          <PenLine size={16} />
+                        </motion.button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <motion.button
+                    whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => { setShowInfoModal(false); setEditMode(false); setDraft(null); }}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
+                    style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}
+                  >
+                    <X size={16} />
+                  </motion.button>
+                </div>
               </div>
 
               {/* Categorías */}
-              <div className="flex-1 min-h-0 overflow-y-auto px-7 py-6" style={{ scrollbarWidth: 'thin' }}>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={editMode ? 'edit' : 'view'}
+                  initial={{ opacity: 0, filter: 'blur(6px)' }}
+                  animate={{ opacity: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, filter: 'blur(6px)' }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex-1 min-h-0 overflow-y-auto px-7 py-6"
+                  style={{ scrollbarWidth: 'thin' }}
+                >
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     {
@@ -408,8 +451,73 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
                         ))}
                       </div>
                     </motion.div>
-                  ))}
+))}
+                      </div>
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
+)}
+      </AnimatePresence>
+
+      {/* ── Confirmación de cambios ─────────── */}
+      <AnimatePresence>
+        {confirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-6"
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setConfirm(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 10 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-sm rounded-3xl p-6"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
+            >
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: confirm === 'status' ? 'rgba(244,56,67,0.1)' : 'rgba(18,112,183,0.1)', color: confirm === 'status' ? '#F43843' : '#1270B7' }}>
+                  {confirm === 'status' ? <Power size={20} /> : <AlertTriangle size={20} />}
                 </div>
+                <p className="text-lg font-bold" style={{ color: '#1A1A1E' }}>Confirmar cambios</p>
+                <p className="text-xs font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{trainer.name}</p>
+              </div>
+              <p className="text-sm font-medium mb-6 text-center" style={{ color: 'rgba(0,0,0,0.55)' }}>
+                {confirm === 'save'
+                  ? '¿Estás seguro de aplicar los cambios realizados?'
+                  : trainer.status === 'active'
+                    ? '¿Estás seguro de desactivar la cuenta de este usuario?'
+                    : '¿Estás seguro de activar la cuenta de este usuario?'}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setConfirm(null)}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={handleConfirm}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                  style={{ background: confirm === 'status' ? (trainer.status === 'active' ? 'linear-gradient(135deg, #F43843, #D0202C)' : GREEN_BLUE_GRAD) : BLUE_GRAD }}
+                >
+                  {confirm === 'save'
+                    ? 'Aplicar'
+                    : trainer.status === 'active'
+                      ? 'Sí, desactivar'
+                      : 'Sí, activar'}
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
