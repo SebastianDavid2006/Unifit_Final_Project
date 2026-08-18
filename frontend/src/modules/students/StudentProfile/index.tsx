@@ -2,11 +2,11 @@
 import { motion, AnimatePresence } from 'motion/react'
 import {
   AlertTriangle, Activity,
-  Calendar, FileText, Dumbbell, Plus,
+  Calendar, FileText, Plus,
   BarChart2, Maximize2, X,
-  Check, CheckCircle, XCircle, Clock, Eye,
+  CheckCircle, XCircle, Clock, Eye,
   Download, Trash2, Upload,
-  Sparkles, Loader2, ChevronDown, ChevronLeft, ChevronRight, List,
+  Sparkles, Loader2, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
@@ -32,7 +32,7 @@ import coachMagicImg from '@/assets/illustrations/characters/coach/coach_magic.p
 import calendarImg from '@/assets/icons/objects/calendar.webp'
 import assessmentSceneImg from '@/assets/scenes/physical_assessment.webp'
 import routineSceneImg from '@/assets/scenes/physical_routine.webp'
-import { meshInputBg, meshInputHover, muscleIcons } from '@/data/constants'
+import { meshInputBg } from '@/data/constants'
 import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine, RoutineRow } from '../aiRoutine'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import routineGenLottie from '@/assets/icons/animated/ai/routine_generation.lottie?url'
@@ -63,6 +63,10 @@ import { AssessmentChoiceModal } from './components/AssessmentChoiceModal'
 import { AIGenerationModal } from './components/AIGenerationModal'
 import { RoutineSuccessModal } from './components/RoutineSuccessModal'
 import { RoutineDetailModal } from './components/RoutineDetailModal'
+import { RoutineDayCard } from './components/RoutineDayCard'
+import { RoutineCategorySelect } from './components/RoutineCategorySelect'
+import { RoutineExerciseSelect } from './components/RoutineExerciseSelect'
+import { ValuationSuccess } from './components/ValuationSuccess'
 
 export { TABS } from '../StudentProfileData'
 export function StudentProfile({ student, tab = 'overview', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
@@ -223,356 +227,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   const assessmentCurrentPage = Math.min(assessmentPage, assessmentTotalPages)
   const pagedAssessments = assessmentItems.slice((assessmentCurrentPage - 1) * ASSESSMENT_PAGE_SIZE, assessmentCurrentPage * ASSESSMENT_PAGE_SIZE)
   const assessmentPageNumbers = Array.from({ length: assessmentTotalPages }, (_, i) => i + 1)
-  const valuationStat = (label: string, value: string, color?: string) => (
-    <div className="rounded-xl p-3 flex items-center justify-between gap-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
-      <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{label}</span>
-      <span className="text-sm font-bold text-right" style={{ color: color ?? '#0D1B2A' }}>{value}</span>
-    </div>
-  )
   const routineEdited = routineSnapshot !== '' && JSON.stringify({ form: routineForm, rows: routineRows }) !== routineSnapshot
-
-  const ROUTINE_DAY_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
-
-  const renderRoutineDayCard = (day: string, selected: boolean, done: boolean, onClick: () => void, onRemove?: () => void) => (
-    <motion.button
-      type="button"
-      whileHover={!selected ? { scale: 1.05 } : {}}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
-      className="relative flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
-      style={{
-        background: selected ? ROUTINE_DAY_GRAD : 'rgba(0,0,0,0.03)',
-        color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-        border: '1px solid transparent',
-        boxShadow: selected ? '0 4px 20px rgba(18,112,183,0.25)' : 'none',
-      }}
-      onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
-      onMouseLeave={e => { if (!selected) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
-    >
-      <motion.img
-        src={calendarImg}
-        alt=""
-        className="mb-0.5"
-        animate={{
-          width: selected ? 52 : 28,
-          height: selected ? 52 : 28,
-          marginTop: selected ? -28 : 0,
-          filter: selected ? 'blur(0px) drop-shadow(0 8px 20px rgba(0,0,0,0.15))' : 'blur(0px)',
-        }}
-        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      />
-      <span className="text-sm leading-none text-center">{day}</span>
-      {onRemove && (
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.15 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={e => { e.stopPropagation(); onRemove() }}
-          className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer z-10"
-          style={{ background: selected ? 'rgba(255,255,255,0.95)' : 'rgba(244,56,67,0.12)', color: '#E63946', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
-        >
-          <X size={11} strokeWidth={3.5} />
-        </motion.button>
-      )}
-    </motion.button>
-  )
-
-  const ROUTINE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
-
-  const renderRoutineCategorySelect = (row: RoutineRow) => {
-    const open = routineDropdown?.id === row.id && routineDropdown.field === 'muscle'
-    const category = ROUTINE_MUSCLE_TO_CAT[row.muscle] || row.muscle
-    const icon = category && muscleIcons[category]
-    return (
-      <div className="relative">
-        <button
-          type="button"
-          disabled={routineViewMode}
-          onClick={() => { if (!routineViewMode) setRoutineDropdown(open ? null : { id: row.id, field: 'muscle' }) }}
-          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold outline-none cursor-pointer transition-all duration-200"
-          style={{ background: meshInputBg, border: '1px solid transparent', color: row.muscle ? '#0D1B2A' : 'rgba(0,0,0,0.35)' }}
-          onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
-          onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
-          onFocus={e => meshInput.focusMesh(e.currentTarget)}
-          onBlur={e => meshInput.blurMesh(e.currentTarget)}
-        >
-          {icon ? (
-            <img src={icon} alt="" className="w-4 h-4 flex-shrink-0" />
-          ) : (
-            <div className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.12)' }}>
-              <List size={11} style={{ color: '#1270B7' }} />
-            </div>
-          )}
-          <span className="flex-1 truncate text-left">{category || 'Categoría'}</span>
-          {!routineViewMode && (
-            <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
-              <ChevronDown size={13} />
-            </motion.div>
-          )}
-        </button>
-        <AnimatePresence initial={false}>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl max-h-44 overflow-y-auto"
-              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)' }}
-            >
-              {ROUTINE_CATEGORIES.map(m => {
-                const isActive = category === m
-                return (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => {
-                      const nameInNewCat = exerciseCatalog.some(x => (ROUTINE_MUSCLE_TO_CAT[x.muscle] || x.muscle) === m && x.name === row.name)
-                      updateRoutineRow(row.id, {
-                        muscle: m,
-                        name: nameInNewCat ? row.name : '',
-                        sets: nameInNewCat ? row.sets : '3',
-                        reps: nameInNewCat ? row.reps : '10-12',
-                      })
-                      setRoutineDropdown(null)
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors relative"
-                    style={{
-                      color: isActive ? '#FFFFFF' : 'rgba(0,0,0,0.6)',
-                      background: isActive ? ROUTINE_GRAD : 'transparent',
-                      borderBottom: '1px solid rgba(0,0,0,0.03)',
-                    }}
-                    onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = '#1270B7' } }}
-                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(0,0,0,0.6)' } }}
-                  >
-                    {muscleIcons[m] && (
-                      <img src={muscleIcons[m]} alt="" className="w-4 h-4 flex-shrink-0" style={{ filter: isActive ? 'brightness(10)' : 'none' }} />
-                    )}
-                    <span>{m}</span>
-                    {isActive && <Check size={12} className="ml-auto text-white" />}
-                  </button>
-                )
-              })}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    )
-  }
-
-  const renderRoutineExerciseSelect = (row: RoutineRow) => {
-    const open = routineDropdown?.id === row.id && routineDropdown.field === 'exercise'
-    const category = ROUTINE_MUSCLE_TO_CAT[row.muscle] || row.muscle
-    const catExercises = exerciseCatalog.filter(e => (ROUTINE_MUSCLE_TO_CAT[e.muscle] || e.muscle) === category)
-    const hasCustom = row.name && !catExercises.some(e => e.name === row.name)
-    return (
-      <div className="relative">
-        <button
-          type="button"
-          disabled={!row.muscle || routineViewMode}
-          onClick={() => { if (!routineViewMode) setRoutineDropdown(open ? null : { id: row.id, field: 'exercise' }) }}
-          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold outline-none cursor-pointer transition-all duration-200"
-          style={{
-            background: row.muscle ? meshInputBg : 'rgba(0,0,0,0.03)',
-            border: '1px solid transparent',
-            color: row.name ? '#0D1B2A' : 'rgba(0,0,0,0.35)',
-            opacity: row.muscle ? 1 : 0.6,
-          }}
-          onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
-          onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
-          onFocus={e => meshInput.focusMesh(e.currentTarget)}
-          onBlur={e => meshInput.blurMesh(e.currentTarget)}
-        >
-          <Dumbbell size={13} style={{ color: row.name ? '#1270B7' : 'rgba(0,0,0,0.3)' }} className="flex-shrink-0" />
-          <span className="flex-1 truncate text-left">{row.name || 'Ejercicio'}</span>
-          {!routineViewMode && (
-            <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
-              <ChevronDown size={13} />
-            </motion.div>
-          )}
-        </button>
-        <AnimatePresence initial={false}>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute top-full left-0 right-0 z-50 mt-1 rounded-xl max-h-44 overflow-y-auto"
-              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)' }}
-            >
-              {catExercises.length === 0 && !hasCustom ? (
-                <p className="text-[11px] py-3 text-center" style={{ color: 'rgba(0,0,0,0.3)' }}>
-                  No hay ejercicios en esta categoría
-                </p>
-              ) : (
-                catExercises.map(ex => {
-                  const isActive = row.name === ex.name
-                  return (
-                    <button
-                      key={ex.id}
-                      type="button"
-                      onClick={() => {
-                        updateRoutineRow(row.id, {
-                          name: ex.name,
-                          muscle: ex.muscle,
-                          sets: String(ex.sets),
-                          reps: ex.reps,
-                        })
-                        setRoutineDropdown(null)
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors relative"
-                      style={{
-                        color: isActive ? '#FFFFFF' : 'rgba(0,0,0,0.6)',
-                        background: isActive ? ROUTINE_GRAD : 'transparent',
-                        borderBottom: '1px solid rgba(0,0,0,0.03)',
-                      }}
-                      onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = '#1270B7' } }}
-                      onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(0,0,0,0.6)' } }}
-                    >
-                      <Dumbbell size={12} style={{ color: isActive ? '#fff' : 'rgba(0,0,0,0.4)' }} className="flex-shrink-0" />
-                      <span>{ex.name}</span>
-                      {isActive && <Check size={12} className="ml-auto text-white" />}
-                    </button>
-                  )
-                })
-              )}
-              {hasCustom && (
-                <button
-                  type="button"
-                  onClick={() => setRoutineDropdown(null)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors"
-                  style={{ color: '#1270B7', background: 'rgba(18,112,183,0.06)', borderBottom: '1px solid rgba(0,0,0,0.03)' }}
-                >
-                  <Sparkles size={12} className="flex-shrink-0" />
-                  <span className="truncate">{row.name} (personalizado)</span>
-                  <Check size={12} className="ml-auto" />
-                </button>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    )
-  }
-
-
-  const renderValuationSuccess = () => (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="flex flex-col items-center pt-8 px-6"
-    >
-      <div className="relative flex items-center justify-center -mt-28 mb-6">
-        {[...Array(24)].map((_, i) => {
-          const angle = (i / 24) * 360
-          const rad = (angle * Math.PI) / 180
-          return (
-            <motion.span
-              key={i}
-              className="absolute pointer-events-none text-lg select-none"
-              style={{ color: '#4ADE80' }}
-              animate={{
-                x: [0, Math.cos(rad) * (110 + (i % 6) * 20)],
-                y: [0, Math.sin(rad) * (110 + (i % 6) * 20)],
-                opacity: [0, 1, 0],
-                scale: [0, 1.4, 0],
-              }}
-              transition={{
-                duration: 2.5 + (i % 4) * 0.3,
-                repeat: Infinity,
-                delay: i * 0.07,
-                ease: 'easeOut',
-              }}
-            >
-              ✦
-            </motion.span>
-          )
-        })}
-        <div className="relative flex items-center justify-center">
-          <motion.img
-            src={coachCongratsImg}
-            alt="felicitaciones"
-            className="w-72 h-auto object-contain relative z-10"
-            style={{ filter: 'drop-shadow(0 0 30px rgba(34,197,94,0.15))' }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-          />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-24 pointer-events-none z-20" style={{
-            background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, transparent 60%)',
-          }} />
-        </div>
-      </div>
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-        className="text-lg font-bold text-center"
-        style={{ color: '#1A1A1E' }}
-      >
-        ¡Valoración guardada exitosamente!
-      </motion.p>
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45, duration: 0.4 }}
-        className="text-sm font-medium mt-1 text-center"
-        style={{ color: 'rgba(0,0,0,0.35)' }}
-      >
-        Los datos de la valoración han sido guardados en el sistema.
-      </motion.p>
-      {aiGenerating ? null : (
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.3 }}
-          whileHover={{ scale: 1.05, boxShadow: '0 12px 32px rgba(124,58,237,0.45)', transition: { duration: 0.15 } }}
-          whileTap={{ scale: 0.94, boxShadow: '0 2px 8px rgba(124,58,237,0.2)', transition: { duration: 0.1 } }}
-          onClick={startAiRoutine}
-          className="mt-8 mb-3 px-10 py-4 rounded-2xl text-sm font-extrabold text-white cursor-pointer flex items-center gap-2.5 shadow-lg"
-          style={{
-            background: 'linear-gradient(135deg, #BF5AF2, #7C3AED)',
-            boxShadow: '0 10px 28px rgba(124,58,237,0.35)',
-          }}
-        >
-          <Sparkles size={16} />
-          Generar rutina con IA
-        </motion.button>
-      )}
-      <motion.button
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.55, duration: 0.3 }}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => {
-          setShowNewValuationModal(false)
-          setValuationSuccess(false)
-          setValuationStep(1)
-          setValuationViewMode(false)
-          setRoutineViewMode(false)
-          setRoutineFromAssessment(false)
-          setRoutineSnapshot('')
-          setRoutineFromAI(false)
-          setRoutineDays([])
-          setShowAddDayMenu(false)
-          setRoutineStep(1)
-          setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
-          setRoutineRows([])
-          setSelectedRoutineDay(null)
-          setRoutineDayPage(1)
-          setAiGeneratedRoutine(null)
-          setShowNewRoutineModal(true)
-        }}
-        className="mb-10 px-6 py-2 text-xs font-semibold cursor-pointer bg-transparent"
-        style={{ color: 'rgba(0,0,0,0.45)' }}
-      >
-        Crear rutina manualmente
-      </motion.button>
-    </motion.div>
-  )
 
   return (
     <>
@@ -865,7 +520,29 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                 {/* Scrollable body */}
                 <div className={`flex-1 px-6 ${valuationSuccess ? 'overflow-visible pb-0' : 'overflow-y-auto pb-6'}`}>
                   {valuationSuccess ? (
-                    renderValuationSuccess()
+                    <ValuationSuccess
+                      aiGenerating={aiGenerating}
+                      onStartAiRoutine={startAiRoutine}
+                      onCreateManual={() => {
+                        setShowNewValuationModal(false)
+                        setValuationSuccess(false)
+                        setValuationStep(1)
+                        setValuationViewMode(false)
+                        setRoutineViewMode(false)
+                        setRoutineFromAssessment(false)
+                        setRoutineSnapshot('')
+                        setRoutineFromAI(false)
+                        setRoutineDays([])
+                        setShowAddDayMenu(false)
+                        setRoutineStep(1)
+                        setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+                        setRoutineRows([])
+                        setSelectedRoutineDay(null)
+                        setRoutineDayPage(1)
+                        setAiGeneratedRoutine(null)
+                        setShowNewRoutineModal(true)
+                      }}
+                    />
                   ) : (
                   <motion.div
                     key={valuationStep}
@@ -1430,7 +1107,6 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           routine={currentRoutine}
           viewRoutineDay={viewRoutineDay}
           setViewRoutineDay={setViewRoutineDay}
-          renderRoutineDayCard={renderRoutineDayCard}
           onClose={() => setShowRoutineViewModal(false)}
         />
 
@@ -1579,12 +1255,15 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                     {pagedRoutineDays.length > 0 && (
                       <div className="flex flex-col mb-3">
                         <div className="grid gap-2 mb-3" style={{ gridTemplateColumns: `repeat(${pagedRoutineDays.length}, minmax(0, 1fr))` }}>
-                          {pagedRoutineDays.map(day => renderRoutineDayCard(
-                            day,
-                            day === (selectedRoutineDay ?? defaultRoutineDay()),
-                            routineRows.some(r => r.dia === day),
-                            () => setSelectedRoutineDay(day),
-                            routineDayList.length > 1 ? () => removeRoutineDay(day) : undefined,
+                          {pagedRoutineDays.map(day => (
+                            <RoutineDayCard
+                              key={day}
+                              day={day}
+                              selected={day === (selectedRoutineDay ?? defaultRoutineDay())}
+                              done={routineRows.some(r => r.dia === day)}
+                              onClick={() => setSelectedRoutineDay(day)}
+                              onRemove={routineDayList.length > 1 ? () => removeRoutineDay(day) : undefined}
+                            />
                           ))}
                         </div>
 
@@ -1721,11 +1400,37 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                                 <div className="flex-1 min-w-0 grid grid-cols-2 gap-2">
                                   <div>
                                     <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Categoría</label>
-                                    {renderRoutineCategorySelect(row)}
+                                    <RoutineCategorySelect
+                                      row={row}
+                                      routineViewMode={routineViewMode}
+                                      open={routineDropdown?.id === row.id && routineDropdown.field === 'muscle'}
+                                      onToggle={() => { if (!routineViewMode) setRoutineDropdown(routineDropdown?.id === row.id && routineDropdown.field === 'muscle' ? null : { id: row.id, field: 'muscle' }) }}
+                                      onSelect={(m) => {
+                                        const nameInNewCat = exerciseCatalog.some(x => (ROUTINE_MUSCLE_TO_CAT[x.muscle] || x.muscle) === m && x.name === row.name)
+                                        updateRoutineRow(row.id, {
+                                          muscle: m,
+                                          name: nameInNewCat ? row.name : '',
+                                          sets: nameInNewCat ? row.sets : '3',
+                                          reps: nameInNewCat ? row.reps : '10-12',
+                                        })
+                                        setRoutineDropdown(null)
+                                      }}
+                                      onClose={() => setRoutineDropdown(null)}
+                                    />
                                   </div>
                                   <div>
                                     <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Ejercicio</label>
-                                    {renderRoutineExerciseSelect(row)}
+                                    <RoutineExerciseSelect
+                                      row={row}
+                                      routineViewMode={routineViewMode}
+                                      open={routineDropdown?.id === row.id && routineDropdown.field === 'exercise'}
+                                      onToggle={() => { if (!routineViewMode) setRoutineDropdown(routineDropdown?.id === row.id && routineDropdown.field === 'exercise' ? null : { id: row.id, field: 'exercise' }) }}
+                                      onSelect={(name, muscle, sets, reps) => {
+                                        updateRoutineRow(row.id, { name, muscle, sets, reps })
+                                        setRoutineDropdown(null)
+                                      }}
+                                      onClose={() => setRoutineDropdown(null)}
+                                    />
                                   </div>
                                 </div>
                                 {!routineViewMode && (

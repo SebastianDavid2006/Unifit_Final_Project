@@ -2,6 +2,7 @@ import { motion } from 'motion/react'
 import { X, Dumbbell } from 'lucide-react'
 import { ModalShell } from './ModalShell'
 import { routineExercises } from '../../StudentProfileData'
+import { RoutineDayCard } from './RoutineDayCard'
 import type { AiRoutine } from '../../aiRoutine'
 
 interface RoutineDetailModalProps {
@@ -10,11 +11,10 @@ interface RoutineDetailModalProps {
   routine: AiRoutine | null
   viewRoutineDay: string | null
   setViewRoutineDay: (day: string | null) => void
-  renderRoutineDayCard: (day: string, selected: boolean, done: boolean, onClick: () => void, onRemove?: () => void) => JSX.Element
   onClose: () => void
 }
 
-export function RoutineDetailModal({ isOpen, assessment, routine, viewRoutineDay, setViewRoutineDay, renderRoutineDayCard, onClose }: RoutineDetailModalProps) {
+export function RoutineDetailModal({ isOpen, assessment, routine, viewRoutineDay, setViewRoutineDay, onClose }: RoutineDetailModalProps) {
   return (
     <ModalShell isOpen={isOpen} onClose={onClose} maxWidth="max-w-3xl">
       <div className="flex items-center justify-between mb-5">
@@ -41,11 +41,14 @@ export function RoutineDetailModal({ isOpen, assessment, routine, viewRoutineDay
           return (
             <div className="flex flex-col min-h-0 flex-1">
               <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `repeat(${viewDays.length}, minmax(0, 1fr))` }}>
-                {viewDays.map(day => renderRoutineDayCard(
-                  day,
-                  day === activeDay,
-                  routine.rows.some(r => r.dia === day),
-                  () => setViewRoutineDay(day),
+                {viewDays.map(day => (
+                  <RoutineDayCard
+                    key={day}
+                    day={day}
+                    selected={day === activeDay}
+                    done={routine.rows.some(r => r.dia === day)}
+                    onClick={() => setViewRoutineDay(day)}
+                  />
                 ))}
               </div>
               <div className="rounded-2xl p-4 space-y-2 overflow-y-auto min-h-[180px]" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', maxHeight: 340, scrollbarWidth: 'thin' }}>

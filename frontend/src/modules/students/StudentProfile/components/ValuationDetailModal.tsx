@@ -1,15 +1,7 @@
 import { motion } from 'motion/react'
 import { X, BarChart2, Dumbbell } from 'lucide-react'
 import { ModalShell } from './ModalShell'
-
-function valuationStat(label: string, value: string, color?: string) {
-  return (
-    <div className="rounded-xl p-3 flex items-center justify-between gap-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
-      <span className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>{label}</span>
-      <span className="text-sm font-bold text-right" style={{ color: color ?? '#0D1B2A' }}>{value}</span>
-    </div>
-  )
-}
+import { ValuationStat } from './ValuationStat'
 
 interface ValuationDetailModalProps {
   isOpen: boolean
@@ -79,18 +71,18 @@ export function ValuationDetailModal({ isOpen, assessment, onClose }: ValuationD
                 <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{m.value}</span>
               </div>
             ))}
-            {valuationStat('Estatura', assessment.estatura)}
-            {valuationStat('Masa magra', assessment.masaMagra)}
-            {valuationStat('Grasa visceral', assessment.grasaVisceral, '#E63946')}
+            <ValuationStat label="Estatura" value={assessment.estatura} />
+            <ValuationStat label="Masa magra" value={assessment.masaMagra} />
+            <ValuationStat label="Grasa visceral" value={assessment.grasaVisceral} color="#E63946" />
           </div>
         </div>
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Evaluación clínica</p>
           <div className="grid grid-cols-2 gap-3">
-            {valuationStat('Presión arterial', assessment.presionArterial)}
-            {valuationStat('Edad metabólica', `${assessment.edadMetabolica} años`)}
-            {valuationStat('Agua corporal', assessment.aguaCorporal)}
-            {valuationStat('Resistencia muscular', assessment.resistenciaMuscular)}
+            <ValuationStat label="Presión arterial" value={assessment.presionArterial} />
+            <ValuationStat label="Edad metabólica" value={`${assessment.edadMetabolica} años`} />
+            <ValuationStat label="Agua corporal" value={assessment.aguaCorporal} />
+            <ValuationStat label="Resistencia muscular" value={assessment.resistenciaMuscular} />
           </div>
         </div>
         <div>
