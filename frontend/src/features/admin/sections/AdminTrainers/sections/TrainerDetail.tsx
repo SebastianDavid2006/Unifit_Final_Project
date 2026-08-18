@@ -23,6 +23,7 @@ const GREEN = '#22C55E'
 export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
+  const [editMode, setEditMode] = useState(false)
   const [showFingerprintModal, setShowFingerprintModal] = useState(false)
   const [fingerprintStatus, setFingerprintStatus] = useState<'idle' | 'scanning' | 'captured'>('idle')
   const [fingerprintSuccess, setFingerprintSuccess] = useState(false)
