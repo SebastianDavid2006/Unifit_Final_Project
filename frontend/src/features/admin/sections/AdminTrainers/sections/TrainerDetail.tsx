@@ -218,6 +218,15 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
                       {trainer.role === 'admin' ? 'Administrador' : 'Entrenador'} · {trainer.speciality}
                     </p>
                   </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setEditMode(true)}
+                    className="px-3 py-2 rounded-xl text-sm font-bold text-white cursor-pointer"
+                    style={{ background: BLUE_GRAD }}
+                  >
+                    Editar
+                  </motion.button>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
