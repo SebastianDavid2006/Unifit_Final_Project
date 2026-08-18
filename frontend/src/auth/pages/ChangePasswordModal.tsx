@@ -2,6 +2,8 @@ import { useState, type FormEvent, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from 'lucide-react'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
+import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
+import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const DARK_BG = '#0A0A14'
@@ -51,8 +53,6 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
     onSuccess()
   }
 
-  const tempPassword = 'test'
-
   const formContent = (
     <motion.div
       className="w-full"
@@ -87,7 +87,7 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
           <Lock size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />
           <input
             type="text"
-            value={tempPassword}
+            value=""
             readOnly
             className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-white/30"
             style={{ color: '#7ec8e3', fontFamily: 'monospace' }}
@@ -150,39 +150,102 @@ export function ChangePasswordModal({ onSuccess }: ChangePasswordModalProps) {
   )
 
   return (
-    <div className="size-full flex flex-col" style={{ background: DARK_BG }}>
-      <div className="flex-1 min-h-0 flex items-center justify-center px-5 py-6">
-        {isMobile ? (
+    <div className="relative size-full flex flex-col" style={{ background: DARK_BG }}>
+      <div className="flex-1 min-h-0 relative">
+        {isDesktopVideo ? (
+          <div className="absolute inset-0 overflow-hidden" style={{ background: DARK_BG }}>
+            <video
+              src={welcomeDesktop}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0" style={{
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+            }} />
+            <div className="absolute inset-0" style={{
+              background: 'linear-gradient(115deg, rgba(8,12,28,0.55) 0%, rgba(8,12,28,0.3) 45%, rgba(8,12,28,0.16) 100%)',
+            }} />
+            <div className="relative z-10 size-full flex items-center justify-center overflow-hidden" style={{ padding: 20 }}>
+              <motion.div
+                initial={{ opacity: 0, y: 30, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="relative w-full max-w-3xl h-full flex flex-col"
+                style={{
+                  background: 'rgba(10,14,24,0.78)',
+                  backdropFilter: 'blur(28px) saturate(1.6)',
+                  WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  boxShadow: '0 24px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
+                  borderRadius: 32,
+                }}
+              >
+                <div className="flex-1 min-h-0 overflow-y-auto px-6 sm:px-10 py-6 flex flex-col justify-center">
+                  {formContent}
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        ) : isPhonePreview ? (
           <motion.div
+            key="phone"
             initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-md rounded-[32px] px-6 py-8"
-            style={{
-              background: 'rgba(10,14,24,0.78)',
-              backdropFilter: 'blur(28px) saturate(1.6)',
-              WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
+            className="relative flex flex-col overflow-hidden mx-auto"
+            style={isMobile ? {
+              width: '100%',
+              height: '100%',
+              background: DARK_BG,
+            } : {
+              width: 390,
+              height: 720,
+              borderRadius: 48,
+              background: DARK_BG,
+              border: '10px solid rgba(255,255,255,0.06)',
+              boxShadow: '0 60px 140px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.05)',
             }}
           >
-            {formContent}
+            {!isMobile && (
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-7 rounded-b-2xl z-50" style={{ background: 'rgba(0,0,0,0.85)' }}>
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-2.5 rounded-full" style={{ background: '#151520' }} />
+              </div>
+            )}
+            <div className="absolute inset-0 overflow-hidden" style={{ background: '#000' }}>
+              <video
+                src={welcomeMobile}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0" style={{
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+              }} />
+              <div className="absolute inset-0" style={{
+                background: 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)',
+              }} />
+            </div>
           </motion.div>
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-md h-full max-h-[600px] flex flex-col rounded-[32px] px-8 py-8"
+            key="desktop"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="relative size-full flex flex-col overflow-hidden"
             style={{
-              background: 'rgba(10,14,24,0.78)',
+              background: 'rgba(10,14,24,0.92)',
               backdropFilter: 'blur(28px) saturate(1.6)',
               WebkitBackdropFilter: 'blur(28px) saturate(1.6)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.15)',
             }}
           >
-            {formContent}
           </motion.div>
         )}
       </div>
