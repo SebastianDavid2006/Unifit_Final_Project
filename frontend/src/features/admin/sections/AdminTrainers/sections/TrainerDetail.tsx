@@ -20,26 +20,86 @@ const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 const GREEN = '#22C55E'
 
-export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
+export default function TrainerDetail({ trainer: trainerProp }: { trainer: Trainer }) {
+  const [trainer, setTrainer] = useState<Trainer>(trainerProp)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
   const [editMode, setEditMode] = useState(false)
+  const [draft, setDraft] = useState<Record<string, string> | null>(null)
   const [showFingerprintModal, setShowFingerprintModal] = useState(false)
   const [fingerprintStatus, setFingerprintStatus] = useState<'idle' | 'scanning' | 'captured'>('idle')
   const [fingerprintSuccess, setFingerprintSuccess] = useState(false)
   const sigRef = useRef<SignatureCanvas>(null)
   const [signatureDrawn, setSignatureDrawn] = useState(false)
   const [signatureSuccess, setSignatureSuccess] = useState(false)
+
+  function buildDraft(): Record<string, string> {
+    return {
+      name: trainer.name,
+      document: trainer.document,
+      birthDate: trainer.birthDate,
+      gender: trainer.gender,
+      speciality: trainer.speciality,
+      joinedAt: trainer.joinedAt,
+      schedule: trainer.schedule,
+      certifications: trainer.certifications.join(', '),
+      eps: trainer.eps,
+      bloodType: trainer.bloodType,
+      email: trainer.email,
+      phone: trainer.phone,
+      contactName: trainer.contactName,
+      contactRelation: trainer.contactRelation,
+      contactPhone: trainer.contactPhone,
+    }
+  }
+
+  function startEdit() {
+    setDraft(buildDraft())
+    setEditMode(true)
+  }
+
+  function saveDraft() {
+    if (!draft) return
+    setTrainer(prev => ({
+      ...prev,
+      name: draft.name,
+      document: draft.document,
+      birthDate: draft.birthDate,
+      gender: draft.gender,
+      speciality: draft.speciality,
+      joinedAt: draft.joinedAt,
+      schedule: draft.schedule,
+      certifications: draft.certifications.split(',').map(s => s.trim()).filter(Boolean),
+      eps: draft.eps,
+      bloodType: draft.bloodType,
+      email: draft.email,
+      phone: draft.phone,
+      contactName: draft.contactName,
+      contactRelation: draft.contactRelation,
+      contactPhone: draft.contactPhone,
+    }))
+    setEditMode(false)
+    setDraft(null)
+  }
+
+  function cancelEdit() {
+    setDraft(null)
+    setEditMode(false)
+  }
+
+  function handleDraftChange(key: string, value: string) {
+    setDraft(prev => (prev ? { ...prev, [key]: value } : prev))
+  }
   return (
     <div className="relative z-10 p-8 overflow-hidden">
       <div className="w-full">
         <div className="grid gap-2 items-stretch" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: '1fr 1fr 1fr' }}>
 <DetailCard gridColumn="1" gridRow="1" accent={RED} title="Información General" model={<StudentCardView />}>
             <FieldList fields={[
-              { label: 'Documento', value: trainer.document },
-              { label: 'Fecha de nacimiento', value: trainer.birthDate },
-              { label: 'Género', value: trainer.gender },
-            ]} editable={editMode} />
+              { key: 'document', label: 'Documento', value: trainer.document },
+              { key: 'birthDate', label: 'Fecha de nacimiento', value: trainer.birthDate },
+              { key: 'gender', label: 'Género', value: trainer.gender },
+            ]} editable={editMode && !!draft} values={draft ?? {}} onChange={handleDraftChange} />
 </DetailCard>
 
           <div className="flex flex-col items-center relative" style={{ gridColumn: '2', gridRow: '1 / 4', paddingTop: 16, alignSelf: 'stretch', overflow: 'visible' }}>
@@ -122,11 +182,11 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
 
 <DetailCard gridColumn="1" gridRow="2" accent={RED} title="Contacto" model={<TelephoneView />}>
             <FieldList fields={[
-              { label: 'Email', value: trainer.email },
-              { label: 'Teléfono', value: trainer.phone },
-              { label: 'Contacto de emergencia', value: trainer.contactName },
-              { label: 'Tel. contacto', value: trainer.contactPhone },
-            ]} labelMb={1} itemPb={8} editable={editMode} />
+              { key: 'email', label: 'Email', value: trainer.email },
+              { key: 'phone', label: 'Teléfono', value: trainer.phone },
+              { key: 'contactName', label: 'Contacto de emergencia', value: trainer.contactName },
+              { key: 'contactPhone', label: 'Tel. contacto', value: trainer.contactPhone },
+            ]} labelMb={1} itemPb={8} editable={editMode && !!draft} values={draft ?? {}} onChange={handleDraftChange} />
 </DetailCard>
 
           <DetailCard gridColumn="3" gridRow="2" accent={BLUE} title="Estadísticas" model={<ListView />}>
@@ -147,9 +207,9 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
 
 <DetailCard gridColumn="1" gridRow="3" accent={RED} title="Información Médica" model={<StethoscopeView />}>
             <FieldList fields={[
-              { label: 'EPS', value: trainer.eps },
-              { label: 'Grupo sanguíneo', value: trainer.bloodType },
-            ]} editable={editMode} />
+              { key: 'eps', label: 'EPS', value: trainer.eps },
+              { key: 'bloodType', label: 'Grupo sanguíneo', value: trainer.bloodType },
+            ]} editable={editMode && !!draft} values={draft ?? {}} onChange={handleDraftChange} />
 </DetailCard>
 
           <div className="rounded-[28px] p-5 relative overflow-hidden" style={{ gridColumn: '3', gridRow: '3', background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
@@ -219,20 +279,43 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
                       {trainer.role === 'admin' ? 'Administrador' : 'Entrenador'} · {trainer.speciality}
                     </p>
                   </div>
+                  {editMode && draft ? (
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={cancelEdit}
+                        className="px-3 py-2 rounded-xl text-sm font-bold cursor-pointer"
+                        style={{ background: 'rgba(0,0,0,0.06)', color: 'rgba(0,0,0,0.5)' }}
+                      >
+                        Cancelar
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={saveDraft}
+                        className="px-3 py-2 rounded-xl text-sm font-bold text-white cursor-pointer"
+                        style={{ background: GREEN_BLUE_GRAD }}
+                      >
+                        Guardar
+                      </motion.button>
+                    </div>
+                  ) : (
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setEditMode(true)}
+                    onClick={startEdit}
                     className="px-3 py-2 rounded-xl text-sm font-bold text-white cursor-pointer"
                     style={{ background: BLUE_GRAD }}
                   >
                     Editar
                   </motion.button>
+                  )}
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => { setShowInfoModal(false); setEditMode(false); }}
+                  onClick={() => { setShowInfoModal(false); setEditMode(false); setDraft(null); }}
                   className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
                   style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}
                 >
@@ -248,41 +331,41 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
                       title: 'Información personal',
                       model: <StudentCardView />,
                       fields: [
-                        { label: 'Nombre completo', value: trainer.name },
-                        { label: 'Documento', value: trainer.document },
-                        { label: 'Fecha de nacimiento', value: trainer.birthDate },
-                        { label: 'Género', value: trainer.gender },
+                        { key: 'name', label: 'Nombre completo', value: trainer.name },
+                        { key: 'document', label: 'Documento', value: trainer.document },
+                        { key: 'birthDate', label: 'Fecha de nacimiento', value: trainer.birthDate },
+                        { key: 'gender', label: 'Género', value: trainer.gender },
                       ],
                     },
                     {
                       title: 'Información laboral',
                       model: <CapView />,
                       fields: [
-                        { label: 'Cargo', value: trainer.role === 'admin' ? 'Administrador' : 'Entrenador' },
-                        { label: 'Especialidad', value: trainer.speciality },
-                        { label: 'Estado', value: trainer.status === 'active' ? 'Activo' : 'Inactivo' },
-                        { label: 'Fecha de ingreso', value: trainer.joinedAt },
-                        { label: 'Horario', value: trainer.schedule },
-                        { label: 'Certificaciones', value: trainer.certifications.join(', ') },
+                        { key: 'role', label: 'Cargo', value: trainer.role === 'admin' ? 'Administrador' : 'Entrenador', readOnly: true },
+                        { key: 'speciality', label: 'Especialidad', value: trainer.speciality },
+                        { key: 'status', label: 'Estado', value: trainer.status === 'active' ? 'Activo' : 'Inactivo', readOnly: true },
+                        { key: 'joinedAt', label: 'Fecha de ingreso', value: trainer.joinedAt },
+                        { key: 'schedule', label: 'Horario', value: trainer.schedule },
+                        { key: 'certifications', label: 'Certificaciones', value: trainer.certifications.join(', ') },
                       ],
                     },
                     {
                       title: 'Información médica',
                       model: <StethoscopeView />,
                       fields: [
-                        { label: 'EPS', value: trainer.eps },
-                        { label: 'Grupo sanguíneo', value: trainer.bloodType },
+                        { key: 'eps', label: 'EPS', value: trainer.eps },
+                        { key: 'bloodType', label: 'Grupo sanguíneo', value: trainer.bloodType },
                       ],
                     },
                     {
                       title: 'Información de contacto',
                       model: <TelephoneView />,
                       fields: [
-                        { label: 'Email', value: trainer.email },
-                        { label: 'Teléfono', value: trainer.phone },
-                        { label: 'Contacto de emergencia', value: trainer.contactName },
-                        { label: 'Parentesco', value: trainer.contactRelation },
-                        { label: 'Teléfono de emergencia', value: trainer.contactPhone },
+                        { key: 'email', label: 'Email', value: trainer.email },
+                        { key: 'phone', label: 'Teléfono', value: trainer.phone },
+                        { key: 'contactName', label: 'Contacto de emergencia', value: trainer.contactName },
+                        { key: 'contactRelation', label: 'Parentesco', value: trainer.contactRelation },
+                        { key: 'contactPhone', label: 'Teléfono de emergencia', value: trainer.contactPhone },
                       ],
                     },
                   ].map((cat, ci) => (
@@ -308,9 +391,19 @@ export default function TrainerDetail({ trainer }: { trainer: Trainer }) {
                       </div>
                       <div className="grid grid-cols-2 gap-x-5 gap-y-3 flex-1">
                         {cat.fields.map(f => (
-                          <div key={f.label} className="flex flex-col">
+                          <div key={f.key} className="flex flex-col">
                             <p className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{f.label}</p>
-                            <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{f.value || '—'}</p>
+                            {editMode && draft && !f.readOnly ? (
+                              <input
+                                type="text"
+                                value={draft[f.key] ?? f.value}
+                                onChange={e => handleDraftChange(f.key, e.target.value)}
+                                className="text-sm font-semibold w-full border rounded p-1"
+                                style={{ color: '#0D1B2A' }}
+                              />
+                            ) : (
+                              <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{f.value || '—'}</p>
+                            )}
                           </div>
                         ))}
                       </div>

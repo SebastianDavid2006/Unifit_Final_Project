@@ -86,7 +86,7 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
     if (trainerTab && trainerTab === 'documents') {
       return <div className="p-8 pt-12 max-w-[1440px] mx-auto" />
     }
-    return <TrainerDetail trainer={selectedTrainer} />
+    return <TrainerDetail key={selectedTrainer.id} trainer={selectedTrainer} />
   }
 
   return (
