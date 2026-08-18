@@ -55,7 +55,7 @@ function seedUsers(): Record<string, MockUser> {
     },
     'estudiante': {
       id: 'u-st1', email: 'estudiante', password: 'estudiante123', rol: 'estudiante',
-      estado: 'en_proceso', debeCambiarContrasena: true,
+      estado: 'en_proceso', debeCambiarContrasena: false,
       onboarding: { cita: false, firma: false, huella: false }, nombre: 'Estudiante Demo',
     },
     'estudiante2': {
