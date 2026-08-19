@@ -529,7 +529,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                     </button>
                   ) : (
                     <button
-                      onClick={onCreated}
+                      onClick={routineStep === 1 ? () => setRoutineStep(2) : onCreated}
                       className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
                       style={{
                         background: routineStep === 2 && routineRows.length === 0 ? 'rgba(48,209,88,0.3)' : 'linear-gradient(135deg, #30D158, #1A8A3F)',
