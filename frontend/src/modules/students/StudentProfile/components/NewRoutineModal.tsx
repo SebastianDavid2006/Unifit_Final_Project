@@ -171,10 +171,10 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                   <div className="space-y-5 px-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
                     <p className="text-sm font-semibold" style={{ color: 'rgba(0,0,0,0.55)' }}>
                       {routineViewMode
-                        ? 'InformaciÃƒÂ³n general de la rutina generada segÃƒÂºn la valoraciÃƒÂ³n.'
+                        ? 'Información general de la rutina generada según la valoración.'
                         : aiGeneratedRoutine
-                          ? 'Ajusta los parÃƒÂ¡metros generales de la rutina (prellenados segÃƒÂºn la valoraciÃƒÂ³n).'
-                          : 'Configura los parÃƒÂ¡metros generales de la rutina.'}
+                          ? 'Ajusta los parámetros generales de la rutina (prellenados según la valoración).'
+                          : 'Configura los parámetros generales de la rutina.'}
                     </p>
                     <div>
                       <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre de la rutina</label>
@@ -239,7 +239,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                   <div className="flex flex-col min-h-0 flex-1">
                     <div className="flex items-center justify-between mb-3 px-1">
                       <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>
-                        {routineViewMode ? 'Ejercicios de cada dÃƒÂ­a de la semana' : 'Configura los ejercicios de cada dÃƒÂ­a de la semana'}
+                        {routineViewMode ? 'Ejercicios de cada día de la semana' : 'Configura los ejercicios de cada día de la semana'}
                       </p>
                     </div>
 
@@ -268,7 +268,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer transition-all"
                                   style={{ border: '1px dashed rgba(18,112,183,0.45)', color: '#1270B7', background: 'rgba(18,112,183,0.05)' }}
                                 >
-                                  <Plus size={13} strokeWidth={3} /> Agregar dÃƒÂ­a
+                                  <Plus size={13} strokeWidth={3} /> Agregar día
                                 </button>
                                 {showAddDayMenu && (
                                   <div
@@ -390,7 +390,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                                 <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ background: 'rgba(18,112,183,0.12)', color: '#1270B7' }}>{i + 1}</span>
                                 <div className="flex-1 min-w-0 grid grid-cols-2 gap-2">
                                   <div>
-                                    <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>CategorÃƒÂ­a</label>
+                                    <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Categoría</label>
                                     <RoutineCategorySelect
                                       row={row}
                                       routineViewMode={routineViewMode}
@@ -459,7 +459,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                                       value={(row.reps.split('-')[0] ?? '').trim()}
                                       readOnly={routineViewMode}
                                       onChange={e => updateRoutineRow(row.id, { reps: `${e.target.value}-${(row.reps.split('-')[1] ?? '').trim()}` })}
-                                      placeholder="MÃƒÂ­n"
+                                      placeholder="Mín"
                                       onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
                                       onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
                                       onFocus={e => meshInput.focusMesh(e.currentTarget)}
@@ -467,12 +467,12 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                                       className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
                                       style={{ background: meshInputBg, border: '1px solid transparent', color: '#0D1B2A' }}
                                     />
-                                    <span className="text-[11px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>Ã¢â‚¬â€œ</span>
+                                    <span className="text-[11px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>–</span>
                                     <input
                                       value={(row.reps.split('-')[1] ?? '').trim()}
                                       readOnly={routineViewMode}
                                       onChange={e => updateRoutineRow(row.id, { reps: `${(row.reps.split('-')[0] ?? '').trim()}-${e.target.value}` })}
-                                      placeholder="MÃƒÂ¡x"
+                                      placeholder="Máx"
                                       onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
                                       onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
                                       onFocus={e => meshInput.focusMesh(e.currentTarget)}
@@ -516,7 +516,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                       className="px-5 py-2.5 rounded-xl text-xs font-semibold transition-all"
                       style={{ background: 'rgba(0,0,0,0.04)', color: '#0D1B2A', border: '1px solid rgba(0,0,0,0.06)' }}
                     >
-                      AtrÃƒÂ¡s
+                      Atrás
                     </button>
                   ) : <div />}
                   {routineFromAssessment && !routineEdited && routineStep === 2 ? (

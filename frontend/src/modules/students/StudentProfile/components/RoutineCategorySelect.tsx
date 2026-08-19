@@ -40,7 +40,7 @@ export function RoutineCategorySelect({ row, routineViewMode, open, onToggle, on
             <List size={11} style={{ color: '#1270B7' }} />
           </div>
         )}
-        <span className="flex-1 truncate text-left">{category || 'CategorÃ­a'}</span>
+        <span className="flex-1 truncate text-left">{category || 'Categoría'}</span>
         {!routineViewMode && (
           <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
             <ChevronDown size={13} />
