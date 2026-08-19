@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Check, PenLine, X, AlertTriangle } from 'lucide-react'
+import { Check, PenLine, Power, X, AlertTriangle } from 'lucide-react'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
@@ -9,6 +9,8 @@ import { ModalShell } from './ModalShell'
 import type { Student } from '../../StudentProfileData'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
+const GREEN = '#22C55E'
+const RED = '#F43843'
 const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 
 interface StudentInfoModalProps {
@@ -22,7 +24,9 @@ interface StudentInfoModalProps {
 export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate }: StudentInfoModalProps) {
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<Record<string, string> | null>(null)
-  const [confirm, setConfirm] = useState(false)
+  const [confirm, setConfirm] = useState<'save' | 'status' | null>(null)
+
+  const curStatus = editable.status ?? 'active'
 
   function buildDraft(): Record<string, string> {
     return {
@@ -75,6 +79,15 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
   function cancelEdit() {
     setEditMode(false)
     setDraft(null)
+  }
+
+  function handleConfirm() {
+    if (confirm === 'save') {
+      saveDraft()
+    } else if (confirm === 'status') {
+      onUpdate({ status: curStatus === 'active' ? 'inactive' : 'active' })
+    }
+    setConfirm(null)
   }
 
   const fullName = [student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')
@@ -131,7 +144,17 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={() => setConfirm(true)}
+                    onClick={() => setConfirm('status')}
+                    title={curStatus === 'active' ? 'Desactivar cuenta' : 'Activar cuenta'}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
+                    style={curStatus === 'active' ? { background: 'rgba(244,56,67,0.1)', color: '#F43843' } : { background: 'rgba(34,197,94,0.12)', color: GREEN }}
+                  >
+                    <Power size={16} />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setConfirm('save')}
                     title="Guardar"
                     className="w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer"
                     style={{ background: GREEN_BLUE_GRAD }}
@@ -245,20 +268,15 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.05 + ci * 0.06 }}
-                  className="rounded-2xl p-5 flex flex-col"
+                  className="p-5 flex flex-col"
                   style={{
-                    background: 'linear-gradient(145deg, rgba(18,112,183,0.09) 0%, rgba(18,112,183,0.03) 55%, rgba(255,255,255,0.6) 100%)',
-                    boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 16px rgba(18,112,183,0.06)',
+                    borderBottom: '1px solid rgba(0,0,0,0.04)',
                   }}
                 >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden" style={{ background: 'rgba(18,112,183,0.10)' }}>
-                      {cat.model}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-1 h-6 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
-                      <p className="text-sm font-extrabold capitalize" style={{ color: '#0D1B2A' }}>{cat.title}</p>
-                    </div>
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
+                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">{cat.model}</div>
+                    <p className="text-sm font-extrabold capitalize" style={{ color: '#0D1B2A' }}>{cat.title}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-x-5 gap-y-3 flex-1">
                     {cat.fields.map((f: { key: string; label: string; value: string; readOnly?: boolean }) => (
@@ -295,7 +313,7 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[120] flex items-center justify-center p-6"
             style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)' }}
-            onClick={() => setConfirm(false)}
+            onClick={() => setConfirm(null)}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 10 }}
@@ -307,20 +325,22 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
               style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
             >
               <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(18,112,183,0.1)', color: '#1270B7' }}>
-                  <AlertTriangle size={20} />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: confirm === 'status' ? 'rgba(244,56,67,0.1)' : 'rgba(18,112,183,0.1)', color: confirm === 'status' ? '#F43843' : '#1270B7' }}>
+                  {confirm === 'status' ? <Power size={20} /> : <AlertTriangle size={20} />}
                 </div>
-                <p className="text-lg font-bold" style={{ color: '#1A1A1E' }}>Confirmar cambios</p>
+                <p className="text-lg font-bold" style={{ color: '#1A1A1E' }}>{confirm === 'status' ? 'Confirmar estado' : 'Confirmar cambios'}</p>
                 <p className="text-xs font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{fullName}</p>
               </div>
               <p className="text-sm font-medium mb-6 text-center" style={{ color: 'rgba(0,0,0,0.55)' }}>
-                ¿Estás seguro de aplicar los cambios realizados?
+                {confirm === 'status'
+                  ? (curStatus === 'active' ? '¿Estás seguro de desactivar la cuenta de este usuario?' : '¿Estás seguro de activar la cuenta de este usuario?')
+                  : '¿Estás seguro de aplicar los cambios realizados?'}
               </p>
               <div className="flex items-center justify-center gap-2">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setConfirm(false)}
+                  onClick={() => setConfirm(null)}
                   className="px-5 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
                   style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
                 >
@@ -329,11 +349,11 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                 <motion.button
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => { saveDraft(); setConfirm(false); }}
+                  onClick={handleConfirm}
                   className="px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                  style={{ background: BLUE_GRAD }}
+                  style={{ background: confirm === 'status' ? (curStatus === 'active' ? RED : GREEN) : BLUE_GRAD }}
                 >
-                  Aplicar
+                  {confirm === 'save' ? 'Aplicar' : curStatus === 'active' ? 'Sí, desactivar' : 'Sí, activar'}
                 </motion.button>
               </div>
             </motion.div>
