@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Fingerprint, LockKeyhole, PenLine, RefreshCw, ScanLine, X } from 'lucide-react'
+import { Fingerprint, PenLine, RefreshCw, ScanLine, X } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import type { Student } from '../StudentProfileData'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
@@ -13,7 +13,6 @@ interface Props {
   gridRow?: string
 }
 
-const BLUE = '#1270B7'
 const GREEN = '#22C55E'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
@@ -69,25 +68,17 @@ export function IdentityAccessCard({ student, onUpdate, gridColumn = '1 / -1', g
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.3 }}
-      className="rounded-2xl p-5"
+      className="rounded-[28px] p-5"
       style={{
         gridColumn,
         gridRow,
-        background: 'linear-gradient(145deg, rgba(18,112,183,0.09) 0%, rgba(18,112,183,0.03) 55%, rgba(255,255,255,0.6) 100%)',
-        boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 16px rgba(18,112,183,0.06)',
+        background: 'rgba(255,255,255,0.5)',
       }}
     >
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center" style={{ background: 'rgba(18,112,183,0.10)', color: BLUE }}>
-          <LockKeyhole size={20} />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-1 h-6 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
-            <p className="text-sm font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad y acceso</p>
-          </div>
-          <p className="text-[11px] mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Edita la firma y la huella digital</p>
-        </div>
+      <div className="flex items-center gap-2.5 mb-4">
+        <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
+        <div className="w-8 h-8 flex-shrink-0"><Fingerprint size={18} style={{ color: '#1270B7' }} /></div>
+        <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad y acceso</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
