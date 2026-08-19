@@ -14,6 +14,7 @@ import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
 import registrationPendingDesktop from '@/assets/scenes/videos/desktop/registration_pending_dekstop.mp4'
 import registrationPendingMobile from '@/assets/scenes/videos/mobile/registration_pending_mobile.mp4'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
+import { getPreviewMode, setPreviewMode as persistPreviewMode } from '@/shared/previewMode'
 
 const BLUE = '#007AFF'
 const YELLOW = '#F5A623'
@@ -28,11 +29,9 @@ interface Props {
 
 type Phase = 'steps' | 'agenda' | 'agendada' | 'pending' | 'app'
 
-let persistedPreview: 'celular' | 'desktop' | 'auto' = 'auto'
-
 export default function StudentOnboardingGate({ session, onLogout }: Props) {
   const isMobile = useIsMobile()
-  const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>(persistedPreview)
+  const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>(getPreviewMode)
   const [user, setUser] = useState<MockUser>(session.user)
   const [phase, setPhase] = useState<Phase>(() => {
     if (!session.user.onboarding.cita) return 'steps'
@@ -291,7 +290,7 @@ const renderPending = () => {
       {(['celular', 'desktop', 'auto'] as const).map(v => (
         <button
           key={v}
-          onClick={() => { persistedPreview = v; setPreviewMode(v) }}
+          onClick={() => { persistPreviewMode(v); setPreviewMode(v) }}
           className="px-3 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer"
           style={{
             background: previewMode === v ? 'rgba(255,255,255,0.14)' : 'transparent',

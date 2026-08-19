@@ -6,6 +6,7 @@ import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import logotipo from '@/assets/logo/logo.webp'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
+import { getPreviewMode, setPreviewMode as persistPreviewMode } from '@/shared/previewMode'
 
 const DARK_BG = '#0A0A14'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
@@ -27,11 +28,9 @@ interface ForgotPasswordPageProps {
 
 type Step = 'email' | 'code' | 'newpass' | 'done'
 
-let persistedPreview: 'celular' | 'desktop' | 'auto' = 'auto'
-
 export function ForgotPasswordPage({ onBack, onDone }: ForgotPasswordPageProps) {
   const isMobile = useIsMobile()
-  const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>(persistedPreview)
+  const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>(getPreviewMode)
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState<string[]>(Array(6).fill(''))
@@ -339,7 +338,7 @@ export function ForgotPasswordPage({ onBack, onDone }: ForgotPasswordPageProps) 
       {(['celular', 'desktop', 'auto'] as const).map(v => (
         <button
           key={v}
-          onClick={() => { persistedPreview = v; setPreviewMode(v) }}
+          onClick={() => { persistPreviewMode(v); setPreviewMode(v) }}
           className="px-3 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer"
           style={{
             background: previewMode === v ? 'rgba(255,255,255,0.14)' : 'transparent',

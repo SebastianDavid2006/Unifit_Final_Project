@@ -15,10 +15,9 @@ import logotipo from '@/assets/logo/logo.webp'
 import accountCreatedImg from '@/assets/illustrations/characters/coach/account_created.webp'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
+import { getPreviewMode, setPreviewMode as persistPreviewMode } from '@/shared/previewMode'
 
 const DARK_BG = '#0A0A14'
-
-let persistedPreview: 'celular' | 'desktop' | 'auto' = 'auto'
 
 const FORM_STEPS = [
   { num: 1, label: 'Información personal' },
@@ -42,9 +41,9 @@ interface RegisterPageProps {
 
 export function RegisterPage({ onBack }: RegisterPageProps) {
   const isMobile = useIsMobile()
-  const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>(persistedPreview)
+  const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>(getPreviewMode)
   const changePreviewMode = (v: 'celular' | 'desktop' | 'auto') => {
-    persistedPreview = v
+    persistPreviewMode(v)
     setPreviewMode(v)
     setPhase('intro')
   }

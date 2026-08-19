@@ -8,6 +8,7 @@ import FieldList from '../components/FieldList'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
 import { ListView } from '@/assets/models/ui/objects/list/ListModel'
+import { LockView } from '@/assets/models/ui/objects/lock/LockModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { BLUE, RED } from '../data'
@@ -197,12 +198,23 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             ]} labelMb={1} itemPb={8} />
 </DetailCard>
 
-          <DetailCard gridColumn="3" gridRow="2" accent={BLUE} title="Acceso y permisos">
-            <FieldList fields={[
-              { key: 'role', label: 'Rol', value: trainer.role === 'admin' ? 'Administrador' : 'Entrenador' },
-              { key: 'accessLevel', label: 'Nivel de acceso', value: trainer.accessLevel },
-              { key: 'lastAccess', label: 'Último acceso', value: trainer.lastAccess },
-            ]} />
+          <DetailCard gridColumn="3" gridRow="2" accent={BLUE} title="Acceso y permisos" model={<LockView />}>
+            <div className="flex flex-col">
+              <div className="flex flex-col" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: 6 }}>
+                <p className="text-xs" style={{ marginBottom: 0.5, color: 'rgba(0,0,0,0.5)' }}>Rol</p>
+                <p className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{trainer.role === 'admin' ? 'Administrador' : 'Entrenador'}</p>
+              </div>
+              <div className="flex flex-col" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: 6 }}>
+                <p className="text-xs" style={{ marginBottom: 0.5, color: 'rgba(0,0,0,0.5)' }}>Estado</p>
+                <span className="inline-flex items-center self-start px-3 py-1 rounded-full text-sm font-bold text-white" style={{ background: trainer.status === 'active' ? 'linear-gradient(135deg, #22C55E, #16A34A)' : 'linear-gradient(135deg, #1270B7, #7ec8e3)' }}>
+                  {trainer.status === 'active' ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <p className="text-xs" style={{ marginBottom: 0.5, color: 'rgba(0,0,0,0.5)' }}>Último acceso</p>
+                <p className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{trainer.lastAccess}</p>
+              </div>
+            </div>
           </DetailCard>
 
 <DetailCard gridColumn="1" gridRow="3" accent={RED} title="Información Médica" model={<StethoscopeView />}>

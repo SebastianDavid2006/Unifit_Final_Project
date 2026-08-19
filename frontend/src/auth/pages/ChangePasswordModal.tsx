@@ -5,6 +5,7 @@ import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
 import logotipo from '@/assets/logo/logo.webp'
+import { getPreviewMode, setPreviewMode as persistPreviewMode, type PreviewMode } from '@/shared/previewMode'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const DARK_BG = '#0A0A14'
@@ -14,14 +15,11 @@ interface ChangePasswordModalProps {
   onBack: () => void
 }
 
-type PreviewMode = 'celular' | 'desktop' | 'auto'
-let persistedPreview = 'auto'
-
 export function ChangePasswordModal({ onSuccess, onBack }: ChangePasswordModalProps) {
   const isMobile = useIsMobile()
-  const [previewMode, setPreviewMode] = useState<PreviewMode>(persistedPreview)
+  const [previewMode, setPreviewMode] = useState<PreviewMode>(getPreviewMode)
   const changePreviewMode = (v: PreviewMode) => {
-    persistedPreview = v
+    persistPreviewMode(v)
     setPreviewMode(v)
   }
 
@@ -59,8 +57,7 @@ export function ChangePasswordModal({ onSuccess, onBack }: ChangePasswordModalPr
             initial={{ opacity: 0, y: -30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-            style={{ background: 'rgba(126,200,227,0.12)', border: '1px solid rgba(126,200,227,0.25)' }}
+            className="w-14 h-14 flex items-center justify-center mb-4"
           >
             <img src={logotipo} alt="UNIFIT" className="w-9 h-9 object-contain" />
           </motion.div>

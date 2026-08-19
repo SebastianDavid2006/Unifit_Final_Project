@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  X, Check, ScanLine, CheckCircle, RefreshCw, ChevronLeft, ChevronRight,
+  X, Check, ScanLine, RefreshCw, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
-import parqBanner from '@/assets/illustrations/banners/parq_banner.webp'
+import { StepDocAgreement } from '@/modules/students/NewStudentModal/sections/StepDocAgreement'
+import { loadDocs, type StoredDocs } from '@/data/documents'
 
 const BLUE = '#1270B7'
 const GREEN = '#22C55E'
@@ -15,9 +16,11 @@ const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 
 const STEPS = [
-  { num: 1, label: 'PAR-Q' },
-  { num: 2, label: 'Firma' },
-  { num: 3, label: 'Huella digital' },
+  { num: 1, label: 'Tratamiento de datos' },
+  { num: 2, label: 'Contrato' },
+  { num: 3, label: 'PAR-Q' },
+  { num: 4, label: 'Firma' },
+  { num: 5, label: 'Huella digital' },
 ]
 
 type FingerprintStatus = 'idle' | 'scanning' | 'captured'
@@ -31,7 +34,10 @@ interface Props {
 
 export default function RegistrationCompletionModal({ open, onClose, onComplete, studentName }: Props) {
   const [step, setStep] = useState(1)
+  const [aceptaDatos, setAceptaDatos] = useState(false)
+  const [aceptaContrato, setAceptaContrato] = useState(false)
   const [aceptaParq, setAceptaParq] = useState(false)
+  const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
   const [fingerprintStatus, setFingerprintStatus] = useState<FingerprintStatus>('idle')
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
@@ -41,7 +47,10 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
   useEffect(() => {
     if (open) {
       setStep(1)
+      setAceptaDatos(false)
+      setAceptaContrato(false)
       setAceptaParq(false)
+      setDocs(loadDocs())
       setFingerprintStatus('idle')
       setSuccess(false)
       setSignatureDrawn(false)
@@ -69,16 +78,18 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
   }
 
   const canGoNext = () => {
-    if (step === 1) return aceptaParq
-    if (step === 2) return signatureDrawn
-    if (step === 3) return fingerprintStatus === 'captured'
+    if (step === 1) return aceptaDatos
+    if (step === 2) return aceptaContrato
+    if (step === 3) return aceptaParq
+    if (step === 4) return signatureDrawn
+    if (step === 5) return fingerprintStatus === 'captured'
     return false
   }
 
   const handlePrev = () => setStep(s => Math.max(1, s - 1))
   const handleNext = () => {
     if (!canGoNext()) { triggerShake(); return }
-    if (step === 3) setSuccess(true)
+    if (step === 5) setSuccess(true)
     else setStep(s => s + 1)
   }
 
@@ -125,45 +136,10 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
     </div>
   )
 
-  const renderStepParq = () => (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="flex flex-col gap-5">
-      <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
-        <img src={parqBanner} alt="Cuestionario PAR-Q" className="w-full h-auto object-cover" />
-      </div>
-      <label className="flex items-start gap-3 cursor-pointer group">
-        <div
-          onClick={() => setAceptaParq(!aceptaParq)}
-          className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
-          style={{
-            background: aceptaParq ? BLUE_GRAD : 'transparent',
-            border: `1.5px solid ${aceptaParq ? BLUE : 'rgba(0,0,0,0.06)'}`,
-          }}
-        >
-          {aceptaParq && (
-            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
-              <Check size={12} color="white" strokeWidth={3} />
-            </motion.span>
-          )}
-        </div>
-        <span style={{
-          fontSize: 12,
-          fontWeight: 500,
-          lineHeight: 1.6,
-          color: aceptaParq ? 'transparent' : 'rgba(0,0,0,0.55)',
-          background: aceptaParq ? BLUE_GRAD : 'none',
-          backgroundClip: aceptaParq ? 'text' : 'none',
-          WebkitBackgroundClip: aceptaParq ? 'text' : 'none',
-        }}>
-          He completado el cuestionario PAR-Q y acepto continuar con mi registro.
-        </span>
-      </label>
-    </motion.div>
-  )
-
   const renderStepFirma = () => (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-6">
       <div className="text-center">
-        <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.5)' }}>{studentName} debe firmar el contrato para completar su registro</p>
+        <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.5)' }}>{studentName} debe firmar para completar su registro</p>
       </div>
       {signaturePad('Firma del estudiante')}
     </motion.div>
@@ -244,9 +220,20 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
               {/* Body */}
               <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
                 <motion.div animate={shake ? { x: [0, -4, 4, -4, 4, 0] } : {}} transition={{ duration: 0.4 }}>
-                  {step === 1 && renderStepParq()}
-                  {step === 2 && renderStepFirma()}
-                  {step === 3 && renderStepHuella()}
+                  {(step === 1 || step === 2 || step === 3) && (
+                    <StepDocAgreement
+                      step={step + 1}
+                      docs={docs}
+                      aceptaDatos={aceptaDatos}
+                      setAceptaDatos={setAceptaDatos}
+                      aceptaContrato={aceptaContrato}
+                      setAceptaContrato={setAceptaContrato}
+                      aceptaParq={aceptaParq}
+                      setAceptaParq={setAceptaParq}
+                    />
+                  )}
+                  {step === 4 && renderStepFirma()}
+                  {step === 5 && renderStepHuella()}
                 </motion.div>
               </div>
 
@@ -258,7 +245,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
                   </div>
 
                   <div className="flex-1 flex justify-center">
-                    {step === 3 && fingerprintStatus === 'idle' && (
+                    {step === 5 && fingerprintStatus === 'idle' && (
                       <motion.button
                         type="button"
                         whileHover={{ scale: 1.03 }}
@@ -287,8 +274,8 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
                         boxShadow: canGoNext() ? '0 4px 16px rgba(18,112,183,0.35)' : 'none',
                       }}
                     >
-                      <span>{step === 3 ? 'Finalizar' : 'Siguiente'}</span>
-                      {step < 3 && <ChevronRight size={14} />}
+                      <span>{step === 5 ? 'Finalizar' : 'Siguiente'}</span>
+                      {step < 5 && <ChevronRight size={14} />}
                     </motion.button>
                   </div>
                 </div>
