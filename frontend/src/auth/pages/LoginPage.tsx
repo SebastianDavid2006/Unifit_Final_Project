@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { motion } from 'motion/react'
-import { User, Lock, Eye, EyeOff, UserPlus, ArrowRight } from 'lucide-react'
+import { User, UserPlus, ArrowRight } from 'lucide-react'
 import { LoginBackground } from '@/auth/components/LoginBackground'
-import { mockLogin, type MockSession } from '@/shared/mock/mockAuth'
+import { PasswordField } from '@/auth/components/PasswordField'
+import { mockLogin } from '@/auth/services/authService'
+import type { MockSession } from '@/auth/types'
 import logotipo from '@/assets/logo/logo.webp'
 import universidadLogo from '@/assets/logo/universitaria_de_colombia.webp'
 import secundarioLogo from '@/assets/logo/universitaria_de_bogota.webp'
@@ -26,7 +28,6 @@ const MESH_BUTTON = `
 export function LoginPage({ onSelect, onRegister, onForgot }: LoginPageProps) {
   const [usuario, setUsuario] = useState('admin')
   const [contraseña, setContraseña] = useState('admin123')
-  const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [shake, setShake] = useState(false)
 
@@ -98,28 +99,7 @@ export function LoginPage({ onSelect, onRegister, onForgot }: LoginPageProps) {
             </div>
 
             <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>CONTRASEÑA</label>
-            <div className="flex items-center gap-3 px-5 rounded-2xl mb-8 h-14" style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.12)',
-            }}>
-              <Lock size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />
-              <input
-                type={showPass ? 'text' : 'password'}
-                value={contraseña}
-                onChange={e => setContraseña(e.target.value)}
-                placeholder="••••••••"
-                className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-white/30"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPass(!showPass)}
-                className="flex items-center justify-center cursor-pointer"
-              >
-                {showPass
-                  ? <EyeOff size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />
-                  : <Eye size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />}
-              </button>
-            </div>
+            <PasswordField value={contraseña} onChange={setContraseña} className="mb-8" />
 
             <div className="flex justify-end -mt-4 mb-6">
               <button

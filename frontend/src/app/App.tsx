@@ -3,14 +3,14 @@ import { motion, AnimatePresence } from 'motion/react'
 import { LoginPage } from '@/auth/pages/LoginPage'
 import { RegisterPage } from '@/auth/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/auth/pages/ForgotPasswordPage'
-import { ChangePasswordModal } from '@/auth/pages/ChangePasswordModal'
+import { ChangePasswordPage } from '@/auth/pages/ChangePasswordPage'
 import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
 import { StudentPage } from '@/features/student/pages/StudentPage'
 import StudentOnboardingGate from '@/features/student/StudentOnboardingGate'
 import { AdminPage } from '@/features/admin/pages/AdminPage'
-import BackgroundDecor from '@/components/BackgroundDecor'
-import type { MockSession } from '@/shared/mock/mockAuth'
-import { updateUser } from '@/shared/mock/mockAuth'
+import BackgroundDecor from '@/shared/components/BackgroundDecor'
+import type { MockSession } from '@/auth/types'
+import { updateUser } from '@/auth/services/authService'
 
 type Platform = 'trainer' | 'student' | 'admin'
 type Screen = 'login' | 'register' | 'forgot' | 'change-password' | Platform
@@ -124,7 +124,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <ChangePasswordModal onBack={() => setScreen('login')} onSuccess={() => {
+              <ChangePasswordPage onBack={() => setScreen('login')} onSuccess={() => {
                 if (pendingSession) {
                   updateUser(pendingSession.user.email, { debeCambiarContrasena: false })
                 }

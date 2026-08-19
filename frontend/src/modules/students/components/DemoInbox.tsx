@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Mail, Copy, Check } from 'lucide-react'
-import { getInbox, type MockEmail } from '@/shared/mock/mockAuth'
+import { getInbox } from '@/auth/services/authService'
+import type { MockEmail } from '@/auth/types'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 

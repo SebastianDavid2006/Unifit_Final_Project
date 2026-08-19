@@ -7,7 +7,7 @@ import EquipmentPage from '@/modules/equipment/EquipmentPage'
 import TrainerDashboard from '@/features/trainer/sections/TrainerDashboard'
 import TrainerSidebar, { type TrainerSection } from '@/features/trainer/components/TrainerSidebar'
 import TrainerTopbar from '@/features/trainer/components/TrainerTopbar'
-import BackgroundDecor from '@/components/BackgroundDecor'
+import BackgroundDecor from '@/shared/components/BackgroundDecor'
 import { students } from '@/data/students'
 
 export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
