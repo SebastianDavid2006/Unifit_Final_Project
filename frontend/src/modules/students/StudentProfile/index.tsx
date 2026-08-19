@@ -437,7 +437,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           }}
         />
 
-        {/* Choice modal: Ver ValoraciÃƒÂ³n / Ver Rutina */}
+        {/* Choice modal: Ver Valoración / Ver Rutina */}
         <AnimatePresence>
           {showAssessmentOptions && selectedAssessment && (
             <motion.div
@@ -476,8 +476,8 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       background: `linear-gradient(to top, ${selectedAssessment.color} 0%, ${selectedAssessment.color}cc 35%, transparent 72%)`,
                     }} />
                     <div className="relative z-10 flex flex-col items-center">
-                      <span className="text-xl font-extrabold text-white tracking-tight">Ver ValoraciÃƒÂ³n</span>
-                      <span className="text-[11px] text-white/60 mt-1">Detalles de la evaluaciÃƒÂ³n</span>
+                      <span className="text-xl font-extrabold text-white tracking-tight">Ver Valoración</span>
+                      <span className="text-[11px] text-white/60 mt-1">Detalles de la evaluación</span>
                     </div>
                   </motion.button>
 
