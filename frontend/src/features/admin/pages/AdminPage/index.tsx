@@ -11,10 +11,12 @@ import PermissionsOverlay from './components/PermissionsOverlay'
 import Topbar from './components/Topbar'
 import StatsCalendar from './components/StatsCalendar'
 import GymFloatingToolbar from './components/GymFloatingToolbar'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import { students } from '@/data/students'
 import type { AdminSection } from './data'
 
 export function AdminPage({ onLogout }: { onLogout?: () => void }) {
+  const isMobile = useIsMobile()
   const [section, setSection] = useState<AdminSection>('dashboard')
   const [expanded, setExpanded] = useState(false)
   const [trainerSearch, setTrainerSearch] = useState('')
@@ -67,7 +69,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
         onSectionChange={setSection}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden relative">
+      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ paddingTop: isMobile ? '60px' : 0 }}>
         <PermissionsOverlay visible={isPermissions} />
 
         <Topbar

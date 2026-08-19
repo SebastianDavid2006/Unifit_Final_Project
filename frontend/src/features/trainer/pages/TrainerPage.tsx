@@ -8,9 +8,11 @@ import TrainerDashboard from '@/features/trainer/sections/TrainerDashboard'
 import TrainerSidebar, { type TrainerSection } from '@/features/trainer/components/TrainerSidebar'
 import TrainerTopbar from '@/features/trainer/components/TrainerTopbar'
 import BackgroundDecor from '@/shared/components/BackgroundDecor'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import { students } from '@/data/students'
 
 export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
+  const isMobile = useIsMobile()
   const [section, setSection] = useState<TrainerSection>('dashboard')
   const [expanded, setExpanded] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<typeof students[0] | null>(null)
@@ -49,7 +51,7 @@ export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
         onSectionChange={setSection}
       />
 
-      <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable' }}>
+      <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable', paddingTop: isMobile ? '60px' : 0 }}>
         <TrainerTopbar
           section={section}
           search={search}

@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { LayoutDashboard, Users, Dumbbell, Calendar, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 export type TrainerSection = 'dashboard' | 'students' | 'equipment' | 'schedule'
 
@@ -19,7 +20,50 @@ interface Props {
 
 export default function TrainerSidebar({ section, expanded, onToggle, onSectionChange }: Props) {
   const items = TRAINER_SIDEBAR_ITEMS
+  const isMobile = useIsMobile()
 
+  // Mobile: horizontal top bar
+  if (isMobile) {
+    return (
+      <header
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-3 py-2"
+        style={{
+          background: 'linear-gradient(180deg, #0A1A3A 0%, #2A0A10 40%, #101014 65%, #2A1E08 100%)',
+          borderBottom: '1px solid rgba(255,255,255,0.04)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <div className="flex items-center gap-1">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onSectionChange(item.id)}
+              title={item.label}
+              className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 ${
+                section === item.id
+                  ? 'bg-gradient-to-r from-red-500/30 to-purple-500/30 text-white shadow-lg'
+                  : 'text-white/40 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <item.icon size={20} />
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={onToggle}
+          className="w-11 h-11 rounded-xl flex items-center justify-center
+            border border-transparent
+            hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/10 hover:shadow-lg"
+          style={{ color: 'rgba(255,255,255,0.5)' }}
+          title={expanded ? 'Colapsar' : 'Expandir'}
+        >
+          {expanded ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
+        </button>
+      </header>
+    )
+  }
+
+  // Desktop: vertical sidebar
   return (
     <aside
       className={`${expanded ? 'w-52' : 'w-[68px]'} flex flex-col items-center pt-8 pb-4 gap-1 flex-shrink-0 z-50 relative`}
