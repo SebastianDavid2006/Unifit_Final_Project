@@ -24,7 +24,7 @@ export function RoutineDetailModal({ isOpen, assessment, routine, viewRoutineDay
           </div>
           <div>
             <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>{routine?.name ?? assessment?.routine ?? 'Sin rutina'}</h3>
-            <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{assessment.date} · Asociada a la valoración</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{assessment?.date ?? ''} · Asociada a la valoración</p>
           </div>
         </div>
         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={onClose}
