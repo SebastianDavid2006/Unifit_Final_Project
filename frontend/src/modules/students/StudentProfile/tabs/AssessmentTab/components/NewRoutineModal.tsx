@@ -194,7 +194,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>DuraciÃƒÂ³n</label>
+                        <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración</label>
                         <select
                           value={routineForm.duration}
                           disabled={routineViewMode}
@@ -355,7 +355,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                       if (!activeDay) {
                         return (
                           <p className="text-xs text-center py-8 px-4 rounded-2xl" style={{ color: 'rgba(0,0,0,0.4)', background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}>
-                            La IA aÃƒÂºn no ha generado ejercicios. Vuelve al paso 1 o agrega uno manualmente.
+                            La IA aún no ha generado ejercicios. Vuelve al paso 1 o agrega uno manualmente.
                           </p>
                         )
                       }
