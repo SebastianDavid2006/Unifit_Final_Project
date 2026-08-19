@@ -19,8 +19,6 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
   const [expanded, setExpanded] = useState(false)
   const [trainerSearch, setTrainerSearch] = useState('')
   const [trainerSearchFocused, setTrainerSearchFocused] = useState(false)
-  const [showTrainerFilters, setShowTrainerFilters] = useState(false)
-  const [trainerRoleFilter, setTrainerRoleFilter] = useState<'all' | 'trainer' | 'admin'>('all')
   const [trainerDetailOpen, setTrainerDetailOpen] = useState(false)
   const [trainerTab, setTrainerTab] = useState('overview')
   const [gymTab, setGymTab] = useState('students')
@@ -52,7 +50,6 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
 
   useEffect(() => {
     setShowStatsCalendar(false)
-    setShowTrainerFilters(false)
     setGymSelectedStudent(null)
     setShowGymStudentFilters(false)
   }, [section])
@@ -84,10 +81,6 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
           onTrainerSearchChange={setTrainerSearch}
           trainerSearchFocused={trainerSearchFocused}
           onTrainerSearchFocusChange={setTrainerSearchFocused}
-          showTrainerFilters={showTrainerFilters}
-          onToggleTrainerFilters={() => setShowTrainerFilters(!showTrainerFilters)}
-          trainerRoleFilter={trainerRoleFilter}
-          onTrainerRoleFilterChange={setTrainerRoleFilter}
           gymSelectedStudent={gymSelectedStudent}
           gymStudentTab={gymStudentTab}
           onGymStudentTabChange={setGymStudentTab}
@@ -133,7 +126,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
           >
             {section === 'dashboard' && <AdminDashboardView />}
             {section === 'stats' && <AdminStats tab={statsTab} showCareerFilter={showCareerFilter} statsRange={statsRange} />}
-            {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} roleFilter={trainerRoleFilter} showFilters={showTrainerFilters} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
+            {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
             {section === 'gym' && (
               <AdminGym
                 tab={gymTab}

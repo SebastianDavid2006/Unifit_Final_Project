@@ -1,14 +1,12 @@
 import { motion } from 'motion/react'
-import { Activity, FileText, GraduationCap, Shield } from 'lucide-react'
+import { Activity, FileText } from 'lucide-react'
 import GlassSearch from '@/features/admin/components/GlassSearch'
-import FilterDropdown from '@/features/admin/components/FilterDropdown'
 import iconRunning from '@/assets/icons/animated/icon_running.gif'
-import { RED, BLUE, PILL_GRAD } from '../data'
+import { PILL_GRAD } from '../data'
 
 export default function TrainersToolbar({
   isPermissions, trainerDetailOpen, trainerTab, onTrainerTabChange, onTrainerBack,
   trainerSearch, onTrainerSearchChange, trainerSearchFocused, onTrainerSearchFocusChange,
-  showTrainerFilters, onToggleTrainerFilters, trainerRoleFilter, onTrainerRoleFilterChange,
 }: {
   isPermissions: boolean
   trainerDetailOpen: boolean
@@ -19,10 +17,6 @@ export default function TrainersToolbar({
   onTrainerSearchChange: (v: string) => void
   trainerSearchFocused: boolean
   onTrainerSearchFocusChange: (v: boolean) => void
-  showTrainerFilters: boolean
-  onToggleTrainerFilters: () => void
-  trainerRoleFilter: 'all' | 'trainer' | 'admin'
-  onTrainerRoleFilterChange: (v: 'all' | 'trainer' | 'admin') => void
 }) {
   if (trainerDetailOpen) {
     return (
@@ -92,18 +86,6 @@ export default function TrainersToolbar({
           focused={trainerSearchFocused}
           onFocusChange={onTrainerSearchFocusChange}
           placeholder="Buscar por nombre, cargo o especialidad..."
-        />
-        <FilterDropdown
-          open={showTrainerFilters}
-          onToggle={onToggleTrainerFilters}
-          value={trainerRoleFilter}
-          onSelect={(id) => { onTrainerRoleFilterChange(id as 'all' | 'trainer' | 'admin'); onToggleTrainerFilters() }}
-          buttonStyle={{ marginLeft: trainerSearchFocused ? 6 : 0 }}
-          options={[
-            { id: 'all', label: 'Todos', color: BLUE },
-            { id: 'trainer', label: 'Entrenadores', color: BLUE, icon: <GraduationCap size={13} /> },
-            { id: 'admin', label: 'Administradores', color: RED, icon: <Shield size={13} /> },
-          ]}
         />
       </div>
     </div>

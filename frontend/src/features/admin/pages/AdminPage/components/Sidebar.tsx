@@ -64,7 +64,7 @@ export default function Sidebar({ expanded, section, onToggle, onSectionChange }
         </div>
 
         {sidebarItems.map((item, idx) => (
-          <div key={item.id}>
+          <div key={item.id} className={item.id === 'config' ? 'flex flex-col flex-1' : ''}>
             {idx > 0 && !(item.id === 'config') && (
               <div className="h-px rounded-full my-0.5 flex-shrink-0" style={{
                 width: expanded ? 160 : 20,

@@ -7,17 +7,15 @@ import PermissionsSection from './sections/PermissionsSection'
 import { DocumentsTab } from '@/modules/students/tabs/DocumentsTab'
 import { DocumentViewerModal } from '@/modules/students/StudentProfile/components/DocumentViewerModal'
 import { DeleteDocumentModal } from '@/modules/students/StudentProfile/components/DeleteDocumentModal'
-import { PAGE_SIZE, type RoleFilter } from './data'
+import { PAGE_SIZE } from './data'
 
 interface AdminTrainersProps {
   search: string
   onSelectTrainer?: () => void
   trainerTab?: string
-  roleFilter?: RoleFilter
-  showFilters?: boolean
 }
 
-const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersProps>(({ search, onSelectTrainer, trainerTab, roleFilter, showFilters }, ref) => {
+const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersProps>(({ search, onSelectTrainer, trainerTab }, ref) => {
   const [trainers, setTrainers] = useState(initialTrainers)
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
   const [globalAdmin, setGlobalAdmin] = useState(true)
@@ -40,20 +38,17 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
 
   const filtered = useMemo(() => {
     const q = (search ?? '').trim().toLowerCase()
-    const role = roleFilter ?? 'all'
     return trainers.filter(t => {
-      const matchRole = role === 'all' || t.role === role
       const roleLabel = t.role === 'trainer' ? 'entrenador' : 'administrador'
-      const matchSearch = !q ||
+      return !q ||
         t.name.toLowerCase().includes(q) ||
         t.email.toLowerCase().includes(q) ||
         t.speciality.toLowerCase().includes(q) ||
         roleLabel.includes(q)
-      return matchRole && matchSearch
     })
-  }, [trainers, search, roleFilter])
+  }, [trainers, search])
 
-  useEffect(() => { setPage(1) }, [search, roleFilter])
+  useEffect(() => { setPage(1) }, [search])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -61,9 +56,14 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
 
   function handleNewUserSuccess(user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string }) {
     const initials = user.name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    const np = user.name.trim().split(/\s+/)
     const newTrainer: Trainer = {
       id: Math.max(0, ...trainers.map(t => t.id)) + 1,
       name: user.name,
+      firstName: np[0] || '',
+      secondName: np.length >= 3 ? np[1] : '',
+      lastName: np.length >= 2 ? (np.length === 3 ? np[2] : np[1]) : '',
+      secondLastName: np.length >= 4 ? np.slice(3).join(' ') : '',
       email: user.email,
       phone: user.phone,
       document: user.document,
@@ -127,7 +127,6 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
         paged={paged}
         totalPages={totalPages}
         currentPage={currentPage}
-        showFilters={showFilters}
         onPage={setPage}
         onSelectTrainer={handleSelectTrainer}
         onOpenNewUser={() => setShowNewUser(true)}

@@ -7,10 +7,9 @@ import DetailCard from '../components/DetailCard'
 import FieldList from '../components/FieldList'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
-import { ListView } from '@/assets/models/ui/objects/list/ListModel'
 import { LockView } from '@/assets/models/ui/objects/lock/LockModel'
+import { CalendarView } from '@/assets/models/ui/objects/calendar/CalendarModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
-import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { BLUE, RED } from '../data'
 import coach2Gif from '@/assets/illustrations/characters/coach_2/animated/coach_2.gif'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
@@ -19,6 +18,21 @@ import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_che
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 const GREEN = '#22C55E'
+
+const MONTHS: Record<string, number> = { Ene: 0, Feb: 1, Mar: 2, Abr: 3, May: 4, Jun: 5, Jul: 6, Ago: 7, Sep: 8, Oct: 9, Nov: 10, Dic: 11 }
+
+function gymTenure(joinedAt: string): string {
+  const m = joinedAt.match(/(\d{1,2}) (\w{3}) (\d{4})/)
+  if (!m || MONTHS[m[2]] === undefined) return joinedAt
+  const start = new Date(Number(m[3]), MONTHS[m[2]], Number(m[1]))
+  const now = new Date()
+  let years = now.getFullYear() - start.getFullYear()
+  let months = now.getMonth() - start.getMonth()
+  if (now.getDate() < start.getDate()) months--
+  if (months < 0) { years--; months += 12 }
+  if (years <= 0) return `${months} ${months === 1 ? 'mes' : 'meses'}`
+  return `${years} ${years === 1 ? 'año' : 'años'}${months > 0 ? ` y ${months} ${months === 1 ? 'mes' : 'meses'}` : ''}`
+}
 
 export default function TrainerDetail({ trainer: trainerProp }: { trainer: Trainer }) {
   const [trainer, setTrainer] = useState<Trainer>(trainerProp)
@@ -37,13 +51,13 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
   function buildDraft(): Record<string, string> {
     return {
       name: trainer.name,
+      firstName: trainer.firstName,
+      secondName: trainer.secondName,
+      lastName: trainer.lastName,
+      secondLastName: trainer.secondLastName,
       document: trainer.document,
       birthDate: trainer.birthDate,
       gender: trainer.gender,
-      speciality: trainer.speciality,
-      joinedAt: trainer.joinedAt,
-      schedule: trainer.schedule,
-      certifications: trainer.certifications.join(', '),
       eps: trainer.eps,
       bloodType: trainer.bloodType,
       email: trainer.email,
@@ -63,14 +77,14 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
     if (!draft) return
     setTrainer(prev => ({
       ...prev,
-      name: draft.name,
+      name: [draft.firstName, draft.secondName, draft.lastName, draft.secondLastName].filter(Boolean).join(' '),
+      firstName: draft.firstName,
+      secondName: draft.secondName,
+      lastName: draft.lastName,
+      secondLastName: draft.secondLastName,
       document: draft.document,
       birthDate: draft.birthDate,
       gender: draft.gender,
-      speciality: draft.speciality,
-      joinedAt: draft.joinedAt,
-      schedule: draft.schedule,
-      certifications: draft.certifications.split(',').map(s => s.trim()).filter(Boolean),
       eps: draft.eps,
       bloodType: draft.bloodType,
       email: draft.email,
@@ -198,7 +212,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             ]} labelMb={1} itemPb={8} />
 </DetailCard>
 
-          <DetailCard gridColumn="3" gridRow="2" accent={BLUE} title="Acceso y permisos" model={<LockView />}>
+          <DetailCard gridColumn="3" gridRow="3" accent={BLUE} title="Acceso y permisos" model={<LockView />}>
             <div className="flex flex-col">
               <div className="flex flex-col" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: 6 }}>
                 <p className="text-xs" style={{ marginBottom: 0.5, color: 'rgba(0,0,0,0.5)' }}>Rol</p>
@@ -210,10 +224,6 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
                   {trainer.status === 'active' ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
-              <div className="flex flex-col">
-                <p className="text-xs" style={{ marginBottom: 0.5, color: 'rgba(0,0,0,0.5)' }}>Último acceso</p>
-                <p className="text-base font-semibold" style={{ color: '#0D1B2A' }}>{trainer.lastAccess}</p>
-              </div>
             </div>
           </DetailCard>
 
@@ -224,12 +234,12 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             ]} />
 </DetailCard>
 
-          <DetailCard gridColumn="3" gridRow="3" accent={BLUE} title="Actividades recientes" model={<ListView />}>
-            <FieldList fields={trainer.recentActivities.slice(0, 3).map((act, i) => ({
-              key: `activity-${i}`,
-              label: act.date,
-              value: act.action,
-            }))} />
+          <DetailCard gridColumn="3" gridRow="2" accent={BLUE} title="Fechas clave" model={<CalendarView />}>
+            <FieldList fields={[
+              { key: 'joinedAt', label: 'Miembro desde', value: trainer.joinedAt },
+              { key: 'tenure', label: 'Tiempo en el gym', value: gymTenure(trainer.joinedAt) },
+              { key: 'lastAccess', label: 'Último acceso', value: trainer.lastAccess },
+            ]} />
           </DetailCard>
         </div>
       </div>
@@ -363,22 +373,14 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
                       title: 'Información personal',
                       model: <StudentCardView />,
                       fields: [
-                        { key: 'name', label: 'Nombre completo', value: trainer.name },
+                        { key: 'firstName', label: 'Primer nombre', value: trainer.firstName },
+                        { key: 'secondName', label: 'Segundo nombre', value: trainer.secondName || '—' },
+                        { key: 'lastName', label: 'Primer apellido', value: trainer.lastName },
+                        { key: 'secondLastName', label: 'Segundo apellido', value: trainer.secondLastName || '—' },
                         { key: 'document', label: 'Documento', value: trainer.document },
                         { key: 'birthDate', label: 'Fecha de nacimiento', value: trainer.birthDate },
                         { key: 'gender', label: 'Género', value: trainer.gender },
-                      ],
-                    },
-                    {
-                      title: 'Información laboral',
-                      model: <CapView />,
-                      fields: [
-                        { key: 'role', label: 'Cargo', value: trainer.role === 'admin' ? 'Administrador' : 'Entrenador', readOnly: true },
-                        { key: 'speciality', label: 'Especialidad', value: trainer.speciality },
-                        { key: 'status', label: 'Estado', value: trainer.status === 'active' ? 'Activo' : 'Inactivo', readOnly: true },
-                        { key: 'joinedAt', label: 'Fecha de ingreso', value: trainer.joinedAt },
-                        { key: 'schedule', label: 'Horario', value: trainer.schedule },
-                        { key: 'certifications', label: 'Certificaciones', value: trainer.certifications.join(', ') },
+                        { key: 'age', label: 'Edad', value: `${Math.abs(new Date(trainer.birthDate.split('/').reverse().join('-')).getFullYear() - new Date().getFullYear())} años`, readOnly: true },
                       ],
                     },
                     {

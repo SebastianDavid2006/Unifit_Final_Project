@@ -1,23 +1,26 @@
 import { useRef, useState, type MouseEvent } from 'react'
 import { motion } from 'motion/react'
-import { FileText, ShieldCheck, ClipboardCheck, Upload, Eye } from 'lucide-react'
-import { loadDocs, saveDoc, DOC_ORDER, DOC_TITLES, type DocKey, type StoredDocs } from '@/data/documents'
+import { FileText, Upload, Eye } from 'lucide-react'
+import { ScalesOfJusticeView } from '@/assets/models/ui/objects/scales_of_justice/ScalesOfJusticeModel'
+import { loadDocs, saveDoc, DOC_TITLES, type StoredDocs } from '@/data/documents'
 import ModalShell, { ModalCloseButton } from '../components/ModalShell'
 import { BLUE, BLUE_GRAD } from '../components/fields'
 
-const DOC_META: Record<DocKey, { icon: typeof FileText; color: string; hint: string }> = {
-  contrato: { icon: FileText, color: BLUE, hint: 'Contrato de prestación de servicios estudiantiles' },
-  tratamiento: { icon: ShieldCheck, color: '#30D158', hint: 'Autorización para el tratamiento de datos personales' },
-  parq: { icon: ClipboardCheck, color: '#F5A623', hint: 'Cuestionario de aptitud física antes de entrenar' },
+const DOC_KEYS = ['contrato', 'tratamiento'] as const
+type DocSubKey = (typeof DOC_KEYS)[number]
+
+const DOC_META: Record<DocSubKey, { color: string; hint: string }> = {
+  contrato: { color: BLUE, hint: 'Contrato de prestación de servicios estudiantiles' },
+  tratamiento: { color: '#30D158', hint: 'Autorización para el tratamiento de datos personales' },
 }
 
 export default function DocsSection() {
   const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
-  const [preview, setPreview] = useState<DocKey | null>(null)
-  const [pendingKey, setPendingKey] = useState<DocKey | null>(null)
+  const [preview, setPreview] = useState<DocSubKey | null>(null)
+  const [pendingKey, setPendingKey] = useState<DocSubKey | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const pickFile = (key: DocKey) => {
+  const pickFile = (key: DocSubKey) => {
     setPendingKey(key)
     fileRef.current?.click()
   }
@@ -43,8 +46,8 @@ export default function DocsSection() {
 
   return (
     <>
-      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-3 gap-5">
-        {DOC_ORDER.map((key, i) => {
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-5">
+        {DOC_KEYS.map((key, i) => {
           const meta = DOC_META[key]
           const doc = docs[key]
           return (
@@ -53,11 +56,11 @@ export default function DocsSection() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.08 + i * 0.08 }}
-              className="rounded-2xl p-6 flex flex-col"
+              className="rounded-2xl p-6 flex flex-col items-center text-center"
               style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}
             >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: `${meta.color}10`, border: `1px solid ${meta.color}15` }}>
-                <meta.icon size={18} style={{ color: meta.color }} />
+              <div className="w-14 h-14 mb-4 flex-shrink-0">
+                <ScalesOfJusticeView />
               </div>
               <h4 className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{DOC_TITLES[key]}</h4>
               <p className="text-[11px] mt-1.5" style={{ color: 'rgba(0,0,0,0.3)' }}>{meta.hint}</p>
@@ -67,7 +70,7 @@ export default function DocsSection() {
                 {doc.dataUrl ? `Actualizado: ${doc.fileName}` : 'Sin documento cargado'}
               </div>
 
-              <div className="flex gap-2 mt-5 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+              <div className="flex gap-2 mt-5 pt-4 w-full" style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}

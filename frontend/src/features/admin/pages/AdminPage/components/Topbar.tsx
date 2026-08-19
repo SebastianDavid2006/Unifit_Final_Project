@@ -10,7 +10,6 @@ export default function Topbar({
   section, isPermissions,
   trainerDetailOpen, trainerTab, onTrainerTabChange, onTrainerBack,
   trainerSearch, onTrainerSearchChange, trainerSearchFocused, onTrainerSearchFocusChange,
-  showTrainerFilters, onToggleTrainerFilters, trainerRoleFilter, onTrainerRoleFilterChange,
   gymSelectedStudent, gymStudentTab, onGymStudentTabChange, onGymBack, gymTab,
   gymStudentSearch, onGymStudentSearchChange, gymStudentSearchFocused, onGymStudentSearchFocusChange,
   showGymStudentFilters, onToggleGymStudentFilters,
@@ -31,10 +30,6 @@ export default function Topbar({
   onTrainerSearchChange: (v: string) => void
   trainerSearchFocused: boolean
   onTrainerSearchFocusChange: (v: boolean) => void
-  showTrainerFilters: boolean
-  onToggleTrainerFilters: () => void
-  trainerRoleFilter: 'all' | 'trainer' | 'admin'
-  onTrainerRoleFilterChange: (v: 'all' | 'trainer' | 'admin') => void
   gymSelectedStudent: import('@/data/students').Student | null
   gymStudentTab: string
   onGymStudentTabChange: (t: string) => void
@@ -81,10 +76,6 @@ export default function Topbar({
             onTrainerSearchChange={onTrainerSearchChange}
             trainerSearchFocused={trainerSearchFocused}
             onTrainerSearchFocusChange={onTrainerSearchFocusChange}
-            showTrainerFilters={showTrainerFilters}
-            onToggleTrainerFilters={onToggleTrainerFilters}
-            trainerRoleFilter={trainerRoleFilter}
-            onTrainerRoleFilterChange={onTrainerRoleFilterChange}
           />
         )}
         {section === 'gym' && (
