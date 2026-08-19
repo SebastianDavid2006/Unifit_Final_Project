@@ -1,12 +1,12 @@
-import { useState, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react'
+﻿import { useState, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Trainer, initialTrainers } from '@/data/trainers'
 import NewUserModal from './components/NewUserModal'
 import TrainersList from './sections/TrainersList'
 import TrainerDetail from './sections/TrainerDetail'
 import PermissionsSection from './sections/PermissionsSection'
-import { DocumentsTab } from '@/modules/students/tabs/DocumentsTab'
-import { DocumentViewerModal } from '@/modules/students/tabs/DocumentsTab/components/DocumentViewerModal'
-import { DeleteDocumentModal } from '@/modules/students/tabs/DocumentsTab/components/DeleteDocumentModal'
+import { DocumentsTab } from '@/modules/students/StudentProfile/tabs/DocumentsTab'
+import { DocumentViewerModal } from '@/modules/students/StudentProfile/tabs/DocumentsTab/components/DocumentViewerModal'
+import { DeleteDocumentModal } from '@/modules/students/StudentProfile/tabs/DocumentsTab/components/DeleteDocumentModal'
 import { PAGE_SIZE } from './data'
 
 interface AdminTrainersProps {
@@ -67,7 +67,7 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
       email: user.email,
       phone: user.phone,
       document: user.document,
-      speciality: user.role === 'admin' ? 'Administración del Sistema' : 'Entrenamiento General',
+      speciality: user.role === 'admin' ? 'AdministraciÃ³n del Sistema' : 'Entrenamiento General',
       role: user.role === 'admin' ? 'admin' : 'trainer',
       students: 0,
       status: 'active',
@@ -75,7 +75,7 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
       rating: 80,
       joinedAt: new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }),
       schedule: 'Lun-Vie 8AM-4PM',
-      certifications: user.role === 'admin' ? ['Gestión de Plataforma'] : ['Entrenamiento Funcional'],
+      certifications: user.role === 'admin' ? ['GestiÃ³n de Plataforma'] : ['Entrenamiento Funcional'],
       accessLevel: user.role === 'admin' ? 'Completo' : 'Parcial',
       lastAccess: 'Nunca',
       recentActivities: [{ action: 'Cuenta creada', date: 'Justo ahora' }],
