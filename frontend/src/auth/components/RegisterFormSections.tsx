@@ -100,7 +100,7 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
             {select('Parentesco', 'parentescoAcudiente', PARENTESCOS, { required: true })}
             {form.parentescoAcudiente === 'Otro'
               ? field('Especifique el parentesco', 'otroParentescoAcudiente', { required: true })
-              : <span />}
+              : null}
           </div>
         </>
       )}

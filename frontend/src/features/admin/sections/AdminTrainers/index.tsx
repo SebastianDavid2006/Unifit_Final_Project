@@ -2,7 +2,7 @@
 import { Trainer, initialTrainers } from '@/data/trainers'
 import NewUserModal from './components/NewUserModal'
 import TrainersList from './sections/TrainersList'
-import TrainerDetail from './sections/TrainerDetail'
+import TrainerDetail from './sections/TrainerDetail/TrainerDetail'
 import PermissionsSection from './sections/PermissionsSection'
 import { DocumentsTab } from '@/modules/students/StudentProfile/tabs/DocumentsTab'
 import { DocumentViewerModal } from '@/modules/students/StudentProfile/tabs/DocumentsTab/components/DocumentViewerModal'

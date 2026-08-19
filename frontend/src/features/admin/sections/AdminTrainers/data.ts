@@ -2,7 +2,10 @@ import { Shield, GraduationCap } from 'lucide-react'
 
 export const RED = '#F43843'
 export const BLUE = '#1270B7'
+export const GREEN = '#22C55E'
 export const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
+export const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
+export const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 
 export const PAGE_SIZE = 6
 
@@ -19,3 +22,18 @@ export const statusMeta = {
 }
 
 export const tableHeaders = ['Nombre', 'Cargo', 'Estado', 'Fecha de creación']
+
+const MONTHS: Record<string, number> = { Ene: 0, Feb: 1, Mar: 2, Abr: 3, May: 4, Jun: 5, Jul: 6, Ago: 7, Sep: 8, Oct: 9, Nov: 10, Dic: 11 }
+
+export function gymTenure(joinedAt: string): string {
+  const m = joinedAt.match(/(\d{1,2}) (\w{3}) (\d{4})/)
+  if (!m || MONTHS[m[2]] === undefined) return joinedAt
+  const start = new Date(Number(m[3]), MONTHS[m[2]], Number(m[1]))
+  const now = new Date()
+  let years = now.getFullYear() - start.getFullYear()
+  let months = now.getMonth() - start.getMonth()
+  if (now.getDate() < start.getDate()) months--
+  if (months < 0) { years--; months += 12 }
+  if (years <= 0) return `${months} ${months === 1 ? 'mes' : 'meses'}`
+  return `${years} ${years === 1 ? 'año' : 'años'}${months > 0 ? ` y ${months} ${months === 1 ? 'mes' : 'meses'}` : ''}`
+}

@@ -146,8 +146,13 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       setTimeout(() => setShake(false), 500)
       return
     }
-    createMockAccount()
-    setPhase('success')
+    try {
+      createMockAccount()
+      setPhase('success')
+    } catch (err) {
+      console.error('Error creating account:', err)
+      alert('Error al crear la cuenta: ' + (err instanceof Error ? err.message : String(err)))
+    }
   }
 
   const renderForm = () => (
