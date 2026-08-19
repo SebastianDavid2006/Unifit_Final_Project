@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { X, PenLine, Fingerprint, RefreshCw } from 'lucide-react'
 import SignatureCanvas from 'react-signature-canvas'
 import type { Trainer } from '@/data/trainers'
-import { BLUE_GRAD, GREEN_BLUE_GRAD, RED, GREEN } from '../../data'
+import { BLUE_GRAD, GREEN_BLUE_GRAD, RED, GREEN, gymTenure } from '../../data'
 
 import DetailCard from '../../components/DetailCard'
 import FieldList from '../../components/FieldList'
@@ -21,27 +21,8 @@ import { TrainerInfoModal } from './modals/TrainerInfoModal'
 import { TrainerSignatureModal } from './modals/TrainerSignatureModal'
 import { TrainerFingerprintModal } from './modals/TrainerFingerprintModal'
 import { TrainerConfirmModal } from './modals/TrainerConfirmModal'
-
-const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
-const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
-const GREEN = '#22C55E'
-
-const MONTHS: Record<string, number> = { Ene: 0, Feb: 1, Mar: 2, Abr: 3, May: 4, Jun: 5, Jul: 6, Ago: 7, Sep: 8, Oct: 9, Nov: 10, Dic: 11 }
-
-export function gymTenure(joinedAt: string): string {
   const m = joinedAt.match(/(\d{1,2}) (\w{3}) (\d{4})/)
-  if (!m || MONTHS[m[2]] === undefined) return joinedAt
-  const start = new Date(Number(m[3]), MONTHS[m[2]], Number(m[1]))
-  const now = new Date()
-  let years = now.getFullYear() - start.getFullYear()
-  let months = now.getMonth() - start.getMonth()
-  if (now.getDate() < start.getDate()) months--
-  if (months < 0) { years--; months += 12 }
-  if (years <= 0) return `${months} ${months === 1 ? 'mes' : 'meses'}`
-  return `${years} ${years === 1 ? 'aÃ±o' : 'aÃ±os'}${months > 0 ? ` y ${months} ${months === 1 ? 'mes' : 'meses'}` : ''}`
-}
-
-export default function TrainerDetail({ trainer: trainerProp }: { trainer: Trainer }) {
+  export default function TrainerDetail({ trainer: trainerProp }: { trainer: Trainer }) {
   const [trainer, setTrainer] = useState<Trainer>(trainerProp)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
