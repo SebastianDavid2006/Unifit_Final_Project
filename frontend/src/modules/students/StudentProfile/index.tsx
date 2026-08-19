@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+﻿import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   Activity, X,
@@ -25,6 +25,7 @@ import { OverviewTab } from '@/modules/students/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/tabs/ProgressTab'
 import { AssessmentTab } from '@/modules/students/tabs/AssessmentTab'
 import { DocumentsTab } from '@/modules/students/tabs/DocumentsTab'
+import { ObjectiveTab } from '@/modules/students/tabs/ObjectiveTab'
 import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
 import { useCalendarNavigation } from './hooks/useCalendarNavigation'
 import { useMeshInput } from './hooks/useMeshInput'
@@ -48,7 +49,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
   const [localTab, setLocalTab] = useState('overview')
   const [modalOpen, setModalOpen] = useState(false)
   const [showInfoModal, setShowInfoModal] = useState(false)
-  const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'aÃ±o'>('mes')
+  const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'aÃƒÂ±o'>('mes')
   const [hoveredCol, setHoveredCol] = useState<number | null>(null)
   const [hoveredCell, setHoveredCell] = useState<{w: number; d: number} | null>(null)
   const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 4))
@@ -239,6 +240,9 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                   getWeekStart={calendarNav.getWeekStart}
                 />
               )}
+                {currentTab === 'objective' && (
+                  <ObjectiveTab student={editable} />
+                )}
               {currentTab === 'assessment' && (
                 <AssessmentTab
                   canCreateValuation={canCreateValuation}
@@ -274,7 +278,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
         <SignatureModal isOpen={signatureModalOpen} onClose={() => setSignatureModalOpen(false)} />
         </div>
 
-        {/* Modal informaciÃ³n completa */}
+        {/* Modal informaciÃƒÂ³n completa */}
         <AnimatePresence>
           {modalOpen && (
             <motion.div
@@ -311,10 +315,10 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       icon: <StudentCardView />,
                       fields: [
                         { label: 'Tipo de documento', value: student.documentType },
-                        { label: 'NÃºmero de documento', value: student.documentNumber },
+                        { label: 'NÃƒÂºmero de documento', value: student.documentNumber },
                         { label: 'Fecha de nacimiento', value: student.birthDate },
-                        { label: 'GÃ©nero', value: student.gender },
-                        { label: 'NÃºmero carnet', value: student.carnetId },
+                        { label: 'GÃƒÂ©nero', value: student.gender },
+                        { label: 'NÃƒÂºmero carnet', value: student.carnetId },
                       ],
                     },
                     {
@@ -322,18 +326,18 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       icon: <ListView />,
                       fields: [
                         { label: 'Email', value: editable.email },
-                        { label: 'TelÃ©fono', value: student.phone },
+                        { label: 'TelÃƒÂ©fono', value: student.phone },
                         { label: 'Contacto de emergencia', value: student.contactName },
                         { label: 'Tel. contacto', value: student.contactPhone },
                       ],
                     },
                     {
-                      title: 'InformaciÃ³n acadÃ©mica',
+                      title: 'InformaciÃƒÂ³n acadÃƒÂ©mica',
                       icon: <CalendarView />,
                       fields: [
                         { label: 'Programa', value: student.program },
-                        { label: 'InstituciÃ³n', value: student.institution },
-                        { label: 'Semestre', value: `${student.semestre}Â°` },
+                        { label: 'InstituciÃƒÂ³n', value: student.institution },
+                        { label: 'Semestre', value: `${student.semestre}Ã‚Â°` },
                         { label: 'Modalidad', value: student.modality },
                         { label: 'Jornada', value: student.jornada },
                         { label: 'Estado', value: student.graduationStatus },
@@ -344,7 +348,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       icon: <Activity size={18} style={{ color: '#E63946' }} />,
                       fields: [
                         { label: 'EPS', value: student.eps },
-                        { label: 'Grupo sanguÃ­neo', value: student.bloodType },
+                        { label: 'Grupo sanguÃƒÂ­neo', value: student.bloodType },
                         { label: 'Peso', value: `${student.weight} kg` },
                         { label: 'Altura', value: `${student.height} cm` },
                         { label: 'IMC', value: imc },
@@ -392,7 +396,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onCancel={() => setDeleteModalOpen(false)}
         />
 
-        {/* Modal nueva valoraciÃ³n */}
+        {/* Modal nueva valoraciÃƒÂ³n */}
         <NewValuationModal
           isOpen={showNewValuationModal}
           valuationForm={valuationForm}
@@ -437,7 +441,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           }}
         />
 
-        {/* Choice modal: Ver ValoraciÃ³n / Ver Rutina */}
+        {/* Choice modal: Ver ValoraciÃƒÂ³n / Ver Rutina */}
         <AnimatePresence>
           {showAssessmentOptions && selectedAssessment && (
             <motion.div
@@ -476,8 +480,8 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       background: `linear-gradient(to top, ${selectedAssessment.color} 0%, ${selectedAssessment.color}cc 35%, transparent 72%)`,
                     }} />
                     <div className="relative z-10 flex flex-col items-center">
-                      <span className="text-xl font-extrabold text-white tracking-tight">Ver ValoraciÃ³n</span>
-                      <span className="text-[11px] text-white/60 mt-1">Detalles de la evaluaciÃ³n</span>
+                      <span className="text-xl font-extrabold text-white tracking-tight">Ver ValoraciÃƒÂ³n</span>
+                      <span className="text-[11px] text-white/60 mt-1">Detalles de la evaluaciÃƒÂ³n</span>
                     </div>
                   </motion.button>
 
@@ -503,7 +507,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           )}
         </AnimatePresence>
 
-        {/* Modal detalle de valoraciÃ³n */}
+        {/* Modal detalle de valoraciÃƒÂ³n */}
         <ValuationDetailModal
           isOpen={!!(showValuationModal && selectedAssessment)}
           assessment={selectedAssessment}
@@ -580,7 +584,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onCloseFromAssessment={() => { setShowNewRoutineModal(false); setRoutineFromAssessment(false); setRoutineSnapshot(''); setRoutineDays([]); setShowAddDayMenu(false) }}
         />
 
-        {/* Modal Ã©xito rutina generada */}
+        {/* Modal ÃƒÂ©xito rutina generada */}
         <AnimatePresence>
           {routineSuccess && (
             <motion.div
@@ -632,7 +636,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                             ease: 'easeOut',
                           }}
                         >
-                          âœ¦
+                          Ã¢Å“Â¦
                         </motion.span>
                       )
                     })}
@@ -658,7 +662,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                     className="text-lg font-bold text-center"
                     style={{ color: '#1A1A1E' }}
                   >
-                    Â¡Se generÃ³ la rutina!
+                    Ã‚Â¡Se generÃƒÂ³ la rutina!
                   </motion.p>
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
@@ -697,7 +701,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onCancel={() => setConfirmCancel('ai')}
         />
 
-        {/* ConfirmaciÃ³n cancelar proceso */}
+        {/* ConfirmaciÃƒÂ³n cancelar proceso */}
         <CancelConfirmModal
           isOpen={!!confirmCancel}
           type={confirmCancel ?? 'valuation'}
@@ -705,7 +709,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onCancel={() => setConfirmCancel(null)}
         />
 
-        {/* â”€â”€ Info completa (modal por categorÃ­as) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* Ã¢â€â‚¬Ã¢â€â‚¬ Info completa (modal por categorÃƒÂ­as) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
         <StudentInfoModal
           isOpen={showInfoModal}
           student={student}
