@@ -1,17 +1,14 @@
 import type { ReactNode, Ref } from 'react'
 import { motion } from 'motion/react'
 import { ArrowLeft } from 'lucide-react'
-import { usePreviewMode } from '@/auth/hooks/usePreviewMode'
-import { PreviewToolbar } from '@/auth/components/PreviewToolbar'
+import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
-import type { PreviewMode } from '@/shared/previewMode'
 
 const DARK_BG = '#0A0A14'
 const PHONE_GRADIENT = 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)'
 
 export interface AuthShellContext {
-  previewMode: PreviewMode
   isDesktopVideo: boolean
   isPhonePreview: boolean
   isMobile: boolean
@@ -21,9 +18,6 @@ interface AuthShellProps {
   children: (ctx: AuthShellContext) => ReactNode
   overlays?: (ctx: AuthShellContext) => ReactNode
   onBack?: () => void
-  showToolbar?: boolean
-  previewMode?: PreviewMode
-  onPreviewModeChange?: (v: PreviewMode) => void
   bgVideoRef?: Ref<HTMLVideoElement>
   phoneGradient?: string
   showBackDesktopVideo?: boolean
@@ -34,27 +28,14 @@ export function AuthShell({
   children,
   overlays,
   onBack,
-  showToolbar = true,
-  previewMode: controlledPreviewMode,
-  onPreviewModeChange,
   bgVideoRef,
   phoneGradient = PHONE_GRADIENT,
   showBackDesktopVideo = true,
   autoDesktopVideo = false,
 }: AuthShellProps) {
-  const internal = usePreviewMode({ autoDesktopVideo })
-  const controlled = controlledPreviewMode !== undefined
-  const isMobile = internal.isMobile
-  const previewMode = controlled ? controlledPreviewMode! : internal.previewMode
-  const isDesktopVideo = previewMode === 'desktop' || (autoDesktopVideo && !isMobile)
-  const isPhonePreview = previewMode === 'celular' || (previewMode === 'auto' && isMobile)
+  const { isPhonePreview, isDesktopVideo, isMobile } = useAuthLayout({ autoDesktopVideo })
 
-  const handlePreviewChange = (v: PreviewMode) => {
-    if (!controlled) internal.changePreviewMode(v)
-    onPreviewModeChange?.(v)
-  }
-
-  const ctx: AuthShellContext = { previewMode, isDesktopVideo, isPhonePreview, isMobile }
+  const ctx: AuthShellContext = { isDesktopVideo, isPhonePreview, isMobile }
 
   const backButton = (top: number) => (
     <button
@@ -68,8 +49,6 @@ export function AuthShell({
 
   return (
     <div className="relative size-full flex flex-col" style={{ background: DARK_BG }}>
-      {showToolbar && <PreviewToolbar previewMode={previewMode} onChange={handlePreviewChange} />}
-
       <div className="flex-1 min-h-0 relative">
         {isDesktopVideo ? (
           <div className="absolute inset-0 overflow-hidden" style={{ background: DARK_BG }}>

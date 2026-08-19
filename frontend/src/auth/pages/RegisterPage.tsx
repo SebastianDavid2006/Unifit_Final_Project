@@ -9,7 +9,7 @@ import { AuthShell } from '@/auth/components/AuthShell'
 import { RegisterFormSections } from '@/auth/components/RegisterFormSections'
 import { RegisterSuccess } from '@/auth/components/RegisterSuccess'
 import { RegisterIntroOverlay } from '@/auth/components/RegisterIntroOverlay'
-import { usePreviewMode } from '@/auth/hooks/usePreviewMode'
+import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
 import logotipo from '@/assets/logo/logo.webp'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
@@ -24,7 +24,7 @@ interface RegisterPageProps {
 type Phase = 'intro' | 'form' | 'success'
 
 export function RegisterPage({ onBack }: RegisterPageProps) {
-  const { previewMode, changePreviewMode, isPhonePreview } = usePreviewMode()
+  const { isPhonePreview, isDesktopVideo } = useAuthLayout()
   const [phase, setPhase] = useState<Phase>('intro')
   const [form, setForm] = useState<Record<string, string>>({ ...INITIAL_FORM, parentesco: 'Padre', estado: 'No egresado' })
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
@@ -68,11 +68,6 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       }
     }
   }, [phase, introSrc, isPhonePreview])
-
-  const handlePreviewChange = (v: 'celular' | 'desktop' | 'auto') => {
-    changePreviewMode(v)
-    setPhase('intro')
-  }
 
   const skipIntro = () => {
     introVideoRef.current?.pause()
@@ -253,8 +248,6 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
 
   return (
     <AuthShell
-      previewMode={previewMode}
-      onPreviewModeChange={handlePreviewChange}
       onBack={phase === 'form' ? onBack : undefined}
       bgVideoRef={bgVideoRef}
       showBackDesktopVideo={false}

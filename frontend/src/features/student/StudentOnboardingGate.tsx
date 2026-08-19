@@ -14,8 +14,7 @@ import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
 import registrationPendingDesktop from '@/assets/scenes/videos/desktop/registration_pending_dekstop.mp4'
 import registrationPendingMobile from '@/assets/scenes/videos/mobile/registration_pending_mobile.mp4'
-import { useIsMobile } from '@/shared/components/ui/use-mobile'
-import { getPreviewMode, setPreviewMode as persistPreviewMode } from '@/shared/previewMode'
+import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
 
 const BLUE = '#007AFF'
 const YELLOW = '#F5A623'
@@ -31,17 +30,13 @@ interface Props {
 type Phase = 'steps' | 'agenda' | 'agendada' | 'pending' | 'app'
 
 export default function StudentOnboardingGate({ session, onLogout }: Props) {
-  const isMobile = useIsMobile()
-  const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>(getPreviewMode)
+  const { isPhonePreview, isDesktopVideo, isMobile } = useAuthLayout()
   const [user, setUser] = useState<MockUser>(session.user)
   const [phase, setPhase] = useState<Phase>(() => {
     if (!session.user.onboarding.cita) return 'steps'
     if (!session.user.onboarding.firma || !session.user.onboarding.huella) return 'pending'
     return 'app'
   })
-
-  const isDesktopVideo = previewMode === 'desktop'
-  const isPhonePreview = previewMode === 'celular' || (previewMode === 'auto' && isMobile)
 
   const handleAgendaConfirm = (fecha: string, hora: string) => {
     const updated = updateUser(user.email, {
@@ -146,7 +141,7 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
           <Clock size={16} style={{ color: YELLOW }} />
           <div className="text-left">
             <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.4)' }}>Tu cita</p>
-            <p className="text-xs font-bold text-white">{user.cita ? `${user.cita.fecha} · ${user.cita.hora}` : ''}</p>
+            <p className="text-xs font-bold text-white">{user.cita ? `${user.cita.fecha} · {user.cita.hora}` : ''}</p>
           </div>
         </div>
       </div>
@@ -179,7 +174,7 @@ export default function StudentOnboardingGate({ session, onLogout }: Props) {
     </div>
   )
 
-const renderPending = () => {
+  const renderPending = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-full py-8 px-4">
         <h2 className="text-xl font-extrabold text-center mb-3" style={{ color: '#fff' }}>
@@ -285,30 +280,8 @@ const renderPending = () => {
     </button>
   )
 
-  const viewToolbar = (
-    <div className="flex-shrink-0 flex items-center justify-center gap-1 z-50 pt-3 pb-2">
-      <span className="text-[9px] font-bold uppercase tracking-widest mr-1.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Vista</span>
-      {(['celular', 'desktop', 'auto'] as const).map(v => (
-        <button
-          key={v}
-          onClick={() => { persistPreviewMode(v); setPreviewMode(v) }}
-          className="px-3 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer"
-          style={{
-            background: previewMode === v ? 'rgba(255,255,255,0.14)' : 'transparent',
-            border: previewMode === v ? '1px solid rgba(255,255,255,0.22)' : '1px solid transparent',
-            color: previewMode === v ? '#FFFFFF' : 'rgba(255,255,255,0.35)',
-          }}
-        >
-          {v === 'celular' ? 'Celular' : v === 'desktop' ? 'Desktop' : 'Auto'}
-        </button>
-      ))}
-    </div>
-  )
-
   return (
     <div className="relative size-full flex flex-col" style={{ background: DARK_BG }}>
-      {viewToolbar}
-
       <div className="flex-1 min-h-0 relative">
         {isDesktopVideo ? (
           phase === 'pending' ? (

@@ -8,10 +8,12 @@ interface AIGenerationModalProps {
   isOpen: boolean
   studentName: string
   onCancel: () => void
+  aiGenStep: number
 }
 
-export function AIGenerationModal({ isOpen, studentName, onCancel }: AIGenerationModalProps) {
-  const aiGenStep = 0 // Will be passed as prop later if needed
+export function AIGenerationModal({ isOpen, studentName, onCancel, aiGenStep }: AIGenerationModalProps) {
+  const currentStep = Math.min(aiGenStep, AI_GENERATION_STEPS.length - 1)
+  const progressWidth = ((currentStep + 1) / AI_GENERATION_STEPS.length) * 100
 
   return (
     <AnimatePresence>
@@ -99,7 +101,7 @@ export function AIGenerationModal({ isOpen, studentName, onCancel }: AIGeneratio
             <div className="flex items-center justify-center gap-2 mt-3 min-h-5">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={0}
+                  key={currentStep}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
@@ -107,7 +109,7 @@ export function AIGenerationModal({ isOpen, studentName, onCancel }: AIGeneratio
                   className="flex items-center gap-2"
                 >
                   <Loader2 size={13} color="#7C3AED" className="animate-spin flex-shrink-0" />
-                  <p className="text-xs font-bold" style={{ color: '#6D28D9' }}>{AI_GENERATION_STEPS[0]}</p>
+                  <p className="text-xs font-bold" style={{ color: '#6D28D9' }}>{AI_GENERATION_STEPS[currentStep]}</p>
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -115,8 +117,8 @@ export function AIGenerationModal({ isOpen, studentName, onCancel }: AIGeneratio
               <motion.div
                 className="h-full rounded-full"
                 style={{ background: 'linear-gradient(90deg, #C084FC, #F472B6)' }}
-                animate={{ width: `${(1 / AI_GENERATION_STEPS.length) * 100}%` }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
+                animate={{ width: `${progressWidth}%` }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
               />
             </div>
           </motion.div>

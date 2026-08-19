@@ -695,6 +695,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           isOpen={aiGenerating}
           studentName={student.firstName}
           onCancel={() => setConfirmCancel('ai')}
+          aiGenStep={aiGenStep}
         />
 
         {/* Confirmación cancelar proceso */}
