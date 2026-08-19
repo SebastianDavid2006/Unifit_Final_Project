@@ -1,5 +1,4 @@
 import { motion } from 'motion/react'
-import { Maximize2 } from 'lucide-react'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
@@ -24,17 +23,24 @@ export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
                       <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
                       <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Información General</p>
                       <motion.button
-                        whileHover={{ scale: 1.12 }}
-                        whileTap={{ scale: 0.9 }}
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.96 }}
                         onClick={() => setShowInfoModal(true)}
-                        className="w-8 h-8 rounded-xl flex items-center justify-center ml-auto flex-shrink-0 cursor-pointer transition-colors"
+                        className="ml-auto flex-shrink-0 px-4 py-1.5 rounded-xl text-[11px] font-bold text-white cursor-pointer transition-all duration-200 hover:shadow-xl"
                         style={{
-                          background: 'rgba(18,112,183,0.1)',
-                          color: '#1270B7',
-                          border: '1px solid rgba(18,112,183,0.18)',
+                          background: `
+                            radial-gradient(at 20% 20%, #F43843 0%, transparent 50%),
+                            radial-gradient(at 80% 15%, #1270B7 0%, transparent 50%),
+                            radial-gradient(at 50% 80%, #F1C827 0%, transparent 60%),
+                            radial-gradient(at 30% 60%, #F43843 0%, transparent 40%),
+                            radial-gradient(at 70% 70%, #1270B7 0%, transparent 40%),
+                            #F43843
+                          `,
+                          backgroundSize: '150% 150%',
+                          boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
                         }}
                       >
-                        <Maximize2 size={14} />
+                        Ver información
                       </motion.button>
                     </div>
                     <div className="flex flex-col">

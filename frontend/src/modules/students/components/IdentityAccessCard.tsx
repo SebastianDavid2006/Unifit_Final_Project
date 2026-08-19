@@ -77,7 +77,6 @@ export function IdentityAccessCard({ student, onUpdate, gridColumn = '1 / -1', g
     >
       <div className="flex items-center gap-2.5 mb-4">
         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
-        <div className="w-8 h-8 flex-shrink-0"><Fingerprint size={18} style={{ color: '#1270B7' }} /></div>
         <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad y acceso</p>
       </div>
 
