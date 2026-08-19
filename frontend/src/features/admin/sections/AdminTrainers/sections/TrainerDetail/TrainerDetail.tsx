@@ -21,8 +21,8 @@ import { TrainerInfoModal } from './modals/TrainerInfoModal'
 import { TrainerSignatureModal } from './modals/TrainerSignatureModal'
 import { TrainerFingerprintModal } from './modals/TrainerFingerprintModal'
 import { TrainerConfirmModal } from './modals/TrainerConfirmModal'
-  const m = joinedAt.match(/(\d{1,2}) (\w{3}) (\d{4})/)
-  export default function TrainerDetail({ trainer: trainerProp }: { trainer: Trainer }) {
+
+export default function TrainerDetail({ trainer: trainerProp }: { trainer: Trainer }) {
   const [trainer, setTrainer] = useState<Trainer>(trainerProp)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [showSignatureModal, setShowSignatureModal] = useState(false)
