@@ -1,11 +1,8 @@
 import { motion } from 'motion/react'
-import { Mail } from 'lucide-react'
-import { BLUE_GRAD } from '@/modules/students/NewStudentData'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
 
 interface SuccessViewProps {
   createdEmail: string
-  onShowInbox: () => void
   onClose: () => void
 }
 
@@ -74,40 +71,12 @@ export function SuccessView({ createdEmail, onShowInbox, onClose }: SuccessViewP
         className="text-xs font-medium mt-2 text-center max-w-xs leading-relaxed"
         style={{ color: 'rgba(0,0,0,0.35)' }}
       >
-        Las credenciales fueron enviadas al correo del estudiante.
+        ¡Se han enviado las credenciales al correo! Pronto estarás listo para la experiencia UNIFIT 🚀
       </motion.p>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.3 }}
-        className="mt-3 rounded-2xl px-4 py-3 w-full max-w-xs"
-        style={{ background: 'rgba(18,112,183,0.06)', border: '1px solid rgba(18,112,183,0.2)' }}
-      >
-        <p className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.45)' }}>Cuéntale al estudiante</p>
-        <p className="text-xs mt-1 leading-relaxed" style={{ color: 'rgba(0,0,0,0.65)' }}>
-          Su usuario es su correo electrónico y una contraseña temporal le llegará por email. Al ingresar por primera vez deberá cambiarla.
-        </p>
-        {createdEmail && (
-          <p className="text-[10px] font-bold mt-2" style={{ color: '#1270B7' }}>{createdEmail}</p>
-        )}
-      </motion.div>
       <motion.button
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.3 }}
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.92 }}
-        onClick={onShowInbox}
-        className="mt-4 flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
-        style={{ background: BLUE_GRAD }}
-      >
-        <Mail size={14} />
-        Ver correo demo
-      </motion.button>
-      <motion.button
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7, duration: 0.3 }}
         whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }}
         whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }}
         onClick={onClose}

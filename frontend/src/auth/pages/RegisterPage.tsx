@@ -259,6 +259,15 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       bgVideoRef={bgVideoRef}
       showBackDesktopVideo={false}
       phoneGradient={phase === 'form' ? PHONE_GRADIENT_FORM : PHONE_GRADIENT_INTRO}
+      overlays={(ctx) => (
+        <>
+          {!ctx.isPhonePreview && phase === 'intro' && (
+            <AnimatePresence>
+              <RegisterIntroOverlay src={introSrc} videoRef={introVideoRef} containerRef={introContainerRef} onSkip={skipIntro} />
+            </AnimatePresence>
+          )}
+        </>
+      )}
     >
       {(ctx) => (
         <>
@@ -266,15 +275,6 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
             <RegisterIntroOverlay src={introSrc} videoRef={introVideoRef} onSkip={skipIntro} />
           )}
           {phaseContent}
-        </>
-      )}
-      {(ctx) => (
-        <>
-          {!ctx.isPhonePreview && phase === 'intro' && (
-            <AnimatePresence>
-              <RegisterIntroOverlay src={introSrc} videoRef={introVideoRef} containerRef={introContainerRef} onSkip={skipIntro} />
-            </AnimatePresence>
-          )}
         </>
       )}
     </AuthShell>

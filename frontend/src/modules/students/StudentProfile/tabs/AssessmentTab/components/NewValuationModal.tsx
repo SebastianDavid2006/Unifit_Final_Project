@@ -107,7 +107,9 @@ export function NewValuationModal({
             {/* Header */}
             <div className="flex-shrink-0 px-6 pt-4 pb-0">
               <div className="relative flex justify-end">
-                <img src={viewGif} alt="" className="absolute left-1/2 -translate-x-1/2 w-6 h-6 pointer-events-none" />
+                {valuationViewMode && (
+                  <img src={viewGif} alt="" className="absolute left-1/2 -translate-x-1/2 w-6 h-6 pointer-events-none" />
+                )}
                 <motion.button
                   initial="rest"
                   whileHover="hover"
