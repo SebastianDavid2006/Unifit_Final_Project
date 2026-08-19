@@ -48,7 +48,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
   const [localTab, setLocalTab] = useState('overview')
   const [modalOpen, setModalOpen] = useState(false)
   const [showInfoModal, setShowInfoModal] = useState(false)
-  const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'aÃƒÂ±o'>('mes')
+  const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'año'>('mes')
   const [hoveredCol, setHoveredCol] = useState<number | null>(null)
   const [hoveredCell, setHoveredCell] = useState<{w: number; d: number} | null>(null)
   const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 4))
@@ -274,7 +274,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
         <SignatureModal isOpen={signatureModalOpen} onClose={() => setSignatureModalOpen(false)} />
         </div>
 
-        {/* Modal informaciÃƒÂ³n completa */}
+        {/* Modal información completa */}
         <AnimatePresence>
           {modalOpen && (
             <motion.div
@@ -311,10 +311,10 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       icon: <StudentCardView />,
                       fields: [
                         { label: 'Tipo de documento', value: student.documentType },
-                        { label: 'NÃƒÂºmero de documento', value: student.documentNumber },
+                        { label: 'Número de documento', value: student.documentNumber },
                         { label: 'Fecha de nacimiento', value: student.birthDate },
-                        { label: 'GÃƒÂ©nero', value: student.gender },
-                        { label: 'NÃƒÂºmero carnet', value: student.carnetId },
+                        { label: 'Género', value: student.gender },
+                        { label: 'Número carnet', value: student.carnetId },
                       ],
                     },
                     {
@@ -322,18 +322,18 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       icon: <ListView />,
                       fields: [
                         { label: 'Email', value: editable.email },
-                        { label: 'TelÃƒÂ©fono', value: student.phone },
+                        { label: 'Teléfono', value: student.phone },
                         { label: 'Contacto de emergencia', value: student.contactName },
                         { label: 'Tel. contacto', value: student.contactPhone },
                       ],
                     },
                     {
-                      title: 'InformaciÃƒÂ³n acadÃƒÂ©mica',
+                      title: 'Información académica',
                       icon: <CalendarView />,
                       fields: [
                         { label: 'Programa', value: student.program },
-                        { label: 'InstituciÃƒÂ³n', value: student.institution },
-                        { label: 'Semestre', value: `${student.semestre}Ã‚Â°` },
+                        { label: 'Institución', value: student.institution },
+                        { label: 'Semestre', value: `${student.semestre}°` },
                         { label: 'Modalidad', value: student.modality },
                         { label: 'Jornada', value: student.jornada },
                         { label: 'Estado', value: student.graduationStatus },
@@ -344,7 +344,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       icon: <Activity size={18} style={{ color: '#E63946' }} />,
                       fields: [
                         { label: 'EPS', value: student.eps },
-                        { label: 'Grupo sanguÃƒÂ­neo', value: student.bloodType },
+                        { label: 'Grupo sanguíneo', value: student.bloodType },
                         { label: 'Peso', value: `${student.weight} kg` },
                         { label: 'Altura', value: `${student.height} cm` },
                         { label: 'IMC', value: imc },
@@ -392,7 +392,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onCancel={() => setDeleteModalOpen(false)}
         />
 
-        {/* Modal nueva valoraciÃƒÂ³n */}
+        {/* Modal nueva valoración */}
         <NewValuationModal
           isOpen={showNewValuationModal}
           valuationForm={valuationForm}
@@ -503,7 +503,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           )}
         </AnimatePresence>
 
-        {/* Modal detalle de valoraciÃƒÂ³n */}
+        {/* Modal detalle de valoración */}
         <ValuationDetailModal
           isOpen={!!(showValuationModal && selectedAssessment)}
           assessment={selectedAssessment}
@@ -580,7 +580,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onCloseFromAssessment={() => { setShowNewRoutineModal(false); setRoutineFromAssessment(false); setRoutineSnapshot(''); setRoutineDays([]); setShowAddDayMenu(false) }}
         />
 
-        {/* Modal ÃƒÂ©xito rutina generada */}
+        {/* Modal éxito rutina generada */}
         <AnimatePresence>
           {routineSuccess && (
             <motion.div
@@ -632,7 +632,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                             ease: 'easeOut',
                           }}
                         >
-                          Ã¢Å“Â¦
+                          ✦
                         </motion.span>
                       )
                     })}
@@ -658,7 +658,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                     className="text-lg font-bold text-center"
                     style={{ color: '#1A1A1E' }}
                   >
-                    Ã‚Â¡Se generÃƒÂ³ la rutina!
+                    ¡Se generó la rutina!
                   </motion.p>
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
@@ -697,7 +697,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onCancel={() => setConfirmCancel('ai')}
         />
 
-        {/* ConfirmaciÃƒÂ³n cancelar proceso */}
+        {/* Confirmación cancelar proceso */}
         <CancelConfirmModal
           isOpen={!!confirmCancel}
           type={confirmCancel ?? 'valuation'}
@@ -705,7 +705,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onCancel={() => setConfirmCancel(null)}
         />
 
-        {/* Ã¢â€â‚¬Ã¢â€â‚¬ Info completa (modal por categorÃƒÂ­as) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ */}
+        {/* Info completa (modal por categorías) */}
         <StudentInfoModal
           isOpen={showInfoModal}
           student={student}
