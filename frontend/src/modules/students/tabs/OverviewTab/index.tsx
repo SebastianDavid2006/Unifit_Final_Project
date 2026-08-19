@@ -5,14 +5,16 @@ import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneMod
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { TrophyView } from '@/assets/models/ui/objects/trophy/TrophyModel'
 import type { Student } from '@/modules/students/StudentProfileData'
+import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
 
 interface Props {
   student: Student
   imc: string
   onShowInfo: () => void
+  onUpdate: (patch: Partial<Student>) => void
 }
 
-export function OverviewTab({ student, imc, onShowInfo }: Props) {
+export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
   const setShowInfoModal = onShowInfo
   return (                <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
                   {/* Fila 1 - Izquierda: Info General */}
@@ -82,47 +84,9 @@ export function OverviewTab({ student, imc, onShowInfo }: Props) {
                     </div>
                   </div>
 
-                  {/* Fila 1 - Derecha: Estado del proceso */}
+                  {/* Fila 1 - Derecha: Identidad y Acceso */}
                   <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '3', gridRow: '1', background: 'rgba(255,255,255,0.5)' }}>
-                    <div className="flex items-center gap-2.5 mb-4">
-                      <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-                      <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Estado del proceso</p>
-                    </div>
-                    <div className="flex items-center gap-5">
-                      <div className="relative flex-shrink-0" style={{ width: 96, height: 96 }}>
-                        <svg viewBox="0 0 36 36" className="w-full h-full" style={{ transform: 'rotate(-90deg)' }}>
-                          <defs>
-                            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                              <stop offset="0%" stopColor="#30D158" />
-                              <stop offset="100%" stopColor="#00C7BE" />
-                            </linearGradient>
-                          </defs>
-                          <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="2.8" />
-                          <circle cx="18" cy="18" r="15.9" fill="none" stroke="url(#scoreGrad)" strokeWidth="2.8" strokeLinecap="round"
-                            strokeDasharray={`${87 * 0.999} ${100 - 87 * 0.999}`} />
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <p className="text-2xl font-extrabold" style={{ background: 'linear-gradient(90deg, #30D158, #00C7BE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>87%</p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col flex-1 gap-4">
-                        {[
-                          { label: 'Adherencia', value: 92, gradient: 'linear-gradient(90deg, #30D158, #00C7BE)' },
-                          { label: 'Constancia', value: 85, gradient: 'linear-gradient(90deg, #FF9500, #FFCC02)' },
-                          { label: 'Evolución física', value: 76, gradient: 'linear-gradient(90deg, #FF6B8A, #FF375F)' },
-                        ].map(m => (
-                          <div key={m.label}>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <p className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.5)' }}>{m.label}</p>
-                              <p className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{m.value}%</p>
-                            </div>
-                            <div className="w-full h-2.5 rounded-full" style={{ background: 'rgba(0,0,0,0.05)' }}>
-                              <div className="h-full rounded-full" style={{ width: `${m.value}%`, background: m.gradient }} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <IdentityAccessCard student={student} onUpdate={onUpdate} />
                   </div>
 
                   {/* Fila 2 - Izquierda: Contacto */}

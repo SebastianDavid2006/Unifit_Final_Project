@@ -220,7 +220,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
               <div className="text-left h-full">
 
               {currentTab === 'overview' && (
-                <OverviewTab student={editable} imc={imc} onShowInfo={() => setShowInfoModal(true)} />
+                <OverviewTab student={editable} imc={imc} onShowInfo={() => setShowInfoModal(true)} onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))} />
               )}
               {currentTab === 'progress' && (
                 <ProgressTab
