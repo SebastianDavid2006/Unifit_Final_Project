@@ -266,7 +266,8 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
         rows,
       })
     )
-    setRoutineStep(2)
+    setRoutineStep(1)
+    setRoutineViewMode(true)
     setRoutineSuccess(false)
     setShowNewRoutineModal(true)
   }, [
@@ -281,6 +282,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     setRoutineDays,
     setRoutineSnapshot,
     setRoutineStep,
+    setRoutineViewMode,
     setRoutineSuccess,
     setShowNewRoutineModal,
   ])
