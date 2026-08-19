@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { CAREER_STATS } from '@/data/careerStats'
+import { CAREER_STATS } from '@/data/stats/careerStats'
 import CareerFilter from './components/CareerFilter'
 import OverviewSection from './sections/OverviewSection'
 import CareersSection from './sections/CareersSection'

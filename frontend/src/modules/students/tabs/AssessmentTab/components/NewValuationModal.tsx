@@ -15,7 +15,7 @@ import liverIcon from '@/assets/icons/anatomy/liver.webp'
 import mindIcon from '@/assets/icons/health/mind.webp'
 import calendarImg from '@/assets/icons/objects/calendar.webp'
 import { ValuationSuccess } from './ValuationSuccess'
-import type { ValuationForm } from '../../StudentProfileData'
+import type { ValuationForm } from '@/modules/students/StudentProfileData'
 
 interface NewValuationModalProps {
   isOpen: boolean

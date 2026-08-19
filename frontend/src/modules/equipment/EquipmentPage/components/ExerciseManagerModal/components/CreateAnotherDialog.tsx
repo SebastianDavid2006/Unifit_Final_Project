@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { Dumbbell } from 'lucide-react'
-import type { Status } from '@/data/types'
-import { GREEN_GRAD } from '@/data/constants'
+import type { Status } from '@/data/shared/types'
+import { GREEN_GRAD } from '@/data/shared/constants'
 
 interface CreateAnotherDialogProps {
   show: boolean

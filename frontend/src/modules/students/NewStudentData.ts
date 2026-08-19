@@ -5,7 +5,7 @@ export {
   TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
   TIPOS_USUARIO, INITIAL_FORM,
   type TipoUsuario,
-} from '@/data/registration'
+} from '@/data/config/registration'
 
 export const RED = '#F43843'
 export const BRAND_GRADIENT = 'linear-gradient(135deg, #F5A623, #1270B7, #F43843)'

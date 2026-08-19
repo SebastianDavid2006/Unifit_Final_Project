@@ -1,5 +1,5 @@
 import { BLUE, monthNames } from '../AgendaData'
-import { meshInputBg, meshInputHover } from '@/data/constants'
+import { meshInputBg, meshInputHover } from '@/data/shared/constants'
 import type { Appointment } from '../AgendaData'
 
 export const typeColors: Record<string, string> = {

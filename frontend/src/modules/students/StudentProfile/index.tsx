@@ -27,20 +27,20 @@ import { AssessmentTab } from '@/modules/students/tabs/AssessmentTab'
 import { DocumentsTab } from '@/modules/students/tabs/DocumentsTab'
 import { ObjectiveTab } from '@/modules/students/tabs/ObjectiveTab'
 import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
-import { useCalendarNavigation } from './hooks/useCalendarNavigation'
-import { useMeshInput } from './hooks/useMeshInput'
-import { useValuationManager } from './hooks/useValuationManager'
-import { useRoutineManager } from './hooks/useRoutineManager'
-import { SignatureModal } from './components/SignatureModal'
-import { DeleteDocumentModal } from './components/DeleteDocumentModal'
-import { DocumentViewerModal } from './components/DocumentViewerModal'
-import { CancelConfirmModal } from './components/CancelConfirmModal'
-import { StudentInfoModal } from './components/StudentInfoModal'
-import { ValuationDetailModal } from './components/ValuationDetailModal'
-import { AIGenerationModal } from './components/AIGenerationModal'
-import { RoutineDetailModal } from './components/RoutineDetailModal'
-import { NewValuationModal } from './components/NewValuationModal'
-import { NewRoutineModal } from './components/NewRoutineModal'
+import { useCalendarNavigation } from '@/shared/hooks/useCalendarNavigation'
+import { useMeshInput } from '@/shared/hooks/useMeshInput'
+import { useValuationManager } from '@/modules/students/shared/hooks/useValuationManager'
+import { useRoutineManager } from '@/modules/students/shared/hooks/useRoutineManager'
+import { SignatureModal } from '@/modules/students/shared/components/SignatureModal'
+import { CancelConfirmModal } from '@/modules/students/shared/components/CancelConfirmModal'
+import { StudentInfoModal } from '@/modules/students/tabs/OverviewTab/components/StudentInfoModal'
+import { ValuationDetailModal } from '@/modules/students/tabs/AssessmentTab/components/ValuationDetailModal'
+import { AIGenerationModal } from '@/modules/students/tabs/AssessmentTab/components/AIGenerationModal'
+import { RoutineDetailModal } from '@/modules/students/tabs/ObjectiveTab/components/RoutineDetailModal'
+import { NewValuationModal } from '@/modules/students/tabs/AssessmentTab/components/NewValuationModal'
+import { NewRoutineModal } from '@/modules/students/tabs/ObjectiveTab/components/NewRoutineModal'
+import { DocumentViewerModal } from '@/modules/students/tabs/DocumentsTab/components/DocumentViewerModal'
+import { DeleteDocumentModal } from '@/modules/students/tabs/DocumentsTab/components/DeleteDocumentModal'
 
 export { TABS } from '../StudentProfileData'
 export function StudentProfile({ student, tab = 'overview', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
@@ -102,7 +102,7 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
   })
 
   // Hooks
-  const calendarNav = useCalendarNavigation()
+  const calendarNav = useCalendarNavigation({ monthNames })
   const meshInput = useMeshInput()
 
 const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'

@@ -1,5 +1,5 @@
-import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/academicPrograms'
-import { CAREER_STATS } from '@/data/careerStats'
+import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/config/academicPrograms'
+import { CAREER_STATS } from '@/data/stats/careerStats'
 
 export const BLUE = '#1270B7'
 export const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'

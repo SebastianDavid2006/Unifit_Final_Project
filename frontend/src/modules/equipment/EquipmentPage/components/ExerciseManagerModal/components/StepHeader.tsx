@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { Pencil, X } from 'lucide-react'
-import { BLUE_GRAD, ORANGE_GRAD, RED } from '@/data/constants'
+import { BLUE_GRAD, ORANGE_GRAD, RED } from '@/data/shared/constants'
 
 interface StepHeaderProps {
   editing: boolean

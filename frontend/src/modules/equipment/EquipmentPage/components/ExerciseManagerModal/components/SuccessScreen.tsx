@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { GREEN_GRAD } from '@/data/constants'
+import { GREEN_GRAD } from '@/data/shared/constants'
 import { EQUIPMENT_IMAGES } from '@/modules/equipment/data'
 
 interface SuccessScreenProps {

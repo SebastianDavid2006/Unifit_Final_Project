@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
-import type { Machine, Exercise } from '@/data/types'
-import { BLUE, RED } from '@/data/constants'
-import { initialMachines, initialExercises } from '@/data/mockData'
+﻿import { useState, useEffect } from 'react'
+import type { Machine, Exercise } from '@/data/shared/types'
+import { BLUE, RED } from '@/data/shared/constants'
+import { initialMachines, initialExercises } from '@/data/shared/mockData'
 import { WeightsView } from '@/assets/models/ui/equipment/weights/WeightsModel'
 import { TrashView } from '@/assets/models/ui/actions/trash/TrashModel'
 import { PenView } from '@/assets/models/ui/actions/pen/PenModel'
@@ -122,7 +122,7 @@ export default function EquipmentPage(props: Props) {
         />
       )}
 
-      {/* ── Machine Modal ── */}
+      {/* â”€â”€ Machine Modal â”€â”€ */}
       <MachineModal
         show={machine.showModal}
         editingMachine={machine.editingMachine}
@@ -139,7 +139,7 @@ export default function EquipmentPage(props: Props) {
         onToggleExerciseSelection={id => machine.toggleExerciseSelection(id)}
       />
 
-      {/* ── Exercise Manager Modal ── */}
+      {/* â”€â”€ Exercise Manager Modal â”€â”€ */}
       <ExerciseManagerModal
         show={ex.showModal}
         editing={ex.editing}
@@ -159,7 +159,7 @@ export default function EquipmentPage(props: Props) {
         onCreateAnotherNo={handleExerciseCreateAnotherNo}
       />
 
-      {/* ── Machine Preview Modal ── */}
+      {/* â”€â”€ Machine Preview Modal â”€â”€ */}
       <MachinePreviewModal
         machine={previewMachine}
         exercises={ex.exercises}
@@ -170,7 +170,7 @@ export default function EquipmentPage(props: Props) {
         onClose={() => setPreviewMachine(null)}
       />
 
-      {/* ── Exercise Preview Modal ── */}
+      {/* â”€â”€ Exercise Preview Modal â”€â”€ */}
       <ExercisePreviewModal
         exercise={previewExercise}
         onEdit={e => { setPreviewExercise(null); ex.openEdit(e) }}
@@ -178,26 +178,26 @@ export default function EquipmentPage(props: Props) {
         onClose={() => setPreviewExercise(null)}
       />
 
-      {/* ── Delete Confirm ── */}
+      {/* â”€â”€ Delete Confirm â”€â”€ */}
       <DeleteConfirmDialog
         confirm={deleteConfirm}
         onCancel={() => setDeleteConfirm(null)}
         onConfirm={handleDelete}
       />
 
-      {/* ── Delete Toast ── */}
+      {/* â”€â”€ Delete Toast â”€â”€ */}
       <Toast
         show={deleteToast.show}
         name={deleteToast.name}
         progress={deleteToast.progress}
-        title="Máquina eliminada"
+        title="MÃ¡quina eliminada"
         icon={<TrashView />}
         iconStyle={{ background: `${RED}08` }}
         boxShadow="0 24px 80px rgba(244,56,67,0.12), 0 8px 32px rgba(0,0,0,0.08)"
         progressGradient="linear-gradient(90deg, #F43843, #FF6B6B)"
       />
 
-      {/* ── Edit Toast ── */}
+      {/* â”€â”€ Edit Toast â”€â”€ */}
       <Toast
         show={editToast.show}
         name={editToast.name}
@@ -209,12 +209,12 @@ export default function EquipmentPage(props: Props) {
         progressGradient="linear-gradient(90deg, #F5A623, #FF8C42)"
       />
 
-      {/* ── Creation Toast ── */}
+      {/* â”€â”€ Creation Toast â”€â”€ */}
       <Toast
         show={createToast.show}
         name={createToast.name}
         progress={createToast.progress}
-        title="¡Máquina creada!"
+        title="Â¡MÃ¡quina creada!"
         icon={<WeightsView />}
         iconStyle={{ background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), rgba(248,251,255,0.8)' }}
         iconClassName="w-[76px] h-[76px] flex-shrink-0"

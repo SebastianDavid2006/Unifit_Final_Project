@@ -1,7 +1,7 @@
-import { motion, AnimatePresence } from 'motion/react'
+﻿import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDown, Check, Dumbbell, Sparkles } from 'lucide-react'
-import type { RoutineRow } from '../../aiRoutine'
-import { ROUTINE_MUSCLE_TO_CAT } from '../../StudentProfileData'
+import type { RoutineRow } from '@/modules/students/aiRoutine'
+import { ROUTINE_MUSCLE_TO_CAT } from '@/modules/students/StudentProfileData'
 import { exerciseCatalog } from '@/data/exercises'
 
 const ROUTINE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
@@ -59,7 +59,7 @@ export function RoutineExerciseSelect({ row, routineViewMode, open, onToggle, on
           >
             {catExercises.length === 0 && !hasCustom ? (
               <p className="text-[11px] py-3 text-center" style={{ color: 'rgba(0,0,0,0.3)' }}>
-                No hay ejercicios en esta categoría
+                No hay ejercicios en esta categorÃ­a
               </p>
             ) : (
               catExercises.map(ex => {

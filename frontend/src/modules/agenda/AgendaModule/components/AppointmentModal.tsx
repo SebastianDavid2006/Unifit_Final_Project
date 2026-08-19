@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Trash2, X } from 'lucide-react'
-import { meshInputBg } from '@/data/constants'
+import { meshInputBg } from '@/data/shared/constants'
 import { BLUE_GRAD, RED } from '../../AgendaData'
 import { blurMesh, enterMesh, focusMesh, leaveMesh, MESH_GRAD, typeColors, typeLabels } from '../data'
 import { DeleteAppointmentModal } from './DeleteAppointmentModal'

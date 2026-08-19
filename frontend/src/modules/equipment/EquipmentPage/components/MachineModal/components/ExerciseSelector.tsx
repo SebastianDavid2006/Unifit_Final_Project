@@ -1,8 +1,8 @@
 import type { RefObject } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, List, ChevronDown, Check } from 'lucide-react'
-import type { Exercise } from '@/data/types'
-import { BLUE, BLUE_GRAD, meshInputBg, meshInputHover, muscleIcons } from '@/data/constants'
+import type { Exercise } from '@/data/shared/types'
+import { BLUE, BLUE_GRAD, meshInputBg, meshInputHover, muscleIcons } from '@/data/shared/constants'
 import { ALL_GROUPS } from '@/modules/equipment/data'
 
 interface ExerciseSelectorProps {

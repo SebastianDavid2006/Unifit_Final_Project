@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import coachCalendarSuccessImg from '@/assets/illustrations/characters/coach/coach_calendar_success.webp'
-import { GREEN_GRAD } from '@/data/constants'
+import { GREEN_GRAD } from '@/data/shared/constants'
 import { WEEK_DAYS_6 } from '../../AgendaData'
 import { fmtShortDate } from '../data'
 

@@ -4,34 +4,12 @@ import { Search, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
 import studentsImg from '@/assets/illustrations/characters/students/students_group.webp'
 import NewStudentModal from './NewStudentModal'
 import RegistrationCompletionModal from './RegistrationCompletionModal'
+import type { Student } from '@/data/students'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
-
-interface Student {
-  id: number
-  name: string
-  faculty: string
-  adherence: number
-  risk: 'high' | 'medium' | 'low'
-  status: 'active' | 'inactive' | 'process'
-  lastVisit: string
-  nextAssessment: string
-  avatar: string
-  goal: string
-  sessions: number
-  weight: number
-  height: number
-  institution: string
-  gender: string
-  program: string
-  modality: string
-  jornada: string
-  semester: string
-  eps: string
-}
 
 interface Props {
   students: Student[]

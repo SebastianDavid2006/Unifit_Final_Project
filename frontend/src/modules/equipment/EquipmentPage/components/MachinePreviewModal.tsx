@@ -1,5 +1,5 @@
-import type { Machine, Exercise } from '@/data/types'
-import { BLUE, RED, BLUE_GRAD, muscleIcons, statusConfig } from '@/data/constants'
+﻿import type { Machine, Exercise } from '@/data/shared/types'
+import { BLUE, RED, BLUE_GRAD, muscleIcons, statusConfig } from '@/data/shared/constants'
 import { StatusBadge } from '@/shared/components/ui/StatusBadge'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Pencil, Trash2, List } from 'lucide-react'

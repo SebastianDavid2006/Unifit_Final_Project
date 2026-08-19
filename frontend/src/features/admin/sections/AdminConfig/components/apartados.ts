@@ -1,5 +1,5 @@
 import { Building2, Briefcase, type LucideIcon } from 'lucide-react'
-import type { ConfigKey } from '@/data/systemConfig'
+import type { ConfigKey } from '@/data/config/systemConfig'
 import { BLUE } from './fields'
 
 export type ApartadoConfig = {

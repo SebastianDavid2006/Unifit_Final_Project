@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import adminImg from '@/assets/illustrations/characters/admin/admin_default.webp'
-import { BLUE_GRAD } from '@/data/constants'
+import { BLUE_GRAD } from '@/data/shared/constants'
 
 export default function HeroBanner() {
   return (

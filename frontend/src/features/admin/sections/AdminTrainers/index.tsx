@@ -5,8 +5,8 @@ import TrainersList from './sections/TrainersList'
 import TrainerDetail from './sections/TrainerDetail'
 import PermissionsSection from './sections/PermissionsSection'
 import { DocumentsTab } from '@/modules/students/tabs/DocumentsTab'
-import { DocumentViewerModal } from '@/modules/students/StudentProfile/components/DocumentViewerModal'
-import { DeleteDocumentModal } from '@/modules/students/StudentProfile/components/DeleteDocumentModal'
+import { DocumentViewerModal } from '@/modules/students/tabs/DocumentsTab/components/DocumentViewerModal'
+import { DeleteDocumentModal } from '@/modules/students/tabs/DocumentsTab/components/DeleteDocumentModal'
 import { PAGE_SIZE } from './data'
 
 interface AdminTrainersProps {

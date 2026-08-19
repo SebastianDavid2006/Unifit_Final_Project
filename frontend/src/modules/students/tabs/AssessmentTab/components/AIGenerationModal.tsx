@@ -1,8 +1,8 @@
-import { motion, AnimatePresence } from 'motion/react'
+﻿import { motion, AnimatePresence } from 'motion/react'
 import { X, Loader2 } from 'lucide-react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import routineGenLottie from '@/assets/icons/animated/ai/routine_generation.lottie?url'
-import { AI_GENERATION_STEPS } from '../../aiRoutine'
+import { AI_GENERATION_STEPS } from '@/modules/students/aiRoutine'
 
 interface AIGenerationModalProps {
   isOpen: boolean
@@ -69,7 +69,7 @@ export function AIGenerationModal({ isOpen, studentName, onCancel }: AIGeneratio
                       ease: 'easeOut',
                     }}
                   >
-                    ✦
+                    âœ¦
                   </motion.span>
                 )
               })}
@@ -94,7 +94,7 @@ export function AIGenerationModal({ isOpen, studentName, onCancel }: AIGeneratio
               Cargando rutina con IA
             </h3>
             <p className="text-xs font-medium text-center mt-1.5" style={{ color: '#8B5CF6' }}>
-              Analizando la valoración de {studentName}
+              Analizando la valoraciÃ³n de {studentName}
             </p>
             <div className="flex items-center justify-center gap-2 mt-3 min-h-5">
               <AnimatePresence mode="wait">

@@ -5,7 +5,7 @@ import { StudentCardView } from '@/assets/models/ui/objects/student_card/Student
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
-import { ModalShell } from './ModalShell'
+import { ModalShell } from '@/modules/students/shared/components/ModalShell'
 import type { Student } from '../../StudentProfileData'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { TrashView } from '@/assets/models/ui/actions/trash/TrashModel'
-import { RED } from '@/data/constants'
+import { RED } from '@/data/shared/constants'
 
 interface DeleteAppointmentModalProps {
   show: boolean

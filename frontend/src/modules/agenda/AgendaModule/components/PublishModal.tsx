@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { Plus, X } from 'lucide-react'
-import { meshInputBg } from '@/data/constants'
+import { meshInputBg } from '@/data/shared/constants'
 import { BLUE, BLUE_GRAD, RED, WEEK_DAYS_6 } from '../../AgendaData'
 import { DayCard } from '../../AgendaDayCard'
 import { blurMesh, enterMesh, focusMesh, leaveMesh, MESH_GRAD } from '../data'

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import type { Exercise, Status } from '@/data/types'
-import { BLUE, meshInputBg, meshInputHover } from '@/data/constants'
+import type { Exercise, Status } from '@/data/shared/types'
+import { BLUE, meshInputBg, meshInputHover } from '@/data/shared/constants'
 import { MuscleGroupPicker } from '@/modules/equipment/EquipmentPage/components/MuscleGroupPicker'
 import { LevelSelector } from '@/modules/equipment/EquipmentPage/components/LevelSelector'
 import { SuccessScreen } from './components/SuccessScreen'
@@ -86,15 +86,15 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
               />
             ) : (
               <>
-                {/* ── Header ── */}
+                {/* â”€â”€ Header â”€â”€ */}
                 <StepHeader
                   editing={!!props.editing}
                   step={props.step}
                   onConfirmClose={() => props.onConfirmClose(true)}
-                  title={props.step === 0 ? 'Datos básicos' : props.step === 1 ? 'Categoría y dificultad' : 'Contenido visual'}
+                  title={props.step === 0 ? 'Datos bÃ¡sicos' : props.step === 1 ? 'CategorÃ­a y dificultad' : 'Contenido visual'}
                 />
 
-                {/* ── Body ── */}
+                {/* â”€â”€ Body â”€â”€ */}
                 <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -104,7 +104,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                       exit={{ opacity: 0, filter: 'blur(6px)' }}
                       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                     >
-                  {/* Step 0 — Name, Description */}
+                  {/* Step 0 â€” Name, Description */}
                   {props.step === 0 && (
                     <div className="space-y-4">
                       <div className="flex flex-col gap-1">
@@ -126,7 +126,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                         />
                       </div>
                       <div>
-                        <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Descripción</label>
+                        <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>DescripciÃ³n</label>
                         <textarea
                           value={props.form.description}
                           onChange={e => props.onFormChange({ ...props.form, description: e.target.value })}
@@ -143,12 +143,12 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                     </div>
                   )}
 
-                  {/* Step 1 — Muscle Groups + Level */}
+                  {/* Step 1 â€” Muscle Groups + Level */}
                   {props.step === 1 && (
                     <div className="space-y-5">
                       <div>
                         <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Grupos musculares</label>
-                        <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más grupos musculares que trabaja este ejercicio.</p>
+                        <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o mÃ¡s grupos musculares que trabaja este ejercicio.</p>
                         <MuscleGroupPicker
                           value={props.form.muscleGroups}
                           onChange={muscleGroups => props.onFormChange({ ...props.form, muscleGroups })}
@@ -164,7 +164,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                     </div>
                   )}
 
-                  {/* Step 2 — Visual Content */}
+                  {/* Step 2 â€” Visual Content */}
                   {props.step === 2 && (
                     <ImageUpload
                       value={props.form.imageUrl}
@@ -175,7 +175,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                   </AnimatePresence>
                 </div>
 
-                {/* ── Footer ── */}
+                {/* â”€â”€ Footer â”€â”€ */}
                 <ModalFooter
                   editing={!!props.editing}
                   step={props.step}

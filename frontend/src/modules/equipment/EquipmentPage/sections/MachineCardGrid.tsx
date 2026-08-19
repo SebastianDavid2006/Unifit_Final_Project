@@ -1,6 +1,6 @@
-import { motion } from 'motion/react'
-import type { Machine, Exercise } from '@/data/types'
-import { BLUE, muscleIcons, statusConfig } from '@/data/constants'
+﻿import { motion } from 'motion/react'
+import type { Machine, Exercise } from '@/data/shared/types'
+import { BLUE, muscleIcons, statusConfig } from '@/data/shared/constants'
 import { StatusBadge } from '@/shared/components/ui/StatusBadge'
 import { EQUIPMENT_IMAGES } from '@/modules/equipment/data'
 
@@ -83,8 +83,8 @@ export function MachineCardGrid({ machines, exercises, onPreview }: MachineCardG
       })}
       {machines.length === 0 && (
         <div className="col-span-3 py-16 text-center">
-          <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>No se encontraron máquinas</p>
-          <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Prueba con otros filtros o agrega una nueva máquina</p>
+          <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>No se encontraron mÃ¡quinas</p>
+          <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Prueba con otros filtros o agrega una nueva mÃ¡quina</p>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
-import { motion } from 'motion/react'
-import { statusConfig } from '@/data/constants'
+﻿import { motion } from 'motion/react'
+import { statusConfig } from '@/data/shared/constants'
 
 interface StatusSelectorProps {
   value: 'active' | 'maintenance' | 'inactive'

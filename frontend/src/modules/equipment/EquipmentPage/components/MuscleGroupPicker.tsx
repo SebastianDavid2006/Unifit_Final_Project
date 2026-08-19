@@ -1,5 +1,5 @@
-import { motion } from 'motion/react'
-import { BLUE, BLUE_GRAD, muscleIcons, BODY_GROUPS } from '@/data/constants'
+﻿import { motion } from 'motion/react'
+import { BLUE, BLUE_GRAD, muscleIcons, BODY_GROUPS } from '@/data/shared/constants'
 import { GOLD_GRAD, QUICK_GROUPS } from '@/modules/equipment/data'
 
 interface MuscleGroupPickerProps {

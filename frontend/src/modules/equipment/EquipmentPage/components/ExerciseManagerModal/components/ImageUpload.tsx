@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { Camera, Upload } from 'lucide-react'
-import { meshInputBg, meshInputHover } from '@/data/constants'
+import { meshInputBg, meshInputHover } from '@/data/shared/constants'
 
 interface ImageUploadProps {
   value: string

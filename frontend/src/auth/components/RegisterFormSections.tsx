@@ -2,9 +2,9 @@ import { motion } from 'motion/react'
 import {
   TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
   TIPOS_USUARIO, BLUE, BLUE_GRAD,
-} from '@/data/registration'
-import type { TipoUsuario } from '@/data/registration'
-import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/academicPrograms'
+} from '@/data/config/registration'
+import type { TipoUsuario } from '@/data/config/registration'
+import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/config/academicPrograms'
 
 interface RegisterFormSectionsProps {
   form: Record<string, string>

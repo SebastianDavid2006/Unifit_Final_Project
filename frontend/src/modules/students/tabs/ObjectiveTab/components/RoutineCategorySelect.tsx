@@ -1,8 +1,8 @@
-import { motion, AnimatePresence } from 'motion/react'
+﻿import { motion, AnimatePresence } from 'motion/react'
 import { List, ChevronDown, Check } from 'lucide-react'
-import { muscleIcons } from '@/data/constants'
-import type { RoutineRow } from '../../aiRoutine'
-import { ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from '../../StudentProfileData'
+import { muscleIcons } from '@/data/shared/constants'
+import type { RoutineRow } from '@/modules/students/aiRoutine'
+import { ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from '@/modules/students/StudentProfileData'
 
 const ROUTINE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const meshInputBg = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'
@@ -40,7 +40,7 @@ export function RoutineCategorySelect({ row, routineViewMode, open, onToggle, on
             <List size={11} style={{ color: '#1270B7' }} />
           </div>
         )}
-        <span className="flex-1 truncate text-left">{category || 'Categoría'}</span>
+        <span className="flex-1 truncate text-left">{category || 'CategorÃ­a'}</span>
         {!routineViewMode && (
           <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} style={{ color: 'rgba(0,0,0,0.25)' }} className="flex-shrink-0">
             <ChevronDown size={13} />

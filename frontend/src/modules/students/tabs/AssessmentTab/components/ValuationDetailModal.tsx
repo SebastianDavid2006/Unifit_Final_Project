@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { X, BarChart2, Dumbbell } from 'lucide-react'
-import { ModalShell } from './ModalShell'
+import { ModalShell } from '@/modules/students/shared/components/ModalShell'
 import { ValuationStat } from './ValuationStat'
 
 interface ValuationDetailModalProps {

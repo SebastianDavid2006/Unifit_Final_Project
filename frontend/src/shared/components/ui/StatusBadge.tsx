@@ -1,5 +1,5 @@
-import type { Status } from '@/data/types'
-import { statusConfig } from '@/data/constants'
+import type { Status } from '@/data/shared/types'
+import { statusConfig } from '@/data/shared/constants'
 
 export function StatusBadge({ status }: { status: Status }) {
   const cfg = statusConfig[status]

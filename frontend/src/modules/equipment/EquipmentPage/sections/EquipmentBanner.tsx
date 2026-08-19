@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { Plus } from 'lucide-react'
-import { BLUE_GRAD } from '@/data/constants'
+import { BLUE_GRAD } from '@/data/shared/constants'
 import { EQUIPMENT_IMAGES } from '@/modules/equipment/data'
 
 export function EquipmentBanner({ onCreate }: { onCreate: () => void }) {

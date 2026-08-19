@@ -5,7 +5,7 @@ import {
   TIPOS_USUARIO,
 } from '@/modules/students/NewStudentData'
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
-import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/academicPrograms'
+import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/config/academicPrograms'
 
 interface Step1InfoProps {
   form: any

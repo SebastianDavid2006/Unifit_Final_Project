@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { ChevronLeft } from 'lucide-react'
-import { BLUE_GRAD, ORANGE_GRAD } from '@/data/constants'
+import { BLUE_GRAD, ORANGE_GRAD } from '@/data/shared/constants'
 
 interface ModalFooterProps {
   editing: boolean

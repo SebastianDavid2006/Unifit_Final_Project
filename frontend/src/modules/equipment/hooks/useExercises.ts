@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import type { Exercise } from '@/data/types'
-import { muscleToZones } from '@/data/constants'
+import type { Exercise } from '@/data/shared/types'
+import { muscleToZones } from '@/data/shared/constants'
 
 interface ExForm {
   name: string

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { X } from 'lucide-react'
-import { RED, ORANGE } from '@/data/constants'
+import { RED, ORANGE } from '@/data/shared/constants'
 
 interface ConfirmCloseDialogProps {
   show: boolean

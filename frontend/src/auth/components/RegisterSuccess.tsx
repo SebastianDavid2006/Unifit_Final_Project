@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import { ArrowLeft } from 'lucide-react'
 import accountCreatedImg from '@/assets/illustrations/characters/coach/account_created.webp'
-import { BLUE_GRAD } from '@/data/registration'
+import { BLUE_GRAD } from '@/data/config/registration'
 
 interface RegisterSuccessProps {
   onBack: () => void
