@@ -25,7 +25,6 @@ export function DocumentsTab({
                           docs: [
                             { name: 'Contrato Firmado', date: '15 Ene 2026', signed: true, originalName: 'contrato_firmado_v2.pdf' },
                             { name: 'Aceptación de Tratamiento de Datos', date: '15 Ene 2026', signed: true, originalName: 'aceptacion_datos_2026.pdf' },
-                            { name: 'PAR-Q+', date: '15 Ene 2026', signed: true, originalName: 'parq_plus_2026.pdf' },
                           ],
                         },
                         {

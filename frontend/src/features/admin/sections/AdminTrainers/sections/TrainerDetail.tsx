@@ -206,7 +206,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
               </div>
               <div className="flex flex-col" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)', paddingBottom: 6 }}>
                 <p className="text-xs" style={{ marginBottom: 0.5, color: 'rgba(0,0,0,0.5)' }}>Estado</p>
-                <span className="inline-flex items-center self-start px-3 py-1 rounded-full text-sm font-bold text-white" style={{ background: trainer.status === 'active' ? 'linear-gradient(135deg, #22C55E, #16A34A)' : 'linear-gradient(135deg, #1270B7, #7ec8e3)' }}>
+                <span className="inline-flex items-center self-start px-3 py-1 rounded-full text-sm font-bold text-white" style={{ background: trainer.status === 'active' ? 'linear-gradient(135deg, #22C55E, #16A34A)' : 'linear-gradient(135deg, #F43843, #D0202C)' }}>
                   {trainer.status === 'active' ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
