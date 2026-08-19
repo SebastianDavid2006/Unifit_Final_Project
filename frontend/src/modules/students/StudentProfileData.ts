@@ -103,7 +103,6 @@ export const TABS = [
   { id: 'overview', label: 'General', icon: Activity },
   { id: 'progress', label: 'Actividad', icon: Calendar },
   { id: 'assessment', label: 'Evaluación Física', icon: BarChart2 },
-  { id: 'objective', label: 'Objetivo', icon: Target },
   { id: 'documents', label: 'Documentos', icon: FileText },
 ] as const
 

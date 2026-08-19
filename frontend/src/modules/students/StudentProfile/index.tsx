@@ -25,7 +25,6 @@ import { OverviewTab } from '@/modules/students/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/tabs/ProgressTab'
 import { AssessmentTab } from '@/modules/students/tabs/AssessmentTab'
 import { DocumentsTab } from '@/modules/students/tabs/DocumentsTab'
-import { ObjectiveTab } from '@/modules/students/tabs/ObjectiveTab'
 import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
 import { useCalendarNavigation } from '@/shared/hooks/useCalendarNavigation'
 import { useMeshInput } from '@/shared/hooks/useMeshInput'
@@ -36,9 +35,9 @@ import { CancelConfirmModal } from '@/modules/students/shared/components/CancelC
 import { StudentInfoModal } from '@/modules/students/tabs/OverviewTab/components/StudentInfoModal'
 import { ValuationDetailModal } from '@/modules/students/tabs/AssessmentTab/components/ValuationDetailModal'
 import { AIGenerationModal } from '@/modules/students/tabs/AssessmentTab/components/AIGenerationModal'
-import { RoutineDetailModal } from '@/modules/students/tabs/ObjectiveTab/components/RoutineDetailModal'
+import { RoutineDetailModal } from './components/RoutineDetailModal'
 import { NewValuationModal } from '@/modules/students/tabs/AssessmentTab/components/NewValuationModal'
-import { NewRoutineModal } from '@/modules/students/tabs/ObjectiveTab/components/NewRoutineModal'
+import { NewRoutineModal } from './components/NewRoutineModal'
 import { DocumentViewerModal } from '@/modules/students/tabs/DocumentsTab/components/DocumentViewerModal'
 import { DeleteDocumentModal } from '@/modules/students/tabs/DocumentsTab/components/DeleteDocumentModal'
 
@@ -240,9 +239,6 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                   getWeekStart={calendarNav.getWeekStart}
                 />
               )}
-                {currentTab === 'objective' && (
-                  <ObjectiveTab student={editable} />
-                )}
               {currentTab === 'assessment' && (
                 <AssessmentTab
                   canCreateValuation={canCreateValuation}
