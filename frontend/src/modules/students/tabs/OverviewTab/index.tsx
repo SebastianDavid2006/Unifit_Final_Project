@@ -16,9 +16,9 @@ interface Props {
 
 export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
   const setShowInfoModal = onShowInfo
-  return (                <div className="grid gap-2 items-start" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
+  return (                <div className="grid gap-2 items-stretch" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
                   {/* Fila 1 - Izquierda: Info General */}
-                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '1', gridRow: '1', background: 'rgba(255,255,255,0.5)' }}>
+                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '1', gridRow: '1', background: 'rgba(255,255,255,0.5)', height: '100%' }}>
                     <div className="flex items-center gap-2.5 mb-2">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
@@ -85,10 +85,7 @@ export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
                   </div>
 
                   {/* Fila 1 - Derecha: Identidad y Acceso */}
-                  <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '3', gridRow: '1', background: 'rgba(255,255,255,0.5)' }}>
-                    <IdentityAccessCard student={student} onUpdate={onUpdate} />
-                  </div>
-
+                  <IdentityAccessCard student={student} onUpdate={onUpdate} gridColumn="3" gridRow="1" />
                   {/* Fila 2 - Izquierda: Contacto */}
                   <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '1', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-3">
