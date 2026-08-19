@@ -1,12 +1,15 @@
-import { motion } from 'motion/react'
-import { X } from 'lucide-react'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
+import { Check, PenLine, X, AlertTriangle } from 'lucide-react'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
-import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
 import { ModalShell } from './ModalShell'
 import type { Student } from '../../StudentProfileData'
+
+const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
+const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 
 interface StudentInfoModalProps {
   isOpen: boolean
@@ -17,6 +20,65 @@ interface StudentInfoModalProps {
 }
 
 export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate }: StudentInfoModalProps) {
+  const [editMode, setEditMode] = useState(false)
+  const [draft, setDraft] = useState<Record<string, string> | null>(null)
+  const [confirm, setConfirm] = useState(false)
+
+  function buildDraft(): Record<string, string> {
+    return {
+      firstName: editable.firstName,
+      secondName: editable.secondName,
+      lastName: editable.lastName,
+      secondLastName: editable.secondLastName,
+      birthDate: editable.birthDate,
+      gender: editable.gender,
+      eps: editable.eps,
+      bloodType: editable.bloodType,
+      email: editable.email,
+      phone: editable.phone,
+      contactName: editable.contactName,
+      contactRelation: editable.contactRelation || '',
+      contactPhone: editable.contactPhone,
+    }
+  }
+
+  function startEdit() {
+    setDraft(buildDraft())
+    setEditMode(true)
+  }
+
+  function saveDraft() {
+    if (!draft) return
+    onUpdate({
+      firstName: draft.firstName,
+      secondName: draft.secondName,
+      lastName: draft.lastName,
+      secondLastName: draft.secondLastName,
+      birthDate: draft.birthDate,
+      gender: draft.gender,
+      eps: draft.eps,
+      bloodType: draft.bloodType,
+      email: draft.email,
+      phone: draft.phone,
+      contactName: draft.contactName,
+      contactRelation: draft.contactRelation,
+      contactPhone: draft.contactPhone,
+    })
+    setEditMode(false)
+    setDraft(null)
+  }
+
+  function handleDraftChange(key: string, value: string) {
+    setDraft(prev => (prev ? { ...prev, [key]: value } : prev))
+  }
+
+  function cancelEdit() {
+    setEditMode(false)
+    setDraft(null)
+  }
+
+  const fullName = [student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')
+
   return (
     <ModalShell isOpen={isOpen} onClose={onClose} maxWidth="max-w-5xl" zIndex={115} backdropBlur="blur(6px)" backdropOpacity="rgba(0,0,0,0.35)">
       <motion.div
@@ -48,118 +110,236 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
             </div>
             <div>
               <h2 className="text-lg font-extrabold" style={{ color: '#0D1B2A' }}>
-                {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
+                {fullName}
               </h2>
               <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>
                 {student.faculty || student.program} · {student.institution}
               </p>
             </div>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
-            whileTap={{ scale: 0.9 }}
-            onClick={onClose}
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
-            style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}
-          >
-            <X size={16} />
-          </motion.button>
+          <div className="flex items-center gap-2">
+            <AnimatePresence mode="wait" initial={false}>
+              {editMode && draft ? (
+                <motion.div
+                  key="edit"
+                  initial={{ opacity: 0, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex items-center gap-2"
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setConfirm(true)}
+                    title="Guardar"
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer"
+                    style={{ background: GREEN_BLUE_GRAD }}
+                  >
+                    <Check size={16} />
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="view"
+                  initial={{ opacity: 0, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex items-center gap-2"
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={startEdit}
+                    title="Editar"
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer"
+                    style={{ background: BLUE_GRAD, boxShadow: '0 4px 12px rgba(18,112,183,0.25)' }}
+                  >
+                    <PenLine size={16} />
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <motion.button
+              whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => { onClose(); cancelEdit(); }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
+              style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}
+            >
+              <X size={16} />
+            </motion.button>
+          </div>
         </div>
 
         {/* Categorías */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-7 py-6" style={{ scrollbarWidth: 'thin' }}>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              {
-                title: 'Información personal',
-                model: <StudentCardView />,
-                fields: [
-                  { label: 'Primer nombre', value: student.firstName },
-                  { label: 'Segundo nombre', value: student.secondName || '—' },
-                  { label: 'Primer apellido', value: student.lastName },
-                  { label: 'Segundo apellido', value: student.secondLastName || '—' },
-                  { label: 'Documento', value: `${student.documentType}. ${student.documentNumber}` },
-                  { label: 'Fecha de nacimiento', value: student.birthDate },
-                  { label: 'Género', value: student.gender },
-                  { label: 'Edad', value: `${Math.abs(new Date(student.birthDate.split('/').reverse().join('-')).getFullYear() - new Date().getFullYear())} años` },
-                ],
-              },
-              {
-                title: student.role === 'profesor' || student.role === 'administrador' ? 'Información laboral' : 'Información académica',
-                model: <CapView />,
-                fields:
-                  student.role === 'profesor' || student.role === 'administrador'
-                    ? [
-                        { label: 'Área', value: student.area || '—' },
-                        { label: 'Cargo', value: student.cargo || '—' },
-                      ]
-                    : [
-                        { label: 'Número carnet', value: student.carnetId },
-                        { label: 'Estado', value: student.graduationStatus },
-                        { label: 'Institución', value: student.institution },
-                        { label: 'Modalidad', value: student.modality },
-                        { label: 'Nivel de formación', value: student.nivelFormacion || 'Técnicos' },
-                        { label: 'Carrera', value: student.faculty || student.program },
-                        { label: 'Semestre', value: student.semester || `${student.semestre}` },
-                        { label: 'Jornada', value: student.jornada },
-                      ],
-              },
-              {
-                title: 'Información médica',
-                model: <StethoscopeView />,
-                fields: [
-                  { label: 'EPS', value: student.eps },
-                  { label: 'Grupo sanguíneo', value: student.bloodType },
-                ],
-              },
-              {
-                title: 'Información de contacto',
-                model: <TelephoneView />,
-                fields: [
-                  { label: 'Email', value: editable.email },
-                  { label: 'Teléfono', value: student.phone },
-                  { label: 'Contacto de emergencia', value: student.contactName },
-                  { label: 'Parentesco', value: student.contactRelation || '—' },
-                  { label: 'Teléfono de emergencia', value: student.contactPhone },
-                ],
-              },
-            ].map((cat, ci) => (
-              <motion.div
-                key={cat.title}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.05 + ci * 0.06 }}
-                className="rounded-2xl p-5 flex flex-col"
-                style={{
-                  background: 'linear-gradient(145deg, rgba(18,112,183,0.09) 0%, rgba(18,112,183,0.03) 55%, rgba(255,255,255,0.6) 100%)',
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 16px rgba(18,112,183,0.06)',
-                }}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden" style={{ background: 'rgba(18,112,183,0.10)' }}>
-                    {cat.model}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-1 h-6 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
-                    <p className="text-sm font-extrabold capitalize" style={{ color: '#0D1B2A' }}>{cat.title}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-x-5 gap-y-3 flex-1">
-                  {cat.fields.map(f => (
-                    <div key={f.label} className="flex flex-col">
-                      <p className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{f.label}</p>
-                      <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{f.value}</p>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={editMode ? 'edit' : 'view'}
+            initial={{ opacity: 0, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, filter: 'blur(6px)' }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="flex-1 min-h-0 overflow-y-auto px-7 py-6"
+            style={{ scrollbarWidth: 'thin' }}
+          >
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                {
+                  title: 'Información personal',
+                  model: <StudentCardView />,
+                  fields: [
+                    { key: 'firstName', label: 'Primer nombre', value: editable.firstName },
+                    { key: 'secondName', label: 'Segundo nombre', value: editable.secondName || '—' },
+                    { key: 'lastName', label: 'Primer apellido', value: editable.lastName },
+                    { key: 'secondLastName', label: 'Segundo apellido', value: editable.secondLastName || '—' },
+                    { key: 'document', label: 'Documento', value: `${editable.documentType}. ${editable.documentNumber}`, readOnly: true },
+                    { key: 'birthDate', label: 'Fecha de nacimiento', value: editable.birthDate },
+                    { key: 'gender', label: 'Género', value: editable.gender },
+                    { key: 'age', label: 'Edad', value: `${Math.abs(new Date(editable.birthDate.split('/').reverse().join('-')).getFullYear() - new Date().getFullYear())} años`, readOnly: true },
+                  ],
+                },
+                {
+                  title: student.role === 'profesor' || student.role === 'administrador' ? 'Información laboral' : 'Información académica',
+                  model: <CapView />,
+                  fields:
+                    student.role === 'profesor' || student.role === 'administrador'
+                      ? [
+                          { key: 'area', label: 'Área', value: editable.area || '—' },
+                          { key: 'cargo', label: 'Cargo', value: editable.cargo || '—' },
+                        ]
+                      : [
+                          { key: 'carnetId', label: 'Número carnet', value: editable.carnetId, readOnly: true },
+                          { key: 'graduationStatus', label: 'Estado', value: editable.graduationStatus },
+                          { key: 'institution', label: 'Institución', value: editable.institution },
+                          { key: 'modality', label: 'Modalidad', value: editable.modality },
+                          { key: 'nivelFormacion', label: 'Nivel de formación', value: editable.nivelFormacion || 'Técnicos' },
+                          { key: 'faculty', label: 'Carrera', value: editable.faculty || editable.program },
+                          { key: 'semester', label: 'Semestre', value: editable.semester || `${editable.semestre}` },
+                          { key: 'jornada', label: 'Jornada', value: editable.jornada },
+                        ],
+                },
+                {
+                  title: 'Información médica',
+                  model: <StethoscopeView />,
+                  fields: [
+                    { key: 'eps', label: 'EPS', value: editable.eps },
+                    { key: 'bloodType', label: 'Grupo sanguíneo', value: editable.bloodType },
+                  ],
+                },
+                {
+                  title: 'Información de contacto',
+                  model: <TelephoneView />,
+                  fields: [
+                    { key: 'email', label: 'Email', value: editable.email },
+                    { key: 'phone', label: 'Teléfono', value: editable.phone },
+                    { key: 'contactName', label: 'Contacto de emergencia', value: editable.contactName },
+                    { key: 'contactRelation', label: 'Parentesco', value: editable.contactRelation || '—' },
+                    { key: 'contactPhone', label: 'Teléfono de emergencia', value: editable.contactPhone },
+                  ],
+                },
+              ].map((cat, ci) => (
+                <motion.div
+                  key={cat.title}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.05 + ci * 0.06 }}
+                  className="rounded-2xl p-5 flex flex-col"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(18,112,183,0.09) 0%, rgba(18,112,183,0.03) 55%, rgba(255,255,255,0.6) 100%)',
+                    boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset, 0 4px 16px rgba(18,112,183,0.06)',
+                  }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden" style={{ background: 'rgba(18,112,183,0.10)' }}>
+                      {cat.model}
                     </div>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          <div className="mt-4">
-            <IdentityAccessCard student={editable} onUpdate={(patch) => onUpdate(patch)} />
-          </div>
-        </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-6 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.35)' }} />
+                      <p className="text-sm font-extrabold capitalize" style={{ color: '#0D1B2A' }}>{cat.title}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-3 flex-1">
+                    {cat.fields.map((f: { key: string; label: string; value: string; readOnly?: boolean }) => (
+                      <div key={f.key} className="flex flex-col">
+                        <p className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{f.label}</p>
+                        {editMode && draft && !f.readOnly ? (
+                          <input
+                            type="text"
+                            value={draft[f.key] ?? f.value}
+                            onChange={e => handleDraftChange(f.key, e.target.value)}
+                            className="text-sm font-semibold w-full border rounded p-1"
+                            style={{ color: '#0D1B2A' }}
+                          />
+                        ) : (
+                          <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{f.value || '—'}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </motion.div>
+
+      {/* ── Confirmación de cambios ─────────── */}
+      <AnimatePresence>
+        {confirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-6"
+            style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setConfirm(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 10 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-sm rounded-3xl p-6"
+              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 25px 60px rgba(0,0,0,0.15)' }}
+            >
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: 'rgba(18,112,183,0.1)', color: '#1270B7' }}>
+                  <AlertTriangle size={20} />
+                </div>
+                <p className="text-lg font-bold" style={{ color: '#1A1A1E' }}>Confirmar cambios</p>
+                <p className="text-xs font-medium mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{fullName}</p>
+              </div>
+              <p className="text-sm font-medium mb-6 text-center" style={{ color: 'rgba(0,0,0,0.55)' }}>
+                ¿Estás seguro de aplicar los cambios realizados?
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setConfirm(false)}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => { saveDraft(); setConfirm(false); }}
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                  style={{ background: BLUE_GRAD }}
+                >
+                  Aplicar
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </ModalShell>
   )
 }
