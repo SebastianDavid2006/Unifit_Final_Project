@@ -17,31 +17,11 @@ export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
   const setShowInfoModal = onShowInfo
   return (                <div className="grid gap-2 items-stretch" style={{ gridTemplateColumns: '1fr 2fr 1fr', gridTemplateRows: 'auto auto auto' }}>
                   {/* Fila 1 - Izquierda: Info General */}
-                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '1', gridRow: '1', background: 'rgba(255,255,255,0.5)', height: '100%' }}>
+                  <div className="rounded-[28px] p-4 cursor-default" style={{ gridColumn: '1', gridRow: '1', background: 'rgba(255,255,255,0.5)', height: '100%' }}>
                     <div className="flex items-center gap-2.5 mb-2">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>
                       <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Información General</p>
-                      <motion.button
-                        whileHover={{ scale: 1.04 }}
-                        whileTap={{ scale: 0.96 }}
-                        onClick={() => setShowInfoModal(true)}
-                        className="ml-auto flex-shrink-0 px-4 py-1.5 rounded-xl text-[11px] font-bold text-white cursor-pointer transition-all duration-200 hover:shadow-xl"
-                        style={{
-                          background: `
-                            radial-gradient(at 20% 20%, #F43843 0%, transparent 50%),
-                            radial-gradient(at 80% 15%, #1270B7 0%, transparent 50%),
-                            radial-gradient(at 50% 80%, #F1C827 0%, transparent 60%),
-                            radial-gradient(at 30% 60%, #F43843 0%, transparent 40%),
-                            radial-gradient(at 70% 70%, #1270B7 0%, transparent 40%),
-                            #F43843
-                          `,
-                          backgroundSize: '150% 150%',
-                          boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
-                        }}
-                      >
-                        Ver información
-                      </motion.button>
                     </div>
                     <div className="flex flex-col">
                       {[
@@ -88,12 +68,32 @@ export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
                         }}
                       />
                     </div>
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setShowInfoModal(true)}
+                      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 px-6 py-2.5 rounded-2xl text-sm font-bold text-white cursor-pointer transition-all duration-200 hover:shadow-xl"
+                      style={{
+                        background: `
+                          radial-gradient(at 20% 20%, #F43843 0%, transparent 50%),
+                          radial-gradient(at 80% 15%, #1270B7 0%, transparent 50%),
+                          radial-gradient(at 50% 80%, #F1C827 0%, transparent 60%),
+                          radial-gradient(at 30% 60%, #F43843 0%, transparent 40%),
+                          radial-gradient(at 70% 70%, #1270B7 0%, transparent 40%),
+                          #F43843
+                        `,
+                        backgroundSize: '150% 150%',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
+                      }}
+                    >
+                      Ver información
+                    </motion.button>
                   </div>
 
                   {/* Fila 1 - Derecha: Identidad y Acceso */}
                   <IdentityAccessCard student={student} onUpdate={onUpdate} gridColumn="3" gridRow="1" />
                   {/* Fila 2 - Izquierda: Contacto */}
-                  <div className="rounded-[28px] p-5 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '1', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
+                  <div className="rounded-[28px] p-5 cursor-default" style={{ gridColumn: '1', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-3">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><TelephoneView /></div>
@@ -115,7 +115,7 @@ export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
                   </div>
 
                   {/* Fila 2 - Derecha: Métricas actuales */}
-                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '3', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
+                  <div className="rounded-[28px] p-4 cursor-default" style={{ gridColumn: '3', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-3">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Métricas actuales</p>
@@ -138,7 +138,7 @@ export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
                   </div>
 
                   {/* Fila 3 - Izquierda: Info académica */}
-                  <div className="rounded-[28px] p-4 transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '1', gridRow: '3', background: 'rgba(255,255,255,0.5)' }}>
+                  <div className="rounded-[28px] p-4 cursor-default" style={{ gridColumn: '1', gridRow: '3', background: 'rgba(255,255,255,0.5)' }}>
                     <div className="flex items-center gap-2.5 mb-2">
                       <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
                       <div className="w-8 h-8 flex-shrink-0"><CapView /></div>
@@ -159,7 +159,7 @@ export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
                   </div>
 
                   {/* Fila 3 - Derecha: Objetivo físico */}
-                  <div className="rounded-[28px] p-5 relative overflow-hidden transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-default" style={{ gridColumn: '3', gridRow: '3', background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
+                  <div className="rounded-[28px] p-5 relative overflow-hidden cursor-default" style={{ gridColumn: '3', gridRow: '3', background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
                     <div className="absolute inset-0 pointer-events-none" style={{
                       background: 'linear-gradient(110deg, transparent 25%, rgba(255,215,0,0.15) 37%, rgba(255,255,255,0.4) 50%, rgba(255,215,0,0.15) 63%, transparent 75%)',
                       backgroundSize: '200% 100%',
