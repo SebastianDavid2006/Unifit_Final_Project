@@ -22,44 +22,34 @@ export default function TrainerSidebar({ section, expanded, onToggle, onSectionC
   const items = TRAINER_SIDEBAR_ITEMS
   const isMobile = useIsMobile()
 
-  // Mobile: horizontal top bar
+  // Mobile: bottom navigation bar
   if (isMobile) {
     return (
-      <header
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-3 py-2"
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 py-2"
         style={{
           background: 'linear-gradient(180deg, #0A1A3A 0%, #2A0A10 40%, #101014 65%, #2A1E08 100%)',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
+          borderTop: '1px solid rgba(255,255,255,0.04)',
           backdropFilter: 'blur(8px)',
         }}
       >
-        <div className="flex items-center gap-1">
-          {items.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onSectionChange(item.id)}
-              title={item.label}
-              className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 ${
-                section === item.id
-                  ? 'bg-gradient-to-r from-red-500/30 to-purple-500/30 text-white shadow-lg'
-                  : 'text-white/40 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <item.icon size={20} />
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={onToggle}
-          className="w-11 h-11 rounded-xl flex items-center justify-center
-            border border-transparent
-            hover:bg-white/[0.06] hover:backdrop-blur-md hover:border-white/10 hover:shadow-lg"
-          style={{ color: 'rgba(255,255,255,0.5)' }}
-          title={expanded ? 'Colapsar' : 'Expandir'}
-        >
-          {expanded ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}
-        </button>
-      </header>
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onSectionChange(item.id)}
+            title={item.label}
+            className={`flex items-center justify-center gap-2 rounded-xl transition-all duration-300 ${
+              section === item.id
+                ? 'flex-1 py-2.5 px-3 bg-gradient-to-r from-red-500/30 to-purple-500/30 text-white shadow-[0_0_12px_rgba(228,35,50,0.4),0_0_24px_rgba(43,44,138,0.3)] scale-105'
+                : 'flex-1 py-2.5 px-3 text-white/50 hover:text-white hover:bg-white/10'
+            }`}
+            style={{ minWidth: 0 }}
+          >
+            <item.icon size={22} className="flex-shrink-0" />
+            <span className="text-xs font-medium truncate">{item.label}</span>
+          </button>
+        ))}
+      </nav>
     )
   }
 

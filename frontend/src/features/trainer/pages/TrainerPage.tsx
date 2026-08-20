@@ -51,7 +51,7 @@ export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
         onSectionChange={setSection}
       />
 
-      <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable', paddingTop: isMobile ? '60px' : 0 }}>
+      <div className="flex-1 overflow-y-auto relative z-10" style={{ scrollbarGutter: 'stable', paddingBottom: isMobile ? '70px' : 0 }}>
         <TrainerTopbar
           section={section}
           search={search}

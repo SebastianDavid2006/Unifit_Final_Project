@@ -69,7 +69,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
         onSectionChange={setSection}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ paddingTop: isMobile ? '60px' : 0 }}>
+      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ paddingBottom: isMobile ? '70px' : 0 }}>
         <PermissionsOverlay visible={isPermissions} />
 
         <Topbar
