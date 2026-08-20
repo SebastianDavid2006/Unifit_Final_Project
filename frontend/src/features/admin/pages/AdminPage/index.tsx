@@ -59,7 +59,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
   const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
 
   return (
-    <div className="flex size-full overflow-hidden mesh-bg relative">
+    <div className="flex size-full overflow-y-auto mesh-bg relative">
       <BackgroundDecor />
 
       <Sidebar
@@ -69,7 +69,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
         onSectionChange={setSection}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ paddingBottom: isMobile ? '70px' : 0 }}>
+      <div className="flex-1 flex flex-col overflow-y-auto relative" style={{ paddingBottom: isMobile ? '70px' : 0 }}>
         <PermissionsOverlay visible={isPermissions} />
 
         <Topbar

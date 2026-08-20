@@ -52,7 +52,7 @@ export default function App() {
 
   return (
     <div
-      className="size-full flex flex-col overflow-hidden mesh-bg"
+      className="size-full flex flex-col overflow-y-auto mesh-bg"
       style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
       <ParticleField />
@@ -68,7 +68,7 @@ export default function App() {
         />
       )}
 
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-y-auto relative">
         <AnimatePresence mode="wait">
           {screen === 'login' && (
             <motion.div

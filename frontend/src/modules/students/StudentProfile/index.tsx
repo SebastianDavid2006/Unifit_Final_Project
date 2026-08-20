@@ -205,7 +205,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   return (
     <>
       <style>{`@keyframes shimmer { 0% { background-position: 200% center } 100% { background-position: -200% center } }`}</style>
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-y-auto">
       {/* Background orbs */}
       <div className="floating-sphere" style={{
         width: 280, height: 280,
@@ -213,7 +213,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
         top: '-60px', right: '-40px',
       }} />
 
-      <div className="relative z-10 flex-1 min-h-0 p-8 overflow-hidden">
+      <div className="relative z-10 flex-1 min-h-0 p-8 overflow-y-auto">
 
           <AnimatePresence mode="wait">
             <motion.div key={currentTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">

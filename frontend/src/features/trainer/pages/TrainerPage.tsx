@@ -41,7 +41,7 @@ export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
   )
 
   return (
-    <div className="flex size-full overflow-hidden mesh-bg relative">
+    <div className="flex size-full overflow-y-auto mesh-bg relative">
       <BackgroundDecor />
 
       <TrainerSidebar
