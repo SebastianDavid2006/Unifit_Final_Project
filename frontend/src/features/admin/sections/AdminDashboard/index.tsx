@@ -11,13 +11,13 @@ export default function AdminDashboard() {
 
       <HeroBanner />
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {dashboardCards.map((card, i) => (
           <StatCard key={card.label} card={card} colors={CARD_COLORS[i]} index={i} isActive={i === 2} />
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <WeeklyAttendanceChart />
         <TopCareersChart />
       </div>

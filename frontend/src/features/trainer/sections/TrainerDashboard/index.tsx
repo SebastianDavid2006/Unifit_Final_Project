@@ -40,12 +40,12 @@ export default function TrainerDashboard() {
         }
       `}</style>
       <HeroBanner />
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {dashboardCards.map((card, i) => (
           <StatCard key={card.label} card={card} colors={CARD_COLORS[i % CARD_COLORS.length]} index={i} isActive={card.label === 'Asistencias de Hoy'} />
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <WeeklyAttendanceChart />
         <TopCareersChart />
       </div>
