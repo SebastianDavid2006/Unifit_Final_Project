@@ -56,7 +56,7 @@ export default function TrainerSidebar({ section, expanded, onToggle, onSectionC
   // Desktop: vertical sidebar
   return (
     <aside
-      className={`${expanded ? 'w-52' : 'w-[68px]'} flex flex-col items-center pt-8 pb-4 gap-1 flex-shrink-0 z-50 relative`}
+      className={`${expanded ? 'w-52' : 'w-[68px]'} flex flex-col items-center pt-8 pb-4 gap-1 flex-shrink-0 z-50 fixed inset-y-0`}
       style={{
         background: 'linear-gradient(180deg, #0A1A3A 0%, #2A0A10 40%, #101014 65%, #2A1E08 100%)',
         borderRight: '1px solid rgba(255,255,255,0.04)',
