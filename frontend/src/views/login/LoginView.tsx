@@ -2,13 +2,16 @@ import { useState, type FormEvent } from 'react'
 import { motion } from 'motion/react'
 import { User, Lock, Eye, EyeOff, UserPlus, ArrowRight } from 'lucide-react'
 import { LoginBackground } from '../../components/ui/LoginBackground'
+import { guardarSesion, mapRolToPlatform, type Platform, type UsuarioSesion } from '../../lib/auth'
+import { api, mensajeError } from '../../lib/api'
 import logotipo from '../../assets/logo/logo.webp'
 import universidadLogo from '../../assets/logo/universitaria_de_colombia.webp'
 import secundarioLogo from '../../assets/logo/universitaria_de_bogota.webp'
 
 interface LoginViewProps {
-  onSelect: (platform: 'trainer' | 'student' | 'admin') => void
+  onSelect: (platform: Platform) => void
   onRegister: () => void
+  onPendiente: () => void
 }
 
 const MESH_BUTTON = `
@@ -21,23 +24,32 @@ const MESH_BUTTON = `
   #1A0B2E
 `
 
-export function LoginView({ onSelect, onRegister }: LoginViewProps) {
+export function LoginView({ onSelect, onRegister, onPendiente }: LoginViewProps) {
   const [usuario, setUsuario] = useState('')
   const [contraseña, setContraseña] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [shake, setShake] = useState(false)
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    const u = usuario.trim().toLowerCase()
-    const p = contraseña.trim()
-    if (u === 'admin' && p === 'admin123') return onSelect('admin')
-    if (u === 'entrenador' && p === 'entrenador123') return onSelect('trainer')
-    if (u === 'estudiante' && p === 'estudiante123') return onSelect('student')
-    setError('Credenciales incorrectas')
-    setShake(true)
-    setTimeout(() => setShake(false), 500)
+    setError('')
+    try {
+      const { data } = await api.post<{ token: string; usuario: UsuarioSesion }>('/auth/login', {
+        email_contacto: usuario.trim(),
+        password: contraseña,
+      })
+      guardarSesion(data.token, data.usuario)
+      if (data.usuario.estado === 'pendiente') {
+        onPendiente()
+      } else {
+        onSelect(mapRolToPlatform(data.usuario.rol))
+      }
+    } catch (error) {
+      setError(mensajeError(error))
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
+    }
   }
 
   return (
@@ -78,7 +90,7 @@ export function LoginView({ onSelect, onRegister }: LoginViewProps) {
               <p className="text-sm mt-1.5 font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>Inicia sesión para continuar</p>
             </div>
 
-            <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>USUARIO</label>
+            <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>CORREO ELECTRÓNICO</label>
             <div className="flex items-center gap-3 px-5 rounded-2xl mb-6 h-14" style={{
               background: 'rgba(255,255,255,0.08)',
               border: '1px solid rgba(255,255,255,0.12)',
@@ -87,7 +99,7 @@ export function LoginView({ onSelect, onRegister }: LoginViewProps) {
               <input
                 value={usuario}
                 onChange={e => setUsuario(e.target.value)}
-                placeholder="Ingresa tu usuario"
+                placeholder="tu@correo.com"
                 className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-white/30"
               />
             </div>

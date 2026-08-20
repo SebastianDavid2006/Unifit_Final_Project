@@ -5,8 +5,9 @@ import { StudentView } from '../views/student/StudentView'
 import { AdminView } from '../views/admin/AdminView'
 import { LoginView } from '../views/login/LoginView'
 import { RegisterView } from '../views/login/RegisterView'
+import { cerrarSesion, getUsuario, mapRolToPlatform, type Platform } from '../lib/auth'
 
-type Platform = 'trainer' | 'student' | 'admin'
+type Screen = 'login' | 'register' | 'agenda' | Platform
 
 function ParticleField() {
   const particles = Array.from({ length: 25 }, (_, i) => ({
@@ -38,7 +39,16 @@ function ParticleField() {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<'login' | 'register' | Platform>('login')
+  const [screen, setScreen] = useState<Screen>(() => {
+    const usuario = getUsuario()
+    if (!usuario) return 'login'
+    return usuario.estado === 'pendiente' ? 'agenda' : mapRolToPlatform(usuario.rol)
+  })
+
+  const handleLogout = () => {
+    cerrarSesion()
+    setScreen('login')
+  }
 
   return (
     <div
@@ -78,7 +88,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <LoginView onSelect={(platform) => setScreen(platform)} onRegister={() => setScreen('register')} />
+              <LoginView onSelect={(platform) => setScreen(platform)} onRegister={() => setScreen('register')} onPendiente={() => setScreen('agenda')} />
             </motion.div>
           )}
           {screen === 'register' && (
@@ -93,6 +103,18 @@ export default function App() {
               <RegisterView onBack={() => setScreen('login')} />
             </motion.div>
           )}
+          {screen === 'agenda' && (
+            <motion.div
+              key="agenda"
+              className="size-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <RegisterView onBack={() => setScreen('login')} initialPhase="schedule" />
+            </motion.div>
+          )}
           {screen === 'trainer' && (
             <motion.div
               key="trainer"
@@ -102,7 +124,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <TrainerView onLogout={() => setScreen('login')} />
+              <TrainerView onLogout={handleLogout} />
             </motion.div>
           )}
           {screen === 'student' && (
@@ -114,7 +136,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <StudentView />
+              <StudentView onLogout={handleLogout} />
             </motion.div>
           )}
           {screen === 'admin' && (
@@ -126,7 +148,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <AdminView onLogout={() => setScreen('login')} />
+              <AdminView onLogout={handleLogout} />
             </motion.div>
           )}
         </AnimatePresence>

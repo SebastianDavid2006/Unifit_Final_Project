@@ -1,32 +1,51 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
+import axios from 'axios'
 import {
-  ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight,
-  Clock, CalendarCheck,
+  ArrowLeft, Check, ChevronLeft, ChevronRight,
+  Clock, CalendarCheck, ArrowRight,
 } from 'lucide-react'
 import { LoginBackground } from '../../components/ui/LoginBackground'
 import {
-  TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
+  GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
   TIPOS_USUARIO, INITIAL_FORM, BLUE, GREEN, BLUE_GRAD, GREEN_GRAD,
 } from '../../modules/students/NewStudentData'
 import type { TipoUsuario } from '../../modules/students/NewStudentData'
-import { INSTITUCIONES, getNiveles, getPrograms } from '../../data/academicPrograms'
 import { dayLabels, monthNames, DAY_GRAD } from '../../modules/agenda/AgendaData'
 import { useIsMobile } from '../../components/ui/use-mobile'
+import { api, mensajeError } from '../../lib/api'
 import successCheckImg from '../../assets/illustrations/actions/feedback/success_check.webp'
 import logotipo from '../../assets/logo/logo.webp'
 
 const DARK_BG = '#0A0A14'
 
-const FORM_STEPS = [
-  { num: 1, label: 'Información' },
-  { num: 2, label: 'Tratamiento de datos' },
-  { num: 3, label: 'Contrato' },
-]
-
-type Phase = 'form' | 'success' | 'schedule'
+type Phase = 'form' | 'pendiente' | 'schedule'
 
 interface Slot { time: string; title: string; color: string }
+
+interface ProgramaCatalogo { id_programa: string; nombre: string; universidad: string }
+interface CatalogoItem { id: string; nombre: string }
+
+const UNIVERSIDADES = [
+  { value: 'uni_colombia', label: 'Universitaria de Colombia' },
+  { value: 'uni_bogota', label: 'Universitaria de Bogotá' },
+]
+
+const DOC_OPCIONES = ['CC', 'TI', 'CE', 'Pasaporte', 'RC']
+const SEMESTRES = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+const TIPO_DOC_MAP: Record<string, string> = { CC: 'CC', TI: 'TI', CE: 'CE', Pasaporte: 'PA', RC: 'RC' }
+const GENERO_MAP: Record<string, string> = { Masculino: 'masculino', Femenino: 'femenino', Otro: 'otro' }
+const GRUPO_MAP: Record<string, string> = {
+  'A+': 'a_positivo', 'A-': 'a_negativo', 'B+': 'b_positivo', 'B-': 'b_negativo',
+  'AB+': 'ab_positivo', 'AB-': 'ab_negativo', 'O+': 'o_positivo', 'O-': 'o_negativo',
+}
+const PARENTESCO_MAP: Record<string, string> = {
+  Padre: 'padre', Madre: 'madre', 'Hermano(a)': 'hermano_a', 'Abuelo(a)': 'abuelo_a',
+  'Tío(a)': 'tio_a', 'Primo(a)': 'primo_a', Otro: 'otro',
+}
+const MODALIDAD_MAP: Record<string, string> = { Presencial: 'presencial', Virtual: 'virtual' }
+const JORNADA_MAP: Record<string, string> = { 'Mañana': 'diurna', Noche: 'nocturna', 'Fin de semana': 'finde' }
 
 function buildDemoAgenda(): Record<string, Slot[]> {
   const now = new Date()
@@ -90,23 +109,48 @@ function getMonthGrid(year: number, month: number): (Date | null)[][] {
 
 interface RegisterViewProps {
   onBack: () => void
+  initialPhase?: Phase
 }
 
-export function RegisterView({ onBack }: RegisterViewProps) {
+export function RegisterView({ onBack, initialPhase }: RegisterViewProps) {
   const isMobile = useIsMobile()
   const [previewMode, setPreviewMode] = useState<'celular' | 'desktop' | 'auto'>('auto')
-  const [phase, setPhase] = useState<Phase>('form')
-  const [form, setForm] = useState<Record<string, string>>({ ...INITIAL_FORM, parentesco: 'Padre', estado: 'No egresado' })
+  const [phase, setPhase] = useState<Phase>(initialPhase ?? 'form')
+  const [form, setForm] = useState<Record<string, string>>({
+    ...INITIAL_FORM, parentesco: 'Padre', estado: 'No egresado', generoOtro: '',
+  })
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
-  const [step, setStep] = useState(1)
-  const [aceptaDatos, setAceptaDatos] = useState(false)
-  const [aceptaContrato, setAceptaContrato] = useState(false)
+  const [universidad, setUniversidad] = useState('uni_colombia')
+  const [programaId, setProgramaId] = useState('')
+  const [cargoId, setCargoId] = useState('')
+  const [areaId, setAreaId] = useState('')
+  const [programas, setProgramas] = useState<ProgramaCatalogo[]>([])
+  const [cargos, setCargos] = useState<CatalogoItem[]>([])
+  const [areas, setAreas] = useState<CatalogoItem[]>([])
+  const [error, setError] = useState('')
+  const [enviando, setEnviando] = useState(false)
   const [shake, setShake] = useState(false)
   const [agenda] = useState<Record<string, Slot[]>>(() => buildDemoAgenda())
   const [viewMonth, setViewMonth] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null)
   const [scheduled, setScheduled] = useState(false)
+
+  useEffect(() => {
+    if (initialPhase && initialPhase !== 'form') return
+    let activo = true
+    Promise.all([api.get('/programas'), api.get('/cargos'), api.get('/areas')])
+      .then(([progs, carg, ar]) => {
+        if (!activo) return
+        setProgramas(progs.data)
+        setCargos(carg.data.map((c: { id_cargo: string; nombre: string }) => ({ id: c.id_cargo, nombre: c.nombre })))
+        setAreas(ar.data.map((a: { id_area: string; nombre: string }) => ({ id: a.id_area, nombre: a.nombre })))
+      })
+      .catch(() => {
+        if (activo) setError('No se pudieron cargar los catálogos. Recarga la página e intenta de nuevo.')
+      })
+    return () => { activo = false }
+  }, [])
 
   const isDesktopVideo = previewMode === 'desktop'
   const isPhonePreview = previewMode === 'celular' || (previewMode === 'auto' && isMobile)
@@ -115,41 +159,90 @@ export function RegisterView({ onBack }: RegisterViewProps) {
 
   const toggleTipoUsuario = (tipo: TipoUsuario) => {
     setTipoUsuario(prev => (prev === tipo ? null : tipo))
-    const inst = 'Universitaria de Colombia'
-    const level = getNiveles(inst)[0]
-    const prog = getPrograms(inst, level)[0] ?? ''
-    setForm(prev => ({
-      ...prev,
-      numCarnet: '', estado: 'No egresado',
-      institucion: inst, nivelFormacion: level, programa: prog,
-      semestre: '1', modalidad: 'Presencial', jornada: 'Mañana',
-      cargo: '', area: '',
-    }))
+    setProgramaId('')
+    setCargoId('')
+    setAreaId('')
   }
 
-  const canGoNext = () => {
-    if (step === 1) return !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc)
-    if (step === 2) return aceptaDatos
-    if (step === 3) return aceptaContrato
-    return true
+  const programasFiltrados = programas.filter(p => p.universidad === universidad)
+
+  const validar = (): string | null => {
+    const requeridos: [string, string][] = [
+      ['primerNombre', 'Primer nombre'],
+      ['primerApellido', 'Primer apellido'],
+      ['numDoc', 'Número de documento'],
+      ['email', 'Correo electrónico'],
+    ]
+    for (const [k, label] of requeridos) {
+      if (!form[k]?.trim()) return `Completa el campo ${label}`
+    }
+    if (!tipoUsuario) return 'Selecciona el rol en la universidad'
+    if (tipoUsuario === 'estudiante' && !programaId) return 'Selecciona el programa'
+    if (tipoUsuario !== 'estudiante' && (!cargoId || !areaId)) return 'Selecciona cargo y área'
+    if (form.genero === 'Otro' && !form.generoOtro?.trim()) return 'Especifica el género'
+    if (form.parentesco === 'Otro' && !form.otroParentesco?.trim()) return 'Especifica el parentesco'
+    return null
   }
 
-  const handleNext = () => {
-    if (!canGoNext()) {
+  const buildPayload = () => {
+    const payload: Record<string, unknown> = {
+      primer_nombre: form.primerNombre?.trim(),
+      segundo_nombre: form.segundoNombre?.trim() || undefined,
+      primer_apellido: form.primerApellido?.trim(),
+      segundo_apellido: form.segundoApellido?.trim() || undefined,
+      email_contacto: form.email?.trim(),
+      telefono_contacto: form.telefono?.trim() || undefined,
+      documento: form.numDoc?.trim(),
+      tipo_documento: TIPO_DOC_MAP[form.tipoDoc] ?? 'CC',
+      fecha_nacimiento: form.fechaNac || undefined,
+      genero: GENERO_MAP[form.genero] ?? 'otro',
+      genero_otro: form.genero === 'Otro' ? form.generoOtro?.trim() : undefined,
+      eps: form.eps?.trim() || undefined,
+      grupo_sanguineo: GRUPO_MAP[form.grupoSanguineo],
+      nombre_emergencia: form.nombreContacto?.trim() || undefined,
+      telefono_emergencia: form.telefonoContacto?.trim() || undefined,
+      parentesco_emergencia: form.parentesco ? PARENTESCO_MAP[form.parentesco] : undefined,
+      parentesco_otro: form.parentesco === 'Otro' ? form.otroParentesco?.trim() : undefined,
+      tipo_usuario: tipoUsuario === 'administrador' ? 'administrativo' : tipoUsuario,
+    }
+
+    if (tipoUsuario === 'estudiante') {
+      payload.id_programa = programaId
+      payload.numero_carnet = form.numCarnet?.trim() || undefined
+      payload.semestre = form.semestre ? Number(form.semestre) : undefined
+      payload.modalidad = MODALIDAD_MAP[form.modalidad]
+      payload.jornada = JORNADA_MAP[form.jornada]
+      payload.es_egresado = form.estado === 'Egresado'
+    } else {
+      payload.id_cargo = cargoId
+      payload.id_area = areaId
+    }
+
+    return payload
+  }
+
+  const handleSubmit = async () => {
+    const mensaje = validar()
+    if (mensaje) {
+      setError(mensaje)
       setShake(true)
       setTimeout(() => setShake(false), 500)
       return
     }
-    if (step < FORM_STEPS.length) {
-      setStep(p => p + 1)
-    } else {
-      setPhase('success')
+    setError('')
+    setEnviando(true)
+    try {
+      await api.post('/auth/registro', buildPayload())
+      setPhase('pendiente')
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 409) {
+        setError('El documento o correo electrónico ya está registrado')
+      } else {
+        setError(mensajeError(err))
+      }
+    } finally {
+      setEnviando(false)
     }
-  }
-
-  const handlePrev = () => {
-    if (step > 1) setStep(p => p - 1)
-    else onBack()
   }
 
   const confirmSchedule = () => {
@@ -208,6 +301,23 @@ export function RegisterView({ onBack }: RegisterViewProps) {
     </div>
   )
 
+  const selectCatalogo = (label: string, value: string, options: { value: string; label: string }[], onChange: (v: string) => void, opts?: { required?: boolean }) => (
+    <div className="flex flex-col gap-1">
+      <label className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        {label}{opts?.required && <span style={{ color: '#F43843' }}> *</span>}
+      </label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="appearance-none cursor-pointer"
+        style={{ ...inputStyle, background: '#151520' }}
+      >
+        <option value="">Selecciona...</option>
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </div>
+  )
+
   const sectionTitle = (label: string) => (
     <div className="flex items-center gap-2 mt-1">
       <div className="w-1 h-4 rounded-full" style={{ background: BLUE_GRAD }} />
@@ -227,17 +337,22 @@ export function RegisterView({ onBack }: RegisterViewProps) {
         {field('Segundo apellido', 'segundoApellido')}
       </div>
       <div className="grid grid-cols-2 gap-3">
-        {select('Tipo de documento', 'tipoDoc', TIPO_DOC)}
+        {select('Tipo de documento', 'tipoDoc', DOC_OPCIONES)}
         {field('Número de documento', 'numDoc', { required: true })}
       </div>
       <div className="grid grid-cols-2 gap-3">
         {field('Fecha de nacimiento', 'fechaNac', { type: 'date' })}
         {select('Género', 'genero', GENEROS)}
       </div>
+      {form.genero === 'Otro' && (
+        <div>
+          {field('Especifique el género', 'generoOtro', { required: true })}
+        </div>
+      )}
 
       {sectionTitle('Información de contacto')}
       <div className="grid grid-cols-2 gap-3">
-        {field('Email', 'email', { type: 'email' })}
+        {field('Email', 'email', { type: 'email', required: true })}
         {field('Teléfono', 'telefono')}
       </div>
 
@@ -315,27 +430,23 @@ export function RegisterView({ onBack }: RegisterViewProps) {
             {select('Estado', 'estado', ESTADOS)}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {select('Institución', 'institucion', INSTITUCIONES, {
-              onChange: (inst) => {
-                const level = getNiveles(inst)[0]
-                const prog = getPrograms(inst, level)[0] ?? ''
-                setForm(prev => ({ ...prev, institucion: inst, nivelFormacion: level, programa: prog }))
-              }
-            })}
+            {selectCatalogo('Institución', universidad, UNIVERSIDADES, (v) => { setUniversidad(v); setProgramaId('') })}
             {select('Modalidad', 'modalidad', MODALIDADES)}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {select('Nivel de formación', 'nivelFormacion', getNiveles(form.institucion), {
-              onChange: (level) => {
-                const prog = getPrograms(form.institucion, level)[0] ?? ''
-                setForm(prev => ({ ...prev, nivelFormacion: level, programa: prog }))
-              }
-            })}
-            {select('Carrera', 'programa', getPrograms(form.institucion, form.nivelFormacion), { required: true })}
+            {selectCatalogo('Programa', programaId, programasFiltrados.map(p => ({ value: p.id_programa, label: p.nombre })), setProgramaId, { required: true })}
+            {select('Jornada', 'jornada', JORNADAS)}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {select('Semestre', 'semestre', ['1', '2', '3', '4', '5', '6', '7', '8', '9'])}
-            {select('Jornada', 'jornada', JORNADAS)}
+            {select('Semestre', 'semestre', SEMESTRES)}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                Estado académico
+              </label>
+              <div className="flex-1 flex items-center justify-center rounded-xl px-3 text-[11px] font-semibold" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.5)' }}>
+                Activo
+              </div>
+            </div>
           </div>
         </>
       )}
@@ -344,81 +455,11 @@ export function RegisterView({ onBack }: RegisterViewProps) {
         <>
           {sectionTitle('Información laboral')}
           <div className="grid grid-cols-2 gap-3">
-            {field('Cargo', 'cargo', { required: true })}
-            {field('Área', 'area', { required: true })}
+            {selectCatalogo('Cargo', cargoId, cargos.map(c => ({ value: c.id, label: c.nombre })), setCargoId, { required: true })}
+            {selectCatalogo('Área', areaId, areas.map(a => ({ value: a.id, label: a.nombre })), setAreaId, { required: true })}
           </div>
         </>
       )}
-    </div>
-  )
-
-  const checkRow = (checked: boolean, onToggle: () => void, text: string) => (
-    <label className="flex items-start gap-3 cursor-pointer group">
-      <div
-        onClick={onToggle}
-        className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
-        style={{
-          background: checked ? BLUE_GRAD : 'transparent',
-          border: `1.5px solid ${checked ? BLUE : 'rgba(255,255,255,0.25)'}`,
-        }}
-      >
-        {checked && (
-          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
-            <Check size={12} color="white" strokeWidth={3} />
-          </motion.span>
-        )}
-      </div>
-      <span className="text-[11px] font-semibold" style={{ color: checked ? '#7ec8e3' : 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-        {text}
-      </span>
-    </label>
-  )
-
-  const renderStep2 = () => (
-    <div className="flex flex-col gap-4 px-5 py-4">
-      <div className="rounded-2xl p-5 text-xs leading-relaxed max-h-[280px] overflow-y-auto" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="font-bold text-sm mb-3" style={{ color: '#fff' }}>Autorización para el tratamiento de datos personales</p>
-        <p className="mb-3">
-          En cumplimiento de la Ley 1581 de 2012 y sus decretos reglamentarios, UniFit S.A.S. en calidad de responsable del tratamiento de datos personales, solicita su autorización para recolectar, almacenar, usar, circular y suprimir los datos personales suministrados en el presente formulario, con la finalidad de gestionar su registro como estudiante, llevar a cabo el seguimiento académico, realizar comunicaciones institucionales, enviar información sobre programas y servicios, y cumplir con obligaciones legales y contractuales.
-        </p>
-        <p className="mb-3">
-          Los datos serán conservados durante el tiempo necesario para cumplir con las finalidades descritas y de acuerdo con las disposiciones legales vigentes. El estudiante podrá ejercer sus derechos de acceso, actualización, rectificación, supresión y revocación de la autorización mediante comunicación escrita dirigida a nuestro correo electrónico: datos@unifit.co.
-        </p>
-        <p>
-          La no autorización implica la imposibilidad de completar el proceso de registro como estudiante de UniFit.
-        </p>
-      </div>
-      {checkRow(aceptaDatos, () => setAceptaDatos(!aceptaDatos), 'Autorizo el tratamiento de mis datos personales de acuerdo con la política de privacidad de UniFit.')}
-    </div>
-  )
-
-  const renderStep3 = () => (
-    <div className="flex flex-col gap-4 px-5 py-4">
-      <div className="rounded-2xl p-5 text-xs leading-relaxed max-h-[280px] overflow-y-auto" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <p className="font-bold text-sm mb-3" style={{ color: '#fff' }}>Contrato de prestación de servicios estudiantiles</p>
-        <p className="mb-3">
-          El presente contrato regula la relación entre UniFit S.A.S., en adelante "LA INSTITUCIÓN", y el estudiante que se registra a través del presente formulario, en adelante "EL ESTUDIANTE".
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA PRIMERA – OBJETO:</strong> LA INSTITUCIÓN se compromete a proporcionar al ESTUDIANTE los servicios de entrenamiento y acompañamiento deportivo contratados, de acuerdo con el programa académico y la modalidad seleccionada en el formulario de registro.
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA SEGUNDA – OBLIGACIONES DEL ESTUDIANTE:</strong> El ESTUDIANTE se obliga a asistir puntualmente a las sesiones programadas, cumplir con las normas internas de LA INSTITUCIÓN, utilizar adecuadamente las instalaciones y equipos, y mantener una conducta respetuosa hacia el personal y demás estudiantes.
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA TERCERA – OBLIGACIONES DE LA INSTITUCIÓN:</strong> LA INSTITUCIÓN se obliga a proporcionar entrenadores calificados, mantener las instalaciones en condiciones óptimas de seguridad e higiene, y garantizar la prestación del servicio de acuerdo con los estándares de calidad establecidos.
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA CUARTA – VALOR Y FORMA DE PAGO:</strong> El valor del programa será el establecido en la tarifa vigente al momento de la matrícula. EL ESTUDIANTE acepta realizar los pagos en las fechas y montos acordados.
-        </p>
-        <p className="mb-3">
-          <strong>CLÁUSULA QUINTA – TERMINACIÓN:</strong> El presente contrato podrá ser terminado por cualquiera de las partes mediante comunicación escrita con quince (15) días de antelación, o de forma inmediata por incumplimiento grave de las obligaciones aquí establecidas.
-        </p>
-        <p>
-          <strong>CLÁUSULA SEXTA – ACEPTACIÓN:</strong> Las partes aceptan el presente contrato y se obligan a su cumplimiento en todos sus términos.
-        </p>
-      </div>
-      {checkRow(aceptaContrato, () => setAceptaContrato(!aceptaContrato), 'Acepto los términos y condiciones del contrato de prestación de servicios estudiantiles de UniFit.')}
     </div>
   )
 
@@ -432,67 +473,39 @@ export function RegisterView({ onBack }: RegisterViewProps) {
         </p>
       </div>
 
-      <div className="flex-shrink-0 px-5 pb-1">
-        <div className="flex items-center justify-center gap-1.5 mb-2">
-          {FORM_STEPS.map(s => (
-            <motion.div
-              key={s.num}
-              animate={{
-                width: s.num === step ? 18 : 7,
-                background: s.num <= step ? BLUE_GRAD : 'rgba(255,255,255,0.12)',
-              }}
-              transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-              className="rounded-full"
-              style={{ height: 6 }}
-            />
-          ))}
-        </div>
-        <span className="text-sm font-bold text-center block mb-2" style={{ color: '#fff' }}>
-          {FORM_STEPS.find(s => s.num === step)!.label}
-        </span>
-      </div>
-
       <div className="flex-1 min-h-0 overflow-y-auto">
         <motion.div
-          key={step}
-          initial={{ opacity: 0, x: 14 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -14 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          key="form"
+          animate={shake ? { x: [0, -6, 6, -6, 6, 0] } : {}}
+          transition={{ duration: 0.4 }}
           className="py-1"
         >
-          {step === 1 ? formBody() : step === 2 ? renderStep2() : renderStep3()}
+          {error && (
+            <div className="mx-5 mb-3 px-4 py-2.5 rounded-xl text-[11px] font-semibold" style={{ background: 'rgba(244,56,67,0.12)', border: '1px solid rgba(244,56,67,0.35)', color: '#FF8A90' }}>
+              {error}
+            </div>
+          )}
+          {formBody()}
         </motion.div>
       </div>
 
       <div className="flex-shrink-0 px-5 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center justify-between">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handlePrev}
-            className="flex items-center gap-1 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
-            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}
-          >
-            <ArrowLeft size={14} />
-            {step === 1 ? 'Salir' : 'Atrás'}
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleNext}
-            className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-            style={{ background: BLUE_GRAD }}
-          >
-            {step === FORM_STEPS.length ? 'Finalizar' : 'Siguiente'}
-            <ArrowRight size={14} />
-          </motion.button>
-        </div>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={handleSubmit}
+          disabled={enviando}
+          className="w-full flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+          style={{ background: enviando ? 'rgba(255,255,255,0.15)' : BLUE_GRAD }}
+        >
+          {enviando ? 'Enviando registro...' : 'Enviar registro'}
+          <ArrowRight size={14} />
+        </motion.button>
       </div>
     </>
   )
 
-  const renderSuccess = () => (
+  const renderPendiente = () => (
     <div className="flex flex-col items-center justify-center flex-1 px-6 text-center">
       <div className="relative flex items-center justify-center mb-4">
         {[...Array(20)].map((_, i) => {
@@ -529,19 +542,21 @@ export function RegisterView({ onBack }: RegisterViewProps) {
           transition={{ type: 'spring', stiffness: 260, damping: 16 }}
         />
       </div>
-      <h2 className="text-lg font-extrabold" style={{ color: '#fff' }}>¡Felicidades, registro exitoso!</h2>
+      <h2 className="text-lg font-extrabold" style={{ color: '#fff' }}>¡Registro enviado!</h2>
       <p className="text-xs mt-2 leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-        Agenda tu cita para continuar con el proceso.
+        Tu cuenta está en estado <b style={{ color: '#FFC247' }}>pendiente</b>.
+        Habla con un administrador para activarla.
+        Tu contraseña temporal es tu número de documento.
       </p>
       <motion.button
         whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.96 }}
-        onClick={() => setPhase('schedule')}
+        onClick={onBack}
         className="mt-6 flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer"
         style={{ background: GREEN_GRAD }}
       >
-        <CalendarCheck size={16} />
-        Agendar cita
+        <ArrowLeft size={16} />
+        Volver al inicio
       </motion.button>
     </div>
   )
@@ -704,25 +719,19 @@ export function RegisterView({ onBack }: RegisterViewProps) {
           transition={{ duration: 0.25 }}
           className="flex flex-col flex-1 min-h-0"
         >
-          <motion.div
-            animate={shake ? { x: [0, -6, 6, -6, 6, 0] } : {}}
-            transition={{ duration: 0.4 }}
-            className="flex flex-col flex-1 min-h-0"
-          >
-            {renderForm()}
-          </motion.div>
+          {renderForm()}
         </motion.div>
       )}
-      {phase === 'success' && (
+      {phase === 'pendiente' && (
         <motion.div
-          key="success"
+          key="pendiente"
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.94 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col flex-1 min-h-0 pt-6"
         >
-          {renderSuccess()}
+          {renderPendiente()}
         </motion.div>
       )}
       {phase === 'schedule' && (

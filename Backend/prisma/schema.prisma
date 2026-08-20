@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ENUMS
@@ -81,11 +80,6 @@ enum EstadoMaquina {
   disponible
   mantenimiento
   sin_servicio
-}
-
-enum EstadoEjercicio {
-  activo
-  inactivo
 }
 
 enum NivelExperiencia {
@@ -172,6 +166,33 @@ enum GrupoMuscular {
   tren_inferior
 }
 
+enum Genero {
+  masculino
+  femenino
+  otro
+}
+
+enum GrupoSanguineo {
+  a_positivo
+  a_negativo
+  b_positivo
+  b_negativo
+  ab_positivo
+  ab_negativo
+  o_positivo
+  o_negativo
+}
+
+enum Parentesco {
+  padre
+  madre
+  hermano_a
+  abuelo_a
+  tio_a
+  primo_a
+  otro
+}
+
 // USUARIO
 
 model Usuario {
@@ -185,20 +206,20 @@ model Usuario {
   documento              String        @unique
   tipo_documento         TipoDocumento @default(CC)
   fecha_nacimiento       DateTime?
-  genero                 String?
+  genero                 Genero
+  genero_otro            String?
   rol                    Rol           @default(usuario)
   tipo_usuario           TipoUsuario   @default(estudiante)
   estado                 EstadoUsuario @default(pendiente)
   password_hash          String?
-  token_activacion       String?
-  token_expira           DateTime?
-  avatar                 String?
+  debe_cambiar_password  Boolean       @default(true) //primer login  
   eps                    String?
   eps_certificado        String?
-  grupo_sanguineo        String?
+  grupo_sanguineo        GrupoSanguineo?
   nombre_emergencia      String?
   telefono_emergencia    String?
-  parentesco_emergencia  String?
+  parentesco_emergencia  Parentesco?
+  parentesco_otro        String?
   fecha_creacion         DateTime      @default(now())
   fecha_modificacion     DateTime      @updatedAt
   parq_realizado         Boolean  @default(false)
@@ -212,6 +233,7 @@ model Usuario {
   huella                Huella?
   aceptaciones          AceptacionDocumento[]
   valoraciones_creadas  Valoracion[]    @relation("ValoracionCreador")
+  valoraciones          Valoracion[]    @relation("ValoracionUsuario")
   rutinas_creadas       Rutina[]        @relation("RutinaCreador")
   rutinas               Rutina[]        @relation("RutinaUsuario")
   asistencias           Asistencia[]
@@ -229,41 +251,40 @@ model Usuario {
 model Estudiante {
   id_estudiante  String               @id @default(uuid())
   id_usuario     String               @unique
-  id_programa    String?
-  numero_carnet  String?
+  id_programa    String       
+  numero_carnet  String?              @unique
   semestre       Int?
   modalidad      ModalidadEstudiante?
-  jornada        String?
+  jornada        JornadaEstudiante?
   es_egresado    Boolean              @default(false)
   fecha_creacion DateTime             @default(now())
 
   usuario      Usuario      @relation(fields: [id_usuario], references: [id_usuario])
-  programa     Programa?    @relation(fields: [id_programa], references: [id_programa])
-  valoraciones Valoracion[]
+  programa     Programa     @relation(fields: [id_programa], references: [id_programa])
 }
 
 model Profesor {
   id_profesor    String   @id @default(uuid())
   id_usuario     String   @unique
-  id_cargo       String?
-  id_area        String?
+  id_cargo       String
+  id_area        String
   fecha_creacion DateTime @default(now())
 
   usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
-  cargo   Cargo?  @relation(fields: [id_cargo], references: [id_cargo])
-  area    Area?   @relation(fields: [id_area], references: [id_area])
+  cargo   Cargo   @relation(fields: [id_cargo], references: [id_cargo])
+  area    Area    @relation(fields: [id_area], references: [id_area])
 }
 
 model Administrativo {
-  id_administrativo String   @id @default(uuid())
+  id_administrativo  String   @id @default(uuid())
   id_usuario         String   @unique
-  id_cargo           String?
-  id_area            String?
+  id_cargo           String
+  id_area            String
   fecha_creacion     DateTime @default(now())
 
   usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
-  cargo   Cargo?  @relation(fields: [id_cargo], references: [id_cargo])
-  area    Area?   @relation(fields: [id_area], references: [id_area])
+  cargo   Cargo   @relation(fields: [id_cargo], references: [id_cargo])
+  area    Area    @relation(fields: [id_area], references: [id_area])
 }
 
 // ACUDIENTE (para usuarios menores de edad)
@@ -322,7 +343,7 @@ model Huella {
   id_huella      String   @id @default(uuid())
   id_usuario     String   @unique
   id_sensor      Int      @unique
-  estado         Boolean  @default(true)
+  activo         Boolean  @default(true)
   fecha_creacion DateTime @default(now())
 
   usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
@@ -337,7 +358,7 @@ model Asistencia {
   hora_ingreso     DateTime
   hora_salida      DateTime?
   duracion_minutos Int?
-  estado           String    @default("activo")
+  activo           Boolean   @default(true)
   observaciones    String?
 
   usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
@@ -347,7 +368,7 @@ model Asistencia {
 
 model Valoracion {
   id_valoracion              String          @id @default(uuid())
-  id_estudiante              String
+  id_usuario                 String
   id_creador                 String
   fecha                      DateTime        @default(now())
   proxima_valoracion         DateTime?
@@ -361,7 +382,7 @@ model Valoracion {
   rutina                     Rutina?
   fecha_creacion             DateTime        @default(now())
         
-  estudiante                 Estudiante         @relation(fields: [id_estudiante], references: [id_estudiante])
+  usuario                    Usuario            @relation("ValoracionUsuario", fields: [id_usuario], references: [id_usuario])
   creador                    Usuario            @relation("ValoracionCreador", fields: [id_creador], references: [id_usuario])
   datos_medicos              DatosMedicos?
   medidas_corporales         MedidasCorporales?
@@ -402,7 +423,7 @@ model Ejercicio {
   grupos_musculares  GrupoMuscular[]
   nivel              NivelExperiencia @default(principiante)
   url_multimedia     String?
-  estado             EstadoEjercicio  @default(activo)
+  activo             Boolean   @default(true)
   fecha_creacion     DateTime  @default(now())
   fecha_modificacion DateTime  @updatedAt
 
@@ -481,7 +502,7 @@ model SesionRutina {
   id_usuario     String
   fecha          DateTime
   hora_inicio    DateTime
-  hora_fin       DateTime?
+  hora_fin       DateTime
   estado         EstadoSesionRutina @default(en_progreso)
   fecha_creacion DateTime           @default(now())
 
@@ -496,10 +517,11 @@ model Agenda {
   id_usuario         String
   id_creador         String
   id_cupo            String?      @unique
-  fecha              DateTime
-  hora_inicio        String
-  hora_fin           String
+  fecha              DateTime     @db.Date
+  hora_inicio        DateTime     @db.Time
+  hora_fin           DateTime     @db.Time
   tipo               TipoAgenda
+  tipo_otro          String?
   estado             EstadoAgenda @default(pendiente)
   observaciones      String?
   fecha_creacion     DateTime     @default(now())
@@ -511,15 +533,14 @@ model Agenda {
 }
 
 model Cupo{
-  id_cupo        String @id @default(uuid())
+  id_cupo        String   @id @default(uuid())
   id_creador     String 
-  fecha          DateTime
-  hora_inicio    String
-  hora_fin       String
-  reservado      Boolean @default(false)
+  fecha          DateTime @db.Date
+  hora_inicio    DateTime @db.Time
+  hora_fin       DateTime @db.Time
   fecha_creacion DateTime @default(now())
 
-  creador Usuario @relation(fields: [id_creador], references: [id_usuario])
+  creador Usuario         @relation(fields: [id_creador], references: [id_usuario])
   agenda Agenda?
 }
 
@@ -544,7 +565,7 @@ model DocumentoPersonal {
   nombre           String
   tipo             TipoDocPersonal
   url_archivo      String?
-  estado           String   @default("activo")
+  activo           Boolean  @default(true)
   fecha_creacion   DateTime @default(now())
 
   usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])

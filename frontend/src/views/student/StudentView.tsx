@@ -3,12 +3,16 @@ import { motion, AnimatePresence } from 'motion/react'
 import {
   Home, Dumbbell, Trophy, User, Flame, Zap, Target, Heart,
   Star, Lock, ChevronRight, Play, CheckCircle, TrendingUp,
-  Calendar, Brain, Award, Activity, Sparkles,
+  Calendar, Brain, Award, Activity, Sparkles, LogOut,
 } from 'lucide-react'
 
 const RED = '#E63946'
 const BLUE = '#007AFF'
 const YELLOW = '#F5A623'
+
+interface StudentViewProps {
+  onLogout: () => void
+}
 
 const todayWorkout = {
   name: 'Hipertrofia Superior',
@@ -73,7 +77,7 @@ function ActivityRing({ radius, value, max, color, strokeWidth = 8 }: {
 
 type MobileTab = 'home' | 'workout' | 'achievements' | 'profile'
 
-export function StudentView() {
+export function StudentView({ onLogout }: StudentViewProps) {
   const [tab, setTab] = useState<MobileTab>('home')
   const [workoutStarted, setWorkoutStarted] = useState(false)
 
@@ -100,6 +104,15 @@ export function StudentView() {
         <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#30D158' }} />
         <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>App Móvil Estudiante — Vista previa</span>
       </div>
+
+      <button
+        onClick={onLogout}
+        title="Cerrar sesión"
+        className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full flex items-center justify-center"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <LogOut size={15} style={{ color: 'rgba(255,255,255,0.5)' }} />
+      </button>
 
       <div
         className="relative flex flex-col overflow-hidden"
