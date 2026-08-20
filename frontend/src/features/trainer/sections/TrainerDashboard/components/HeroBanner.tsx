@@ -28,15 +28,15 @@ export default function HeroBanner() {
           }}
         />
       </div>
-      <div className="relative z-10 p-8 flex items-center min-h-[280px]">
-        <div className="flex items-center gap-5">
-          <div className="w-1 h-24 rounded-full" style={{ background: BLUE_GRAD }} />
-          <div>
-            <p className="text-[11px] font-bold tracking-[0.18em] uppercase" style={{ color: 'rgba(0,0,0,0.25)' }}>{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            <h1 className="mt-1.5" style={{ color: '#1A1A1E', fontSize: '2.8rem', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+      <div className="relative z-10 p-6 md:p-8 flex items-center min-h-[240px] md:min-h-[280px]">
+        <div className="flex items-center gap-4 md:gap-5 w-full">
+          <div className="w-1 h-20 md:h-24 rounded-full flex-shrink-0" style={{ background: BLUE_GRAD }} />
+          <div className="min-w-0">
+            <p className="text-[10px] md:text-[11px] font-bold tracking-[0.18em] uppercase mb-1 md:mb-1.5" style={{ color: 'rgba(0,0,0,0.25)' }}>{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <h1 className="text-2xl md:text-[2.8rem] font-extrabold leading-tight" style={{ color: '#1A1A1E', letterSpacing: '-0.04em' }}>
               Buenos días,
             </h1>
-            <h2 className="text-gradient-warm" style={{ fontSize: '2.8rem', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+            <h2 className="text-2xl md:text-[2.8rem] font-extrabold leading-tight text-gradient-warm" style={{ letterSpacing: '-0.04em' }}>
               Sebastián.
             </h2>
           </div>
