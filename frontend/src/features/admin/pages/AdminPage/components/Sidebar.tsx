@@ -16,27 +16,27 @@ export default function Sidebar({ expanded, section, onToggle, onSectionChange }
   if (isMobile) {
     return (
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 py-2"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 py-1"
         style={{
           background: 'linear-gradient(180deg, #0A1A3A 0%, #2A0A10 40%, #101014 65%, #2A1E08 100%)',
           borderTop: '1px solid rgba(255,255,255,0.04)',
           backdropFilter: 'blur(8px)',
         }}
       >
-        {sidebarItems.map((item, index) => (
+        {sidebarItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onSectionChange(item.id)}
             title={item.label}
-            className={`flex items-center justify-center gap-2 rounded-xl transition-all duration-300 ${
+            className={`flex flex-col items-center justify-center gap-1 rounded-xl transition-all duration-300 ${
               section === item.id
-                ? 'flex-1 py-2.5 px-3 bg-gradient-to-r from-red-500/30 to-purple-500/30 text-white shadow-[0_0_12px_rgba(228,35,50,0.4),0_0_24px_rgba(43,44,138,0.3)] scale-105'
-                : 'flex-1 py-2.5 px-3 text-white/50 hover:text-white hover:bg-white/10'
+                ? 'flex-1 py-2 px-3 bg-gradient-to-r from-red-500/30 to-purple-500/30 text-white shadow-[0_0_12px_rgba(228,35,50,0.4),0_0_24px_rgba(43,44,138,0.3)] scale-105'
+                : 'flex-1 py-2 px-3 text-white/50 hover:text-white hover:bg-white/10'
             }`}
             style={{ minWidth: 0 }}
           >
-            <item.icon size={22} className="flex-shrink-0" />
-            <span className="text-xs font-medium truncate">{item.label}</span>
+            <item.icon size={24} className="flex-shrink-0" />
+            <span className="text-[10px] font-medium truncate max-w-[60px]">{item.label}</span>
           </button>
         ))}
       </nav>
