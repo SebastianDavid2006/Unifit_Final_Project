@@ -3,9 +3,10 @@ import type { Student } from '@/modules/students/StudentProfileData'
 
 interface ContactCardProps {
   student: Student
+  className?: string
 }
 
-export function ContactCard({ student }: ContactCardProps) {
+export function ContactCard({ student, className = '' }: ContactCardProps) {
   const fields = [
     { label: 'Email', value: student.email },
     { label: 'Teléfono', value: student.phone },
@@ -14,7 +15,7 @@ export function ContactCard({ student }: ContactCardProps) {
   ]
 
   return (
-    <div className="rounded-[28px] p-5 cursor-default" style={{ gridColumn: '1', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
+    <div className={`rounded-[28px] p-5 cursor-default ${className}`} style={{ background: 'rgba(255,255,255,0.5)' }}>
       <div className="flex items-center gap-2.5 mb-3">
         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
         <div className="w-8 h-8 flex-shrink-0"><TelephoneView /></div>

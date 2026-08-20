@@ -3,9 +3,10 @@ import type { Student } from '@/modules/students/StudentProfileData'
 interface CurrentMetricsCardProps {
   student: Student
   imc: string
+  className?: string
 }
 
-export function CurrentMetricsCard({ student, imc }: CurrentMetricsCardProps) {
+export function CurrentMetricsCard({ student, imc, className = '' }: CurrentMetricsCardProps) {
   const metrics = [
     { label: 'Peso', value: `${student.weight} kg` },
     { label: 'Estatura', value: `${student.height} cm` },
@@ -16,7 +17,7 @@ export function CurrentMetricsCard({ student, imc }: CurrentMetricsCardProps) {
   ]
 
   return (
-    <div className="rounded-[28px] p-4 cursor-default" style={{ gridColumn: '3', gridRow: '2', background: 'rgba(255,255,255,0.5)' }}>
+    <div className={`rounded-[28px] p-4 cursor-default ${className}`} style={{ background: 'rgba(255,255,255,0.5)' }}>
       <div className="flex items-center gap-2.5 mb-3">
         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
         <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Métricas actuales</p>

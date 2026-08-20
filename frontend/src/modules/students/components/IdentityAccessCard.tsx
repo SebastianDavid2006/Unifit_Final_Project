@@ -9,8 +9,7 @@ import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_che
 interface Props {
   student: Student
   onUpdate: (patch: Partial<Student>) => void
-  gridColumn?: string
-  gridRow?: string
+  className?: string
 }
 
 const GREEN = '#22C55E'
@@ -19,7 +18,7 @@ const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 
 type FingerprintStatus = 'idle' | 'scanning' | 'captured'
 
-export function IdentityAccessCard({ student, onUpdate, gridColumn = '1 / -1', gridRow }: Props) {
+export function IdentityAccessCard({ student, onUpdate, className = '' }: Props) {
   const [sigOpen, setSigOpen] = useState(false)
   const [sigDrawn, setSigDrawn] = useState(false)
   const [sigSuccess, setSigSuccess] = useState(false)
@@ -68,10 +67,8 @@ export function IdentityAccessCard({ student, onUpdate, gridColumn = '1 / -1', g
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.3 }}
-      className="rounded-[28px] p-5"
+      className={`rounded-[28px] p-5 ${className}`}
       style={{
-        gridColumn,
-        gridRow,
         background: 'rgba(255,255,255,0.5)',
       }}
     >

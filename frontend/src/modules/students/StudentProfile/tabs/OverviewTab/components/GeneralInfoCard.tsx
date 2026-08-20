@@ -3,9 +3,10 @@ import type { Student } from '@/modules/students/StudentProfileData'
 
 interface GeneralInfoCardProps {
   student: Student
+  className?: string
 }
 
-export function GeneralInfoCard({ student }: GeneralInfoCardProps) {
+export function GeneralInfoCard({ student, className = '' }: GeneralInfoCardProps) {
   const fields = [
     { label: 'Documento', value: `${student.documentType}. ${student.documentNumber}` },
     { label: 'Fecha de nacimiento', value: student.birthDate },
@@ -13,7 +14,7 @@ export function GeneralInfoCard({ student }: GeneralInfoCardProps) {
   ]
 
   return (
-    <div className="rounded-[28px] p-4 cursor-default" style={{ gridColumn: '1', gridRow: '1', background: 'rgba(255,255,255,0.5)', height: '100%' }}>
+    <div className={`rounded-[28px] p-4 cursor-default ${className}`} style={{ background: 'rgba(255,255,255,0.5)', height: '100%' }}>
       <div className="flex items-center gap-2.5 mb-2">
         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
         <div className="w-8 h-8 flex-shrink-0"><StudentCardView /></div>

@@ -4,11 +4,12 @@ import type { Student } from '@/modules/students/StudentProfileData'
 interface StudentCenterSectionProps {
   student: Student
   onShowInfo: () => void
+  className?: string
 }
 
-export function StudentCenterSection({ student, onShowInfo }: StudentCenterSectionProps) {
+export function StudentCenterSection({ student, onShowInfo, className = '' }: StudentCenterSectionProps) {
   return (
-    <div className="flex flex-col items-center relative" style={{ gridColumn: '2', gridRow: '1 / 4', paddingTop: 16, alignSelf: 'stretch', overflow: 'visible' }}>
+    <div className={`flex flex-col items-center relative ${className}`} style={{ paddingTop: 16, alignSelf: 'stretch', overflow: 'visible' }}>
       <div
         className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3 relative z-10"
         style={{
