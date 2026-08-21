@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { DocumentSection } from './components/DocumentSection'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface Props {
   openMenuDoc: string | null
@@ -41,12 +42,13 @@ export function DocumentsTab({
   setFileModalData,
   setFileModalOpen,
 }: Props) {
+  const isMobile = useIsMobile()
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="max-w-[1200px] mx-auto grid grid-cols-3 gap-6 items-start"
+      className={`max-w-[1200px] mx-auto grid gap-6 items-start ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}
     >
       {SECTIONS.map((section, si) => (
         <DocumentSection

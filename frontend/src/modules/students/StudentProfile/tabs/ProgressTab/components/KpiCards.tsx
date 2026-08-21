@@ -5,6 +5,7 @@ import { ListView } from '@/assets/models/ui/objects/list/ListModel'
 import { CalendarView } from '@/assets/models/ui/objects/calendar/CalendarModel'
 import fireGif from '@/assets/icons/animated/fire.gif'
 import { cardStyle, historialAsistencia } from '@/modules/students/StudentProfileData'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
 
@@ -50,8 +51,9 @@ function getIcon(model: string) {
 }
 
 export function KpiCards() {
+  const isMobile = useIsMobile()
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-4'}`}>
       {items.map((m, idx) => {
         const esFuego = m.model === 'fire'
         return (

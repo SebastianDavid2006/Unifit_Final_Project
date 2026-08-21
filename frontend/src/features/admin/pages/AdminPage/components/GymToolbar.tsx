@@ -5,6 +5,7 @@ import GlassSearch from '@/features/admin/components/GlassSearch'
 import iconRunning from '@/assets/icons/animated/icon_running.gif'
 import { PILL_GRAD, EQUIP_GRAD, EQUIP_SHADOW } from '../data'
 import type { Student } from '@/data/students'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 export default function GymToolbar({
   gymSelectedStudent, gymStudentTab, onGymStudentTabChange, onGymBack,
@@ -33,6 +34,8 @@ export default function GymToolbar({
   equipViewMode: 'machines' | 'exercises'
   onEquipViewModeChange: (v: 'machines' | 'exercises') => void
 }) {
+  const isMobile = useIsMobile()
+
   return (
     <div className="flex-1 flex items-center justify-center gap-3 relative">
       {gymSelectedStudent ? (
@@ -77,31 +80,42 @@ export default function GymToolbar({
       ) : (
         <>
           {gymTab === 'students' && (
-            <div className="flex items-center gap-2 w-96 flex-shrink-0">
-              <GlassSearch
-                value={gymStudentSearch}
-                onChange={onGymStudentSearchChange}
-                focused={gymStudentSearchFocused}
-                onFocusChange={onGymStudentSearchFocusChange}
-                placeholder="Buscar por nombre o documento..."
-              />
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={onToggleGymStudentFilters}
-                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300"
-                style={{
-                  marginLeft: gymStudentSearchFocused ? 6 : 0,
-                  background: showGymStudentFilters ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)',
-                  backdropFilter: 'blur(24px) saturate(1.6)',
-                  border: showGymStudentFilters ? '1px solid rgba(255,255,255,0.6)' : '1px solid rgba(255,255,255,0.25)',
-                  boxShadow: showGymStudentFilters ? '0 4px 24px rgba(0,0,0,0.08)' : '0 4px 16px rgba(0,0,0,0.03)',
-                  color: showGymStudentFilters ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
-                }}
-              >
-                <Menu size={18} />
-              </motion.button>
-            </div>
+            <>
+              {isMobile && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-5">
+                  <button className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xl font-bold" style={{ background: 'linear-gradient(135deg, #1270B7, #7ec8e3)', boxShadow: '0 4px 16px rgba(18,112,183,0.35)' }}>
+                    +
+                  </button>
+                </div>
+              )}
+              <div className={`flex items-center gap-2 ${isMobile ? 'w-full' : 'w-96'} flex-shrink-0`}>
+                <GlassSearch
+                  value={gymStudentSearch}
+                  onChange={onGymStudentSearchChange}
+                  focused={gymStudentSearchFocused}
+                  onFocusChange={onGymStudentSearchFocusChange}
+                  placeholder="Buscar por nombre o documento..."
+                />
+                {!isMobile && (
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={onToggleGymStudentFilters}
+                    className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                    style={{
+                      marginLeft: gymStudentSearchFocused ? 6 : 0,
+                      background: showGymStudentFilters ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.15)',
+                      backdropFilter: 'blur(24px) saturate(1.6)',
+                      border: showGymStudentFilters ? '1px solid rgba(255,255,255,0.6)' : '1px solid rgba(255,255,255,0.25)',
+                      boxShadow: showGymStudentFilters ? '0 4px 24px rgba(0,0,0,0.08)' : '0 4px 16px rgba(0,0,0,0.03)',
+                      color: showGymStudentFilters ? '#1A1A1E' : 'rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    <Menu size={18} />
+                  </motion.button>
+                )}
+              </div>
+            </>
           )}
           {gymTab === 'equipment' && (
             <div className="flex items-center justify-center gap-3 relative">

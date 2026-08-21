@@ -5,6 +5,7 @@ import studentsImg from '@/assets/illustrations/characters/students/students_gro
 import NewStudentModal from './NewStudentModal'
 import RegistrationCompletionModal from './RegistrationCompletionModal'
 import type { Student } from '@/data/students'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function StudentsModule({ students, search, riskFilter, onSelectStudent, showFilters, onToggleFilters }: Props) {
+  const isMobile = useIsMobile()
   const [filterCategory, setFilterCategory] = useState<'status' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
   const [filterSearch, setFilterSearch] = useState('')
@@ -370,18 +372,20 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
 
         {/* Student list — blurred when filters are open */}
         <motion.div layout transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} style={{ filter: showFilters ? 'blur(4px)' : 'none', opacity: showFilters ? 0.5 : 1, transition: 'filter 0.3s ease, opacity 0.3s ease', pointerEvents: showFilters ? 'none' : 'auto' }}>
-          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
-            {tableHeaders.map((h, i) => (
-              <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
-            ))}
-            <div className="w-5" />
-          </div>
+          {!isMobile && (
+            <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
+              {tableHeaders.map((h, i) => (
+                <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
+              ))}
+              <div className="w-5" />
+            </div>
+          )}
 
           <div className="space-y-2">
             {paged.map((s, i) => {
               const isProcess = s.status === 'process'
               return (
-                <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => handleStudentClick(s)} whileHover={{ y: -3, scale: 1.002 }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer relative overflow-hidden" style={{
+                <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => handleStudentClick(s)} whileHover={{ y: -3, scale: 1.002 }} className={`rounded-2xl premium-card cursor-pointer relative overflow-hidden ${isMobile ? 'p-4 text-center' : 'grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4'}`} style={{
                   background: isProcess ? BLUE_GRAD : undefined,
                   color: isProcess ? '#FFFFFF' : undefined,
                   border: 'none',
@@ -397,22 +401,31 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
                       }}
                     />
                   )}
-                  <div className="flex items-center gap-4 min-w-0 relative z-10">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold truncate" style={{ color: isProcess ? '#FFFFFF' : '#1A1A1E' }}>{s.name}</p>
-                      <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
+                  {isMobile ? (
+                    <div className="relative z-10">
+                      <p className="text-lg font-bold truncate" style={{ color: isProcess ? '#FFFFFF' : '#1A1A1E' }}>{s.name}</p>
+                      <p className="text-xs font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
                     </div>
-                  </div>
-                  <p className="text-xs font-semibold" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.faculty}</p>
-                  <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : s.lastVisit}</p>
-                  <p className="text-xs font-bold" style={{ color: isProcess ? '#FFD6E0' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{s.nextAssessment}</p>
-                  <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : statusMap[s.status].bg, color: isProcess ? '#FFFFFF' : statusMap[s.status].color }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: isProcess ? '#FFFFFF' : statusMap[s.status].color }} />
-                    {statusMap[s.status].label}
-                  </span>
-                  <ChevronRight size={15} style={{ color: isProcess ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.12)' }} />
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-4 min-w-0 relative z-10">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold truncate" style={{ color: isProcess ? '#FFFFFF' : '#1A1A1E' }}>{s.name}</p>
+                          <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs font-semibold" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.faculty}</p>
+                      <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : s.lastVisit}</p>
+                      <p className="text-xs font-bold" style={{ color: isProcess ? '#FFD6E0' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{s.nextAssessment}</p>
+                      <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : statusMap[s.status].bg, color: isProcess ? '#FFFFFF' : statusMap[s.status].color }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: isProcess ? '#FFFFFF' : statusMap[s.status].color }} />
+                        {statusMap[s.status].label}
+                      </span>
+                      <ChevronRight size={15} style={{ color: isProcess ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.12)' }} />
+                    </>
+                  )}
                 </motion.div>
               )
             })}

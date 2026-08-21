@@ -8,6 +8,7 @@ import { Plus } from 'lucide-react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
 import { cardStyle, emptyValuationForm } from '@/modules/students/StudentProfileData'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface AssessmentDashboardProps {
   canCreateValuation: boolean
@@ -40,8 +41,10 @@ export function AssessmentDashboard({
   setValuationForm,
   setShowNewValuationModal,
 }: AssessmentDashboardProps) {
+  const isMobile = useIsMobile()
+  const cardCols = isMobile ? 'grid-cols-2' : (canCreateValuation ? 'grid-cols-4' : 'grid-cols-3')
   return (
-    <div className={`grid ${canCreateValuation ? 'grid-cols-4' : 'grid-cols-3'} gap-4`}>
+    <div className={`grid ${cardCols} gap-4`}>
       {items.map((m) => {
         const iconEl = getIcon(m.model)
         return (

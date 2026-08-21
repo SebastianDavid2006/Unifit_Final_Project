@@ -1,4 +1,5 @@
 import { Calendar } from 'lucide-react'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface AttendanceHeaderProps {
   vistaCalendario: 'semana' | 'mes' | 'año'
@@ -21,6 +22,9 @@ export function AttendanceHeader({
   formatWeekRange,
   monthNames,
 }: AttendanceHeaderProps) {
+  const isMobile = useIsMobile()
+  const views = isMobile ? ['semana'] : ['semana', 'mes', 'año']
+
   return (
     <div className="rounded-2xl" style={{
       background: '#FFFFFF',
@@ -34,22 +38,24 @@ export function AttendanceHeader({
           <Calendar size={16} style={{ color: '#E63946' }} />
           <h3 className="text-[#0D1B2A] text-sm font-bold whitespace-nowrap">Historial de Entradas y Salidas</h3>
         </div>
-        <div className="flex items-center gap-0.5 rounded-lg p-0.5 flex-shrink-0" style={{ background: 'rgba(0,0,0,0.04)' }}>
-          {(['semana', 'mes', 'año'] as const).map(v => (
-            <button
-              key={v}
-              onClick={() => setVistaCalendario(v)}
-              className="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
-              style={{
-                background: vistaCalendario === v ? RED_GRAD : 'transparent',
-                color: vistaCalendario === v ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-                boxShadow: vistaCalendario === v ? '0 2px 8px rgba(230,57,70,0.25)' : 'none',
-              }}
-            >
-              {v === 'semana' ? 'Semana' : v === 'mes' ? 'Mes' : 'Año'}
-            </button>
-          ))}
-        </div>
+        {!isMobile && (
+          <div className="flex items-center gap-0.5 rounded-lg p-0.5 flex-shrink-0" style={{ background: 'rgba(0,0,0,0.04)' }}>
+            {views.map(v => (
+              <button
+                key={v}
+                onClick={() => setVistaCalendario(v)}
+                className="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
+                style={{
+                  background: vistaCalendario === v ? RED_GRAD : 'transparent',
+                  color: vistaCalendario === v ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                  boxShadow: vistaCalendario === v ? '0 2px 8px rgba(230,57,70,0.25)' : 'none',
+                }}
+              >
+                {v === 'semana' ? 'Semana' : v === 'mes' ? 'Mes' : 'Año'}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex items-center gap-1 flex-1 justify-end">
           <button
             onClick={() => prevPeriod(vistaCalendario, currentDate)}
