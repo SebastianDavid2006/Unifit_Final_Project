@@ -13,7 +13,7 @@ export function StudentCenterSection({ student, onShowInfo, className = '' }: St
   return (
     <div className={`relative ${className}`} style={{ height: '100%', overflow: 'visible' }}>
       {!isMobile ? (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 16, position: 'relative' }}>
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 24, position: 'relative' }}>
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-4 relative z-10"
             style={{
@@ -27,10 +27,10 @@ export function StudentCenterSection({ student, onShowInfo, className = '' }: St
           >
             {student.avatar}
           </div>
-          <h2 className="text-[#0D1B2A] text-2xl font-bold text-center mb-4 relative z-10">
+          <h2 className="text-[#0D1B2A] text-2xl font-bold text-center mb-6 relative z-10">
             {[student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')}
           </h2>
-          <div className="absolute left-0 right-0 top-0 bottom-0 z-0 pointer-events-none" style={{ marginTop: 100, marginBottom: 70 }}>
+          <div className="absolute left-0 right-0 top-0 bottom-0 z-0 pointer-events-none" style={{ marginTop: 120, marginBottom: 90 }}>
             <video
               src="/student-body.webm"
               autoPlay loop muted playsInline preload="auto"
@@ -47,7 +47,7 @@ export function StudentCenterSection({ student, onShowInfo, className = '' }: St
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             onClick={onShowInfo}
-            className="relative z-10 px-6 py-2.5 rounded-2xl text-sm font-bold text-white cursor-pointer transition-all duration-200 hover:shadow-xl"
+            className="relative z-10 mt-auto mb-16 px-6 py-2.5 rounded-2xl text-sm font-bold text-white cursor-pointer transition-all duration-200 hover:shadow-xl"
             style={{
               background: `
                 radial-gradient(at 20% 20%, #F43843 0%, transparent 50%),
