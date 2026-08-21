@@ -1,427 +1,503 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronLeft, Dumbbell, Search, Filter, Star, Clock, Flame, Trophy, Target, Calendar, User, CheckCircle, ArrowRight } from 'lucide-react'
-import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
-import { useStudentApp } from '@/features/student/hooks/useStudentApp'
-import { useRoutines } from '@/features/student/hooks/useRoutines'
-import { RoutineCard } from '@/features/student/components/routine/RoutineCard'
-import { mockStudent } from '@/features/student/utils/mockData.tsx'
+import {
+  ChevronLeft, ChevronRight, Dumbbell, ClipboardCheck, Clock, Flame,
+  CheckCircle2, Circle, X, Trophy
+} from 'lucide-react'
+import { studentRoutines } from '@/features/student/utils/mockData'
 import { assessmentItems } from '@/modules/students/StudentProfileData'
+import type { StudentRoutine, ExerciseRow } from '@/features/student/types/student'
+import { SectionTitle, GradientBorder, cardStyle, FIRE, AMBER, BLUE, GREEN } from '@/features/student/components/ui/fitness'
+import { AssessmentDetail } from '@/features/student/components/ui/AssessmentDetail'
+import routineScene from '@/assets/scenes/physical_routine.webp'
+import legImg from '@/assets/icons/anatomy/leg.webp'
+import chestImg from '@/assets/icons/anatomy/chest.webp'
+import backImg from '@/assets/icons/anatomy/back.webp'
+import shouldersImg from '@/assets/icons/anatomy/shoulders.webp'
+import absImg from '@/assets/icons/anatomy/abs.webp'
+import armImg from '@/assets/icons/anatomy/arm.webp'
+import cardioImg from '@/assets/icons/anatomy/cardio.webp'
+import fullBodyImg from '@/assets/icons/anatomy/full-body.webp'
 
-const RED = '#E63946'
-const BLUE = '#007AFF'
-const YELLOW = '#F5A623'
-const GREEN = '#30D158'
-const DARK_BG = '#0A0A14'
+type View = 'list' | 'detail'
 
-const routineFilters = ['Todas', 'Activas', 'Completadas', 'Pendientes'] as const
-type RoutineFilter = typeof routineFilters[number]
+const PAGE_SIZE = 6
+
+const MUSCLE_IMG: Record<string, string> = {
+  Piernas: legImg, Glúteos: legImg, Cuádriceps: legImg, Isquiotibiales: legImg, Pantorrilla: legImg,
+  Pecho: chestImg,
+  Espalda: backImg, Dorsal: backImg,
+  Hombros: shouldersImg,
+  Core: absImg, Abdomen: absImg,
+  Brazos: armImg, Bíceps: armImg, Tríceps: armImg,
+  Cardio: cardioImg,
+  'Full body': fullBodyImg,
+}
+
+const levelColor: Record<string, string> = {
+  Principiante: GREEN,
+  Intermedio: BLUE,
+  Avanzado: FIRE,
+}
 
 export function RoutinesPage() {
-  const { isPhonePreview, isMobile } = useAuthLayout()
-  const { student } = useStudentApp()
-  const [filter, setFilter] = useState<'Todas' | 'Activas' | 'Completadas' | 'Pendientes'>('Todas')
-  const [search, setSearch] = useState('')
-  const [selectedRoutine, setSelectedRoutine] = useState<any>(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [view, setView] = useState<View>('list')
+  const [routine, setRoutine] = useState<StudentRoutine | null>(null)
+  const [detailTab, setDetailTab] = useState<'exercises' | 'assessment'>('exercises')
+  const [checked, setChecked] = useState<Record<string, number[]>>({})
+  const [completedRoutines, setCompletedRoutines] = useState<string[]>([])
+  const [selectedExercise, setSelectedExercise] = useState<{ ex: ExerciseRow; index: number } | null>(null)
+  const [page, setPage] = useState(1)
 
-  const routines = useRoutines(assessmentItems)
+  const totalPages = Math.max(1, Math.ceil(studentRoutines.length / PAGE_SIZE))
+  const visibleRoutines = studentRoutines.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  const filteredRoutines = routines.routines
-    .filter(r => {
-      if (filter === 'Activas' && r.progress.adherence < 100) return true
-      if (filter === 'Completadas' && r.progress.adherence >= 100) return true
-      if (filter === 'Pendientes' && r.progress.completedSessions === 0) return true
-      return filter === 'Todas'
+  const assessment = routine ? assessmentItems.find(a => a.num === routine.assessmentNum) : null
+
+  const openRoutine = (r: StudentRoutine) => {
+    setRoutine(r)
+    setDetailTab('exercises')
+    setView('detail')
+  }
+
+  const toggleExercise = (index: number) => {
+    if (!routine) return
+    setChecked(prev => {
+      const list = prev[routine.id] || []
+      return { ...prev, [routine.id]: list.includes(index) ? list.filter(i => i !== index) : [...list, index] }
     })
-    .filter(r =>
-      r.routine.name.toLowerCase().includes(search.toLowerCase()) ||
-      r.assessment.evaluator.toLowerCase().includes(search.toLowerCase())
-    )
+  }
 
-  return (
-    <div className="size-full flex items-center justify-center" style={{
-      background: 'radial-gradient(ellipse at 50% 30%, rgba(245,166,35,0.06) 0%, rgba(10,10,20,1) 60%)',
-    }}>
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-[0.03]" style={{
-          background: 'radial-gradient(circle, #F5A623, transparent 70%)',
-          animation: 'breathe 6s ease-in-out infinite',
-        }} />
-        <div className="absolute bottom-1/4 right-1/4 w-72 h-72 rounded-full opacity-[0.02]" style={{
-          background: 'radial-gradient(circle, #007AFF, transparent 70%)',
-          animation: 'breathe 8s ease-in-out infinite',
-          animationDelay: '-3s',
-        }} />
-      </div>
+  const checkedCount = routine ? (checked[routine.id] || []).length : 0
+  const isCompleted = routine ? completedRoutines.includes(routine.id) : false
 
-      <div
-        className="relative flex flex-col overflow-hidden"
-        style={{
-          width: '100%',
-          height: '100%',
-          borderRadius: 0,
-          background: DARK_BG,
-        }}
-      >
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-7 rounded-b-2xl z-50" style={{ background: 'rgba(0,0,0,0.85)' }}>
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-2.5 rounded-full" style={{ background: '#151520' }} />
+  const completeRoutine = () => {
+    if (!routine || isCompleted) return
+    setChecked(prev => ({ ...prev, [routine.id]: routine.rows.map((_, i) => i) }))
+    setCompletedRoutines(prev => [...prev, routine.id])
+  }
+
+  /* ---------------- LISTA ---------------- */
+  if (view === 'list' || !routine) {
+    return (
+      <div className="space-y-4">
+        <SectionTitle>Rutinas asignadas por tu entrenador</SectionTitle>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-5">
+          {visibleRoutines.map((r, i) => {
+            const done = completedRoutines.includes(r.id)
+            if (r.current) {
+              /* --- RUTINA ACTUAL: resaltada con borde gradiente --- */
+              return (
+                <motion.div key={r.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }} className="xl:col-span-2">
+                  <motion.button whileHover={{ y: -3 }} whileTap={{ scale: 0.985 }} onClick={() => openRoutine(r)} className="w-full text-left relative">
+                    <span
+                      className="absolute -top-3 left-5 z-10 px-3 py-1 rounded-full uppercase italic font-black tracking-widest"
+                      style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, color: '#fff', fontSize: 9.5, boxShadow: '0 8px 20px rgba(230,57,70,0.4)' }}
+                    >
+                      ★ Rutina actual
+                    </span>
+                    <GradientBorder radius={22}>
+                      <div className="p-5 pt-6">
+                        <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+                          <div className="min-w-0">
+                            <h3 className="uppercase italic font-black text-white truncate" style={{ fontSize: 19 }}>{r.name}</h3>
+                            <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5, marginTop: 3 }}>
+                              {r.focus} · Entrenador {assessmentItems.find(a => a.num === r.assessmentNum)?.evaluator}
+                            </p>
+                          </div>
+                          <span className="px-2.5 py-1 rounded-full uppercase tracking-wider font-black" style={{ background: levelColor[r.level] + '18', color: levelColor[r.level], fontSize: 9 }}>
+                            {r.level}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                          {[
+                            { v: r.duration, l: 'Duración', c: AMBER },
+                            { v: r.frequency, l: 'Frecuencia', c: BLUE },
+                            { v: `${r.progress.adherence}%`, l: 'Adherencia', c: GREEN },
+                            { v: `${r.progress.completedSessions}/${r.progress.totalSessions}`, l: 'Sesiones', c: FIRE },
+                          ].map((s, k) => (
+                            <div key={k} className="rounded-xl p-2.5 text-center" style={{ background: s.c + '10', border: `1px solid ${s.c}22` }}>
+                              <p style={{ color: s.c, fontSize: 13, fontWeight: 800 }}>{s.v}</p>
+                              <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 9 }}>{s.l}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="h-2 rounded-full overflow-hidden mb-4" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                          <div className="h-full rounded-full" style={{ width: `${(r.progress.completedSessions / r.progress.totalSessions) * 100}%`, background: `linear-gradient(90deg, ${FIRE}, ${AMBER})` }} />
+                        </div>
+
+                        <p className="flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11.5, fontWeight: 700 }}>
+                          <Dumbbell size={14} style={{ color: AMBER }} />
+                          {r.rows.length} ejercicios · Toca la tarjeta para entrar
+                          {done && <Trophy size={13} style={{ color: GREEN }} />}
+                        </p>
+                      </div>
+                    </GradientBorder>
+                  </motion.button>
+                </motion.div>
+              )
+            }
+            /* --- OTRAS RUTINAS --- */
+            return (
+              <motion.div key={r.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
+                <motion.button whileHover={{ y: -3 }} whileTap={{ scale: 0.985 }} onClick={() => openRoutine(r)} className="w-full text-left">
+                  <div className="rounded-[22px] p-5 h-full" style={cardStyle}>
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="min-w-0">
+                        <h3 className="uppercase italic font-black text-white truncate" style={{ fontSize: 16 }}>{r.name}</h3>
+                        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5, marginTop: 3 }}>{r.focus} · {assessmentItems.find(a => a.num === r.assessmentNum)?.date}</p>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full uppercase tracking-wider font-black flex-shrink-0" style={{ background: levelColor[r.level] + '18', color: levelColor[r.level], fontSize: 9 }}>
+                        {r.level}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      {[
+                        { v: r.duration, l: 'Duración', c: AMBER },
+                        { v: `${r.progress.adherence}%`, l: 'Adherencia', c: GREEN },
+                        { v: `${r.rows.length}`, l: 'Ejercicios', c: BLUE },
+                      ].map((s, k) => (
+                        <div key={k} className="rounded-xl p-2.5 text-center" style={{ background: s.c + '10', border: `1px solid ${s.c}22` }}>
+                          <p style={{ color: s.c, fontSize: 13, fontWeight: 800 }}>{s.v}</p>
+                          <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 9 }}>{s.l}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                      <div className="h-full rounded-full" style={{ width: `${(r.progress.completedSessions / r.progress.totalSessions) * 100}%`, background: `linear-gradient(90deg, rgba(255,255,255,0.35), rgba(245,166,35,0.7))` }} />
+                    </div>
+
+                    <p style={{ color: 'rgba(255,255,255,0.42)', fontSize: 11, fontWeight: 600 }}>
+                      Toca para ver detalles
+                    </p>
+                  </div>
+                </motion.button>
+              </motion.div>
+            )
+          })}
         </div>
 
-        <div className="flex-1 overflow-hidden pt-7">
-          <div className="px-5 pb-4 flex items-center justify-between">
-            <h1 className="text-white" style={{ fontSize: 20, fontWeight: 700 }}>Mis Rutinas</h1>
+        {/* Paginación */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-1.5 mt-8">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowCreateModal(true)}
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #F5A623, #E63946)', color: 'white', boxShadow: '0 4px 16px rgba(245,166,35,0.3)' }}
+              whileHover={page > 1 ? { scale: 1.08 } : undefined}
+              whileTap={page > 1 ? { scale: 0.92 } : undefined}
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: page === 1 ? 'rgba(255,255,255,0.2)' : '#fff',
+                cursor: page === 1 ? 'not-allowed' : 'pointer',
+              }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
+              <ChevronLeft size={17} />
+            </motion.button>
+            {Array.from({ length: totalPages }).map((_, i) => {
+              const active = page === i + 1
+              return (
+                <motion.button
+                  key={i}
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setPage(i + 1)}
+                  className="w-9 h-9 rounded-xl font-black transition-all"
+                  style={{
+                    background: active ? `linear-gradient(135deg, ${FIRE}, ${AMBER})` : 'rgba(255,255,255,0.05)',
+                    border: active ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                    color: active ? '#fff' : 'rgba(255,255,255,0.45)',
+                    fontSize: 13,
+                    boxShadow: active ? '0 6px 18px rgba(230,57,70,0.35)' : 'none',
+                  }}
+                >
+                  {i + 1}
+                </motion.button>
+              )
+            })}
+            <motion.button
+              whileHover={page < totalPages ? { scale: 1.08 } : undefined}
+              whileTap={page < totalPages ? { scale: 0.92 } : undefined}
+              disabled={page === totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: page === totalPages ? 'rgba(255,255,255,0.2)' : '#fff',
+                cursor: page === totalPages ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <ChevronRight size={17} />
             </motion.button>
           </div>
+        )}
+      </div>
+    )
+  }
 
-          <div className="flex-1 overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key="routines"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="h-full overflow-y-auto px-5 pb-20"
-              >
-                {/* Search */}
-                <div className="relative mb-4">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="M21 21l-4.35-4.35" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Buscar rutinas..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl text-sm"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'white', outline: 'none' }}
-                  />
-                </div>
+  /* ---------------- DETALLE ---------------- */
+  const progressPct = Math.round((checkedCount / routine.rows.length) * 100)
 
-                {/* Filters */}
-                <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                  {['Todas', 'Activas', 'Completadas', 'Pendientes'].map(f => (
-                    <motion.button
-                      key={f}
-                      onClick={() => setFilter(f as 'Todas' | 'Activas' | 'Completadas' | 'Pendientes')}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all"
-                      style={{
-                        background: filter === f ? 'rgba(245,166,35,0.15)' : 'transparent',
-                        color: filter === f ? '#F5A623' : 'rgba(255,255,255,0.35)',
-                        border: filter === f ? '1px solid rgba(245,166,35,0.25)' : '1px solid transparent',
-                      }}
-                    >
-                      {f}
-                    </motion.button>
-                  ))}
-                </div>
-
-                {/* Stats Summary */}
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  <div className="rounded-2xl p-3 text-center" style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.15)' }}>
-                    <p style={{ color: '#F5A623', fontSize: 18, fontWeight: 700 }}>24</p>
-                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>Sesiones Totales</p>
-                  </div>
-                  <div className="rounded-2xl p-3 text-center" style={{ background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.15)' }}>
-                    <p style={{ color: '#007AFF', fontSize: 18, fontWeight: 700 }}>92%</p>
-                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>Adherencia</p>
-                  </div>
-                  <div className="rounded-2xl p-3 text-center" style={{ background: 'rgba(48,209,88,0.08)', border: '1px solid rgba(48,209,88,0.15)' }}>
-                    <p style={{ color: '#30D158', fontSize: 18, fontWeight: 700 }}>12d</p>
-                    <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>Racha Actual</p>
-                  </div>
-                </div>
-
-                {/* Routines List */}
-                <div className="space-y-3">
-                  {routines.routines.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3" style={{ opacity: 0.3 }}>
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                      </svg>
-                      <p className="text-lg font-medium">No hay rutinas</p>
-                      <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Completa una valoración para generar tu rutina</p>
-                    </div>
-                  ) : (
-                    [
-                      {
-                        routine: {
-                          name: 'Hipertrofia Superior',
-                          duration: '60 min',
-                          frequency: '3 días/semana',
-                          level: 'Intermedio',
-                          rows: [
-                            { name: 'Sentadilla con barra', sets: '4x8-10', reps: '8-10', rest: '90 s', weight: '80 kg', muscle: 'Cuádriceps' },
-                            { name: 'Press de banca', sets: '4x8-10', reps: '8-10', rest: '90 s', weight: '70 kg', muscle: 'Pecho' },
-                            { name: 'Peso muerto', sets: '3x6-8', reps: '6-8', rest: '120 s', weight: '100 kg', muscle: 'Espalda' },
-                            { name: 'Dominadas', sets: '3x8-12', reps: '8-12', rest: '90 s', weight: 'Peso corporal', muscle: 'Dorsal' },
-                            { name: 'Press militar', sets: '3x10-12', reps: '10-12', rest: '90 s', weight: '50 kg', muscle: 'Hombros' },
-                          ]
-                        },
-                        assessment: {
-                          score: 87,
-                          date: '15 May 2026',
-                          evaluator: 'Carlos Ruiz',
-                          metrics: [
-                            { label: 'Peso', value: '72 kg' },
-                            { label: 'IMC', value: '23.4' },
-                            { label: 'Grasa Corporal', value: '18%' },
-                            { label: 'Masa Muscular', value: '32 kg' },
-                          ],
-                          objetivoDetalle: 'Incrementar masa muscular y mejorar la condición física general para competencias de fin de año.',
-                        },
-                        progress: { completedSessions: 8, totalSessions: 12, adherence: 78, lastSession: '2026-05-20' }
-                      },
-                      {
-                        routine: {
-                          name: 'Fuerza Tren Inferior',
-                          duration: '75 min',
-                          frequency: '3 días/semana',
-                          level: 'Avanzado',
-                          rows: [
-                            { name: 'Sentadilla libre', sets: '5x5', reps: '5', rest: '180 s', weight: '120 kg', muscle: 'Cuádriceps' },
-                            { name: 'Prensa de piernas', sets: '4x8', reps: '8', rest: '120 s', weight: '200 kg', muscle: 'Cuádriceps' },
-                            { name: 'Peso muerto rumano', sets: '4x6', reps: '6', rest: '120 s', weight: '140 kg', muscle: 'Isquiotibiales' },
-                            { name: 'Zancadas búlgaras', sets: '3x10', reps: '10', rest: '90 s', weight: '20 kg', muscle: 'Glúteos' },
-                            { name: 'Elevación de talones', sets: '4x15', reps: '15', rest: '60 s', weight: '40 kg', muscle: 'Pantorrilla' },
-                          ]
-                        },
-                        assessment: {
-                          score: 82,
-                          date: '20 Feb 2026',
-                          evaluator: 'Carlos Ruiz',
-                          metrics: [
-                            { label: 'Peso', value: '73 kg' },
-                            { label: 'IMC', value: '23.8' },
-                            { label: 'Grasa Corporal', value: '19%' },
-                            { label: 'Masa Muscular', value: '31 kg' },
-                          ],
-                          objetivoDetalle: 'Aumentar fuerza en tren inferior y mejorar los levantamientos básicos.',
-                        },
-                        progress: { completedSessions: 6, totalSessions: 12, adherence: 65, lastSession: '2026-05-15' }
-                      },
-                      {
-                        routine: {
-                          name: 'Acondicionamiento Full Body',
-                          duration: '45 min',
-                          frequency: '4 días/semana',
-                          level: 'Intermedio',
-                          rows: [
-                            { name: 'Burpees', sets: '4x10', reps: '10', rest: '60 s', weight: 'Peso corporal', muscle: 'Cardio' },
-                            { name: 'Kettlebell swings', sets: '4x15', reps: '15', rest: '60 s', weight: '24 kg', muscle: 'Glúteos' },
-                            { name: 'Push-ups', sets: '3x15', reps: '15', rest: '60 s', weight: 'Peso corporal', muscle: 'Pecho' },
-                            { name: 'Mountain climbers', sets: '3x30s', reps: '30s', rest: '60 s', weight: 'Peso corporal', muscle: 'Core' },
-                            { name: 'Plancha', sets: '3x60s', reps: '60s', rest: '60 s', weight: 'Peso corporal', muscle: 'Core' },
-                          ]
-                        },
-                        assessment: {
-                          score: 78,
-                          date: '10 Nov 2025',
-                          evaluator: 'Carlos Ruiz',
-                          metrics: [
-                            { label: 'Peso', value: '74 kg' },
-                            { label: 'IMC', value: '24.1' },
-                            { label: 'Grasa Corporal', value: '20%' },
-                            { label: 'Masa Muscular', value: '30 kg' },
-                          ],
-                          objetivoDetalle: 'Mejorar resistencia cardiovascular y bienestar general.',
-                        },
-                        progress: { completedSessions: 3, totalSessions: 16, adherence: 42, lastSession: '2026-05-10' }
-                      }
-                    ].map((routine, i) => (
-                      <motion.div
-                        key={routine.routine.name}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                      >
-                        <div
-                          className="flex flex-col p-4 rounded-2xl cursor-pointer transition-all"
-                          style={{
-                            background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.06)',
-                          }}
-                          onClick={() => setSelectedRoutine(routine)}
-                        >
-                          <div className="flex items-start justify-between gap-3 mb-3">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="text-white font-bold text-lg truncate mb-1">{routine.routine.name}</h3>
-                              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>Valoración: {routine.assessment.score}/100 · {routine.assessment.date}</p>
-                            </div>
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(245,166,35,0.15)', color: '#F5A623' }}>
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M5 12h14M12 19l-7-7 7-7" />
-                              </svg>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-3 mb-3">
-                            <div className="flex-1 rounded-xl p-3 text-center" style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.15)' }}>
-                              <p style={{ color: '#F5A623', fontSize: 16, fontWeight: 700 }}>{routine.routine.duration}</p>
-                              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>Duración</p>
-                            </div>
-                            <div className="flex-1 rounded-xl p-3 text-center" style={{ background: 'rgba(0,122,255,0.08)', border: '1px solid rgba(0,122,255,0.15)' }}>
-                              <p style={{ color: '#007AFF', fontSize: 16, fontWeight: 700 }}>{routine.routine.frequency}</p>
-                              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>Frecuencia</p>
-                            </div>
-                            <div className="flex-1 rounded-xl p-3 text-center" style={{ background: 'rgba(230,57,70,0.08)', border: '1px solid rgba(230,57,70,0.15)' }}>
-                              <p style={{ color: '#E63946', fontSize: 16, fontWeight: 700 }}>{routine.routine.level}</p>
-                              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>Nivel</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <span className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: '#30D158' }}>5</span>
-                              <span style={{ color: '#30D158', fontSize: 12, fontWeight: 600 }}>5 ejercicios</span>
-                            </div>
-                            <div className="flex items-center gap-1.5" style={{ color: '#30D158' }}>
-                              <span style={{ fontSize: 14, fontWeight: 700 }}>{routine.progress.adherence}%</span>
-                              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Adherencia</span>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            {routine.routine.rows.slice(0, 3).map((ex, idx) => (
-                              <div key={idx} className="flex items-center gap-3 p-2.5 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.03)' }}>
-                                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(48,209,88,0.1)', color: '#30D158' }}>
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-white font-medium text-sm truncate">{ex.name}</p>
-                                  <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>{ex.muscle} · {ex.sets}</p>
-                                </div>
-                              </div>
-                            ))}
-                            {routine.routine.rows.length > 3 && (
-                              <div className="text-center py-2" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>
-                                +{routine.routine.rows.length - 3} ejercicios más
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex items-center justify-between mt-4 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                            <div className="flex items-center gap-2" style={{ color: '#30D158' }}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                              <span style={{ fontSize: 12, fontWeight: 600 }}>Ver detalles y valoración</span>
-                            </div>
-                            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,166,35,0.15)', color: '#F5A623' }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 19l-7-7 7-7" /></svg>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))
-                  )}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+  return (
+    <div className="space-y-4">
+      {/* Header con volver */}
+      <div className="flex items-center gap-3">
+        <motion.button
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          onClick={() => setView('list')}
+          className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', color: '#fff' }}
+        >
+          <ChevronLeft size={20} />
+        </motion.button>
+        <div className="min-w-0">
+          <h2 className="uppercase italic font-black text-white truncate leading-tight" style={{ fontSize: 19 }}>{routine.name}</h2>
+          <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5 }}>
+            {routine.duration} · {routine.focus} · Entrenador {assessment?.evaluator}
+          </p>
         </div>
       </div>
 
-      {/* Routine Detail Modal */}
+      {/* Imagen default de la rutina */}
+      <div className="relative overflow-hidden rounded-3xl" style={{ height: 150, border: '1px solid rgba(255,255,255,0.09)' }}>
+        <img src={routineScene} alt="Rutina física" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: '50% 78%' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 20%, rgba(7,7,14,0.85))' }} />
+        <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-3">
+          <div>
+            <p className="uppercase italic font-black text-white" style={{ fontSize: 17, lineHeight: 1.1 }}>{routine.name}</p>
+            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 11 }}>{routine.frequency} · Nivel {routine.level.toLowerCase()}</p>
+          </div>
+          {routine.current && (
+            <span className="px-2.5 py-1 rounded-full uppercase italic font-black tracking-widest flex-shrink-0" style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, color: '#fff', fontSize: 8.5 }}>
+              Actual
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Selector: Ver rutina / Valoración física */}
+      <div className="grid grid-cols-2 gap-3">
+        {([
+          { id: 'exercises', label: 'Ver rutina', icon: Dumbbell },
+          { id: 'assessment', label: 'Valoración física', icon: ClipboardCheck },
+        ] as const).map(opt => {
+          const active = detailTab === opt.id
+          return (
+            <motion.button
+              key={opt.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setDetailTab(opt.id)}
+              className="flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl font-black uppercase tracking-wider transition-all"
+              style={{
+                background: active ? `linear-gradient(135deg, ${FIRE}, ${AMBER})` : 'rgba(255,255,255,0.04)',
+                border: active ? 'none' : '1px solid rgba(255,255,255,0.09)',
+                color: active ? '#fff' : 'rgba(255,255,255,0.45)',
+                fontSize: 11.5,
+                boxShadow: active ? '0 12px 30px rgba(230,57,70,0.3)' : 'none',
+              }}
+            >
+              <opt.icon size={16} />
+              {opt.label}
+            </motion.button>
+          )
+        })}
+      </div>
+
+      <AnimatePresence mode="wait">
+        {detailTab === 'exercises' ? (
+          /* --------- LISTA DE EJERCICIOS --------- */
+          <motion.div key="exercises" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
+            <div className="rounded-2xl p-4 flex items-center gap-4" style={cardStyle}>
+              <div className="flex-1">
+                <div className="flex justify-between mb-2" style={{ fontSize: 11 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>Ejercicios marcados</span>
+                  <span style={{ color: GREEN, fontWeight: 800 }}>{checkedCount}/{routine.rows.length}</span>
+                </div>
+                <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                  <motion.div animate={{ width: `${progressPct}%` }} className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${GREEN}, #7CE495)` }} />
+                </div>
+              </div>
+              {isCompleted && (
+                <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl" style={{ background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.3)' }}>
+                  <Trophy size={15} style={{ color: GREEN }} />
+                  <span style={{ color: GREEN, fontSize: 11, fontWeight: 800, whiteSpace: 'nowrap' }}>¡Completada!</span>
+                </div>
+              )}
+            </div>
+
+            {routine.rows.map((ex, i) => {
+              const isChecked = (checked[routine.id] || []).includes(i)
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -14 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <div
+                    className="rounded-2xl p-4 flex items-center gap-3.5 cursor-pointer transition-all"
+                    style={{
+                      ...cardStyle,
+                      borderColor: isChecked ? 'rgba(48,209,88,0.35)' : undefined,
+                      background: isChecked ? 'linear-gradient(160deg, rgba(48,209,88,0.07), rgba(255,255,255,0.015))' : cardStyle.background,
+                    }}
+                    onClick={() => setSelectedExercise({ ex, index: i })}
+                  >
+                    <button
+                      onClick={e => { e.stopPropagation(); toggleExercise(i) }}
+                      className="flex-shrink-0"
+                      aria-label={isChecked ? 'Desmarcar ejercicio' : 'Marcar ejercicio'}
+                    >
+                      <motion.div whileTap={{ scale: 0.82 }} animate={{ scale: isChecked ? [1, 1.25, 1] : 1 }}>
+                        {isChecked
+                          ? <CheckCircle2 size={30} style={{ color: GREEN }} strokeWidth={2.2} />
+                          : <Circle size={30} style={{ color: 'rgba(255,255,255,0.22)' }} strokeWidth={2.2} />}
+                      </motion.div>
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white truncate" style={{ fontSize: 14.5, textDecoration: isChecked ? 'line-through' : 'none', opacity: isChecked ? 0.65 : 1 }}>
+                        {i + 1}. {ex.name}
+                      </p>
+                      <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5, marginTop: 2 }}>
+                        {ex.muscle} · {ex.sets}×{ex.reps} · {ex.weight}
+                      </p>
+                    </div>
+
+                    <div className="hidden sm:block text-right flex-shrink-0">
+                      <p style={{ color: AMBER, fontSize: 13, fontWeight: 800 }}>{ex.sets} × {ex.reps}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10.5 }}>{ex.weight}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+
+            {/* Completar rutina */}
+            <motion.button
+              whileHover={isCompleted ? {} : { scale: 1.01 }}
+              whileTap={isCompleted ? {} : { scale: 0.98 }}
+              onClick={completeRoutine}
+              disabled={isCompleted}
+              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-black uppercase tracking-widest mt-2"
+              style={{
+                background: isCompleted ? 'rgba(48,209,88,0.14)' : `linear-gradient(135deg, ${GREEN}, #7CE495)`,
+                border: isCompleted ? '1px solid rgba(48,209,88,0.4)' : 'none',
+                color: isCompleted ? GREEN : '#052e12',
+                fontSize: 13,
+                boxShadow: isCompleted ? 'none' : '0 14px 40px rgba(48,209,88,0.3)',
+                cursor: isCompleted ? 'default' : 'pointer',
+              }}
+            >
+              <Trophy size={18} />
+              {isCompleted ? 'Rutina completada' : 'Completar rutina'}
+            </motion.button>
+          </motion.div>
+        ) : assessment ? (
+          /* --------- VALORACIÓN FÍSICA (datos reales del entrenador) --------- */
+          <motion.div key="assessment" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+            <div className="rounded-3xl p-5 md:p-6" style={cardStyle}>
+              <AssessmentDetail item={assessment} />
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
+      {/* Modal detalle de ejercicio */}
       <AnimatePresence>
-        {selectedRoutine && (
+        {selectedExercise && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
-            onClick={() => setSelectedRoutine(null)}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-6"
+            style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setSelectedExercise(null)}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
               onClick={e => e.stopPropagation()}
-              className="w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-3xl flex flex-col"
+              className="w-full md:max-w-lg max-h-[85vh] overflow-y-auto rounded-t-3xl md:rounded-3xl"
               style={{
-                background: '#0A0A14',
-                border: '1px solid rgba(255,255,255,0.08)',
-                boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
+                background: 'linear-gradient(165deg, #12121C, #0A0A14)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 -10px 80px rgba(0,0,0,0.6), 0 40px 100px rgba(230,57,70,0.12)',
               }}
             >
-              <div className="flex-1 overflow-hidden flex">
-                <div className="w-full md:w-1/2 flex flex-col overflow-hidden" style={{ borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div className="p-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <h3 className="text-white font-bold text-lg mb-2">Ejercicios</h3>
-                    <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-                      {selectedRoutine.routine.rows.map((ex: any, i: number) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.05 }}
-                          className="flex items-center gap-4 p-4 rounded-2xl"
-                          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}
-                        >
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(48,209,88,0.1)', color: '#30D158' }}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-semibold text-base truncate">{ex.name}</p>
-                            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>{ex.muscle} · {ex.sets} × {ex.reps} · Descanso {ex.rest}</p>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-white font-bold text-sm">{ex.sets} × {ex.reps}</p>
-                            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>{ex.weight}</p>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
+              <div className="relative p-6 pb-5" style={{ background: `linear-gradient(135deg, rgba(230,57,70,0.16), rgba(245,166,35,0.06))`, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                <button onClick={() => setSelectedExercise(null)} className="absolute top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center z-10" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)' }}>
+                  <X size={17} />
+                </button>
+                <div className="flex items-center gap-4">
+                  <div className="w-[104px] h-[104px] rounded-2xl flex-shrink-0 overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 12px 32px rgba(0,0,0,0.45)', background: '#0A0A14' }}>
+                    <img src={MUSCLE_IMG[selectedExercise.ex.muscle] || fullBodyImg} alt={selectedExercise.ex.muscle} className="w-full h-full object-cover" />
                   </div>
-
-                  <div className="w-full md:w-1/2 flex flex-col overflow-hidden">
-                    <div className="p-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                      <h3 className="text-white font-bold text-lg mb-2">Valoración Vinculada</h3>
-                      <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, #1270B710, rgba(10,10,20,0))', border: '1px solid #1270B720' }}>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span style={{ color: '#1270B7' }}>📊</span>
-                            <p style={{ color: 'white', fontSize: 13, fontWeight: 700 }}>Score: {selectedRoutine.assessment.score}/100</p>
-                          </div>
-                          <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: '#1270B720', color: '#1270B7' }}>{selectedRoutine.assessment.type}</span>
-                        </div>
-                        <p style={{ color: 'white', fontSize: 13, marginBottom: 12 }}>{selectedRoutine.assessment.objetivoDetalle}</p>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          {selectedRoutine.assessment.metrics.slice(0, 6).map((m: any, i: number) => (
-                            <div key={i} className="flex items-center justify-between py-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{m.label}</span>
-                              <span style={{ color: 'white', fontWeight: 600 }}>{m.value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                  <div className="min-w-0 pr-10">
+                    <p className="uppercase tracking-[0.25em]" style={{ fontSize: 9, fontWeight: 800, color: AMBER }}>
+                      Ejercicio {selectedExercise.index + 1} de {routine.rows.length}
+                    </p>
+                    <h3 className="uppercase italic font-black text-white mt-1 leading-tight" style={{ fontSize: 19 }}>{selectedExercise.ex.name}</h3>
+                    <span className="inline-block px-2.5 py-0.5 rounded-full mt-2 uppercase tracking-wider font-black" style={{ background: FIRE + '18', color: FIRE, fontSize: 8.5 }}>
+                      {selectedExercise.ex.muscle}
+                    </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-5" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                <button onClick={() => setSelectedRoutine(null)} className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
-                  Cerrar
-                </button>
-                <button className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #F5A623, #E63946)', boxShadow: '0 8px 24px rgba(245,166,35,0.3)' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                  Iniciar Rutina
-                </button>
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-3 gap-2.5">
+                  {[
+                    { icon: Flame, label: 'Series', value: selectedExercise.ex.sets, color: FIRE },
+                    { icon: ChevronRight, label: 'Reps', value: selectedExercise.ex.reps, color: AMBER },
+                    { icon: Clock, label: 'Descanso', value: selectedExercise.ex.rest, color: BLUE },
+                  ].map((s, i) => (
+                    <div key={i} className="rounded-2xl p-3.5 text-center" style={{ background: s.color + '10', border: `1px solid ${s.color}25` }}>
+                      <s.icon size={17} style={{ color: s.color, margin: '0 auto 6px' }} />
+                      <p className="text-white font-black" style={{ fontSize: 16 }}>{s.value}</p>
+                      <p className="uppercase" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between rounded-2xl p-4" style={cardStyle}>
+                  <span className="uppercase tracking-widest" style={{ fontSize: 9.5, fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>Carga / peso</span>
+                  <span className="text-white font-black" style={{ fontSize: 17 }}>{selectedExercise.ex.weight}</span>
+                </div>
+
+                <div className="rounded-2xl p-4" style={{ background: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.15)' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Dumbbell size={14} style={{ color: AMBER }} />
+                    <p className="uppercase tracking-widest" style={{ fontSize: 9.5, fontWeight: 800, color: AMBER }}>Técnica</p>
+                  </div>
+                  <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.7 }}>{selectedExercise.ex.instructions}</p>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => { toggleExercise(selectedExercise.index); setSelectedExercise(null) }}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black uppercase tracking-wider"
+                  style={{
+                    background: (checked[routine.id] || []).includes(selectedExercise.index) ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${GREEN}, #7CE495)`,
+                    color: (checked[routine.id] || []).includes(selectedExercise.index) ? 'rgba(255,255,255,0.55)' : '#052e12',
+                    fontSize: 12,
+                  }}
+                >
+                  {(checked[routine.id] || []).includes(selectedExercise.index)
+                    ? <><CheckCircle2 size={17} /> Marcado — desmarcar</>
+                    : <><CheckCircle2 size={17} /> Marcar como hecho</>}
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>

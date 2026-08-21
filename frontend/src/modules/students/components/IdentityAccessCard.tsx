@@ -70,6 +70,7 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
       className={`rounded-[28px] p-5 ${className}`}
       style={{
         background: 'rgba(255,255,255,0.5)',
+        height: '100%',
       }}
     >
       <div className="flex items-center gap-2.5 mb-4">

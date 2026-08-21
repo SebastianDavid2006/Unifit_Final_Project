@@ -15,7 +15,7 @@ export function ContactCard({ student, className = '' }: ContactCardProps) {
   ]
 
   return (
-    <div className={`rounded-[28px] p-5 cursor-default ${className}`} style={{ background: 'rgba(255,255,255,0.5)' }}>
+    <div className={`rounded-[28px] p-5 cursor-default ${className}`} style={{ background: 'rgba(255,255,255,0.5)', height: '100%' }}>
       <div className="flex items-center gap-2.5 mb-3">
         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
         <div className="w-8 h-8 flex-shrink-0"><TelephoneView /></div>

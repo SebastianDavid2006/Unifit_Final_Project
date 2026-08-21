@@ -8,6 +8,7 @@ export interface Student {
   firstName: string
   lastName: string
   email: string
+  gender: 'M' | 'F'
   avatar: string
   goal: string
   risk: 'low' | 'medium' | 'high'
@@ -105,4 +106,47 @@ export interface StatsCard {
 export interface NextSession {
   name: string
   date: string
+}
+
+export interface ExerciseRow {
+  name: string
+  sets: string
+  reps: string
+  rest: string
+  weight: string
+  muscle: string
+  instructions: string
+}
+
+export interface RoutineProgress {
+  completedSessions: number
+  totalSessions: number
+  adherence: number
+  lastSession: string | null
+}
+
+export interface StudentRoutine {
+  id: string
+  name: string
+  duration: string
+  frequency: string
+  level: 'Principiante' | 'Intermedio' | 'Avanzado'
+  focus: string
+  current?: boolean
+  rows: ExerciseRow[]
+  assessmentNum: number
+  progress: RoutineProgress
+}
+
+export interface AgendaSlot {
+  time: string
+  taken: boolean
+}
+
+export interface DayAvailability {
+  date: Date
+  isHoliday: boolean
+  holidayName?: string
+  isCoachDay: boolean
+  slots: AgendaSlot[]
 }

@@ -8,7 +8,7 @@ interface PhysicalGoalCardProps {
 
 export function PhysicalGoalCard({ student, className = '' }: PhysicalGoalCardProps) {
   return (
-    <div className={`rounded-[28px] p-5 relative overflow-hidden cursor-default ${className}`} style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))' }}>
+    <div className={`rounded-[28px] p-5 relative overflow-hidden cursor-default ${className}`} style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))', height: '100%' }}>
       <div className="absolute inset-0 pointer-events-none" style={{
         background: 'linear-gradient(110deg, transparent 25%, rgba(255,215,0,0.15) 37%, rgba(255,255,255,0.4) 50%, rgba(255,215,0,0.15) 63%, transparent 75%)',
         backgroundSize: '200% 100%',

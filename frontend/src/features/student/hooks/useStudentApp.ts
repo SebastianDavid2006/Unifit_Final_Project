@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useMemo } from 'react'
+import { createContext, useContext, useState, ReactNode, useMemo, createElement } from 'react'
 import { Student, TodayWorkout, CoachMessage, UpcomingSession, BodyComposition, NextSession, WeeklyProgress, Achievement, RankingItem, StatsCard, MobileTab } from '@/features/student/types/student'
 import { mockStudent, todayWorkout, weeklyProgress, achievements, ranking, coachMessage, upcomingSessions, bodyComposition, statsCards, nextSessions } from '@/features/student/utils/mockData.tsx'
 
@@ -40,25 +40,25 @@ export function StudentAppProvider(props: { children: ReactNode }) {
   const nextSessionsData = useMemo(() => nextSessions, [])
 
   const value = useMemo(() => ({
-    student: student[0],
+    student,
     tab: tab[0],
     setTab: tab[1],
-    todayWorkout: todayWorkoutData[0],
-    weeklyProgress: weeklyProgressData[0],
-    achievements: achievementsData[0],
-    ranking: rankingData[0],
-    coachMessage: coachMessageData[0],
-    upcomingSessions: upcomingSessionsData[0],
-    bodyComposition: bodyCompositionData[0],
-    statsCards: statsCardsData[0],
-    nextSessions: nextSessionsData[0],
+    todayWorkout: todayWorkoutData,
+    weeklyProgress: weeklyProgressData,
+    achievements: achievementsData,
+    ranking: rankingData,
+    coachMessage: coachMessageData,
+    upcomingSessions: upcomingSessionsData,
+    bodyComposition: bodyCompositionData,
+    statsCards: statsCardsData,
+    nextSessions: nextSessionsData,
     routinesWithAssessment: routinesWithAssessment[0],
     setRoutinesWithAssessment: routinesWithAssessment[1],
     workoutStarted: workoutStarted[0],
     setWorkoutStarted: workoutStarted[1],
   }), [tab[0], workoutStarted[0], routinesWithAssessment[0]])
 
-  return React.createElement(
+  return createElement(
     StudentAppContext.Provider,
     { value: value },
     props.children

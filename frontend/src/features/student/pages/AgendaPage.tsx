@@ -1,196 +1,519 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Calendar, ChevronLeft, ChevronRight, Clock, User } from 'lucide-react'
-import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
+import { ChevronLeft, ChevronRight, Lock, Clock, User, CalendarCheck, CheckCircle2, XCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-
-const RED = '#E63946'
-const BLUE = '#007AFF'
-const YELLOW = '#F5A623'
-const GREEN = '#30D158'
-const DARK_BG = '#0A0A14'
-
-const mockAppointments = [
-  { id: 1, title: 'Sesion Full Body', time: '07:00', duration: '60 min', trainer: 'Carlos Ruiz', type: 'workout', color: '#E63946' },
-  { id: 2, title: 'Valoracion Fisica', time: '09:00', duration: '45 min', trainer: 'Laura Gomez', type: 'assessment', color: '#1270B7' },
-  { id: 3, title: 'Sesion Cardio', time: '18:30', duration: '45 min', trainer: 'Ana', type: 'workout', color: '#30D158' },
-  { id: 4, title: 'Sesion Fuerza', time: '07:00', duration: '60 min', trainer: 'Carlos Ruiz', type: 'workout', color: '#E63946' },
-  { id: 5, title: 'Revision Progreso', time: '10:00', duration: '30 min', trainer: 'Laura Gomez', type: 'checkup', color: '#F5A623' },
-]
+import type { DayAvailability } from '@/features/student/types/student'
+import { SectionTitle, cardStyle, FIRE, AMBER, BLUE, GREEN } from '@/features/student/components/ui/fitness'
 
 const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-const weekDays = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
+const weekDaysShort = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+/* Horario del entrenador */
+const COACH_SCHEDULE: Record<number, string[]> = {
+  0: [],                                  // Domingo cerrado
+  1: ['06:00', '07:00', '08:00', '16:00', '17:00', '18:00'],
+  2: ['06:00', '07:00', '17:00', '18:00', '19:00'],
+  3: ['07:00', '08:00', '16:00', '17:00'],
+  4: ['06:00', '07:00', '08:00', '18:00', '19:00'],
+  5: ['06:00', '09:00', '10:00'],
+  6: ['09:00', '10:00'],                  // Sábado medio día
+}
+
+/* Festivos Colombia (Emiliani) — cálculo con Pascua */
+function easterSunday(year: number): Date {
+  const a = year % 19
+  const b = Math.floor(year / 100)
+  const c = year % 100
+  const d = Math.floor(b / 4)
+  const e = b % 4
+  const f = Math.floor((b + 8) / 25)
+  const g = Math.floor((b - f + 1) / 3)
+  const h = (19 * a + b - d - g + 15) % 30
+  const i = Math.floor(c / 4)
+  const k = c % 4
+  const l = (32 + 2 * e + 2 * i - h - k) % 7
+  const m = Math.floor((a + 11 * h + 22 * l) / 451)
+  const month = Math.floor((h + l - 7 * m + 114) / 31)
+  const day = ((h + l - 7 * m + 114) % 31) + 1
+  return new Date(year, month - 1, day)
+}
+
+function offset(d: Date, days: number): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days)
+}
+
+function colombianHolidays(year: number): Map<string, string> {
+  const map = new Map<string, string>()
+  const key = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+  const addFixed = (m: number, day: number, name: string, moveMonday: boolean) => {
+    let d = new Date(year, m, day)
+    if (moveMonday) d = offset(d, (8 - d.getDay()) % 7 || 7)
+    map.set(key(d), name)
+  }
+  const addEasterBased = (days: number, name: string, moveMonday: boolean) => {
+    let d = offset(easterSunday(year), days)
+    if (moveMonday) d = offset(d, (8 - d.getDay()) % 7 || 7)
+    map.set(key(d), name)
+  }
+  addFixed(0, 1, 'Año Nuevo', false)
+  addFixed(0, 6, 'Reyes Magos', true)
+  addFixed(2, 19, 'San José', true)
+  addFixed(4, 1, 'Día del Trabajo', false)
+  addFixed(6, 20, 'Independencia', false)
+  addFixed(7, 7, 'Batalla de Boyacá', false)
+  addEasterBased(-3, 'Jueves Santo', false)
+  addEasterBased(-2, 'Viernes Santo', false)
+  addEasterBased(43, 'Ascensión', true)
+  addEasterBased(64, 'Corpus Christi', true)
+  addEasterBased(71, 'Sagrado Corazón', true)
+  addFixed(7, 15, 'Asunción', true)
+  addFixed(9, 12, 'Día de la Raza', true)
+  addFixed(10, 1, 'Todos los Santos', true)
+  addFixed(10, 11, 'Independencia de Cartagena', true)
+  addFixed(11, 8, 'Inmaculada Concepción', false)
+  addFixed(11, 25, 'Navidad', false)
+  return map
+}
+
+/* Determinista: mismos cupos ocupados para una fecha */
+function hashDate(d: Date): number {
+  return (d.getDate() * 7 + (d.getMonth() + 1) * 13 + d.getFullYear() * 3) % 97
+}
+
+function getDayInfo(date: Date, holidays: Map<string, string>): DayAvailability {
+  const holidayName = holidays.get(`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`)
+  if (holidayName) return { date, isHoliday: true, holidayName, isCoachDay: false, slots: [] }
+  const times = COACH_SCHEDULE[date.getDay()] || []
+  if (times.length === 0) return { date, isHoliday: false, isCoachDay: false, slots: [] }
+  const takenCount = hashDate(date) % times.length // nunca todos ocupados salvo forzado abajo
+  const allFull = hashDate(date) % 11 === 5 // ~9% de días completamente llenos
+  const slots = times.map((time, i) => ({
+    time,
+    taken: allFull ? true : i < takenCount,
+  }))
+  return { date, isHoliday: false, isCoachDay: true, slots }
+}
 
 export function AgendaPage() {
-  const layout = useAuthLayout()
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [view, setView] = useState('month')
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const today = useMemo(() => new Date(), [])
+  const holidays = useMemo(() => {
+    const y = today.getFullYear()
+    const map = colombianHolidays(y)
+    ;[...colombianHolidays(y + 1).entries()].forEach(([k, v]) => map.set(k, v))
+    return map
+  }, [today])
+
+  const [currentDate, setCurrentDate] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1))
+  const [view, setView] = useState<'month' | 'week' | 'day'>('month')
+  const [selected, setSelected] = useState<DayAvailability | null>(null)
 
   const currentMonth = currentDate.getMonth()
   const currentYear = currentDate.getFullYear()
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1)
-  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0)
-  const startingDay = firstDayOfMonth.getDay()
-  const daysInMonth = lastDayOfMonth.getDate()
+  const startingDay = new Date(currentYear, currentMonth, 1).getDay()
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
 
-  const prevMonth = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
-  const nextMonth = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
-  const today = new Date()
+  const sameDay = (a: Date, b: Date) =>
+    a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()
 
-  const appointmentsForDate = (date: Date) => {
-    const day = date.getDate()
-    return mockAppointments.filter((_, i) => (i + 1) === day || (i + 1) === day + 7 || (i + 1) === day + 14)
+  const weekStart = (d: Date) => offset(d, -d.getDay())
+  const [weekOffset, setWeekOffset] = useState(0)
+
+  const infoFor = (d: Date) => getDayInfo(d, holidays)
+
+  const freeSlots = (info: DayAvailability) => info.slots.filter(s => !s.taken).length
+
+  /* ---- Panel de detalle del día (responsive: columna en desktop, sheet en mobile) ---- */
+  const DayDetail = ({ info }: { info: DayAvailability }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 14 }}
+      className="rounded-3xl overflow-hidden"
+      style={cardStyle}
+    >
+      <div className="p-5 pb-4" style={{ background: 'linear-gradient(135deg, rgba(230,57,70,0.14), rgba(245,166,35,0.05))', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="uppercase italic font-black text-white capitalize" style={{ fontSize: 17 }}>
+              {format(info.date, "EEEE d 'de' MMMM", { locale: es })}
+            </p>
+            {info.isHoliday ? (
+              <p style={{ color: AMBER, fontSize: 11.5, marginTop: 3 }}>Festivo: {info.holidayName}</p>
+            ) : info.isCoachDay ? (
+              <p style={{ color: freeSlots(info) > 0 ? GREEN : FIRE, fontSize: 11.5, marginTop: 3 }}>
+                {freeSlots(info) > 0 ? `${freeSlots(info)} cupos disponibles` : 'Sin cupos — agenda llena'}
+              </p>
+            ) : (
+              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5, marginTop: 3 }}>El entrenador no abre agenda este día</p>
+            )}
+          </div>
+          <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.55)' }}>
+            <XCircle size={17} />
+          </button>
+        </div>
+      </div>
+
+      {info.isCoachDay && (
+        <div className="p-4 space-y-2">
+          {info.slots.map((slot, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.04 }}
+              className="flex items-center gap-3 p-3 rounded-2xl"
+              style={{
+                background: slot.taken ? 'rgba(230,57,70,0.05)' : 'rgba(48,209,88,0.05)',
+                border: `1px solid ${slot.taken ? 'rgba(230,57,70,0.16)' : 'rgba(48,209,88,0.2)'}`,
+              }}
+            >
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: slot.taken ? 'rgba(230,57,70,0.1)' : 'rgba(48,209,88,0.1)' }}>
+                <Clock size={18} style={{ color: slot.taken ? FIRE : GREEN }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-bold" style={{ fontSize: 14 }}>{slot.time}</p>
+                <p style={{ color: slot.taken ? FIRE : GREEN, fontSize: 11 }}>
+                  {slot.taken ? 'Ocupado' : 'Disponible'}
+                </p>
+              </div>
+              {!slot.taken && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-2 rounded-xl font-black uppercase tracking-wider"
+                  style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 10 }}
+                >
+                  Reservar
+                </motion.button>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      )}
+      {info.isHoliday && (
+        <div className="flex flex-col items-center py-8" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <Lock size={34} style={{ color: AMBER, marginBottom: 10 }} />
+          <p style={{ fontSize: 12.5 }}>No hay atención en días festivos</p>
+        </div>
+      )}
+      {!info.isCoachDay && !info.isHoliday && (
+        <div className="flex flex-col items-center py-8" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <CalendarCheck size={34} style={{ marginBottom: 10, opacity: 0.4 }} />
+          <p style={{ fontSize: 12.5 }}>Descanso del entrenador</p>
+        </div>
+      )}
+    </motion.div>
+  )
+
+  /* ---------------- VISTA MES ---------------- */
+  const renderMonth = () => (
+    <motion.div key="month" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
+      <div className="flex items-center justify-between">
+        <button onClick={() => setCurrentDate(new Date(currentYear, currentMonth - 1, 1))} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
+          <ChevronLeft size={19} />
+        </button>
+        <h2 className="uppercase italic font-black text-white" style={{ fontSize: 18 }}>{monthNames[currentMonth]} {currentYear}</h2>
+        <button onClick={() => setCurrentDate(new Date(currentYear, currentMonth + 1, 1))} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
+          <ChevronRight size={19} />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 mb-1">
+        {weekDaysShort.map(day => (
+          <div key={day} className="h-8 flex items-center justify-center text-[10px] font-black uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.28)' }}>{day}</div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1.5">
+        {Array.from(Array(startingDay)).map((_, i) => <div key={'e' + i} />)}
+        {Array.from(Array(daysInMonth)).map((_, i) => {
+          const day = i + 1
+          const date = new Date(currentYear, currentMonth, day)
+          const info = getDayInfo(date, holidays)
+          const free = freeSlots(info)
+          const full = info.isCoachDay && free === 0
+          const sel = selected && sameDay(selected.date, date)
+          const isToday = sameDay(date, today)
+
+          return (
+            <motion.button
+              key={day}
+              whileTap={{ scale: 0.92 }}
+              disabled={info.isHoliday}
+              onClick={() => setSelected(sel ? null : info)}
+              className="relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all"
+              style={{
+                background: sel ? `linear-gradient(135deg, ${FIRE}, ${AMBER})`
+                  : full ? 'rgba(230,57,70,0.1)'
+                  : info.isCoachDay ? 'rgba(48,209,88,0.07)'
+                  : 'rgba(255,255,255,0.02)',
+                border: sel ? 'none'
+                  : full ? '1px solid rgba(230,57,70,0.35)'
+                  : info.isCoachDay ? '1px solid rgba(48,209,88,0.22)'
+                  : '1px solid rgba(255,255,255,0.05)',
+                cursor: info.isHoliday ? 'not-allowed' : 'pointer',
+                opacity: info.isHoliday ? 0.75 : 1,
+              }}
+            >
+              <span style={{
+                color: sel ? '#fff' : isToday ? AMBER : info.isHoliday ? 'rgba(255,255,255,0.4)' : 'white',
+                fontSize: 13,
+                fontWeight: isToday || sel ? 800 : 600,
+              }}>
+                {day}
+              </span>
+              {/* Subrayado de disponibilidad */}
+              {info.isCoachDay && (
+                <span className="absolute bottom-1.5 h-[3px] rounded-full transition-all" style={{
+                  width: sel ? 18 : 12,
+                  background: sel ? '#fff' : full ? FIRE : GREEN,
+                  boxShadow: !sel && !full ? '0 0 8px rgba(48,209,88,0.6)' : 'none',
+                }} />
+              )}
+              {info.isHoliday && <Lock size={10} style={{ position: 'absolute', bottom: 5, color: AMBER }} />}
+            </motion.button>
+          )
+        })}
+      </div>
+
+      {/* Leyenda */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-2 px-1">
+        {[
+          { color: GREEN, label: 'Cupos disponibles' },
+          { color: FIRE, label: 'Agenda llena' },
+          { color: AMBER, label: 'Festivo / bloqueado' },
+        ].map(l => (
+          <span key={l.label} className="flex items-center gap-1.5" style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.42)', fontWeight: 600 }}>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: l.color }} />
+            {l.label}
+          </span>
+        ))}
+      </div>
+    </motion.div>
+  )
+
+  /* ---------------- VISTA SEMANA ---------------- */
+  const baseWeek = weekStart(offset(currentDate, weekOffset * 7))
+  const renderWeek = () => (
+    <motion.div key="week" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
+      <div className="flex items-center justify-between">
+        <button onClick={() => setWeekOffset(w => w - 1)} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
+          <ChevronLeft size={19} />
+        </button>
+        <h2 className="uppercase italic font-black text-white text-center" style={{ fontSize: 15 }}>
+          {format(baseWeek, 'd MMM', { locale: es })} — {format(offset(baseWeek, 6), 'd MMM yyyy', { locale: es })}
+        </h2>
+        <button onClick={() => setWeekOffset(w => w + 1)} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
+          <ChevronRight size={19} />
+        </button>
+      </div>
+
+      <div className="space-y-2.5">
+        {[0, 1, 2, 3, 4, 5, 6].map(off => {
+          const date = offset(baseWeek, off)
+          const info = getDayInfo(date, holidays)
+          const free = freeSlots(info)
+          const full = info.isCoachDay && free === 0
+          const isToday = sameDay(date, today)
+
+          const statusColor = info.isHoliday ? AMBER : full ? FIRE : info.isCoachDay ? GREEN : 'rgba(255,255,255,0.25)'
+          const statusText = info.isHoliday ? 'Festivo' : full ? 'Lleno' : info.isCoachDay ? `${free} libres` : 'Descanso'
+
+          return (
+            <div
+              key={off}
+              className="rounded-2xl flex flex-col sm:flex-row overflow-hidden"
+              style={{
+                background: 'rgba(255,255,255,0.025)',
+                border: `1px solid ${statusColor}30`,
+                opacity: info.isHoliday ? 0.8 : 1,
+              }}
+            >
+              {/* Izquierda: día */}
+              <div
+                className="sm:w-[120px] flex-shrink-0 flex sm:flex-col items-center justify-center gap-1 py-3 px-3 relative"
+                style={{ background: statusColor + '10', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                {isToday && <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: AMBER }} />}
+                <span className="uppercase tracking-widest" style={{ fontSize: 9.5, fontWeight: 800, color: 'rgba(255,255,255,0.45)' }}>
+                  {weekDaysShort[date.getDay()]}
+                </span>
+                <span style={{ fontSize: 22, fontWeight: 900, lineHeight: 1, color: isToday ? AMBER : '#fff' }}>{date.getDate()}</span>
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full uppercase tracking-wider" style={{ fontSize: 8, fontWeight: 800, color: statusColor, background: statusColor + '15', marginTop: 3 }}>
+                  {info.isHoliday && <Lock size={8} />}
+                  {statusText}
+                </span>
+              </div>
+
+              {/* Derecha: horarios */}
+              <div className="flex-1 min-w-0 p-3 flex items-center">
+                {info.isHoliday ? (
+                  <p className="flex items-center gap-2 w-full justify-center py-2" style={{ color: 'rgba(255,255,255,0.38)', fontSize: 12 }}>
+                    <Lock size={13} style={{ color: AMBER }} />
+                    {info.holidayName} — el gimnasio no abre
+                  </p>
+                ) : !info.isCoachDay ? (
+                  <p className="w-full text-center py-2" style={{ color: 'rgba(255,255,255,0.28)', fontSize: 12 }}>El entrenador descansa este día</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2 w-full">
+                    {info.slots.map((s, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.94 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="flex items-center gap-2 pl-3 pr-1.5 py-1.5 rounded-xl"
+                        style={{
+                          background: s.taken ? 'rgba(230,57,70,0.07)' : 'rgba(48,209,88,0.07)',
+                          border: `1px solid ${s.taken ? 'rgba(230,57,70,0.22)' : 'rgba(48,209,88,0.22)'}`,
+                        }}
+                      >
+                        <Clock size={12} style={{ color: s.taken ? FIRE : GREEN }} />
+                        <span style={{ fontSize: 11.5, fontWeight: 700, color: s.taken ? 'rgba(255,255,255,0.35)' : '#fff', textDecoration: s.taken ? 'line-through' : 'none' }}>
+                          {s.time}
+                        </span>
+                        {!s.taken && (
+                          <button className="px-2 py-1 rounded-lg font-black uppercase tracking-wide transition-transform hover:scale-105" style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 8.5 }}>
+                            Reservar
+                          </button>
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </motion.div>
+  )
+
+  /* ---------------- VISTA DÍA ---------------- */
+  const renderDay = () => {
+    const info = getDayInfo(currentDate, holidays)
+    return (
+      <motion.div key="day" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
+        <div className="flex items-center justify-between">
+          <button onClick={() => setCurrentDate(d => offset(d, -1))} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
+            <ChevronLeft size={19} />
+          </button>
+          <h2 className="uppercase italic font-black text-white capitalize text-center" style={{ fontSize: 15 }}>
+            {format(currentDate, "EEEE d 'de' MMMM yyyy", { locale: es })}
+          </h2>
+          <button onClick={() => setCurrentDate(d => offset(d, 1))} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
+            <ChevronRight size={19} />
+          </button>
+        </div>
+
+        {info.isCoachDay && !info.isHoliday ? (
+          <div className="space-y-2">
+            {info.slots.map((slot, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="flex items-center gap-3 p-3.5 rounded-2xl"
+                style={{
+                  ...cardStyle,
+                  borderColor: slot.taken ? 'rgba(230,57,70,0.2)' : 'rgba(48,209,88,0.24)',
+                  background: slot.taken ? 'linear-gradient(160deg, rgba(230,57,70,0.06), rgba(255,255,255,0.015))' : 'linear-gradient(160deg, rgba(48,209,88,0.06), rgba(255,255,255,0.015))',
+                }}
+              >
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: slot.taken ? 'rgba(230,57,70,0.1)' : 'rgba(48,209,88,0.1)' }}>
+                  <Clock size={20} style={{ color: slot.taken ? FIRE : GREEN }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-black" style={{ fontSize: 15 }}>{slot.time}</p>
+                  <p style={{ color: slot.taken ? FIRE : GREEN, fontSize: 11 }}>{slot.taken ? 'Cupo ocupado' : 'Cupo libre'}</p>
+                </div>
+                {!slot.taken && (
+                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="px-4 py-2 rounded-xl font-black uppercase tracking-wider" style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 10 }}>
+                    Reservar
+                  </motion.button>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        ) : info.isHoliday ? (
+          <div className="flex flex-col items-center py-12 rounded-3xl" style={cardStyle}>
+            <Lock size={36} style={{ color: AMBER, marginBottom: 12 }} />
+            <p className="text-white font-bold" style={{ fontSize: 15 }}>Festivo — {info.holidayName}</p>
+            <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 12, marginTop: 4 }}>El gimnasio no abre hoy</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center py-12 rounded-3xl" style={cardStyle}>
+            <CalendarCheck size={36} style={{ marginBottom: 12, opacity: 0.4, color: 'rgba(255,255,255,0.5)' }} />
+            <p className="text-white font-bold" style={{ fontSize: 15 }}>Sin agenda este día</p>
+            <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 12, marginTop: 4 }}>El entrenador descansa</p>
+          </div>
+        )}
+      </motion.div>
+    )
   }
 
-  const isToday = (date: Date) => date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()
-
-  const isSelected = (date: Date) => selectedDate && date.getDate() === selectedDate.getDate() && date.getMonth() === selectedDate.getMonth() && date.getFullYear() === selectedDate.getFullYear()
-
   return (
-    <div className="size-full flex items-center justify-center" style={{ background: 'radial-gradient(ellipse at 50% 30%, rgba(245,166,35,0.06) 0%, rgba(10,10,20,1) 60%)' }}>
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-[0.03]" style={{ background: 'radial-gradient(circle, #F5A623, transparent 70%)', animation: 'breathe 6s ease-in-out infinite' }} />
-        <div className="absolute bottom-1/4 right-1/4 w-72 h-72 rounded-full opacity-[0.02]" style={{ background: 'radial-gradient(circle, #007AFF, transparent 70%)', animation: 'breathe 8s ease-in-out infinite', animationDelay: '-3s' }} />
-      </div>
-      <div className="relative flex flex-col overflow-hidden" style={{ width: '100%', height: '100%', borderRadius: 0, background: DARK_BG }}>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-7 rounded-b-2xl z-50" style={{ background: 'rgba(0,0,0,0.85)' }}>
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-2.5 rounded-full" style={{ background: '#151520' }} />
-        </div>
-        <div className="flex-1 overflow-hidden pt-7">
-          <div className="px-5 pb-4 flex items-center justify-between">
-            <h1 className="text-white" style={{ fontSize: 20, fontWeight: 700 }}>Agenda</h1>
-            <div className="flex items-center gap-1">
-              {['month', 'week', 'day'].map(v => (
-                <button key={v} onClick={() => setView(v)} className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
-                  style={{ background: view === v ? 'rgba(245,166,35,0.15)' : 'transparent', color: view === v ? '#F5A623' : 'rgba(255,255,255,0.35)', border: view === v ? '1px solid rgba(245,166,35,0.25)' : '1px solid transparent' }}>
-                  {v === 'month' ? 'Mes' : v === 'week' ? 'Semana' : 'Dia'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <AnimatePresence mode="wait">
-            {view === 'month' && (
-              <motion.div key="month" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto px-5 pb-20">
-                <div className="flex items-center justify-between mb-4">
-                  <motion.button whileTap={{ scale: 0.95 }} onClick={prevMonth} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-                  </motion.button>
-                  <div className="flex-1 text-center"><h2 className="text-white" style={{ fontSize: 20, fontWeight: 700 }}>{monthNames[currentMonth]} {currentYear}</h2></div>
-                  <motion.button whileTap={{ scale: 0.95 }} onClick={nextMonth} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-                  </motion.button>
-                </div>
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                  {weekDays.map(day => <div key={day} className="h-8 flex items-center justify-center text-xs font-bold" style={{ color: 'rgba(255,255,255,0.3)' }}>{day}</div>)}
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {Array.from(Array(startingDay)).map((_, i) => <div key={'empty-' + i} className="aspect-square" />)}
-                  {Array.from(Array(daysInMonth)).map((_, i) => {
-                    const day = i + 1
-                    const date = new Date(currentYear, currentMonth, day)
-                    const appointments = appointmentsForDate(date)
-                    return (
-                      <motion.button key={day} onClick={() => setSelectedDate(date)} whileTap={{ scale: 0.95 }} className="relative aspect-square rounded-xl flex flex-col items-start justify-start p-2"
-                        style={{ background: isSelected(date) ? '#F5A62320' : isToday(date) ? '#F5A62310' : 'rgba(255,255,255,0.02)', border: isSelected(date) ? '1px solid #F5A623' : isToday(date) ? '1px solid #F5A623' : '1px solid rgba(255,255,255,0.04)' }}>
-                        <span style={{ color: isToday(date) ? '#F5A623' : isSelected(date) ? '#F5A623' : 'white', fontSize: 13, fontWeight: isToday(date) || isSelected(date) ? 700 : 500 }}>{day}</span>
-                        <div className="mt-1 flex flex-col gap-1 max-h-16 overflow-hidden">
-                          {appointments.slice(0, 3).map((apt, idx) => <div key={idx} className="text-[9px] px-1.5 py-0.5 rounded truncate" style={{ background: apt.color + '20', color: apt.color, fontSize: 8, fontWeight: 600 }}>{apt.time} {apt.title}</div>)}
-                          {appointments.length > 3 && <div className="text-[9px] text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>+{appointments.length - 3} mas</div>}
-                        </div>
-                      </motion.button>
-                    )
-                  })}
-                </div>
-              </motion.div>
-            )}
-            {view === 'week' && (
-              <motion.div key="week" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto px-5 pb-20">
-                <div className="flex items-center justify-between mb-4">
-                  <motion.button whileTap={{ scale: 0.95 }} onClick={prevMonth} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-                  </motion.button>
-                  <div className="flex-1 text-center"><h2 className="text-white" style={{ fontSize: 20, fontWeight: 700 }}>Semana {format(currentDate, 'w', { locale: es })} {format(currentDate, 'MMMM yyyy', { locale: es })}</h2></div>
-                  <button className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-                  </button>
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {[0, 1, 2, 3, 4, 5, 6].map(offset => {
-                    const date = new Date(currentDate)
-                    date.setDate(currentDate.getDate() - currentDate.getDay() + offset)
-                    const appointments = appointmentsForDate(date)
-                    const isTodayDate = isToday(date)
-                    return (
-                      <motion.div key={offset} className="flex flex-col h-72 overflow-hidden rounded-2xl" style={{ background: isToday(date) ? '#F5A62310' : 'rgba(255,255,255,0.02)', border: isToday(date) ? '1px solid #F5A623' : '1px solid rgba(255,255,255,0.04)' }}>
-                        <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                          <span style={{ color: isToday(date) ? '#F5A623' : 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600 }}>{weekDays[date.getDay()]}</span>
-                          <span style={{ color: isToday(date) ? '#F5A623' : 'white', fontSize: 16, fontWeight: 700 }}>{date.getDate()}</span>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                          {appointments.map((apt, idx) => (
-                            <div key={idx} className="px-2 py-1.5 rounded-xl text-xs" style={{ background: apt.color + '20', color: apt.color, fontSize: 10, fontWeight: 600 }}>
-                              <div className="flex items-center gap-1 mb-0.5"><span>{apt.time}</span><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9 }}>{apt.duration}</span></div>
-                              <div className="truncate font-medium">{apt.title}</div>
-                              <div className="flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 8 }}><User size={8} />{apt.trainer}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              </motion.div>
-            )}
-            {view === 'day' && (
-              <motion.div key="day" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto px-5 pb-20">
-                <div className="flex items-center justify-between mb-4">
-                  <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCurrentDate(d => { const nd = new Date(d); nd.setDate(nd.getDate() - 1); return nd })} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-                  </motion.button>
-                  <div className="flex-1 text-center"><h2 className="text-white" style={{ fontSize: 20, fontWeight: 700 }}>{format(currentDate, 'EEEE, d MMMM yyyy', { locale: es })}</h2></div>
-                  <button className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                    <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {mockAppointments.map((apt, idx) => (
-                    <motion.div key={idx} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }} className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: apt.color + '15', color: apt.color }}><Clock size={20} /></div>
-                      <div className="flex-1 min-w-0"><p className="text-white font-semibold truncate">{apt.title}</p><p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{apt.time} · {apt.duration}</p></div>
-                      <div className="flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}><User size={14} />{apt.trainer}</div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-            {selectedDate && (
-              <AnimatePresence>
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-0 left-0 right-0 z-40">
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="fixed bottom-0 left-0 right-0 z-40 rounded-t-3xl p-5 max-h-[60vh] overflow-y-auto" style={{ background: '#0A0A14', borderTop: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 -10px 40px rgba(0,0,0,0.3)' }}>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-white font-bold">Citas para {format(selectedDate, 'EEEE, d MMMM', { locale: es })}</h3>
-                      <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setSelectedDate(null)} className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.5)' }}>
-                        <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
-                      </motion.button>
-                    </div>
-                    <div className="space-y-2">
-                      {appointmentsForDate(selectedDate).map((apt, idx) => (
-                        <motion.div key={idx} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }} className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: apt.color + '10', border: '1px solid ' + apt.color + '20' }}>
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: apt.color + '15', color: apt.color }}><Clock size={20} /></div>
-                          <div className="flex-1 min-w-0"><p className="text-white font-semibold truncate">{apt.title}</p><p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>{apt.time} · {apt.duration}</p></div>
-                          <div className="flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}><User size={14} />{apt.trainer}</div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </motion.div>
-                </motion.div>
-              </AnimatePresence>
-            )}
-          </AnimatePresence>
+    <div className="space-y-4">
+      <SectionTitle>Disponibilidad del entrenador</SectionTitle>
+
+      {/* Switch de vista */}
+      <div className="flex justify-center">
+        <div className="inline-flex rounded-2xl p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          {(['month', 'week', 'day'] as const).map(v => (
+            <button
+              key={v}
+              onClick={() => { setView(v); setSelected(null) }}
+              className="px-4 md:px-5 py-2 rounded-xl font-black uppercase tracking-wider transition-all"
+              style={{
+                background: view === v ? `linear-gradient(135deg, ${FIRE}, ${AMBER})` : 'transparent',
+                color: view === v ? '#fff' : 'rgba(255,255,255,0.4)',
+                fontSize: 10.5,
+                boxShadow: view === v ? '0 8px 20px rgba(230,57,70,0.3)' : 'none',
+              }}
+            >
+              {v === 'month' ? 'Mes' : v === 'week' ? 'Semana' : 'Día'}
+            </button>
+          ))}
         </div>
       </div>
+
+      <AnimatePresence mode="wait">
+        {view === 'month' && renderMonth()}
+        {view === 'week' && renderWeek()}
+        {view === 'day' && renderDay()}
+      </AnimatePresence>
+
+      {/* Detalle del día: modal solo en vista mes */}
+      <AnimatePresence>
+        {selected && view === 'month' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-6"
+            style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setSelected(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              className="w-full md:max-w-md max-h-[80vh] overflow-y-auto rounded-t-3xl md:rounded-3xl"
+              style={{
+                background: 'linear-gradient(165deg, #12121C, #0A0A14)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 -10px 80px rgba(0,0,0,0.6)',
+              }}
+            >
+              <DayDetail info={selected} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

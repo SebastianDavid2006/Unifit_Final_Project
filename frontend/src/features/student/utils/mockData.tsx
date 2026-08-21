@@ -1,4 +1,4 @@
-import { Student, TodayWorkout, WeeklyProgress, Achievement, RankingItem, CoachMessage, UpcomingSession, BodyComposition, StatsCard, NextSession } from '@/features/student/types/student'
+import { Student, TodayWorkout, WeeklyProgress, Achievement, RankingItem, CoachMessage, UpcomingSession, BodyComposition, StatsCard, NextSession, StudentRoutine } from '@/features/student/types/student'
 import { Dumbbell, Flame, Trophy, Star, Zap, Heart, Calendar, Brain, Award, Activity, Sparkles, Target } from 'lucide-react'
 
 export const mockStudent: Student = {
@@ -7,6 +7,7 @@ export const mockStudent: Student = {
   firstName: 'Ana',
   lastName: 'García Martínez',
   email: 'ana.garcia@universitaria.edu.co',
+  gender: 'F',
   avatar: 'AG',
   goal: 'Pérdida de peso',
   risk: 'low',
@@ -98,4 +99,173 @@ export const statsCards: StatsCard[] = [
 export const nextSessions: NextSession[] = [
   { name: 'Full Body', date: 'Mañana, 7:00 AM' },
   { name: 'Valoración física', date: 'Lunes, 9:00 AM' },
+]
+
+export const motivationalQuotes = [
+  'EL ÚNICO ENTRENAMIENTO MALO ES EL QUE NO HICISTE',
+  'MÁS FUERTE QUE AYER',
+  'EL DOLOR DE HOY ES EL PODER DE MAÑANA',
+  'TU ÚNICO LÍMITE ERES TÚ',
+]
+
+export const studentRoutines: StudentRoutine[] = [
+  {
+    id: 'hipertrofia-superior',
+    name: 'Hipertrofia Superior',
+    duration: '60 min',
+    frequency: '3 días/semana',
+    level: 'Intermedio',
+    focus: 'Tren superior',
+    current: true,
+    rows: [
+      { name: 'Sentadilla con barra', sets: '4', reps: '8-10', rest: '90 s', weight: '80 kg', muscle: 'Cuádriceps', instructions: 'Barra alta en trapecio, pies al ancho de hombros. Baja hasta que el fémur quede paralelo al suelo manteniendo la espalda recta y el pecho arriba. Empuja con todo el pie al subir.' },
+      { name: 'Press de banca', sets: '4', reps: '8-10', rest: '90 s', weight: '70 kg', muscle: 'Pecho', instructions: 'Escápulas retraídas y pies firmes. Baja la barra controlado hasta el pecho medio y empuja explosivamente sin bloquear los codos bruscamente.' },
+      { name: 'Peso muerto', sets: '3', reps: '6-8', rest: '120 s', weight: '100 kg', muscle: 'Espalda', instructions: 'Barra sobre el medio del pie, agarre firme y espalda neutra. Extiende cadera y rodillas simultáneamente manteniendo la barra pegada al cuerpo.' },
+      { name: 'Dominadas', sets: '3', reps: '8-12', rest: '90 s', weight: 'Peso corporal', muscle: 'Dorsal', instructions: 'Agarre prono ligeramente más ancho que los hombros. Sube llevando el pecho a la barra y baja controlado en 2-3 segundos.' },
+      { name: 'Press militar', sets: '3', reps: '10-12', rest: '90 s', weight: '50 kg', muscle: 'Hombros', instructions: 'De pie, core apretado y glúteos activos. Empuja la barra verticalmente pasando la cabeza al final, sin arquear la lumbar.' },
+    ],
+    assessmentNum: 1,
+    progress: { completedSessions: 8, totalSessions: 12, adherence: 78, lastSession: '2026-05-20' },
+  },
+  {
+    id: 'fuerza-tren-inferior',
+    name: 'Fuerza Tren Inferior',
+    duration: '75 min',
+    frequency: '3 días/semana',
+    level: 'Avanzado',
+    focus: 'Piernas y glúteos',
+    rows: [
+      { name: 'Sentadilla libre', sets: '5', reps: '5', rest: '180 s', weight: '120 kg', muscle: 'Cuádriceps', instructions: 'Fuerza pura: series pesadas de 5 repeticiones. Descansa completo entre series y mantén técnica impecable sobre volumen.' },
+      { name: 'Prensa de piernas', sets: '4', reps: '8', rest: '120 s', weight: '200 kg', muscle: 'Cuádriceps', instructions: 'Pies a ancho de hombros en la plataforma. Baja hasta 90 grados sin despegar la zona lumbar del respaldo.' },
+      { name: 'Peso muerto rumano', sets: '4', reps: '6', rest: '120 s', weight: '140 kg', muscle: 'Isquiotibiales', instructions: 'Rodillas semiflexionadas fijas. Lleva la cadera hacia atrás sintiendo el estiramiento de isquios y sube contrayendo glúteo.' },
+      { name: 'Zancadas búlgaras', sets: '3', reps: '10', rest: '90 s', weight: '20 kg', muscle: 'Glúteos', instructions: 'Pie trasero elevado en banco. Baja vertical controlando el equilibrio; el peso cae sobre la pierna adelantada.' },
+      { name: 'Elevación de talones', sets: '4', reps: '15', rest: '60 s', weight: '40 kg', muscle: 'Pantorrilla', instructions: 'Rango completo: estira abajo, contrae arriba y pausa 1 segundo en la cima para máximo estímulo.' },
+    ],
+    assessmentNum: 2,
+    progress: { completedSessions: 6, totalSessions: 12, adherence: 65, lastSession: '2026-05-15' },
+  },
+  {
+    id: 'acondicionamiento-full-body',
+    name: 'Acondicionamiento Full Body',
+    duration: '45 min',
+    frequency: '4 días/semana',
+    level: 'Intermedio',
+    focus: 'Cardio y resistencia',
+    rows: [
+      { name: 'Burpees', sets: '4', reps: '10', rest: '60 s', weight: 'Peso corporal', muscle: 'Cardio', instructions: 'Flexión + salto explosivo. Mantén ritmo constante; si fatiga excesiva, elimina la flexión pero conserva el salto.' },
+      { name: 'Kettlebell swings', sets: '4', reps: '15', rest: '60 s', weight: '24 kg', muscle: 'Glúteos', instructions: 'El movimiento sale de la cadera, no de los brazos. La kettlebell flota; tú solo la proyectas con el impulso de cadera.' },
+      { name: 'Push-ups', sets: '3', reps: '15', rest: '60 s', weight: 'Peso corporal', muscle: 'Pecho', instructions: 'Cuerpo en tabla rígida, codos a 45 grados. Pecho casi toca suelo y sube en bloque.' },
+      { name: 'Mountain climbers', sets: '3', reps: '30 s', rest: '60 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Posición de plancha alta, alterna rodillas al pecho a máxima velocidad sin elevar la cadera.' },
+      { name: 'Plancha', sets: '3', reps: '60 s', rest: '60 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Antebrazos al suelo, glúteos y abdomen contraídos. Respira; no aguantes la respiración. Si falla la técnica, descansa.' },
+    ],
+    assessmentNum: 3,
+    progress: { completedSessions: 3, totalSessions: 16, adherence: 42, lastSession: '2026-05-10' },
+  },
+  {
+    id: 'cardio-quemagrasas',
+    name: 'Cardio Quemagrasas',
+    duration: '50 min',
+    frequency: '4 días/semana',
+    level: 'Intermedio',
+    focus: 'Cardio y resistencia',
+    rows: [
+      { name: 'Sprints en cinta', sets: '6', reps: '30 s', rest: '60 s', weight: '—', muscle: 'Cardio', instructions: 'Velocidad alta sostenida por 30 segundos, recuperación caminando. Mantén la postura erguida y no te apoyes en las manijas.' },
+      { name: 'Battle ropes', sets: '4', reps: '40 s', rest: '40 s', weight: '—', muscle: 'Cardio', instructions: 'Ondas alternas rápidas con core firme y rodillas semiflexionadas. El ritmo debe ser constante, no explosiones sueltas.' },
+      { name: 'Remo en máquina', sets: '3', reps: '500 m', rest: '90 s', weight: '—', muscle: 'Cardio', instructions: 'Secuencia piernas-tronco-brazos al impulsar y brazos-tronco-piernas al regresar. Espalda neutra todo el recorrido.' },
+      { name: 'Salto a la comba', sets: '4', reps: '60 s', rest: '45 s', weight: '—', muscle: 'Cardio', instructions: 'Saltos bajos y muñecas activas. Aterriza con rodillas suaves para proteger las articulaciones.' },
+      { name: 'Bicicleta intervalos', sets: '5', reps: '1 min', rest: '60 s', weight: 'Resistencia media-alta', muscle: 'Cardio', instructions: 'Alterna 1 minuto fuerte / 1 minuto suave. Regula el asiento a la altura de la cadera para un pedaleo eficiente.' },
+    ],
+    assessmentNum: 4,
+    progress: { completedSessions: 5, totalSessions: 16, adherence: 55, lastSession: '2026-05-12' },
+  },
+  {
+    id: 'core-poderoso',
+    name: 'Core Poderoso',
+    duration: '40 min',
+    frequency: '3 días/semana',
+    level: 'Principiante',
+    focus: 'Abdomen y zona media',
+    rows: [
+      { name: 'Crunch abdominal', sets: '3', reps: '15', rest: '45 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Manos a los lados de la cabeza sin tirar del cuello. Sube despegando hombros contrayendo el abdomen, baja lento.' },
+      { name: 'Elevación de piernas', sets: '3', reps: '12', rest: '45 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Tumbado, manos bajo los glúteos para proteger la lumbar. Sube piernas rectas hasta 90 grados y baja sin tocar el suelo.' },
+      { name: 'Plancha frontal', sets: '3', reps: '40 s', rest: '45 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Codos bajo hombros, cuerpo en línea recta. Aprieta glúteos y abdomen; respira sin arquear la espalda.' },
+      { name: 'Plancha lateral', sets: '3', reps: '30 s', rest: '45 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Apoyo sobre antebrazo y borde del pie. Cadera alta y alineada; cambia de lado tras cada serie.' },
+      { name: 'Bird dog', sets: '3', reps: '10', rest: '40 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'En cuadrupedia, extiende brazo y pierna opuestos manteniendo la cadera estable. Pausa 2 segundos arriba.' },
+    ],
+    assessmentNum: 5,
+    progress: { completedSessions: 2, totalSessions: 12, adherence: 35, lastSession: '2026-05-08' },
+  },
+  {
+    id: 'definicion-tren-superior',
+    name: 'Definición Tren Superior',
+    duration: '65 min',
+    frequency: '4 días/semana',
+    level: 'Avanzado',
+    focus: 'Tren superior',
+    rows: [
+      { name: 'Press inclinado con mancuernas', sets: '4', reps: '10-12', rest: '75 s', weight: '22 kg c/u', muscle: 'Pecho', instructions: 'Banco a 30-45 grados. Baja mancuernas a la altura del pecho sintiendo estiramiento y sube juntando sin chocar.' },
+      { name: 'Remo con barra', sets: '4', reps: '10', rest: '90 s', weight: '60 kg', muscle: 'Espalda', instructions: 'Tronco a 45 grados, espalda recta. Lleva la barra al ombligo apretando escápulas al final del recorrido.' },
+      { name: 'Elevaciones laterales', sets: '4', reps: '12-15', rest: '60 s', weight: '10 kg c/u', muscle: 'Hombros', instructions: 'Codos ligeramente flexionados, sube a la altura de los hombros sin encoger el trapecio. Baja controlado.' },
+      { name: 'Jalón al pecho', sets: '4', reps: '12', rest: '75 s', weight: '55 kg', muscle: 'Dorsal', instructions: 'Agarre ancho, pecho arriba. Lleva la barra a la clavícula pensando en codos hacia abajo, no en las manos.' },
+      { name: 'Curl de bíceps alterno', sets: '3', reps: '12', rest: '60 s', weight: '14 kg c/u', muscle: 'Brazos', instructions: 'Codos pegados al torso, supina la muñeca al subir. Sin balanceo; si te impulsas, baja el peso.' },
+    ],
+    assessmentNum: 6,
+    progress: { completedSessions: 7, totalSessions: 16, adherence: 70, lastSession: '2026-05-18' },
+  },
+  {
+    id: 'movilidad-functional',
+    name: 'Movilidad Funcional',
+    duration: '35 min',
+    frequency: '3 días/semana',
+    level: 'Principiante',
+    focus: 'Movilidad y prevención',
+    rows: [
+      { name: 'Cat-Camel spinal', sets: '2', reps: '10', rest: '30 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'En cuadrupedia, alterna arquear y redondear la espalda lentamente coordinando con la respiración.' },
+      { name: '90/90 cadera', sets: '3', reps: '8', rest: '40 s', weight: 'Peso corporal', muscle: 'Piernas', instructions: 'Sentado con piernas a 90 grados, rota las rodillas de lado a lado sin mover el torso. Gana rango progresivamente.' },
+      { name: 'World greatest stretch', sets: '2', reps: '6', rest: '40 s', weight: 'Peso corporal', muscle: 'Full body', instructions: 'Zancada profunda con codo al interior y rotación torácica hacia el techo. El mejor estiramiento integral.' },
+      { name: 'Dislocación de hombro', sets: '2', reps: '12', rest: '30 s', weight: 'Palo o banda', muscle: 'Hombros', instructions: 'Agarre ancho, pasa el palo por encima y detrás lentamente. Reduce el agarre conforme ganes movilidad.' },
+      { name: 'Sentadilla profunda sostenida', sets: '3', reps: '30 s', rest: '45 s', weight: 'Peso corporal', muscle: 'Piernas', instructions: 'Baja a sentadilla completa apoyando codos en rodillas, talones al suelo. Respira profundo para abrir caderas.' },
+    ],
+    assessmentNum: 7,
+    progress: { completedSessions: 4, totalSessions: 12, adherence: 58, lastSession: '2026-05-19' },
+  },
+  {
+    id: 'cross-training-unifit',
+    name: 'Cross Training UNIFIT',
+    duration: '55 min',
+    frequency: '5 días/semana',
+    level: 'Avanzado',
+    focus: 'Full body intenso',
+    rows: [
+      { name: 'Thrusters', sets: '5', reps: '10', rest: '90 s', weight: '40 kg', muscle: 'Full body', instructions: 'Front squat + press overhead en un solo movimiento explosivo. Usa el impulso de piernas para proyectar la barra.' },
+      { name: 'Kettlebell swings', sets: '4', reps: '20', rest: '60 s', weight: '24 kg', muscle: 'Glúteos', instructions: 'Cadera como pistón, brazos solo de guía. La kettlebell llega a la altura del pecho con glúteo contraído.' },
+      { name: 'Toes to bar', sets: '4', reps: '8', rest: '75 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Colgado de la barra, lleva los pies hasta ella con control lumbar. Si aún no llegas, haz knee raises.' },
+      { name: 'Wall balls', sets: '4', reps: '15', rest: '60 s', weight: '9 kg', muscle: 'Full body', instructions: 'Sentadilla profunda lanzando el balón a un punto de 3 metros. Atrapa en cuclillas y encadena el siguiente.' },
+      { name: 'Farmer walk', sets: '3', reps: '40 m', rest: '90 s', weight: '2×28 kg', muscle: 'Core', instructions: 'Camina con pesas a los lados, hombros atrás y core firme. Pasos cortos y respiración constante.' },
+    ],
+    assessmentNum: 8,
+    progress: { completedSessions: 9, totalSessions: 20, adherence: 80, lastSession: '2026-05-21' },
+  },
+  {
+    id: 'tonificacion-general',
+    name: 'Tonificación General',
+    duration: '45 min',
+    frequency: '3 días/semana',
+    level: 'Principiante',
+    focus: 'Full body suave',
+    rows: [
+      { name: 'Goblet squat', sets: '3', reps: '12', rest: '60 s', weight: '12 kg', muscle: 'Piernas', instructions: 'Mancuerna vertical al pecho. Baja entre las rodillas con pecho orgulloso y empuja desde el talón.' },
+      { name: 'Push-ups inclinados', sets: '3', reps: '10', rest: '60 s', weight: 'Peso corporal', muscle: 'Pecho', instructions: 'Manos elevadas en banco para reducir carga. Cuerpo recto, pecho hacia el banco, codos a 45 grados.' },
+      { name: 'Remo con mancuerna', sets: '3', reps: '12', rest: '60 s', weight: '16 kg', muscle: 'Espalda', instructions: 'Una mano y rodilla apoyadas en banco. Lleva la mancuerna a la cadera apretando la espalda media.' },
+      { name: 'Puente de glúteos', sets: '3', reps: '15', rest: '45 s', weight: 'Peso corporal', muscle: 'Glúteos', instructions: 'Tumbado, sube cadera apretando glúteos hasta alinear rodilla-cadera-hombro. Pausa 1 segundo arriba.' },
+      { name: 'Dead bug', sets: '3', reps: '10', rest: '45 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Tumbado, extiende brazo y pierna opuestos manteniendo la lumbar pegada al suelo. Lento y controlado.' },
+    ],
+    assessmentNum: 3,
+    progress: { completedSessions: 1, totalSessions: 12, adherence: 20, lastSession: null },
+  },
+]
+
+export const studentDocuments = [
+  { name: 'Contrato de prestación de servicios', status: 'firmado', date: '12 Ago 2025' },
+  { name: 'Tratamiento de datos personales', status: 'firmado', date: '12 Ago 2025' },
 ]
