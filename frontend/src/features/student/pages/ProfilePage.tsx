@@ -12,17 +12,54 @@ import { AssessmentDetail } from '@/features/student/components/ui/AssessmentDet
 import studentBoy from '@/assets/illustrations/characters/students/student_boy.webp'
 import studentGirl from '@/assets/illustrations/characters/students/student_girl.webp'
 
-const personalData = [
-  { label: 'Tipo de documento', value: 'Tarjeta de identidad' },
-  { label: 'Número de documento', value: '1.021.334.556' },
-  { label: 'Fecha de nacimiento', value: '14 Mar 2004' },
-  { label: 'Teléfono', value: '+57 312 456 7890' },
-  { label: 'EPS', value: 'Sanitas' },
-  { label: 'Tipo de sangre', value: 'O+' },
-  { label: 'Programa académico', value: 'Ingeniería de Sistemas' },
-  { label: 'Semestre', value: '7' },
-  { label: 'Jornada', value: 'Diurna' },
-  { label: 'Contacto de emergencia', value: 'María García · +57 310 222 3344' },
+const personalSections = [
+  {
+    title: 'Información personal',
+    items: [
+      { label: 'Primer nombre', value: 'Ana' },
+      { label: 'Segundo nombre', value: 'Lucía' },
+      { label: 'Primer apellido', value: 'García' },
+      { label: 'Segundo apellido', value: 'Restrepo' },
+      { label: 'Tipo de documento', value: 'CC' },
+      { label: 'Número de documento', value: '1.021.334.556' },
+      { label: 'Fecha de nacimiento', value: '14/03/2004' },
+      { label: 'Género', value: 'Femenino' },
+    ],
+  },
+  {
+    title: 'Información de contacto',
+    items: [
+      { label: 'Email', value: 'ana.garcia@ucol.edu.co' },
+      { label: 'Teléfono', value: '+57 312 456 7890' },
+    ],
+  },
+  {
+    title: 'Información médica',
+    items: [
+      { label: 'EPS', value: 'Sanitas' },
+      { label: 'Grupo sanguíneo', value: 'O+' },
+      { label: 'Nombre contacto', value: 'María García' },
+      { label: 'Teléfono contacto', value: '+57 310 222 3344' },
+      { label: 'Parentesco', value: 'Madre' },
+    ],
+  },
+  {
+    title: 'Rol en la universidad',
+    items: [{ label: 'Rol', value: 'Estudiante' }],
+  },
+  {
+    title: 'Información académica',
+    items: [
+      { label: 'Número carnet', value: 'U-2021-10458' },
+      { label: 'Estado', value: 'Activo' },
+      { label: 'Institución', value: 'Universitaria de Colombia' },
+      { label: 'Modalidad', value: 'Presencial' },
+      { label: 'Nivel de formación', value: 'Profesional' },
+      { label: 'Carrera', value: 'Ingeniería de Sistemas' },
+      { label: 'Semestre', value: '7' },
+      { label: 'Jornada', value: 'Diurna' },
+    ],
+  },
 ]
 
 type ModalId = 'history' | 'documents' | 'personal' | null
@@ -33,6 +70,12 @@ export function ProfilePage() {
   const [photo, setPhoto] = useState<string | null>(null)
   const [historySel, setHistorySel] = useState<number | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const epsRef = useRef<HTMLInputElement>(null)
+  const histRef = useRef<HTMLInputElement>(null)
+  const lesRef = useRef<HTMLInputElement>(null)
+  const [medEps, setMedEps] = useState<File | null>(null)
+  const [medHistoria, setMedHistoria] = useState<File | null>(null)
+  const [lesiones, setLesiones] = useState<File[]>([])
 
   const defaultPhoto = student.gender === 'M' ? studentBoy : studentGirl
   const latest = assessmentItems[0]

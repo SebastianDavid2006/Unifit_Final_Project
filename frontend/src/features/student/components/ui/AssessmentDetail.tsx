@@ -38,8 +38,6 @@ const SectionLabel = ({ icon: Icon, text, color }: { icon: any; text: string; co
 )
 
 export function AssessmentDetail({ item }: { item: AssessmentItem }) {
-  const evaluador = item.evaluator || item.evaluador || '—'
-
   const medidas = [
     { label: 'Peso (kg)', value: item.metrics[0]?.value },
     { label: 'Estatura (cm)', value: item.estatura },
@@ -56,23 +54,15 @@ export function AssessmentDetail({ item }: { item: AssessmentItem }) {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: item.color + '18', border: `1px solid ${item.color}33` }}>
-            <Activity size={22} style={{ color: item.color }} />
-          </div>
-          <div className="min-w-0">
-            <p className="uppercase italic font-black text-white truncate" style={{ fontSize: 15 }}>Valoración {item.type.toLowerCase()}</p>
-            <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5 }}>
-              {item.date}{item.next ? ` · Próxima: ${item.next}` : ''}
-            </p>
-          </div>
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: item.color + '18', border: `1px solid ${item.color}33` }}>
+          <Activity size={22} style={{ color: item.color }} />
         </div>
-        <div className="text-right">
-          <p className="font-black leading-none" style={{ fontSize: 30, background: `linear-gradient(135deg, ${BLUE}, #7CC7FF)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            {item.score}
+        <div className="min-w-0">
+          <p className="uppercase italic font-black text-white truncate" style={{ fontSize: 15 }}>Valoración {item.type.toLowerCase()}</p>
+          <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5 }}>
+            {item.date}{item.next ? ` · Próxima: ${item.next}` : ''}
           </p>
-          <p className="uppercase tracking-widest" style={{ fontSize: 8.5, fontWeight: 700, color: 'rgba(255,255,255,0.32)' }}>Score /100</p>
         </div>
       </div>
 
@@ -147,19 +137,15 @@ export function AssessmentDetail({ item }: { item: AssessmentItem }) {
         <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.65 }}>{item.observacionesFinales}</p>
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between flex-wrap gap-2 pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <span className="flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.42)', fontSize: 11.5 }}>
-          <User size={13} />
-          Realizada por {evaluador}
-        </span>
-        {item.diasDisponibles && item.diasDisponibles.length > 0 && (
-          <span className="flex items-center gap-1.5 flex-wrap" style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11 }}>
-            <CalendarClock size={12} style={{ color: BLUE }} />
+      {/* Footer: días de entrenamiento */}
+      {item.diasDisponibles && item.diasDisponibles.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <CalendarClock size={13} style={{ color: BLUE }} />
+          <span style={{ color: 'rgba(255,255,255,0.42)', fontSize: 11.5 }}>
             Entrena: {item.diasDisponibles.join(', ')}
           </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

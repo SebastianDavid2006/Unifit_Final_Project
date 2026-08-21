@@ -267,7 +267,7 @@ export function RoutinesPage() {
 
       {/* Imagen default de la rutina */}
       <div className="relative overflow-hidden rounded-3xl" style={{ height: 150, border: '1px solid rgba(255,255,255,0.09)' }}>
-        <img src={routineScene} alt="Rutina física" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: '50% 78%' }} />
+        <img src={routineScene} alt="Rutina física" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: '50% 95%' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 20%, rgba(7,7,14,0.85))' }} />
         <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-3">
           <div>
@@ -435,23 +435,25 @@ export function RoutinesPage() {
                 boxShadow: '0 -10px 80px rgba(0,0,0,0.6), 0 40px 100px rgba(230,57,70,0.12)',
               }}
             >
-              <div className="relative p-6 pb-5" style={{ background: `linear-gradient(135deg, rgba(230,57,70,0.16), rgba(245,166,35,0.06))`, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                <button onClick={() => setSelectedExercise(null)} className="absolute top-4 right-4 w-9 h-9 rounded-xl flex items-center justify-center z-10" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)' }}>
+              {/* Imagen guía grande del ejercicio */}
+              <div className="relative" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                <img
+                  src={MUSCLE_IMG[selectedExercise.ex.muscle] || fullBodyImg}
+                  alt={selectedExercise.ex.muscle}
+                  className="w-full h-52 object-cover"
+                />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(10,10,20,0.35) 0%, transparent 35%, rgba(7,7,14,0.94) 100%)' }} />
+                <button onClick={() => setSelectedExercise(null)} className="absolute top-3.5 right-3.5 w-9 h-9 rounded-xl flex items-center justify-center z-10" style={{ background: 'rgba(10,10,18,0.6)', backdropFilter: 'blur(8px)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)' }}>
                   <X size={17} />
                 </button>
-                <div className="flex items-center gap-4">
-                  <div className="w-[104px] h-[104px] rounded-2xl flex-shrink-0 overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.14)', boxShadow: '0 12px 32px rgba(0,0,0,0.45)', background: '#0A0A14' }}>
-                    <img src={MUSCLE_IMG[selectedExercise.ex.muscle] || fullBodyImg} alt={selectedExercise.ex.muscle} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="min-w-0 pr-10">
-                    <p className="uppercase tracking-[0.25em]" style={{ fontSize: 9, fontWeight: 800, color: AMBER }}>
-                      Ejercicio {selectedExercise.index + 1} de {routine.rows.length}
-                    </p>
-                    <h3 className="uppercase italic font-black text-white mt-1 leading-tight" style={{ fontSize: 19 }}>{selectedExercise.ex.name}</h3>
-                    <span className="inline-block px-2.5 py-0.5 rounded-full mt-2 uppercase tracking-wider font-black" style={{ background: FIRE + '18', color: FIRE, fontSize: 8.5 }}>
-                      {selectedExercise.ex.muscle}
-                    </span>
-                  </div>
+                <span className="absolute top-4 left-5 px-2.5 py-1 rounded-full uppercase tracking-[0.22em] font-black z-10" style={{ fontSize: 8.5, background: 'rgba(10,10,18,0.55)', backdropFilter: 'blur(8px)', border: '1px solid rgba(245,166,35,0.4)', color: AMBER }}>
+                  Ejercicio {selectedExercise.index + 1} de {routine.rows.length}
+                </span>
+                <div className="absolute bottom-3 left-5 right-5">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full uppercase tracking-wider font-black mb-1.5" style={{ background: FIRE + '30', backdropFilter: 'blur(6px)', color: '#FF8FA3', fontSize: 8.5, border: `1px solid ${FIRE}55` }}>
+                    {selectedExercise.ex.muscle}
+                  </span>
+                  <h3 className="uppercase italic font-black text-white leading-tight" style={{ fontSize: 22, textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>{selectedExercise.ex.name}</h3>
                 </div>
               </div>
 
