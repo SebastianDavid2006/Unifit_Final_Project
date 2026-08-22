@@ -16,7 +16,7 @@ export function ExerciseCardGrid({ exercises, onPreview }: ExerciseCardGridProps
       <div className="grid grid-cols-3 gap-4">
         <div className="col-span-3 py-16 text-center">
           <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>No se encontraron ejercicios</p>
-          <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Agrega ejercicios para verlos aquÃ­.</p>
+          <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Agrega ejercicios para verlos aquí.</p>
         </div>
       </div>
     )

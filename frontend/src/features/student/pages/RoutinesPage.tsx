@@ -21,8 +21,6 @@ import fullBodyImg from '@/assets/icons/anatomy/full-body.webp'
 
 type View = 'list' | 'detail'
 
-const PAGE_SIZE = 6
-
 const MUSCLE_IMG: Record<string, string> = {
   Piernas: legImg, Glúteos: legImg, Cuádriceps: legImg, Isquiotibiales: legImg, Pantorrilla: legImg,
   Pecho: chestImg,
@@ -49,8 +47,13 @@ export function RoutinesPage() {
   const [selectedExercise, setSelectedExercise] = useState<{ ex: ExerciseRow; index: number } | null>(null)
   const [page, setPage] = useState(1)
 
-  const totalPages = Math.max(1, Math.ceil(studentRoutines.length / PAGE_SIZE))
-  const visibleRoutines = studentRoutines.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  /* Página 1: 7 rutinas (la actual ocupa fila entera), siguientes: 8 por página */
+  const FIRST_PAGE = 7
+  const OTHER_PAGES = 8
+  const totalPages = Math.max(1, Math.ceil((studentRoutines.length - FIRST_PAGE) / OTHER_PAGES) + 1)
+  const pageStart = page === 1 ? 0 : FIRST_PAGE + (page - 2) * OTHER_PAGES
+  const pageSize = page === 1 ? FIRST_PAGE : OTHER_PAGES
+  const visibleRoutines = studentRoutines.slice(pageStart, pageStart + pageSize)
 
   const assessment = routine ? assessmentItems.find(a => a.num === routine.assessmentNum) : null
 
@@ -282,7 +285,7 @@ export function RoutinesPage() {
         })}
       </div>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {detailTab === 'exercises' ? (
           /* --------- LISTA DE EJERCICIOS --------- */
           <motion.div key="exercises" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
@@ -306,9 +309,10 @@ export function RoutinesPage() {
 
             {routine.rows.map((ex, i) => {
               const isChecked = (checked[routine.id] || []).includes(i)
+              const exerciseKey = `${ex.name}-${i}`
               return (
                 <motion.div
-                  key={i}
+                  key={exerciseKey}
                   initial={{ opacity: 0, x: -14 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
@@ -362,6 +366,14 @@ export function RoutinesPage() {
                           </div>
                         ))}
                       </div>
+                    </div>
+
+                    {/* Preview del ejercicio */}
+                    <div
+                      className="w-14 h-14 md:w-16 md:h-16 rounded-xl overflow-hidden flex-shrink-0"
+                      style={{ border: '1px solid rgba(255,255,255,0.12)', background: '#0A0A14', boxShadow: '0 6px 18px rgba(0,0,0,0.4)' }}
+                    >
+                      <img src={MUSCLE_IMG[ex.muscle] || fullBodyImg} alt={ex.muscle} className="w-full h-full object-cover" />
                     </div>
 
                     <ChevronRight size={17} style={{ color: 'rgba(255,255,255,0.2)' }} className="flex-shrink-0 hidden sm:block" />
@@ -465,7 +477,7 @@ export function RoutinesPage() {
                 <div className="rounded-2xl p-4" style={{ background: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.15)' }}>
                   <div className="flex items-center gap-2 mb-2">
                     <Dumbbell size={14} style={{ color: AMBER }} />
-                    <p className="uppercase tracking-widest" style={{ fontSize: 9.5, fontWeight: 800, color: AMBER }}>Técnica</p>
+                    <p className="uppercase tracking-widest" style={{ fontSize: 9.5, fontWeight: 800, color: AMBER }}>Descripción</p>
                   </div>
                   <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.7 }}>{selectedExercise.ex.instructions}</p>
                 </div>

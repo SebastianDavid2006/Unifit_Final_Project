@@ -33,7 +33,7 @@ export function DocumentViewerModal({ isOpen, fileData, onClose, onDelete }: Doc
           <FileText size={36} style={{ color: '#E63946' }} />
         </div>
         <p className="text-sm font-semibold mb-1" style={{ color: '#0D1B2A' }}>Vista previa del documento</p>
-        <p className="text-xs text-center max-w-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>Este es un documento firmado electrÃ³nicamente.</p>
+        <p className="text-xs text-center max-w-xs" style={{ color: 'rgba(0,0,0,0.4)' }}>Este es un documento firmado electrónicamente.</p>
         <div className="flex gap-2 mt-6">
           <button className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2" style={{ background: '#E63946', color: '#FFFFFF' }}>
             <Download size={14} /> Descargar

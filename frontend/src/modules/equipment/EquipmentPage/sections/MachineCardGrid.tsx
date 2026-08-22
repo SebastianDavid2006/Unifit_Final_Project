@@ -83,8 +83,8 @@ export function MachineCardGrid({ machines, exercises, onPreview }: MachineCardG
       })}
       {machines.length === 0 && (
         <div className="col-span-3 py-16 text-center">
-          <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>No se encontraron mÃ¡quinas</p>
-          <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Prueba con otros filtros o agrega una nueva mÃ¡quina</p>
+          <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>No se encontraron máquinas</p>
+          <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Prueba con otros filtros o agrega una nueva máquina</p>
         </div>
       )}
     </div>

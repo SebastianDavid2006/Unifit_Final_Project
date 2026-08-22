@@ -94,7 +94,7 @@ export function FingerprintCapture({ status, onStartScan, onCaptureComplete }: F
                       ease: 'easeOut',
                     }}
                   >
-                    ��
+                    ✦✦
                   </motion.span>
                 )
               })}

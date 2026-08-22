@@ -24,7 +24,7 @@ export function RoutineDetailModal({ isOpen, assessment, routine, viewRoutineDay
           </div>
           <div>
             <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>{routine?.name ?? assessment?.routine ?? 'Sin rutina'}</h3>
-            <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{assessment?.date ?? ''} Â· Asociada a la valoraciÃ³n</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{assessment?.date ?? ''} Â· Asociada a la valoración</p>
           </div>
         </div>
         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={onClose}
@@ -53,7 +53,7 @@ export function RoutineDetailModal({ isOpen, assessment, routine, viewRoutineDay
               </div>
               <div className="rounded-2xl p-4 space-y-2 overflow-y-auto min-h-[180px]" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.04)', maxHeight: 340, scrollbarWidth: 'thin' }}>
                 {selDayRows.length === 0 ? (
-                  <p className="text-xs text-center py-4" style={{ color: 'rgba(0,0,0,0.4)' }}>Sin ejercicios para este dÃ­a.</p>
+                  <p className="text-xs text-center py-4" style={{ color: 'rgba(0,0,0,0.4)' }}>Sin ejercicios para este día.</p>
                 ) : selDayRows.map((ex, i) => (
                   <motion.div
                     key={ex.id}
@@ -81,7 +81,7 @@ export function RoutineDetailModal({ isOpen, assessment, routine, viewRoutineDay
       ) : (
         <div className="space-y-2">
           <div className="grid gap-3 px-1 mb-2" style={{ gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr' }}>
-            {['Ejercicio', 'Series', 'Repeticiones', 'Peso', 'CalorÃ­as'].map(h => (
+            {['Ejercicio', 'Series', 'Repeticiones', 'Peso', 'Calorías'].map(h => (
               <div key={h} className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{h}</div>
             ))}
           </div>

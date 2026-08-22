@@ -17,7 +17,7 @@ export function DeleteDocumentModal({ isOpen, docName, onConfirm, onCancel }: De
       </div>
       <h3 className="text-base font-bold mb-1" style={{ color: '#0D1B2A' }}>Â¿Eliminar documento?</h3>
       <p className="text-sm mb-6" style={{ color: 'rgba(0,0,0,0.4)' }}>
-        Esta acciÃ³n no se puede deshacer.
+        Esta acción no se puede deshacer.
       </p>
       <div className="flex gap-2.5 w-full">
         <button

@@ -91,7 +91,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                   editing={!!props.editing}
                   step={props.step}
                   onConfirmClose={() => props.onConfirmClose(true)}
-                  title={props.step === 0 ? 'Datos bÃ¡sicos' : props.step === 1 ? 'CategorÃ­a y dificultad' : 'Contenido visual'}
+                  title={props.step === 0 ? 'Datos básicos' : props.step === 1 ? 'Categoría y dificultad' : 'Contenido visual'}
                 />
 
                 {/* â”€â”€ Body â”€â”€ */}
@@ -126,7 +126,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                         />
                       </div>
                       <div>
-                        <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>DescripciÃ³n</label>
+                        <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Descripción</label>
                         <textarea
                           value={props.form.description}
                           onChange={e => props.onFormChange({ ...props.form, description: e.target.value })}
@@ -148,7 +148,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                     <div className="space-y-5">
                       <div>
                         <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Grupos musculares</label>
-                        <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o mÃ¡s grupos musculares que trabaja este ejercicio.</p>
+                        <p className="text-[10px] mb-2" style={{ color: 'rgba(0,0,0,0.3)' }}>Selecciona uno o más grupos musculares que trabaja este ejercicio.</p>
                         <MuscleGroupPicker
                           value={props.form.muscleGroups}
                           onChange={muscleGroups => props.onFormChange({ ...props.form, muscleGroups })}

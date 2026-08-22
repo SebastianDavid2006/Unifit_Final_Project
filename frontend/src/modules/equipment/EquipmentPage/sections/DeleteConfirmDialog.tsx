@@ -38,9 +38,9 @@ export function DeleteConfirmDialog({ confirm, onCancel, onConfirm }: DeleteConf
               <TrashView />
             </div>
             <div>
-              <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>Â¿Eliminar {confirm.type === 'machine' ? 'mÃ¡quina' : 'ejercicio'}?</p>
+              <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>Â¿Eliminar {confirm.type === 'machine' ? 'máquina' : 'ejercicio'}?</p>
               <p className="text-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                Esta acciÃ³n no se puede deshacer.
+                Esta acción no se puede deshacer.
               </p>
             </div>
             <div className="flex items-center gap-2.5 w-full">

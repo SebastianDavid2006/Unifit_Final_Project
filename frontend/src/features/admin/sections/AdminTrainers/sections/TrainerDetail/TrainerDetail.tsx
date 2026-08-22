@@ -127,7 +127,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
         <TrainerGrid trainer={trainer} onShowInfo={() => setShowInfoModal(true)} />
       </div>
 
-      {/* â”€â”€ Info completa (modal por categorÃ­as) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â”€â”€ Info completa (modal por categorías) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <AnimatePresence>
         {showInfoModal && (
           <TrainerInfoModal
@@ -144,7 +144,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
         )}
       </AnimatePresence>
 
-      {/* â”€â”€ ConfirmaciÃ³n de cambios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* â”€â”€ Confirmación de cambios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <AnimatePresence>
         {confirm && (
           <TrainerConfirmModal

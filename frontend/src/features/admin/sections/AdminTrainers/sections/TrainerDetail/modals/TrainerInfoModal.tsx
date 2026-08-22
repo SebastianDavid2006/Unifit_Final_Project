@@ -22,7 +22,7 @@ interface TrainerInfoModalProps {
 
 const CATEGORIES = [
   {
-    title: 'InformaciÃ³n personal',
+    title: 'Información personal',
     model: <StudentCardView />,
     fields: [
       { key: 'firstName', label: 'Primer nombre' },
@@ -31,27 +31,27 @@ const CATEGORIES = [
       { key: 'secondLastName', label: 'Segundo apellido' },
       { key: 'document', label: 'Documento' },
       { key: 'birthDate', label: 'Fecha de nacimiento' },
-      { key: 'gender', label: 'GÃ©nero' },
+      { key: 'gender', label: 'Género' },
       { key: 'age', label: 'Edad', readOnly: true },
     ] as const,
   },
   {
-    title: 'InformaciÃ³n mÃ©dica',
+    title: 'Información médica',
     model: <StethoscopeView />,
     fields: [
       { key: 'eps', label: 'EPS' },
-      { key: 'bloodType', label: 'Grupo sanguÃ­neo' },
+      { key: 'bloodType', label: 'Grupo sanguíneo' },
     ] as const,
   },
   {
-    title: 'InformaciÃ³n de contacto',
+    title: 'Información de contacto',
     model: <TelephoneView />,
     fields: [
       { key: 'email', label: 'Email' },
-      { key: 'phone', label: 'TelÃ©fono' },
+      { key: 'phone', label: 'Teléfono' },
       { key: 'contactName', label: 'Contacto de emergencia' },
       { key: 'contactRelation', label: 'Parentesco' },
-      { key: 'contactPhone', label: 'TelÃ©fono de emergencia' },
+      { key: 'contactPhone', label: 'Teléfono de emergencia' },
     ] as const,
   },
 ] as const
@@ -69,7 +69,7 @@ export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, on
       let age = now.getFullYear() - birth.getFullYear()
       const monthDiff = now.getMonth() - birth.getMonth()
       if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--
-      return `${age} aÃ±os`
+      return `${age} años`
     } catch {
       return 'â€”'
     }
@@ -185,7 +185,7 @@ export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, on
           </div>
         </div>
 
-        {/* CategorÃ­as */}
+        {/* Categorías */}
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={editMode ? 'edit' : 'view'}
