@@ -35,33 +35,33 @@ export default function MobileStudentTabs({ studentTab, onStudentTabChange, onBa
         </motion.button>
       )}
 
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-4 flex items-center gap-2 px-2 py-1.5 rounded-2xl"
+      <div className="absolute left-1/2 -translate-x-1/2 bottom-4 flex items-center gap-3 px-3 py-2 rounded-2xl"
         style={{
           background: 'rgba(0,0,0,0.7)',
           backdropFilter: 'blur(24px) saturate(1.6)',
           border: '1px solid rgba(255,255,255,0.15)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
         }}>
-        {TABS.map(t => (
-          <motion.button
-            key={t.id}
-            onClick={() => onStudentTabChange(t.id)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-[10px] font-bold transition-all"
-            style={{
-              background: studentTab === t.id ? RED_GRAD : 'rgba(255,255,255,0.1)',
-              color: studentTab === t.id ? '#FFFFFF' : 'rgba(255,255,255,0.7)',
-              boxShadow: studentTab === t.id ? '0 4px 16px rgba(244,56,67,0.3)' : 'none',
-            }}
-          >
-            <div className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ background: studentTab === t.id ? 'rgba(255,255,255,0.2)' : 'transparent' }}>
-              <t.icon size={16} style={{ color: 'currentColor' }} />
-            </div>
-            <span className="text-xs">{t.label}</span>
-          </motion.button>
-        ))}
+{TABS.map(t => (
+            <motion.button
+              key={t.id}
+              onClick={() => onStudentTabChange(t.id)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold transition-all"
+              style={{
+                background: studentTab === t.id ? RED_GRAD : 'rgba(255,255,255,0.1)',
+                color: studentTab === t.id ? '#FFFFFF' : 'rgba(255,255,255,0.7)',
+                boxShadow: studentTab === t.id ? '0 4px 16px rgba(244,56,67,0.3)' : 'none',
+              }}
+            >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ background: studentTab === t.id ? 'rgba(255,255,255,0.2)' : 'transparent' }}>
+                <t.icon size={16} style={{ color: 'currentColor' }} />
+              </div>
+              <span className="text-xs">{t.label}</span>
+            </motion.button>
+          ))}
       </div>
     </>
   )

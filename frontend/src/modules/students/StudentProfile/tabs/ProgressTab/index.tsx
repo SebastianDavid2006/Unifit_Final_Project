@@ -44,7 +44,7 @@ export function ProgressTab(props: Props) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="max-w-[1200px] mx-auto space-y-6"
+      className={`max-w-[1200px] mx-auto ${isMobile ? 'space-y-3 px-2' : 'space-y-6'}`}
     >
       <KpiCards />
 

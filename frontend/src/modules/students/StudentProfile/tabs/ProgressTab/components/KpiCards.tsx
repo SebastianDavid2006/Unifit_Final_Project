@@ -61,8 +61,8 @@ export function KpiCards() {
             key={m.label}
             whileHover={{ scale: 1.03 }}
             transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
-            className="relative rounded-2xl p-4 flex flex-col items-center text-center group cursor-pointer"
-            style={cardStyle}
+            className="relative rounded-2xl flex flex-col items-center text-center group cursor-pointer"
+            style={{ ...cardStyle, padding: isMobile ? '1rem' : '1.5rem' }}
           >
             <div
               className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.5] mb-5 flex items-center justify-center"
@@ -71,7 +71,7 @@ export function KpiCards() {
               {getIcon(m.model)}
             </div>
             <p className={esFuego ? '' : 'text-gradient-warm'} style={{
-              fontSize: '1.8rem', fontWeight: 700, lineHeight: 1,
+              fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 700, lineHeight: 1,
               ...(esFuego
                 ? {
                     background: 'linear-gradient(135deg, #FF6B00, #FF2D00, #FF9500)',
@@ -83,8 +83,9 @@ export function KpiCards() {
                   }
                 : {}),
             }}>{m.value}</p>
-            <p className="text-sm font-semibold mt-2" style={{
+            <p className={isMobile ? 'text-xs' : 'text-sm'} style={{
               color: esFuego ? '#FF6B00' : 'rgba(0,0,0,0.5)',
+              marginTop: isMobile ? '0.5rem' : '0.75rem',
             }}>{m.label}</p>
           </motion.div>
         )

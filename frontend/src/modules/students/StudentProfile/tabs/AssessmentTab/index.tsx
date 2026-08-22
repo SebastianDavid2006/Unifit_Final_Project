@@ -1,4 +1,6 @@
-﻿import { motion } from 'motion/react'
+﻿import { useIsMobile } from '@/shared/components/ui/use-mobile'
+
+import { motion } from 'motion/react'
 import { AssessmentDashboard } from './components/AssessmentDashboard'
 import { AssessmentList } from './components/AssessmentList'
 import type { Dispatch, SetStateAction } from 'react'
@@ -39,12 +41,13 @@ export function AssessmentTab({
   setSelectedAssessment,
   setShowAssessmentOptions,
 }: Props) {
+  const isMobile = useIsMobile()
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="max-w-[1200px] mx-auto space-y-4"
+      className={`max-w-[1200px] mx-auto ${isMobile ? 'space-y-3 px-2' : 'space-y-4'}`}
     >
       <AssessmentDashboard
         canCreateValuation={canCreateValuation}
