@@ -115,6 +115,8 @@ export interface ExerciseRow {
   rest: string
   weight: string
   muscle: string
+  secondaryMuscle?: string
+  level?: string
   instructions: string
 }
 

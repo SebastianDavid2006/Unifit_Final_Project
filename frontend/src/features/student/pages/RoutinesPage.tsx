@@ -98,41 +98,24 @@ export function RoutinesPage() {
                     </span>
                     <GradientBorder radius={22}>
                       <div className="p-5 pt-6">
-                        <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
-                          <div className="min-w-0">
-                            <h3 className="uppercase italic font-black text-white truncate" style={{ fontSize: 19 }}>{r.name}</h3>
-                            <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5, marginTop: 3 }}>
-                              {r.focus} · Entrenador {assessmentItems.find(a => a.num === r.assessmentNum)?.evaluator}
-                            </p>
+                        <div className="flex items-center justify-between gap-3 mb-4">
+                          <h3 className="uppercase italic font-black text-white truncate flex items-center gap-2" style={{ fontSize: 19 }}>
+                            {r.name}
+                            {done && <Trophy size={15} style={{ color: GREEN }} />}
+                          </h3>
+                          <Dumbbell size={20} style={{ color: FIRE, opacity: 0.7 }} className="flex-shrink-0" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2.5 max-w-[340px]">
+                          <div className="rounded-xl p-3" style={{ background: AMBER + '10', border: `1px solid ${AMBER}25` }}>
+                            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Duración</p>
+                            <p style={{ color: AMBER, fontSize: 14, fontWeight: 800, marginTop: 2 }}>{r.duration}</p>
                           </div>
-                          <span className="px-2.5 py-1 rounded-full uppercase tracking-wider font-black" style={{ background: levelColor[r.level] + '18', color: levelColor[r.level], fontSize: 9 }}>
-                            {r.level}
-                          </span>
+                          <div className="rounded-xl p-3" style={{ background: levelColor[r.level] + '10', border: `1px solid ${levelColor[r.level]}25` }}>
+                            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Nivel</p>
+                            <p style={{ color: levelColor[r.level], fontSize: 14, fontWeight: 800, marginTop: 2 }}>{r.level}</p>
+                          </div>
                         </div>
-
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                          {[
-                            { v: r.duration, l: 'Duración', c: AMBER },
-                            { v: r.frequency, l: 'Frecuencia', c: BLUE },
-                            { v: `${r.progress.adherence}%`, l: 'Adherencia', c: GREEN },
-                            { v: `${r.progress.completedSessions}/${r.progress.totalSessions}`, l: 'Sesiones', c: FIRE },
-                          ].map((s, k) => (
-                            <div key={k} className="rounded-xl p-2.5 text-center" style={{ background: s.c + '10', border: `1px solid ${s.c}22` }}>
-                              <p style={{ color: s.c, fontSize: 13, fontWeight: 800 }}>{s.v}</p>
-                              <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 9 }}>{s.l}</p>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="h-2 rounded-full overflow-hidden mb-4" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                          <div className="h-full rounded-full" style={{ width: `${(r.progress.completedSessions / r.progress.totalSessions) * 100}%`, background: `linear-gradient(90deg, ${FIRE}, ${AMBER})` }} />
-                        </div>
-
-                        <p className="flex items-center gap-2" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11.5, fontWeight: 700 }}>
-                          <Dumbbell size={14} style={{ color: AMBER }} />
-                          {r.rows.length} ejercicios · Toca la tarjeta para entrar
-                          {done && <Trophy size={13} style={{ color: GREEN }} />}
-                        </p>
                       </div>
                     </GradientBorder>
                   </motion.button>
