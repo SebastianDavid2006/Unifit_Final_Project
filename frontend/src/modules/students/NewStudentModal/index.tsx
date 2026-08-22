@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { X, ChevronLeft, ChevronRight, ExternalLink, ScanLine } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import DemoInbox from '@/modules/students/components/DemoInbox'
-import { createAccount, generateTempPassword, sendEmail } from '@/auth/services/authService'
+import { createAccount, sendEmail } from '@/auth/services/authService'
 import { getNiveles, getPrograms } from '@/data/config/academicPrograms'
 import { loadDocs, type StoredDocs } from '@/data/documents'
 import { BLUE_GRAD, GREEN_GRAD, RED, STEPS, INITIAL_FORM } from '@/modules/students/NewStudentData'
@@ -142,10 +142,9 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     console.log('Nuevo estudiante:', payload)
 
     const email = (form.email || `${(form.primerNombre || 'estudiante').toLowerCase()}@unifit.com`).trim()
-    const tempPassword = generateTempPassword()
     const created = createAccount({
       email,
-      password: tempPassword,
+      password: form.numDoc,
       nombre: `${form.primerNombre || ''} ${form.primerApellido || ''}`.trim(),
       estado: 'activo',
       debeCambiarContrasena: true,
@@ -154,8 +153,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     sendEmail(
       email,
       'Tus credenciales de acceso a UniFit',
-      `Hola${form.primerNombre ? ` ${form.primerNombre}` : ''}! Tu cuenta fue creada exitosamente. Tu usuario es tu correo electrónico (${email}) y te hemos enviado una contraseña temporal. Al ingresar por primera vez deberás cambiarla por una nueva.`,
-      tempPassword,
+      `Hola${form.primerNombre ? ` ${form.primerNombre}` : ''}! Tu cuenta fue creada exitosamente. Tu usuario es tu correo electrónico (${email}) y tu contraseña es tu número de documento. Al ingresar por primera vez deberás cambiarla por una nueva.`,
+      form.numDoc,
     )
     setCreatedEmail(email)
     setCreatedName(created.nombre)

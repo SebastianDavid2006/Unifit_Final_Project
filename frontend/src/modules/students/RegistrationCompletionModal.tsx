@@ -125,7 +125,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
         </div>
       </div>
       <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }} className="text-base font-bold text-center" style={{ color: '#1A1A1E' }}>¡Estudiante registrado exitosamente!</motion.p>
-      <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="text-sm font-medium text-center max-w-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.45)' }}>Tu cuenta queda habilitada. Te enviamos un correo con las credenciales.</motion.p>
+      <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="text-sm font-medium text-center max-w-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.45)' }}>Tu cuenta queda habilitada. Tu usuario es tu correo electrónico y tu contraseña es tu número de documento; deberás cambiarla la primera vez que ingreses al sistema.</motion.p>
       <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }} className="text-sm font-bold text-center" style={{ color: BLUE }}>¡Para que empieces tu experiencia en UniFit y conquistes tu mejor versión!</motion.p>
       <motion.button whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }} whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }} onClick={handleCloseClick} className="mt-8 mb-10 px-8 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer" style={{ background: GREEN_BLUE_GRAD }}>Cerrar</motion.button>
     </motion.div>
