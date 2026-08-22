@@ -9,13 +9,6 @@ interface WeekViewProps {
   monthNames: string[]
   getWeekStart: (d: Date) => Date
 }
-import { useIsMobile } from '@/shared/components/ui/use-mobile'
-
-interface WeekViewProps {
-  currentDate: Date
-  monthNames: string[]
-  getWeekStart: (d: Date) => Date
-}
 
 export function WeekView({ currentDate, monthNames, getWeekStart }: WeekViewProps) {
   const isMobile = useIsMobile()
