@@ -61,16 +61,6 @@ export default function TrainersToolbar({
               <FileText size={14} />
               Permisos
             </motion.button>
-            <motion.button onClick={() => onTrainerTabChange('documents')} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-              style={{
-                background: trainerTab === 'documents' ? PILL_GRAD : 'transparent',
-                color: trainerTab === 'documents' ? '#FFFFFF' : isPermissions ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)',
-              }}
-            >
-              <FileText size={14} />
-              Documentos
-            </motion.button>
           </div>
         </div>
       </>

@@ -4,9 +4,6 @@ import NewUserModal from './components/NewUserModal'
 import TrainersList from './sections/TrainersList'
 import TrainerDetail from './sections/TrainerDetail/TrainerDetail'
 import PermissionsSection from './sections/PermissionsSection'
-import { DocumentsTab } from '@/modules/students/StudentProfile/tabs/DocumentsTab'
-import { DocumentViewerModal } from '@/modules/students/StudentProfile/tabs/DocumentsTab/components/DocumentViewerModal'
-import { DeleteDocumentModal } from '@/modules/students/StudentProfile/tabs/DocumentsTab/components/DeleteDocumentModal'
 import { PAGE_SIZE } from './data'
 
 interface AdminTrainersProps {
@@ -21,11 +18,6 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
   const [globalAdmin, setGlobalAdmin] = useState(true)
   const [page, setPage] = useState(1)
   const [showNewUser, setShowNewUser] = useState(false)
-  const [openMenuDoc, setOpenMenuDoc] = useState<string | null>(null)
-  const [fileModalOpen, setFileModalOpen] = useState(false)
-  const [fileModalData, setFileModalData] = useState<{ name: string; date: string } | null>(null)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [deleteDocName, setDeleteDocName] = useState('')
 
   useImperativeHandle(ref, () => ({
     clearSelection: () => setSelectedTrainer(null)
@@ -93,30 +85,6 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
   if (selectedTrainer) {
     if (trainerTab && trainerTab === 'permissions') {
       return <PermissionsSection trainer={selectedTrainer} globalAdmin={globalAdmin} onToggleGlobalAdmin={() => setGlobalAdmin(!globalAdmin)} />
-    }
-    if (trainerTab && trainerTab === 'documents') {
-      return (
-        <div className="p-8 pt-12 max-w-[1440px] mx-auto">
-          <DocumentsTab
-            openMenuDoc={openMenuDoc}
-            setOpenMenuDoc={setOpenMenuDoc}
-            setFileModalData={setFileModalData}
-            setFileModalOpen={setFileModalOpen}
-          />
-          <DocumentViewerModal
-            isOpen={fileModalOpen && !!fileModalData}
-            fileData={fileModalData}
-            onClose={() => setFileModalOpen(false)}
-            onDelete={(name) => { setFileModalOpen(false); setDeleteDocName(name); setDeleteModalOpen(true) }}
-          />
-          <DeleteDocumentModal
-            isOpen={deleteModalOpen}
-            docName={deleteDocName}
-            onConfirm={() => setDeleteModalOpen(false)}
-            onCancel={() => setDeleteModalOpen(false)}
-          />
-        </div>
-      )
     }
     return <TrainerDetail key={selectedTrainer.id} trainer={selectedTrainer} />
   }

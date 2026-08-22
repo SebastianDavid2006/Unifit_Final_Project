@@ -24,7 +24,6 @@ import type { Student, ValuationForm } from '../StudentProfileData'
 import { OverviewTab } from '@/modules/students/StudentProfile/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/StudentProfile/tabs/ProgressTab'
 import { AssessmentTab } from '@/modules/students/StudentProfile/tabs/AssessmentTab'
-import { DocumentsTab } from '@/modules/students/StudentProfile/tabs/DocumentsTab'
 import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
 import { useCalendarNavigation } from '@/shared/hooks/useCalendarNavigation'
 import { useMeshInput } from '@/shared/hooks/useMeshInput'
@@ -38,8 +37,6 @@ import { AIGenerationModal } from '@/modules/students/StudentProfile/tabs/Assess
 import { RoutineDetailModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/RoutineDetailModal'
 import { NewValuationModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/NewValuationModal'
 import { NewRoutineModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/NewRoutineModal'
-import { DocumentViewerModal } from '@/modules/students/StudentProfile/tabs/DocumentsTab/components/DocumentViewerModal'
-import { DeleteDocumentModal } from '@/modules/students/StudentProfile/tabs/DocumentsTab/components/DeleteDocumentModal'
 
 export { TABS } from '../StudentProfileData'
 export function StudentProfile({ student, tab = 'overview', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
@@ -53,11 +50,6 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
   const [hoveredCell, setHoveredCell] = useState<{w: number; d: number} | null>(null)
   const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 4))
   const [signatureModalOpen, setSignatureModalOpen] = useState(false)
-  const [fileModalOpen, setFileModalOpen] = useState(false)
-  const [fileModalData, setFileModalData] = useState<{name: string, date: string} | null>(null)
-  const [openMenuDoc, setOpenMenuDoc] = useState<string | null>(null)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [deleteDocName, setDeleteDocName] = useState('')
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null)
   const [showAssessmentOptions, setShowAssessmentOptions] = useState(false)
   const [showValuationModal, setShowValuationModal] = useState(false)
@@ -257,14 +249,6 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                   setShowAssessmentOptions={setShowAssessmentOptions}
                 />
               )}
-              {currentTab === 'documents' && (
-                <DocumentsTab
-                  openMenuDoc={openMenuDoc}
-                  setOpenMenuDoc={setOpenMenuDoc}
-                  setFileModalData={setFileModalData}
-                  setFileModalOpen={setFileModalOpen}
-                />
-              )}
 
               </div>
             </motion.div>
@@ -375,22 +359,6 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Modal visor de documento */}
-        <DocumentViewerModal
-          isOpen={fileModalOpen && !!fileModalData}
-          fileData={fileModalData}
-          onClose={() => setFileModalOpen(false)}
-          onDelete={(name) => { setFileModalOpen(false); setDeleteDocName(name); setDeleteModalOpen(true) }}
-        />
-
-        {/* Modal eliminar documento */}
-        <DeleteDocumentModal
-          isOpen={deleteModalOpen}
-          docName={deleteDocName}
-          onConfirm={() => setDeleteModalOpen(false)}
-          onCancel={() => setDeleteModalOpen(false)}
-        />
 
         {/* Modal nueva valoración */}
         <NewValuationModal
