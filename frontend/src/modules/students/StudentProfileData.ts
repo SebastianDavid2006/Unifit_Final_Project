@@ -1,4 +1,4 @@
-﻿import { Activity, BarChart2, Calendar, FileText } from 'lucide-react'
+﻿import { Activity, BarChart2, Calendar, FileText, Target } from 'lucide-react'
 
 export const ROUTINE_CATEGORIES = ['Pecho', 'Espalda', 'Hombros', 'Brazos', 'Piernas', 'Abdomen/Core', 'Cardio', 'General', 'Tren Superior', 'Tren Inferior']
 
@@ -57,6 +57,8 @@ export interface Student {
   nivelFormacion?: string
   area?: string
   cargo?: string
+  firma?: string
+  huella?: string
 }
 
 export const RED = '#E63946'
@@ -114,6 +116,8 @@ export const emptyValuationForm = {
   }
 
 export const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+export const numOnly = (s: any) => String(s ?? '').replace(/[^\d.]/g, '')
 
 export type ValuationForm = typeof emptyValuationForm
 

@@ -1,35 +1,15 @@
 import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
-import studentsImg from '../../assets/illustrations/characters/students/students_group.webp'
+import studentsImg from '@/assets/illustrations/characters/students/students_group.webp'
 import NewStudentModal from './NewStudentModal'
+import RegistrationCompletionModal from './RegistrationCompletionModal'
+import type { Student } from '@/data/students'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
-
-interface Student {
-  id: number
-  name: string
-  faculty: string
-  adherence: number
-  risk: 'high' | 'medium' | 'low'
-  status: 'active' | 'inactive' | 'process'
-  lastVisit: string
-  nextAssessment: string
-  avatar: string
-  goal: string
-  sessions: number
-  weight: number
-  height: number
-  institution: string
-  gender: string
-  program: string
-  modality: string
-  jornada: string
-  semester: string
-  eps: string
-}
+const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 
 interface Props {
   students: Student[]
@@ -45,8 +25,19 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
   const [filterSearch, setFilterSearch] = useState('')
   const [showNewStudent, setShowNewStudent] = useState(false)
+  const [showRegModal, setShowRegModal] = useState(false)
+  const [selectedProcessStudent, setSelectedProcessStudent] = useState<Student | null>(null)
   const [page, setPage] = useState(1)
   const pageSize = 7
+
+  const handleStudentClick = (s: Student) => {
+    if (s.status === 'process') {
+      setSelectedProcessStudent(s)
+      setShowRegModal(true)
+    } else {
+      onSelectStudent(s)
+    }
+  }
 
   const filterLabels: Record<string, string> = {
     status: 'Estado', gender: 'Género', institution: 'Institución',
@@ -62,17 +53,23 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
     semester: [...new Set(students.map(s => s.semester))],
   }), [students])
 
-  const filtered = useMemo(() =>
-    students.filter(s => {
+  const filtered = useMemo(() => {
+    const filteredStudents = students.filter(s => {
       const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.faculty.toLowerCase().includes(search.toLowerCase())
       const matchRisk = riskFilter === 'all' || s.risk === riskFilter
       const entries = Object.entries(filterSelections).filter(([, v]) => v.size > 0)
       const statusLabel: Record<string, string> = { active: 'Activo', inactive: 'Inactivo', process: 'En proceso' }
       const matchCategory = entries.length === 0 || entries.every(([cat, vals]) => vals.has(cat === 'status' ? statusLabel[s.status] : (s as any)[cat]))
       return matchSearch && matchRisk && matchCategory
-    }),
-    [students, search, riskFilter, filterSelections]
-  )
+    })
+
+    // Sort: "process" status first, then by name
+    return filteredStudents.sort((a, b) => {
+      if (a.status === 'process' && b.status !== 'process') return -1
+      if (a.status !== 'process' && b.status === 'process') return 1
+      return a.name.localeCompare(b.name)
+    })
+  }, [students, search, riskFilter, filterSelections])
 
   const tableHeaders = ['Nombre', 'Carrera', 'Último Ingreso', 'Próxima Valoración', 'Valoraciones', 'Estado']
 
@@ -104,6 +101,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
 
   return (
     <>
+      <style>{`@keyframes shimmer { 0% { background-position: 200% center } 100% { background-position: -200% center } }`}</style>
       <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
 
       {/* Banner card */}
@@ -380,26 +378,44 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
           </div>
 
           <div className="space-y-2">
-            {paged.map((s, i) => (
-              <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => onSelectStudent(s)} whileHover={{ y: -3, scale: 1.002, background: 'rgba(255,255,255,0.8)' }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer">
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
-                  <div className="min-w-0">
-                    <p className="text-[#1A1A1E] text-sm font-bold truncate">{s.name}</p>
-                    <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
+            {paged.map((s, i) => {
+              const isProcess = s.status === 'process'
+              return (
+                <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => handleStudentClick(s)} whileHover={{ y: -3, scale: 1.002 }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer relative overflow-hidden" style={{
+                  background: isProcess ? BLUE_GRAD : undefined,
+                  color: isProcess ? '#FFFFFF' : undefined,
+                  border: 'none',
+                  boxShadow: isProcess ? '0 4px 16px rgba(18,112,183,0.3), 0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03)' : undefined,
+                }}>
+                  {isProcess && (
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(110deg, transparent 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.12) 63%, transparent 75%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer 3s ease-in-out infinite',
+                      }}
+                    />
+                  )}
+                  <div className="flex items-center gap-4 min-w-0 relative z-10">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold truncate" style={{ color: isProcess ? '#FFFFFF' : '#1A1A1E' }}>{s.name}</p>
+                      <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
+                    </div>
                   </div>
-                </div>
-                <p className="text-xs font-semibold" style={{ color: '#1A1A1E' }}>{s.faculty}</p>
-                <p className="text-xs font-medium" style={{ color: '#1A1A1E' }}>{s.lastVisit}</p>
-                <p className="text-xs font-bold" style={{ color: s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A' }}>{s.nextAssessment}</p>
-                <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: statusMap[s.status].bg, color: statusMap[s.status].color }}>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusMap[s.status].color }} />
-                  {statusMap[s.status].label}
-                </span>
-                <ChevronRight size={15} style={{ color: 'rgba(0,0,0,0.12)' }} />
-              </motion.div>
-            ))}
+                  <p className="text-xs font-semibold" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.faculty}</p>
+                  <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : s.lastVisit}</p>
+                  <p className="text-xs font-bold" style={{ color: isProcess ? '#FFD6E0' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{s.nextAssessment}</p>
+                  <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : statusMap[s.status].bg, color: isProcess ? '#FFFFFF' : statusMap[s.status].color }}>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: isProcess ? '#FFFFFF' : statusMap[s.status].color }} />
+                    {statusMap[s.status].label}
+                  </span>
+                  <ChevronRight size={15} style={{ color: isProcess ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.12)' }} />
+                </motion.div>
+              )
+            })}
           </div>
 
           {totalPages > 1 && (
@@ -460,6 +476,12 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
         </motion.div>
       </div>
       <NewStudentModal open={showNewStudent} onClose={() => setShowNewStudent(false)} />
+      <RegistrationCompletionModal
+        open={showRegModal}
+        onClose={() => { setShowRegModal(false); setSelectedProcessStudent(null) }}
+        onComplete={() => { onSelectStudent(selectedProcessStudent!); }}
+        studentName={selectedProcessStudent?.name || ''}
+      />
     </>
   )
 }

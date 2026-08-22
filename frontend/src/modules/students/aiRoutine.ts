@@ -1,4 +1,4 @@
-import { Exercise, exerciseCatalog } from '../../data/exercises'
+import { Exercise, exerciseCatalog } from '@/data/exercises'
 
 export interface RoutineRow {
   id: string

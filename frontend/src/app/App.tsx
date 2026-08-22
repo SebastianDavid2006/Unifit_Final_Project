@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { TrainerView } from '../views/trainer/TrainerView'
-import { StudentView } from '../views/student/StudentView'
-import { AdminView } from '../views/admin/AdminView'
-import { LoginView } from '../views/login/LoginView'
-import { RegisterView } from '../views/login/RegisterView'
-import { cerrarSesion, getUsuario, mapRolToPlatform, type Platform } from '../lib/auth'
+import { LoginPage, type LoginSession } from '@/auth/pages/LoginPage'
+import { RegisterPage } from '@/auth/pages/RegisterPage'
+import { ForgotPasswordPage } from '@/auth/pages/ForgotPasswordPage'
+import { ChangePasswordPage } from '@/auth/pages/ChangePasswordPage'
+import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
+import { StudentPage } from '@/features/student/pages/StudentPage'
+import StudentOnboardingGate from '@/features/student/StudentOnboardingGate'
+import { AdminPage } from '@/features/admin/pages/AdminPage'
+import BackgroundDecor from '@/shared/components/BackgroundDecor'
 
-type Screen = 'login' | 'register' | 'agenda' | Platform
+type Platform = 'trainer' | 'student' | 'admin'
+type Screen = 'login' | 'register' | 'forgot' | 'change-password' | Platform
 
 function ParticleField() {
   const particles = Array.from({ length: 25 }, (_, i) => ({
@@ -39,45 +43,30 @@ function ParticleField() {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>(() => {
-    const usuario = getUsuario()
-    if (!usuario) return 'login'
-    return usuario.estado === 'pendiente' ? 'agenda' : mapRolToPlatform(usuario.rol)
-  })
-
-  const handleLogout = () => {
-    cerrarSesion()
-    setScreen('login')
-  }
+  const [screen, setScreen] = useState<Screen>('login')
+  const [studentSession, setStudentSession] = useState<LoginSession | null>(null)
+  const [pendingSession, setPendingSession] = useState<LoginSession | null>(null)
+  const [pendingPlatform, setPendingPlatform] = useState<Platform | null>(null)
 
   return (
     <div
-      className="size-full flex flex-col overflow-hidden mesh-bg"
+      className="size-full flex flex-col overflow-y-auto mesh-bg"
       style={{ fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" }}
     >
       <ParticleField />
 
       {screen !== 'login' && (
-        <>
-          <div className="floating-sphere" style={{
-            width: 380, height: 380,
-            background: 'radial-gradient(circle at 30% 30%, rgba(230,57,70,0.05), transparent)',
-            top: '-120px', right: '-80px', animationDelay: '0s',
-          }} />
-          <div className="floating-sphere" style={{
-            width: 250, height: 250,
-            background: 'radial-gradient(circle at 70% 30%, rgba(255,107,138,0.04), transparent)',
-            bottom: '10%', left: '-60px', animationDelay: '-4s',
-          }} />
-          <div className="floating-sphere" style={{
-            width: 180, height: 180,
-            background: 'radial-gradient(circle at 50% 50%, rgba(204,0,51,0.03), transparent)',
-            top: '30%', right: '15%', animationDelay: '-8s',
-          }} />
-        </>
+        <BackgroundDecor
+          goo={false}
+          spheres={[
+            { width: 380, height: 380, background: 'radial-gradient(circle at 30% 30%, rgba(230,57,70,0.05), transparent)', top: '-120px', right: '-80px', animationDelay: '0s' },
+            { width: 250, height: 250, background: 'radial-gradient(circle at 70% 30%, rgba(255,107,138,0.04), transparent)', bottom: '10%', left: '-60px', animationDelay: '-4s' },
+            { width: 180, height: 180, background: 'radial-gradient(circle at 50% 50%, rgba(204,0,51,0.03), transparent)', top: '30%', right: '15%', animationDelay: '-8s' },
+          ]}
+        />
       )}
 
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-y-auto relative">
         <AnimatePresence mode="wait">
           {screen === 'login' && (
             <motion.div
@@ -88,7 +77,31 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <LoginView onSelect={(platform) => setScreen(platform)} onRegister={() => setScreen('register')} onPendiente={() => setScreen('agenda')} />
+              <LoginPage onSelect={(platform, session) => {
+                if (session.user.estado === 'pendiente') {
+                  setStudentSession(session)
+                  setScreen('student')
+                } else if (session.user.debeCambiarContrasena) {
+                  setPendingSession(session)
+                  setPendingPlatform(platform)
+                  setScreen('change-password')
+                } else {
+                  if (platform === 'student') setStudentSession(session)
+                  setScreen(platform)
+                }
+              }} onRegister={() => setScreen('register')} onForgot={() => setScreen('forgot')} />
+            </motion.div>
+          )}
+          {screen === 'forgot' && (
+            <motion.div
+              key="forgot"
+              className="size-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+                <ForgotPasswordPage onBack={() => setScreen('login')} onDone={() => setScreen('login')} />
             </motion.div>
           )}
           {screen === 'register' && (
@@ -100,19 +113,30 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <RegisterView onBack={() => setScreen('login')} />
+                <RegisterPage onBack={() => setScreen('login')} />
             </motion.div>
           )}
-          {screen === 'agenda' && (
+          {screen === 'change-password' && (
             <motion.div
-              key="agenda"
+              key="change-password"
               className="size-full"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <RegisterView onBack={() => setScreen('login')} initialPhase="schedule" />
+              <ChangePasswordPage
+                email={pendingSession.user.email}
+                onBack={() => setScreen('login')}
+                onSuccess={() => {
+                  if (pendingPlatform === 'student' && pendingSession) {
+                    setStudentSession({ ...pendingSession, user: { ...pendingSession.user, debeCambiarContrasena: false } })
+                  }
+                  setPendingSession(null)
+                  setPendingPlatform(null)
+                  setScreen(pendingPlatform || 'login')
+                }}
+              />
             </motion.div>
           )}
           {screen === 'trainer' && (
@@ -124,7 +148,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <TrainerView onLogout={handleLogout} />
+              <TrainerPage onLogout={() => setScreen('login')} />
             </motion.div>
           )}
           {screen === 'student' && (
@@ -136,7 +160,11 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <StudentView onLogout={handleLogout} />
+              {studentSession ? (
+                <StudentOnboardingGate session={studentSession} onLogout={() => { setStudentSession(null); setScreen('login') }} />
+              ) : (
+                <StudentPage />
+              )}
             </motion.div>
           )}
           {screen === 'admin' && (
@@ -148,7 +176,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <AdminView onLogout={handleLogout} />
+              <AdminPage onLogout={() => setScreen('login')} />
             </motion.div>
           )}
         </AnimatePresence>

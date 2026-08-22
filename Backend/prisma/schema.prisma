@@ -241,9 +241,6 @@ model Usuario {
   agenda_creada         Agenda[]        @relation("AgendaCreador")
   cupos_creados         Cupo[]
   documentos_personales DocumentoPersonal[]
-  ejercicios            Ejercicio[]
-  maquinas              Maquina[]
-  sesiones_rutina       SesionRutina[]
 }
 
 // Tipos de Usuario
@@ -417,7 +414,7 @@ model MedidasCorporales {
 
 model Ejercicio {
   id_ejercicio       String @id @default(uuid())
-  id_usuario         String
+  id_creador         String
   nombre             String
   descripcion        String?
   grupos_musculares  GrupoMuscular[]
@@ -427,14 +424,14 @@ model Ejercicio {
   fecha_creacion     DateTime  @default(now())
   fecha_modificacion DateTime  @updatedAt
 
-  usuario           Usuario  @relation(fields: [id_usuario], references: [id_usuario])
+  creador           Usuario  @relation(fields: [id_creador], references: [id_usuario])
   maquinas          MaquinaEjercicio[]
   rutina_ejercicios RutinaEjercicio[]
 }
 
 model Maquina {
   id_maquina         String        @id @default(uuid())
-  id_usuario         String
+  id_creador         String
   nombre             String
   descripcion        String?
   grupos_musculares  GrupoMuscular[]
@@ -444,7 +441,7 @@ model Maquina {
   fecha_creacion     DateTime      @default(now())
   fecha_modificacion DateTime      @updatedAt
 
-  usuario    Usuario            @relation(fields: [id_usuario], references: [id_usuario])
+  creador    Usuario            @relation(fields: [id_creador], references: [id_usuario])
   ejercicios MaquinaEjercicio[]
 }
 
@@ -499,7 +496,6 @@ model RutinaEjercicio {
 model SesionRutina {
   id_sesion      String             @id @default(uuid())
   id_rutina      String
-  id_usuario     String
   fecha          DateTime
   hora_inicio    DateTime
   hora_fin       DateTime
@@ -507,7 +503,6 @@ model SesionRutina {
   fecha_creacion DateTime           @default(now())
 
   rutina  Rutina  @relation(fields: [id_rutina], references: [id_rutina])
-  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
 }
 
 // AGENDA
