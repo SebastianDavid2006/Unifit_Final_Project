@@ -16,9 +16,6 @@ export function ProfilePage() {
   const { student } = useStudentApp()
   const [modal, setModal] = useState<ModalId>(null)
   const [historySel, setHistorySel] = useState<number | null>(null)
-  const [medEps, setMedEps] = useState<File | null>(null)
-  const [medHistoria, setMedHistoria] = useState<File | null>(null)
-  const [lesiones, setLesiones] = useState<File[]>([])
 
   const menuItems = [
     { id: 'history' as const, label: 'Historial de valoraciones', desc: `${assessmentItems.length} valoraciones registradas`, icon: ClipboardList, color: BLUE },
@@ -104,16 +101,7 @@ export function ProfilePage() {
                     onBack={() => setHistorySel(null)}
                   />
                 )}
-                {modal === 'documents' && (
-                  <DocumentsPanel
-                    medEps={medEps}
-                    setMedEps={setMedEps}
-                    medHistoria={medHistoria}
-                    setMedHistoria={setMedHistoria}
-                    lesiones={lesiones}
-                    setLesiones={setLesiones}
-                  />
-                )}
+                {modal === 'documents' && <DocumentsPanel />}
                 {modal === 'personal' && <PersonalDataPanel />}
               </div>
             </motion.div>
