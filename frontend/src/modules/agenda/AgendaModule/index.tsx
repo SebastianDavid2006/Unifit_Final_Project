@@ -315,7 +315,7 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
   }
 
   return (
-    <div className="p-8 pt-12 max-w-[1440px] mx-auto relative">
+    <div className="p-8 pt-12 max-w-[1440px] mx-auto relative overflow-x-hidden" style={{ maxWidth: '100%' }}>
       <Banner onOpenPublish={openPublishModal} />
 
       <div className="space-y-4">

@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
-  X, Check, ScanLine, RefreshCw, ChevronLeft, ChevronRight,
+  X, ScanLine, RefreshCw, ChevronLeft, ChevronRight,
 } from 'lucide-react'
-import SignatureCanvas from 'react-signature-canvas'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
@@ -19,8 +18,7 @@ const STEPS = [
   { num: 1, label: 'Tratamiento de datos' },
   { num: 2, label: 'Contrato' },
   { num: 3, label: 'PAR-Q' },
-  { num: 4, label: 'Firma' },
-  { num: 5, label: 'Huella digital' },
+  { num: 4, label: 'Huella digital' },
 ]
 
 type FingerprintStatus = 'idle' | 'scanning' | 'captured'
@@ -41,8 +39,6 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
   const [fingerprintStatus, setFingerprintStatus] = useState<FingerprintStatus>('idle')
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
-  const sigRef = useRef<SignatureCanvas>(null)
-  const [signatureDrawn, setSignatureDrawn] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -53,18 +49,12 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
       setDocs(loadDocs())
       setFingerprintStatus('idle')
       setSuccess(false)
-      setSignatureDrawn(false)
     }
   }, [open])
 
   const handleCloseClick = () => {
     if (success) onComplete()
     onClose()
-  }
-
-  const clearSignature = () => {
-    sigRef.current?.clear()
-    setSignatureDrawn(false)
   }
 
   const startFingerprintScan = () => {
@@ -81,69 +71,16 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
     if (step === 1) return aceptaDatos
     if (step === 2) return aceptaContrato
     if (step === 3) return aceptaParq
-    if (step === 4) return signatureDrawn
-    if (step === 5) return fingerprintStatus === 'captured'
+    if (step === 4) return fingerprintStatus === 'captured'
     return false
   }
 
   const handlePrev = () => setStep(s => Math.max(1, s - 1))
   const handleNext = () => {
     if (!canGoNext()) { triggerShake(); return }
-    if (step === 5) setSuccess(true)
+    if (step === 4) setSuccess(true)
     else setStep(s => s + 1)
   }
-
-  const signaturePad = (title: string) => (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{title}</p>
-        <motion.button
-          type="button"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.93 }}
-          onClick={clearSignature}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer"
-          style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.4)' }}
-        >
-          <RefreshCw size={11} />
-          Limpiar firma
-        </motion.button>
-      </div>
-      <p className="text-[11px] font-medium mb-2" style={{ color: 'rgba(0,0,0,0.4)' }}>
-        Dibuja tu firma en el recuadro utilizando el mouse o tu dedo (si usas pantalla táctil).
-      </p>
-      <div className="relative rounded-2xl p-4 overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)' }}>
-        <motion.div className="absolute top-0 left-0 right-0 h-0.5 pointer-events-none z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }} animate={{ x: ['-100%', '100%'] }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} />
-        <motion.div className="absolute bottom-0 left-0 right-0 h-0.5 pointer-events-none z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(18,112,183,0.3), transparent)' }} animate={{ x: ['100%', '-100%'] }} transition={{ duration: 2, repeat: Infinity, ease: 'linear' }} />
-        <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 rounded-tl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 rounded-tr pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-        <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
-          <SignatureCanvas
-            ref={sigRef}
-            penColor="#1A1A1E"
-            minWidth={1}
-            maxWidth={2.5}
-            onEnd={() => setSignatureDrawn(true)}
-            canvasProps={{
-              className: 'w-full',
-              style: { height: 200, background: '#FFFFFF', borderRadius: '12px', width: '100%' },
-            }}
-          />
-        </div>
-      </div>
-    </div>
-  )
-
-  const renderStepFirma = () => (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-6">
-      <div className="text-center">
-        <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.5)' }}>{studentName} debe firmar para completar su registro</p>
-      </div>
-      {signaturePad('Firma del estudiante')}
-    </motion.div>
-  )
 
   const renderStepHuella = () => (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="flex flex-col items-center space-y-4">
@@ -232,8 +169,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
                       setAceptaParq={setAceptaParq}
                     />
                   )}
-                  {step === 4 && renderStepFirma()}
-                  {step === 5 && renderStepHuella()}
+                  {step === 4 && renderStepHuella()}
                 </motion.div>
               </div>
 
@@ -245,7 +181,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
                   </div>
 
                   <div className="flex-1 flex justify-center">
-                    {step === 5 && fingerprintStatus === 'idle' && (
+                    {step === 4 && fingerprintStatus === 'idle' && (
                       <motion.button
                         type="button"
                         whileHover={{ scale: 1.03 }}
@@ -274,8 +210,8 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
                         boxShadow: canGoNext() ? '0 4px 16px rgba(18,112,183,0.35)' : 'none',
                       }}
                     >
-                      <span>{step === 5 ? 'Finalizar' : 'Siguiente'}</span>
-                      {step < 5 && <ChevronRight size={14} />}
+                      <span>{step === 4 ? 'Finalizar' : 'Siguiente'}</span>
+                      {step < 4 && <ChevronRight size={14} />}
                     </motion.button>
                   </div>
                 </div>

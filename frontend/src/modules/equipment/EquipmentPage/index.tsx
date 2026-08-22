@@ -99,7 +99,7 @@ export default function EquipmentPage(props: Props) {
   }
 
   return (
-    <div className="p-8 pt-12 max-w-[1440px] mx-auto relative">
+    <div className="p-8 pt-12 max-w-[1440px] mx-auto relative overflow-x-hidden" style={{ maxWidth: '100%' }}>
       <EquipmentBanner onCreate={() => setShowCreateOptions(true)} />
 
       <CreateOptionsOverlay
