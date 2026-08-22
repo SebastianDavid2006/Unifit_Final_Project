@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
-import studentsImg from '@/assets/illustrations/characters/students/students_group.webp'
 import NewStudentModal from './NewStudentModal'
 import RegistrationCompletionModal from './RegistrationCompletionModal'
 import type { Student } from '@/data/students'

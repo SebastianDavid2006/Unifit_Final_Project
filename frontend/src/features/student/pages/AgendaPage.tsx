@@ -119,6 +119,24 @@ export function AgendaPage() {
   const weekStart = (d: Date) => offset(d, -d.getDay())
   const [weekOffset, setWeekOffset] = useState(0)
 
+  /* ---- Flujo de reserva ---- */
+  const [pendingBooking, setPendingBooking] = useState<{ info: DayAvailability; time: string } | null>(null)
+  const [booked, setBooked] = useState<{ date: Date; time: string } | null>(null)
+  const [successOpen, setSuccessOpen] = useState(false)
+
+  const confirmBooking = () => {
+    if (!pendingBooking) return
+    setBooked({ date: pendingBooking.info.date, time: pendingBooking.time })
+    setPendingBooking(null)
+    setSelected(null)
+    setSuccessOpen(true)
+  }
+
+  const cancelSession = () => {
+    setBooked(null)
+    setSuccessOpen(false)
+  }
+
   const infoFor = (d: Date) => getDayInfo(d, holidays)
 
   const freeSlots = (info: DayAvailability) => info.slots.filter(s => !s.taken).length
@@ -177,15 +195,21 @@ export function AgendaPage() {
                   {slot.taken ? 'Ocupado' : 'Disponible'}
                 </p>
               </div>
-              {!slot.taken && (
+              {!slot.taken && !booked && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  onClick={() => setPendingBooking({ info, time: slot.time })}
                   className="px-4 py-2 rounded-xl font-black uppercase tracking-wider"
                   style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 10 }}
                 >
                   Reservar
                 </motion.button>
+              )}
+              {!slot.taken && booked && (
+                <span className="flex items-center gap-1 px-3 py-1.5 rounded-xl uppercase tracking-wider font-bold" style={{ fontSize: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' }}>
+                  <Lock size={9} /> Bloqueado
+                </span>
               )}
             </motion.div>
           ))}
@@ -272,6 +296,9 @@ export function AgendaPage() {
                 }} />
               )}
               {info.isHoliday && <Lock size={10} style={{ position: 'absolute', bottom: 5, color: AMBER }} />}
+              {booked && sameDay(date, booked.date) && (
+                <CheckCircle2 size={13} style={{ position: 'absolute', top: 5, right: 5, color: GREEN, filter: 'drop-shadow(0 0 6px rgba(48,209,88,0.7))' }} />
+              )}
             </motion.button>
           )
         })}
@@ -373,10 +400,15 @@ export function AgendaPage() {
                         <span style={{ fontSize: 11.5, fontWeight: 700, color: s.taken ? 'rgba(255,255,255,0.35)' : '#fff', textDecoration: s.taken ? 'line-through' : 'none' }}>
                           {s.time}
                         </span>
-                        {!s.taken && (
-                          <button className="px-2 py-1 rounded-lg font-black uppercase tracking-wide transition-transform hover:scale-105" style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 8.5 }}>
+                        {!s.taken && !booked && (
+                          <button onClick={() => setPendingBooking({ info, time: s.time })} className="px-2 py-1 rounded-lg font-black uppercase tracking-wide transition-transform hover:scale-105" style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 8.5 }}>
                             Reservar
                           </button>
+                        )}
+                        {!s.taken && booked && (
+                          <span className="px-2 py-1 rounded-lg uppercase tracking-wide font-bold flex items-center gap-1" style={{ fontSize: 7.5, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' }}>
+                            <Lock size={8} /> Bloqueado
+                          </span>
                         )}
                       </motion.div>
                     ))}
@@ -429,10 +461,15 @@ export function AgendaPage() {
                   <p className="text-white font-black" style={{ fontSize: 15 }}>{slot.time}</p>
                   <p style={{ color: slot.taken ? FIRE : GREEN, fontSize: 11 }}>{slot.taken ? 'Cupo ocupado' : 'Cupo libre'}</p>
                 </div>
-                {!slot.taken && (
-                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="px-4 py-2 rounded-xl font-black uppercase tracking-wider" style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 10 }}>
+                {!slot.taken && !booked && (
+                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => setPendingBooking({ info, time: slot.time })} className="px-4 py-2 rounded-xl font-black uppercase tracking-wider" style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 10 }}>
                     Reservar
                   </motion.button>
+                )}
+                {!slot.taken && booked && (
+                  <span className="flex items-center gap-1.5 px-4 py-2 rounded-xl uppercase tracking-wider font-bold" style={{ fontSize: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' }}>
+                    <Lock size={11} /> Bloqueado
+                  </span>
                 )}
               </motion.div>
             ))}
@@ -479,6 +516,38 @@ export function AgendaPage() {
         </div>
       </div>
 
+      {/* Banner: sesión agendada — agenda bloqueada */}
+      <AnimatePresence>
+        {booked && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="rounded-2xl p-4 flex flex-wrap items-center gap-3"
+            style={{ background: 'rgba(48,209,88,0.07)', border: '1px solid rgba(48,209,88,0.3)' }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(48,209,88,0.14)', border: '1px solid rgba(48,209,88,0.3)' }}>
+              <CheckCircle2 size={19} style={{ color: GREEN }} />
+            </div>
+            <div className="flex-1 min-w-[190px]">
+              <p className="text-white font-black capitalize" style={{ fontSize: 13 }}>
+                Sesión agendada — {format(booked.date, "EEEE d 'de' MMMM", { locale: es })} · {booked.time}
+              </p>
+              <p style={{ color: 'rgba(255,255,255,0.42)', fontSize: 11, marginTop: 2 }}>
+                La agenda queda bloqueada mientras tengas una sesión activa.
+              </p>
+            </div>
+            <button
+              onClick={cancelSession}
+              className="px-3.5 py-2 rounded-xl font-black uppercase tracking-wider transition-transform hover:scale-105"
+              style={{ fontSize: 9, background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.35)', color: '#FF8FA3' }}
+            >
+              Cancelar sesión
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {view === 'month' && renderMonth()}
         {view === 'week' && renderWeek()}
@@ -510,6 +579,152 @@ export function AgendaPage() {
               }}
             >
               <DayDetail info={selected} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: confirmación de reserva */}
+      <AnimatePresence>
+        {pendingBooking && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-end md:items-center justify-center md:p-6"
+            style={{ background: 'rgba(0,0,0,0.74)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setPendingBooking(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              onClick={e => e.stopPropagation()}
+              className="w-full md:max-w-sm rounded-t-3xl md:rounded-3xl p-6 text-center"
+              style={{
+                background: 'linear-gradient(165deg, #12121C, #0A0A14)',
+                border: '1px solid rgba(48,209,88,0.28)',
+                boxShadow: '0 -10px 80px rgba(0,0,0,0.6), 0 30px 90px rgba(48,209,88,0.12)',
+              }}
+            >
+              <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center" style={{ background: GREEN + '14', border: `1px solid ${GREEN}40` }}>
+                <CalendarCheck size={30} style={{ color: GREEN }} />
+              </div>
+              <h3 className="uppercase italic font-black text-white mt-4" style={{ fontSize: 18 }}>¿Reservar esta sesión?</h3>
+              <p style={{ color: 'rgba(255,255,255,0.52)', fontSize: 12.5, marginTop: 6 }}>
+                ¿Estás seguro que deseas reservar para esta fecha?
+              </p>
+              <div className="rounded-2xl p-4 mt-4" style={{ background: 'rgba(48,209,88,0.06)', border: '1px solid rgba(48,209,88,0.22)' }}>
+                <p className="capitalize text-white font-black" style={{ fontSize: 14.5 }}>
+                  {format(pendingBooking.info.date, "EEEE d 'de' MMMM yyyy", { locale: es })}
+                </p>
+                <p className="flex items-center justify-center gap-1.5" style={{ color: '#7CE495', fontSize: 12.5, fontWeight: 800, marginTop: 4 }}>
+                  <Clock size={13} /> {pendingBooking.time} h
+                </p>
+              </div>
+              <div className="flex gap-2.5 mt-5">
+                <button
+                  onClick={() => setPendingBooking(null)}
+                  className="flex-1 py-3.5 rounded-2xl font-black uppercase tracking-wider"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.55)', fontSize: 11 }}
+                >
+                  Cancelar
+                </button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={confirmBooking}
+                  className="flex-1 py-3.5 rounded-2xl font-black uppercase tracking-wider"
+                  style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 11, boxShadow: '0 14px 36px rgba(48,209,88,0.3)' }}
+                >
+                  Sí, reservar
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: reserva exitosa */}
+      <AnimatePresence>
+        {booked && successOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-end md:items-center justify-center md:p-6"
+            style={{ background: 'rgba(0,0,0,0.74)', backdropFilter: 'blur(8px)' }}
+            onClick={() => setSuccessOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 40 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 22 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full md:max-w-sm rounded-t-3xl md:rounded-3xl p-7 text-center relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(170deg, #101A12, #0A0A14)',
+                border: '1px solid rgba(48,209,88,0.35)',
+                boxShadow: '0 -10px 80px rgba(0,0,0,0.6), 0 30px 100px rgba(48,209,88,0.15)',
+              }}
+            >
+              {/* Brillos de fondo */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(70% 50% at 50% 0%, rgba(48,209,88,0.14), transparent 65%)' }} />
+
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 240, damping: 13, delay: 0.1 }}
+                className="w-24 h-24 mx-auto rounded-full flex items-center justify-center relative z-10"
+                style={{ background: `radial-gradient(circle at 32% 28%, rgba(48,209,88,0.3), ${GREEN}18)`, border: `2px solid ${GREEN}66`, boxShadow: '0 0 60px rgba(48,209,88,0.35)' }}
+              >
+                <CheckCircle2 size={46} style={{ color: GREEN, filter: 'drop-shadow(0 6px 14px rgba(48,209,88,0.6))' }} />
+                <motion.span
+                  className="absolute inset-0 rounded-full"
+                  style={{ border: `2px solid ${GREEN}` }}
+                  animate={{ scale: [1, 1.45], opacity: [0.55, 0] }}
+                  transition={{ duration: 1.7, repeat: Infinity, ease: 'easeOut' }}
+                />
+              </motion.div>
+
+              <h3
+                className="uppercase italic font-black mt-5 relative z-10"
+                style={{
+                  fontSize: 26,
+                  background: `linear-gradient(135deg, #B8FFCE, ${GREEN})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                ¡Listo! Agendada
+              </h3>
+              <p className="relative z-10" style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12.5, marginTop: 6 }}>
+                Tu sesión quedó reservada con el entrenador
+              </p>
+
+              <div className="rounded-2xl p-4 mt-4 relative z-10" style={{ background: 'rgba(48,209,88,0.07)', border: '1px solid rgba(48,209,88,0.25)' }}>
+                <p className="capitalize text-white font-black" style={{ fontSize: 14.5 }}>
+                  {format(booked.date, "EEEE d 'de' MMMM yyyy", { locale: es })}
+                </p>
+                <p className="flex items-center justify-center gap-1.5" style={{ color: '#7CE495', fontSize: 12.5, fontWeight: 800, marginTop: 4 }}>
+                  <Clock size={13} /> {booked.time} h
+                </p>
+              </div>
+
+              <motion.button
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setSuccessOpen(false)}
+                className="w-full py-4 rounded-2xl font-black uppercase tracking-widest mt-5 relative z-10"
+                style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 12, boxShadow: '0 14px 40px rgba(48,209,88,0.32)' }}
+              >
+                ¡Genial!
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
