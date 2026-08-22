@@ -29,6 +29,7 @@ import { useCalendarNavigation } from '@/shared/hooks/useCalendarNavigation'
 import { useMeshInput } from '@/shared/hooks/useMeshInput'
 import { useValuationManager } from '@/modules/students/shared/hooks/useValuationManager'
 import { useRoutineManager } from '@/modules/students/shared/hooks/useRoutineManager'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import { SignatureModal } from '@/modules/students/StudentProfile/shared/components/SignatureModal'
 import { CancelConfirmModal } from '@/modules/students/StudentProfile/shared/components/CancelConfirmModal'
 import { StudentInfoModal } from '@/modules/students/StudentProfile/tabs/OverviewTab/components/StudentInfoModal'
@@ -65,6 +66,8 @@ export function StudentProfile({ student, tab = 'overview', onTabChange, canCrea
   const [selectedRoutineDay, setSelectedRoutineDay] = useState<string | null>(null)
   const [viewRoutineDay, setViewRoutineDay] = useState<string | null>(null)
   const [routineDropdown, setRoutineDropdown] = useState<{ id: string; field: 'muscle' | 'exercise' } | null>(null)
+
+  const isMobile = useIsMobile()
   const [routineDayPage, setRoutineDayPage] = useState(1)
   const [assessmentPage, setAssessmentPage] = useState(1)
   const [aiGenerating, setAiGenerating] = useState(false)
@@ -205,7 +208,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
         top: '-60px', right: '-40px',
       }} />
 
-      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto" style={{ padding: isMobile ? '12px 12px 80px 12px' : '24px 24px 80px 24px', paddingTop: '20px' }}>
+      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto" style={{ padding: isMobile ? '12px 12px 80px 12px' : '24px 24px 80px 24px', paddingTop: '20px', overflowX: 'auto' }}>
 
           <AnimatePresence mode="wait">
             <motion.div key={currentTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">
