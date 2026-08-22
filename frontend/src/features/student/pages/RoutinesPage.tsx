@@ -267,7 +267,7 @@ export function RoutinesPage() {
 
       {/* Imagen default de la rutina */}
       <div className="relative overflow-hidden rounded-3xl" style={{ height: 150, border: '1px solid rgba(255,255,255,0.09)' }}>
-        <img src={routineScene} alt="Rutina física" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: '50% 95%' }} />
+        <img src={routineScene} alt="Rutina física" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: '50% 22%' }} />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 20%, rgba(7,7,14,0.85))' }} />
         <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-3">
           <div>
