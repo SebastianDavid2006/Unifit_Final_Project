@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Fingerprint, PenLine, RefreshCw, ScanLine, X } from 'lucide-react'
-import SignatureCanvas from 'react-signature-canvas'
+import { Fingerprint, RefreshCw, ScanLine, X } from 'lucide-react'
 import type { Student } from '../StudentProfileData'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
@@ -19,11 +18,6 @@ const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 type FingerprintStatus = 'idle' | 'scanning' | 'captured'
 
 export function IdentityAccessCard({ student, onUpdate, className = '' }: Props) {
-  const [sigOpen, setSigOpen] = useState(false)
-  const [sigDrawn, setSigDrawn] = useState(false)
-  const [sigSuccess, setSigSuccess] = useState(false)
-  const sigRef = useRef<SignatureCanvas | null>(null)
-
   const [fpOpen, setFpOpen] = useState(false)
   const [fpStatus, setFpStatus] = useState<FingerprintStatus>('idle')
   const [fpSuccess, setFpSuccess] = useState(false)
@@ -32,18 +26,6 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
   useEffect(() => () => {
     if (fpTimer.current) window.clearTimeout(fpTimer.current)
   }, [])
-
-  const saveSignature = () => {
-    const data = sigRef.current?.toDataURL()
-    if (data) onUpdate({ firma: data })
-  }
-
-  const closeSignature = () => {
-    setSigOpen(false)
-    setSigDrawn(false)
-    setSigSuccess(false)
-    sigRef.current?.clear()
-  }
 
   const closeFingerprint = () => {
     setFpOpen(false)

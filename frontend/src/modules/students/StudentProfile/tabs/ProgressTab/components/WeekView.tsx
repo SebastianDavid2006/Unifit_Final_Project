@@ -2,17 +2,13 @@ import { motion } from 'motion/react'
 import { CheckCircle, XCircle, Clock } from 'lucide-react'
 import { historialAsistencia } from '@/modules/students/StudentProfileData'
 import type { AttendanceRecord } from '@/modules/students/StudentProfileData'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface WeekViewProps {
   currentDate: Date
   monthNames: string[]
   getWeekStart: (d: Date) => Date
 }
-
-import { motion } from 'motion/react'
-import { CheckCircle, XCircle, Clock } from 'lucide-react'
-import { historialAsistencia } from '@/modules/students/StudentProfileData'
-import type { AttendanceRecord } from '@/modules/students/StudentProfileData'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface WeekViewProps {
