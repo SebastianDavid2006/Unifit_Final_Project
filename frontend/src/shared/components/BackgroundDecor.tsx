@@ -1,3 +1,5 @@
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
+
 export interface FloatingSphereStyle {
   width?: number
   height?: number
@@ -13,15 +15,24 @@ export default function BackgroundDecor({ spheres, goo = true }: {
   spheres?: FloatingSphereStyle[]
   goo?: boolean
 }) {
+  const isMobile = useIsMobile()
+  
   const defaultSpheres: FloatingSphereStyle[] = [
     { width: 600, height: 600, background: 'radial-gradient(circle, rgba(18,112,183,0.25), transparent 60%)', top: '-180px', right: '-120px' },
     { width: 450, height: 450, background: 'radial-gradient(circle, rgba(244,56,67,0.2), transparent 60%)', bottom: '5%', left: '-120px' },
     { width: 350, height: 350, background: 'radial-gradient(circle, rgba(241,200,39,0.18), transparent 60%)', top: '25%', right: '15%' },
   ]
-  const items = spheres ?? defaultSpheres
+  
+  const mobileSpheres: FloatingSphereStyle[] = [
+    { width: 280, height: 280, background: 'radial-gradient(circle, rgba(18,112,183,0.15), transparent 60%)', top: '-60px', right: '-40px' },
+    { width: 200, height: 200, background: 'radial-gradient(circle, rgba(244,56,67,0.1), transparent 60%)', bottom: '10%', left: '-40px' },
+    { width: 180, height: 180, background: 'radial-gradient(circle, rgba(241,200,39,0.08), transparent 60%)', top: '30%', right: '10%' },
+  ]
+  
+  const items = spheres ?? (isMobile ? mobileSpheres : defaultSpheres)
 
   return (
-    <>
+    <div className="overflow-hidden" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
       {items.map((s, i) => (
         <div key={i} className="floating-sphere" style={{
           width: s.width,
@@ -44,6 +55,6 @@ export default function BackgroundDecor({ spheres, goo = true }: {
           </defs>
         </svg>
       )}
-    </>
+    </div>
   )
 }
