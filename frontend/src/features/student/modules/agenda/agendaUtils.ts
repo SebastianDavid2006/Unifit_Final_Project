@@ -34,6 +34,18 @@ export function offset(d: Date, days: number): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days)
 }
 
+export function sameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
+export function weekStart(d: Date): Date {
+  return offset(d, -d.getDay())
+}
+
+export function freeSlots(info: DayAvailability): number {
+  return info.slots.filter(s => !s.taken).length
+}
+
 export function colombianHolidays(year: number): Map<string, string> {
   const map = new Map<string, string>()
   const key = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`

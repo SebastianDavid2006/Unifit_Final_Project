@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { Flame, ChevronRight, Clock, Target, Dumbbell, X, CheckCircle2 } from 'lucide-react'
 import type { ExerciseRow, StudentRoutine } from '@/features/student/types/student'
 import { FIRE, AMBER, BLUE, GREEN } from '@/features/student/components/ui/fitness'
-import { MUSCLE_IMG, FULL_BODY_IMG } from '../../routineAssets'
+import { MUSCLE_IMG, FULL_BODY_IMG } from '../routineAssets'
 
 interface ExerciseModalProps {
   data: { ex: ExerciseRow; index: number } | null
