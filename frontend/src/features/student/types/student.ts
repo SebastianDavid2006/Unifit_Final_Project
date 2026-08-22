@@ -67,7 +67,7 @@ export interface TodayWorkout {
   name: string
   duration: string
   exercises: number
-  calories: number
+  level: 'Principiante' | 'Intermedio' | 'Avanzado'
   completed: number
   exercises_list: {
     name: string

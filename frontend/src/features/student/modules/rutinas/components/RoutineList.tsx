@@ -49,10 +49,14 @@ export function RoutineList({ openRoutine, completedIds }: RoutineListProps) {
                         <Dumbbell size={20} style={{ color: FIRE, opacity: 0.7 }} className="flex-shrink-0" />
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2.5 max-w-[340px]">
+                      <div className="grid grid-cols-3 gap-2.5 max-w-[480px]">
                         <div className="rounded-xl p-3" style={{ background: AMBER + '10', border: `1px solid ${AMBER}25` }}>
                           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Duración</p>
                           <p style={{ color: AMBER, fontSize: 14, fontWeight: 800, marginTop: 2 }}>{r.duration}</p>
+                        </div>
+                        <div className="rounded-xl p-3" style={{ background: FIRE + '10', border: `1px solid ${FIRE}25` }}>
+                          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Ejercicios</p>
+                          <p style={{ color: FIRE, fontSize: 14, fontWeight: 800, marginTop: 2 }}>{r.rows.length}</p>
                         </div>
                         <div className="rounded-xl p-3" style={{ background: LEVEL_COLOR[r.level] + '10', border: `1px solid ${LEVEL_COLOR[r.level]}25` }}>
                           <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Nivel</p>
@@ -78,10 +82,14 @@ export function RoutineList({ openRoutine, completedIds }: RoutineListProps) {
                     <Dumbbell size={17} style={{ color: 'rgba(255,255,255,0.25)' }} className="flex-shrink-0" />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-3 gap-2.5">
                     <div className="rounded-xl p-2.5 text-center" style={{ background: AMBER + '10', border: `1px solid ${AMBER}25` }}>
                       <p style={{ color: AMBER, fontSize: 12.5, fontWeight: 800 }}>{r.duration}</p>
                       <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 8.5 }}>Duración</p>
+                    </div>
+                    <div className="rounded-xl p-2.5 text-center" style={{ background: FIRE + '10', border: `1px solid ${FIRE}25` }}>
+                      <p style={{ color: FIRE, fontSize: 12.5, fontWeight: 800 }}>{r.rows.length}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 8.5 }}>Ejercicios</p>
                     </div>
                     <div className="rounded-xl p-2.5 text-center" style={{ background: LEVEL_COLOR[r.level] + '10', border: `1px solid ${LEVEL_COLOR[r.level]}25` }}>
                       <p style={{ color: LEVEL_COLOR[r.level], fontSize: 12.5, fontWeight: 800 }}>{r.level}</p>

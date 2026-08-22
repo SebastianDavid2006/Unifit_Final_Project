@@ -1,8 +1,9 @@
 import { motion } from 'motion/react'
-import { Flame, Clock, Dumbbell, Check, Zap } from 'lucide-react'
+import { Flame, Clock, Dumbbell, Check, Signal } from 'lucide-react'
 import { useStudentApp } from '@/features/student/hooks/useStudentApp'
 import { motivationalQuotes } from '@/features/student/utils/mockData'
 import { SectionTitle, GradientBorder, cardStyle, FIRE, AMBER, GREEN } from '@/features/student/components/ui/fitness'
+import { LEVEL_COLOR } from '@/features/student/modules/rutinas/routineAssets'
 import studentBoy from '@/assets/illustrations/characters/students/student_boy.webp'
 import studentGirl from '@/assets/illustrations/characters/students/student_girl.webp'
 
@@ -67,7 +68,7 @@ export function HomePage() {
               {[
                 { icon: Clock, value: todayWorkout.duration, label: 'Duración', color: AMBER },
                 { icon: Dumbbell, value: `${todayWorkout.exercises}`, label: 'Ejercicios', color: '#fff' },
-                { icon: Zap, value: `${todayWorkout.calories}`, label: 'Kcal', color: FIRE },
+                { icon: Signal, value: todayWorkout.level, label: 'Nivel', color: LEVEL_COLOR[todayWorkout.level] },
               ].map((s, i) => (
                 <div key={i} className="rounded-2xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <s.icon size={16} style={{ color: s.color, margin: '0 auto 6px' }} />

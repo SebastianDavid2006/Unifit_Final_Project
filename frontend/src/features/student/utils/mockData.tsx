@@ -34,7 +34,7 @@ export const todayWorkout: TodayWorkout = {
   name: 'Hipertrofia Superior',
   duration: '60 min',
   exercises: 5,
-  calories: 420,
+  level: 'Intermedio',
   completed: 2,
   exercises_list: [
     { name: 'Sentadilla con barra', sets: '4x8-10', done: true },
