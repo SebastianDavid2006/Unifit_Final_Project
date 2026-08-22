@@ -9,15 +9,30 @@ interface WeekViewProps {
   getWeekStart: (d: Date) => Date
 }
 
+import { motion } from 'motion/react'
+import { CheckCircle, XCircle, Clock } from 'lucide-react'
+import { historialAsistencia } from '@/modules/students/StudentProfileData'
+import type { AttendanceRecord } from '@/modules/students/StudentProfileData'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
+
+interface WeekViewProps {
+  currentDate: Date
+  monthNames: string[]
+  getWeekStart: (d: Date) => Date
+}
+
 export function WeekView({ currentDate, monthNames, getWeekStart }: WeekViewProps) {
+  const isMobile = useIsMobile()
   return (
     <div className="px-5 pt-4 pb-4">
       <div className="w-full">
-        <div className="grid gap-4 px-2 mb-3" style={{ gridTemplateColumns: '1.3fr 0.8fr 1fr 1fr 0.8fr' }}>
-          {['Día', 'Asistencia', 'Entrada', 'Salida', 'Duración'].map(h => (
-            <div key={h} className="text-sm font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{h}</div>
-          ))}
-        </div>
+        {!isMobile && (
+          <div className="grid gap-4 px-2 mb-3" style={{ gridTemplateColumns: '1.3fr 0.8fr 1fr 1fr 0.8fr' }}>
+            {['Día', 'Asistencia', 'Entrada', 'Salida', 'Duración'].map(h => (
+              <div key={h} className="text-sm font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>{h}</div>
+            ))}
+          </div>
+        )}
         <div className="space-y-1">
           {(() => {
             const weekStart = getWeekStart(currentDate)
@@ -41,7 +56,7 @@ export function WeekView({ currentDate, monthNames, getWeekStart }: WeekViewProp
                   transition={{ delay: i * 0.04 }}
                   className="grid gap-4 items-center px-4 py-3 rounded-xl transition-all cursor-pointer"
                   style={{
-                    gridTemplateColumns: '1.3fr 0.8fr 1fr 1fr 0.8fr',
+                    gridTemplateColumns: isMobile ? '1fr 1fr' : '1.3fr 0.8fr 1fr 1fr 0.8fr',
                     background: hasData ? 'rgba(48,209,88,0.06)' : 'rgba(230,57,70,0.04)',
                     borderLeft: hasData ? '3px solid #30D158' : '3px solid #E63946',
                     opacity: 1,
@@ -53,14 +68,16 @@ export function WeekView({ currentDate, monthNames, getWeekStart }: WeekViewProp
                     <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{dayNames[i]}</span>
                     <span className="text-xs" style={{ color: 'rgba(0,0,0,0.35)' }}>{dayNum} {monthShort}</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    {hasData
-                      ? <CheckCircle size={14} style={{ color: '#30D158' }} />
-                      : <XCircle size={14} style={{ color: '#E63946' }} />}
-                    <span className="text-xs font-bold" style={{ color: hasData ? '#30D158' : '#E63946' }}>
-                      {hasData ? 'Asistió' : 'No asistió'}
-                    </span>
-                  </div>
+                  {!isMobile && (
+                    <div className="flex items-center gap-1.5">
+                      {hasData
+                        ? <CheckCircle size={14} style={{ color: '#30D158' }} />
+                        : <XCircle size={14} style={{ color: '#E63946' }} />}
+                      <span className="text-xs font-bold" style={{ color: hasData ? '#30D158' : '#E63946' }}>
+                        {hasData ? 'Asistió' : 'No asistió'}
+                      </span>
+                    </div>
+                  )}
                   {hasData ? (
                     <>
                       <div className="flex items-center gap-2">
