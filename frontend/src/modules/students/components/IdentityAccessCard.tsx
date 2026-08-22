@@ -60,23 +60,7 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
         <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad y acceso</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl p-3.5 flex flex-col" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.05)' }}>
-          <p className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color: 'rgba(0,0,0,0.4)' }}>Firma</p>
-          <div className="flex-1 flex items-center justify-center mb-2.5 min-h-[48px]">
-            {student.firma ? (
-              <img src={student.firma} alt="firma" className="max-h-12" style={{ maxWidth: '100%', objectFit: 'contain' }} />
-            ) : (
-              <svg viewBox="0 0 400 120" className="w-full h-auto" style={{ maxHeight: 56, opacity: 0.5 }}>
-                <path d="M30,90 C40,50 60,30 80,40 C100,50 95,75 110,65 C125,55 130,35 150,30 C170,25 180,50 195,55 C210,60 220,40 240,35 C260,30 270,55 280,60 C290,65 300,45 320,50 C340,55 345,70 355,65 C365,60 370,50 380,55" fill="none" stroke="#0D1B2A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </div>
-          <button onClick={() => setSigOpen(true)} className="self-center inline-flex items-center gap-1.5 px-5 py-2 rounded-3xl text-xs font-bold text-white cursor-pointer" style={{ background: BLUE_GRAD, boxShadow: '0 4px 16px rgba(18,112,183,0.35)' }}>
-            <PenLine size={13} /> {student.firma ? 'Editar firma' : 'Firmar ahora'}
-          </button>
-        </div>
-
+      <div className="grid grid-cols-1 gap-3">
         <div className="rounded-xl p-3.5 flex flex-col" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.05)' }}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'rgba(0,0,0,0.4)' }}>Huella digital</p>
@@ -92,93 +76,6 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
           </button>
         </div>
       </div>
-
-      {/* ── Modal Firma ─────────── */}
-      <AnimatePresence>
-        {sigOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[115] flex items-center justify-center p-6"
-            style={{ background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(6px)' }}
-            onClick={() => closeSignature()}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.97, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.97, y: 8 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              onClick={e => e.stopPropagation()}
-              className="rounded-3xl w-full max-w-lg flex flex-col overflow-hidden"
-              style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)', boxShadow: '0 25px 60px rgba(0,0,0,0.12)', maxHeight: '85vh' }}
-            >
-              <div className="flex items-center justify-between px-6 pt-6 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-                <div>
-                  <p className="text-lg font-bold" style={{ color: '#1A1A1E' }}>Firma del estudiante</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{student.name}</p>
-                </div>
-                <motion.button whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }} whileTap={{ scale: 0.9 }} onClick={() => closeSignature()} className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}>
-                  <X size={16} />
-                </motion.button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
-                {sigSuccess ? (
-                  <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center py-10 gap-3">
-                    <motion.img src={checkSuccessImg} alt="éxito" className="w-28 h-auto object-contain" animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }} />
-                    <p className="text-lg font-bold" style={{ color: '#1A1A1E' }}>Firma registrada</p>
-                    <p className="text-xs font-medium text-center max-w-[260px]" style={{ color: 'rgba(0,0,0,0.45)' }}>La firma de {student.name} ha sido guardada exitosamente.</p>
-                    <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => closeSignature()} className="mt-4 px-8 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: GREEN_BLUE_GRAD }}>
-                      Finalizar
-                    </motion.button>
-                  </motion.div>
-                ) : (
-                  <>
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>Dibuja tu firma</p>
-                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.93 }} onClick={() => { sigRef.current?.clear(); setSigDrawn(false); }} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold cursor-pointer" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.4)' }}>
-                        <RefreshCw size={11} /> Limpiar firma
-                      </motion.button>
-                    </div>
-                    <p className="text-[11px] font-medium mb-3" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                      Dibuja tu firma en el recuadro utilizando el mouse o tu dedo.
-                    </p>
-                    <div className="relative rounded-2xl p-4 overflow-hidden" style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.04)' }}>
-                      <div className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 rounded-tl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-                      <div className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 rounded-tr pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-                      <div className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 rounded-bl pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-                      <div className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 rounded-br pointer-events-none" style={{ borderColor: 'rgba(18,112,183,0.2)' }} />
-                      <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.04)' }}>
-                        <SignatureCanvas
-                          ref={sigRef}
-                          penColor="#1A1A1E"
-                          minWidth={1}
-                          maxWidth={2.5}
-                          onEnd={() => setSigDrawn(true)}
-                          canvasProps={{ className: 'w-full', style: { height: 200, background: '#FFFFFF', borderRadius: 12, width: '100%' } }}
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {!sigSuccess && (
-                <div className="flex-shrink-0 p-6 pt-4 flex items-center justify-between" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', background: 'rgba(255,255,255,0.8)' }}>
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => closeSignature()} className="px-5 py-2.5 rounded-xl text-xs font-medium cursor-pointer" style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.5)' }}>
-                    Cancelar
-                  </motion.button>
-                  <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => { if (!sigDrawn) return; saveSignature(); setSigSuccess(true); }} className="px-5 py-2.5 rounded-xl text-xs font-bold text-white" style={{ background: sigDrawn ? BLUE_GRAD : 'rgba(0,0,0,0.1)', cursor: sigDrawn ? 'pointer' : 'not-allowed' }}>
-                    Siguiente →
-                  </motion.button>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ── Modal Huella Digital ─────────── */}
       <AnimatePresence>

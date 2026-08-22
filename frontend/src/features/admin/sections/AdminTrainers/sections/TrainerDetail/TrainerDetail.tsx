@@ -1,7 +1,5 @@
-﻿import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, PenLine, Fingerprint, RefreshCw } from 'lucide-react'
-import SignatureCanvas from 'react-signature-canvas'
 import type { Trainer } from '@/data/trainers'
 import { BLUE_GRAD, GREEN_BLUE_GRAD, RED, GREEN, gymTenure } from '../../data'
 
@@ -18,21 +16,16 @@ import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_che
 
 import { TrainerGrid } from './components/TrainerGrid'
 import { TrainerInfoModal } from './modals/TrainerInfoModal'
-import { TrainerSignatureModal } from './modals/TrainerSignatureModal'
 import { TrainerFingerprintModal } from './modals/TrainerFingerprintModal'
 import { TrainerConfirmModal } from './modals/TrainerConfirmModal'
 
 export default function TrainerDetail({ trainer: trainerProp }: { trainer: Trainer }) {
   const [trainer, setTrainer] = useState<Trainer>(trainerProp)
   const [showInfoModal, setShowInfoModal] = useState(false)
-  const [showSignatureModal, setShowSignatureModal] = useState(false)
   const [showFingerprintModal, setShowFingerprintModal] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<Record<string, string> | null>(null)
   const [confirm, setConfirm] = useState<'save' | 'status' | null>(null)
-  const sigRef = useRef<SignatureCanvas>(null)
-  const [signatureDrawn, setSignatureDrawn] = useState(false)
-  const [signatureSuccess, setSignatureSuccess] = useState(false)
   const [fingerprintStatus, setFingerprintStatus] = useState<'idle' | 'scanning' | 'captured'>('idle')
   const [fingerprintSuccess, setFingerprintSuccess] = useState(false)
 
@@ -102,16 +95,6 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
     setConfirm(null)
   }
 
-  const handleSignatureClear = () => {
-    sigRef.current?.clear()
-    setSignatureDrawn(false)
-  }
-
-  const handleSignatureSave = () => {
-    if (!signatureDrawn) return
-    setSignatureSuccess(true)
-  }
-
   const handleFingerprintStart = () => {
     setFingerprintStatus('scanning')
     setTimeout(() => setFingerprintStatus('captured'), 5000)
@@ -124,7 +107,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
   return (
     <div className="relative z-10 p-8 overflow-hidden">
       <div className="w-full">
-        <TrainerGrid trainer={trainer} onShowInfo={() => setShowInfoModal(true)} />
+        <TrainerGrid trainer={trainer} onShowInfo={() => setShowInfoModal(true)} onShowFingerprint={() => setShowFingerprintModal(true)} />
       </div>
 
       {/* â”€â”€ Info completa (modal por categorías) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -153,17 +136,6 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             type={confirm}
             onConfirm={handleConfirm}
             onCancel={() => setConfirm(null)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* â”€â”€ Modal Firma â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <AnimatePresence>
-        {showSignatureModal && (
-          <TrainerSignatureModal
-            isOpen={true}
-            trainer={trainer}
-            onClose={() => { setShowSignatureModal(false); handleSignatureClear(); setSignatureSuccess(false); }}
           />
         )}
       </AnimatePresence>
