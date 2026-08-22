@@ -137,6 +137,21 @@ export function AgendaPage() {
     setSuccessOpen(false)
   }
 
+  /* Días distintos al de la cita activa se ven difuminados */
+  const isBookedDay = (d: Date) => !!booked && sameDay(d, booked.date)
+  const dimmedStyle = (d: Date) =>
+    booked && !isBookedDay(d) ? { opacity: 0.28 as const, filter: 'blur(1.5px)' as const } : {}
+
+  /* Política de cancelación: mínimo 24 horas antes de la sesión */
+  const HOURS_24_MS = 24 * 60 * 60 * 1000
+  const sessionDateTime = booked ? (() => {
+    const [h, m] = booked.time.split(':').map(Number)
+    const d = new Date(booked.date)
+    d.setHours(h || 0, m || 0, 0, 0)
+    return d
+  })() : null
+  const canCancel = !!booked && !!sessionDateTime && sessionDateTime.getTime() - Date.now() > HOURS_24_MS
+
   const infoFor = (d: Date) => getDayInfo(d, holidays)
 
   const freeSlots = (info: DayAvailability) => info.slots.filter(s => !s.taken).length
@@ -277,7 +292,9 @@ export function AgendaPage() {
                   : info.isCoachDay ? '1px solid rgba(48,209,88,0.22)'
                   : '1px solid rgba(255,255,255,0.05)',
                 cursor: info.isHoliday ? 'not-allowed' : 'pointer',
-                opacity: info.isHoliday ? 0.75 : 1,
+                ...(booked && !isBookedDay(date)
+                  ? { opacity: 0.28, filter: 'blur(1.5px)' }
+                  : { opacity: info.isHoliday ? 0.75 : 1 }),
               }}
             >
               <span style={{
@@ -353,8 +370,10 @@ export function AgendaPage() {
               className="rounded-2xl flex flex-col sm:flex-row overflow-hidden"
               style={{
                 background: 'rgba(255,255,255,0.025)',
-                border: `1px solid ${statusColor}30`,
+                border: `1px solid ${isBookedDay(date) ? 'rgba(48,209,88,0.55)' : `${statusColor}30`}`,
+                boxShadow: isBookedDay(date) ? '0 0 26px rgba(48,209,88,0.16), inset 0 0 30px rgba(48,209,88,0.05)' : 'none',
                 opacity: info.isHoliday ? 0.8 : 1,
+                ...(booked && !isBookedDay(date) ? { opacity: 0.28, filter: 'blur(1.2px)' } : {}),
               }}
             >
               {/* Izquierda: día */}
@@ -426,7 +445,7 @@ export function AgendaPage() {
   const renderDay = () => {
     const info = getDayInfo(currentDate, holidays)
     return (
-      <motion.div key="day" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
+      <motion.div key="day" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3" style={booked && !isBookedDay(currentDate) ? { opacity: 0.28, filter: 'blur(1.2px)' } : undefined}>
         <div className="flex items-center justify-between">
           <button onClick={() => setCurrentDate(d => offset(d, -1))} className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}>
             <ChevronLeft size={19} />
@@ -534,16 +553,29 @@ export function AgendaPage() {
                 Sesión agendada — {format(booked.date, "EEEE d 'de' MMMM", { locale: es })} · {booked.time}
               </p>
               <p style={{ color: 'rgba(255,255,255,0.42)', fontSize: 11, marginTop: 2 }}>
-                La agenda queda bloqueada mientras tengas una sesión activa.
+                {canCancel
+                  ? 'La agenda queda bloqueada mientras tengas una sesión activa.'
+                  : 'Puedes cancelar hasta 24 horas antes de tu sesión — después queda bloqueada la cancelación.'}
               </p>
             </div>
-            <button
-              onClick={cancelSession}
-              className="px-3.5 py-2 rounded-xl font-black uppercase tracking-wider transition-transform hover:scale-105"
-              style={{ fontSize: 9, background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.35)', color: '#FF8FA3' }}
-            >
-              Cancelar sesión
-            </button>
+            {canCancel ? (
+              <button
+                onClick={cancelSession}
+                className="px-3.5 py-2 rounded-xl font-black uppercase tracking-wider transition-transform hover:scale-105"
+                style={{ fontSize: 9, background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.35)', color: '#FF8FA3' }}
+              >
+                Cancelar sesión
+              </button>
+            ) : (
+              <span
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold uppercase tracking-wider cursor-not-allowed"
+                style={{ fontSize: 9, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.32)' }}
+                title="Las cancelaciones requieren mínimo 24 horas de antelación"
+              >
+                <Lock size={11} />
+                Cancelación no disponible
+              </span>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -623,6 +655,10 @@ export function AgendaPage() {
                   <Clock size={13} /> {pendingBooking.time} h
                 </p>
               </div>
+              <p className="flex items-center justify-center gap-1.5 mt-3" style={{ color: AMBER, fontSize: 10.5, fontWeight: 600 }}>
+                <Lock size={11} />
+                Cancelación disponible solo hasta 24 horas antes
+              </p>
               <div className="flex gap-2.5 mt-5">
                 <button
                   onClick={() => setPendingBooking(null)}
