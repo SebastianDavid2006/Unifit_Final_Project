@@ -112,7 +112,7 @@ export const studentRoutines: StudentRoutine[] = [
   {
     id: 'hipertrofia-superior',
     name: 'Hipertrofia Superior',
-    duration: '8 semanas'
+    duration: '8 semanas',
     frequency: '3 dÃ­as/semana',
     level: 'Intermedio',
     focus: 'Tren superior',
@@ -130,7 +130,7 @@ export const studentRoutines: StudentRoutine[] = [
   {
     id: 'fuerza-tren-inferior',
     name: 'Fuerza Tren Inferior',
-    duration: '6 semanas'
+    duration: '6 semanas',
     frequency: '3 dÃ­as/semana',
     level: 'Avanzado',
     focus: 'Piernas y glÃºteos',
@@ -147,7 +147,7 @@ export const studentRoutines: StudentRoutine[] = [
   {
     id: 'acondicionamiento-full-body',
     name: 'Acondicionamiento Full Body',
-    duration: '12 semanas'
+    duration: '12 semanas',
     frequency: '4 dÃ­as/semana',
     level: 'Intermedio',
     focus: 'Cardio y resistencia',
@@ -164,7 +164,7 @@ export const studentRoutines: StudentRoutine[] = [
   {
     id: 'cardio-quemagrasas',
     name: 'Cardio Quemagrasas',
-    duration: '8 semanas'
+    duration: '8 semanas',
     frequency: '4 dÃ­as/semana',
     level: 'Intermedio',
     focus: 'Cardio y resistencia',
@@ -181,7 +181,7 @@ export const studentRoutines: StudentRoutine[] = [
   {
     id: 'core-poderoso',
     name: 'Core Poderoso',
-    duration: '6 semanas'
+    duration: '6 semanas',
     frequency: '3 dÃ­as/semana',
     level: 'Principiante',
     focus: 'Abdomen y zona media',
@@ -198,7 +198,7 @@ export const studentRoutines: StudentRoutine[] = [
   {
     id: 'definicion-tren-superior',
     name: 'DefiniciÃ³n Tren Superior',
-    duration: '10 semanas'
+    duration: '10 semanas',
     frequency: '4 dÃ­as/semana',
     level: 'Avanzado',
     focus: 'Tren superior',
@@ -215,7 +215,7 @@ export const studentRoutines: StudentRoutine[] = [
   {
     id: 'movilidad-functional',
     name: 'Movilidad Funcional',
-    duration: '4 semanas'
+    duration: '4 semanas',
     frequency: '3 dÃ­as/semana',
     level: 'Principiante',
     focus: 'Movilidad y prevenciÃ³n',
@@ -232,7 +232,7 @@ export const studentRoutines: StudentRoutine[] = [
   {
     id: 'cross-training-unifit',
     name: 'Cross Training UNIFIT',
-    duration: '8 semanas'
+    duration: '8 semanas',
     frequency: '5 dÃ­as/semana',
     level: 'Avanzado',
     focus: 'Full body intenso',
@@ -249,7 +249,7 @@ export const studentRoutines: StudentRoutine[] = [
   {
     id: 'tonificacion-general',
     name: 'TonificaciÃ³n General',
-    duration: '6 semanas'
+    duration: '6 semanas',
     frequency: '3 dÃ­as/semana',
     level: 'Principiante',
     focus: 'Full body suave',

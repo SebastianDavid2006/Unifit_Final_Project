@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   ChevronLeft, ChevronRight, Dumbbell, ClipboardCheck, Clock, Flame,
-  CheckCircle2, Circle, X, Trophy
+  CheckCircle2, Circle, X, Trophy, Target
 } from 'lucide-react'
 import { studentRoutines } from '@/features/student/utils/mockData'
 import { assessmentItems } from '@/modules/students/StudentProfileData'
@@ -127,36 +127,24 @@ export function RoutinesPage() {
               <motion.div key={r.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
                 <motion.button whileHover={{ y: -3 }} whileTap={{ scale: 0.985 }} onClick={() => openRoutine(r)} className="w-full text-left">
                   <div className="rounded-[22px] p-5 h-full" style={cardStyle}>
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      <div className="min-w-0">
-                        <h3 className="uppercase italic font-black text-white truncate" style={{ fontSize: 16 }}>{r.name}</h3>
-                        <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5, marginTop: 3 }}>{r.focus} · {assessmentItems.find(a => a.num === r.assessmentNum)?.date}</p>
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <h3 className="uppercase italic font-black text-white truncate flex items-center gap-2" style={{ fontSize: 16 }}>
+                        {r.name}
+                        {done && <Trophy size={13} style={{ color: GREEN }} />}
+                      </h3>
+                      <Dumbbell size={17} style={{ color: 'rgba(255,255,255,0.25)' }} className="flex-shrink-0" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="rounded-xl p-2.5 text-center" style={{ background: AMBER + '10', border: `1px solid ${AMBER}25` }}>
+                        <p style={{ color: AMBER, fontSize: 12.5, fontWeight: 800 }}>{r.duration}</p>
+                        <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 8.5 }}>Duración</p>
                       </div>
-                      <span className="px-2.5 py-1 rounded-full uppercase tracking-wider font-black flex-shrink-0" style={{ background: levelColor[r.level] + '18', color: levelColor[r.level], fontSize: 9 }}>
-                        {r.level}
-                      </span>
+                      <div className="rounded-xl p-2.5 text-center" style={{ background: levelColor[r.level] + '10', border: `1px solid ${levelColor[r.level]}25` }}>
+                        <p style={{ color: levelColor[r.level], fontSize: 12.5, fontWeight: 800 }}>{r.level}</p>
+                        <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 8.5 }}>Nivel</p>
+                      </div>
                     </div>
-
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      {[
-                        { v: r.duration, l: 'Duración', c: AMBER },
-                        { v: `${r.progress.adherence}%`, l: 'Adherencia', c: GREEN },
-                        { v: `${r.rows.length}`, l: 'Ejercicios', c: BLUE },
-                      ].map((s, k) => (
-                        <div key={k} className="rounded-xl p-2.5 text-center" style={{ background: s.c + '10', border: `1px solid ${s.c}22` }}>
-                          <p style={{ color: s.c, fontSize: 13, fontWeight: 800 }}>{s.v}</p>
-                          <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 9 }}>{s.l}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
-                      <div className="h-full rounded-full" style={{ width: `${(r.progress.completedSessions / r.progress.totalSessions) * 100}%`, background: `linear-gradient(90deg, rgba(255,255,255,0.35), rgba(245,166,35,0.7))` }} />
-                    </div>
-
-                    <p style={{ color: 'rgba(255,255,255,0.42)', fontSize: 11, fontWeight: 600 }}>
-                      Toca para ver detalles
-                    </p>
                   </div>
                 </motion.button>
               </motion.div>
@@ -347,18 +335,36 @@ export function RoutinesPage() {
                     </button>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-white truncate" style={{ fontSize: 14.5, textDecoration: isChecked ? 'line-through' : 'none', opacity: isChecked ? 0.65 : 1 }}>
-                        {i + 1}. {ex.name}
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span
+                          className="w-7 h-7 rounded-lg flex items-center justify-center font-black flex-shrink-0"
+                          style={{ background: FIRE + '14', color: FIRE, fontSize: 12, border: `1px solid ${FIRE}30` }}
+                        >
+                          {i + 1}
+                        </span>
+                        <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10.5 }}>Categoría:</span>
+                        <span className="px-2 py-0.5 rounded-full font-bold" style={{ background: BLUE + '12', color: '#7CC7FF', fontSize: 10 }}>
+                          {ex.muscle}{ex.secondaryMuscle ? ` + ${ex.secondaryMuscle}` : ''}
+                        </span>
+                      </div>
+                      <p className="font-bold text-white truncate" style={{ fontSize: 15, textDecoration: isChecked ? 'line-through' : 'none', opacity: isChecked ? 0.65 : 1 }}>
+                        {ex.name}
                       </p>
-                      <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5, marginTop: 2 }}>
-                        {ex.muscle} · {ex.sets}×{ex.reps} · {ex.weight}
-                      </p>
+                      <div className="flex gap-1.5 mt-2 flex-wrap">
+                        {[
+                          { l: 'Series', v: ex.sets, c: FIRE },
+                          { l: 'Reps', v: ex.reps, c: AMBER },
+                          { l: 'Descanso', v: ex.rest, c: GREEN },
+                        ].map((s, k) => (
+                          <div key={k} className="rounded-lg px-2.5 py-1 text-center" style={{ background: s.c + '0d', border: `1px solid ${s.c}22` }}>
+                            <p style={{ color: s.c === GREEN ? '#7CE495' : s.c, fontSize: 11, fontWeight: 800 }}>{s.v}</p>
+                            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 7.5, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.l}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="hidden sm:block text-right flex-shrink-0">
-                      <p style={{ color: AMBER, fontSize: 13, fontWeight: 800 }}>{ex.sets} × {ex.reps}</p>
-                      <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10.5 }}>{ex.weight}</p>
-                    </div>
+                    <ChevronRight size={17} style={{ color: 'rgba(255,255,255,0.2)' }} className="flex-shrink-0 hidden sm:block" />
                   </div>
                 </motion.div>
               )
@@ -434,30 +440,26 @@ export function RoutinesPage() {
                 </span>
                 <div className="absolute bottom-3 left-5 right-5">
                   <span className="inline-block px-2.5 py-0.5 rounded-full uppercase tracking-wider font-black mb-1.5" style={{ background: FIRE + '30', backdropFilter: 'blur(6px)', color: '#FF8FA3', fontSize: 8.5, border: `1px solid ${FIRE}55` }}>
-                    {selectedExercise.ex.muscle}
+                    {selectedExercise.ex.muscle}{selectedExercise.ex.secondaryMuscle ? ` + ${selectedExercise.ex.secondaryMuscle}` : ''}
                   </span>
                   <h3 className="uppercase italic font-black text-white leading-tight" style={{ fontSize: 22, textShadow: '0 2px 12px rgba(0,0,0,0.7)' }}>{selectedExercise.ex.name}</h3>
                 </div>
               </div>
 
               <div className="p-6 space-y-4">
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   {[
                     { icon: Flame, label: 'Series', value: selectedExercise.ex.sets, color: FIRE },
                     { icon: ChevronRight, label: 'Reps', value: selectedExercise.ex.reps, color: AMBER },
-                    { icon: Clock, label: 'Descanso', value: selectedExercise.ex.rest, color: BLUE },
+                    { icon: Clock, label: 'Descanso', value: selectedExercise.ex.rest, color: GREEN },
+                    { icon: Target, label: 'Nivel recomendado', value: selectedExercise.ex.level || routine.level, color: BLUE },
                   ].map((s, i) => (
                     <div key={i} className="rounded-2xl p-3.5 text-center" style={{ background: s.color + '10', border: `1px solid ${s.color}25` }}>
-                      <s.icon size={17} style={{ color: s.color, margin: '0 auto 6px' }} />
-                      <p className="text-white font-black" style={{ fontSize: 16 }}>{s.value}</p>
-                      <p className="uppercase" style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
+                      <s.icon size={17} style={{ color: s.color === GREEN ? '#7CE495' : s.color, margin: '0 auto 6px' }} />
+                      <p className="text-white font-black" style={{ fontSize: 15 }}>{s.value}</p>
+                      <p className="uppercase" style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
                     </div>
                   ))}
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl p-4" style={cardStyle}>
-                  <span className="uppercase tracking-widest" style={{ fontSize: 9.5, fontWeight: 700, color: 'rgba(255,255,255,0.4)' }}>Carga / peso</span>
-                  <span className="text-white font-black" style={{ fontSize: 17 }}>{selectedExercise.ex.weight}</span>
                 </div>
 
                 <div className="rounded-2xl p-4" style={{ background: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.15)' }}>
