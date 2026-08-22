@@ -200,6 +200,27 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
         </div>
       </motion.div>
 
+      {/* Mobile Search Bar */}
+      {isMobile && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+          className="mb-4 px-4"
+        >
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(0,0,0,0.2)' }} />
+            <input
+              value={search}
+              onChange={e => onSearchChange?.(e.target.value)}
+              placeholder="Buscar por nombre o documento..."
+              className="w-full pl-10 pr-3 py-3 rounded-xl text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: '#1A1A1E' }}
+            />
+          </div>
+        </motion.div>
+      )}
+
       {/* Filter category pills — full width row */}
       <motion.div
         layout
@@ -207,28 +228,28 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
         animate={{ opacity: showFilters ? 1 : 0 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       >
-        {showFilters && (
-          <motion.div
-            initial={{ y: -8 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="mb-4"
-          >
-            <div className="flex items-center justify-between gap-1 p-1 rounded-2xl w-full relative" style={{
-              background: 'rgba(255,255,255,0.35)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.5)',
-            }}>
-              {Object.entries(filterLabels).map(([key, label]) => {
-                const hasSelection = (filterSelections[key]?.size ?? 0) > 0
-                return (
-                  <button key={key}
-                    onClick={() => { setFilterCategory(key as any); setFilterSearch('') }}
-                    className="relative px-4 py-1.5 rounded-xl text-[11px] font-bold transition-colors flex-1 text-center hover:bg-white/40"
-                    style={{
-                      color: filterCategory === key ? '#1A1A1E' : hasSelection ? '#1270B7' : 'rgba(0,0,0,0.35)',
-                    }}
-                  >
+{showFilters && (
+            <motion.div
+              initial={{ y: -8 }}
+              animate={{ y: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="mb-4"
+            >
+              <div className={`flex items-center gap-1 p-1 rounded-2xl w-full ${isMobile ? 'overflow-x-auto pb-2' : 'flex items-center justify-between'}`} style={{
+                background: 'rgba(255,255,255,0.35)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.5)',
+              }}>
+                {Object.entries(filterLabels).map(([key, label]) => {
+                  const hasSelection = (filterSelections[key]?.size ?? 0) > 0
+                  return (
+                    <button key={key}
+                      onClick={() => { setFilterCategory(key as any); setFilterSearch('') }}
+                      className={`relative px-4 py-1.5 rounded-xl text-[11px] font-bold transition-colors ${isMobile ? 'whitespace-nowrap flex-shrink-0' : 'flex-1'} text-center hover:bg-white/40`}
+                      style={{
+                        color: filterCategory === key ? '#1A1A1E' : hasSelection ? '#1270B7' : 'rgba(0,0,0,0.35)',
+                      }}
+                    >
                     {filterCategory === key && (
                       <motion.div
                         layoutId="activeFilterBg"

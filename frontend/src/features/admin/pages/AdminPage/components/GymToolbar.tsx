@@ -6,6 +6,7 @@ import iconRunning from '@/assets/icons/animated/icon_running.gif'
 import { PILL_GRAD, EQUIP_GRAD, EQUIP_SHADOW } from '../data'
 import type { Student } from '@/data/students'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
+import MobileStudentTabs from '@/features/shared/components/MobileStudentTabs'
 
 export default function GymToolbar({
   gymSelectedStudent, gymStudentTab, onGymStudentTabChange, onGymBack,
@@ -40,42 +41,52 @@ export default function GymToolbar({
     <div className="flex-1 flex items-center justify-center gap-3 relative">
       {gymSelectedStudent ? (
         <>
-          <div className="absolute left-0 top-1/2 -translate-y-1/2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onGymBack}
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{
-                background: 'rgba(255,255,255,0.2)',
-                backdropFilter: 'blur(16px) saturate(1.5)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
-              }}
-            >
-              <img src={iconRunning} alt="Volver" className="w-5 h-5 object-contain" style={{ transform: 'scaleX(-1)' }} />
-            </motion.button>
-          </div>
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
-            background: 'rgba(255,255,255,0.12)',
-            backdropFilter: 'blur(24px) saturate(1.6)',
-            border: '1px solid rgba(255,255,255,0.25)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-          }}>
-            {TABS.map(t => (
-              <motion.button key={t.id} onClick={() => onGymStudentTabChange(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
-                style={{
-                  background: gymStudentTab === t.id ? PILL_GRAD : 'transparent',
-                  color: gymStudentTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
-                  boxShadow: gymStudentTab === t.id ? '0 2px 8px rgba(230,57,70,0.2), 0 0 20px rgba(230,57,70,0.1)' : 'none',
-                }}
-              >
-                <t.icon size={14} />
-                {t.label}
-              </motion.button>
-            ))}
-          </div>
+          <MobileStudentTabs
+            studentTab={gymStudentTab}
+            onStudentTabChange={onGymStudentTabChange}
+            onBack={onGymBack}
+          />
+
+          {!isMobile && (
+            <>
+              <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onGymBack}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(16px) saturate(1.5)',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <img src={iconRunning} alt="Volver" className="w-5 h-5 object-contain" style={{ transform: 'scaleX(-1)' }} />
+                </motion.button>
+              </div>
+              <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-2xl px-2 py-1.5" style={{
+                background: 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(24px) saturate(1.6)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+              }}>
+                {TABS.map(t => (
+                  <motion.button key={t.id} onClick={() => onGymStudentTabChange(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                    style={{
+                      background: gymStudentTab === t.id ? PILL_GRAD : 'transparent',
+                      color: gymStudentTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                      boxShadow: gymStudentTab === t.id ? '0 2px 8px rgba(230,57,70,0.2), 0 0 20px rgba(230,57,70,0.1)' : 'none',
+                    }}
+                  >
+                    <t.icon size={14} />
+                    {t.label}
+                  </motion.button>
+                ))}
+              </div>
+            </>
+          )}
         </>
       ) : (
         <>
