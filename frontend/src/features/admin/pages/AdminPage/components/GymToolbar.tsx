@@ -92,13 +92,6 @@ export default function GymToolbar({
         <>
           {gymTab === 'students' && (
             <>
-              {isMobile && (
-                <div className="absolute left-1/2 -translate-x-1/2 top-5">
-                  <button className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xl font-bold" style={{ background: 'linear-gradient(135deg, #1270B7, #7ec8e3)', boxShadow: '0 4px 16px rgba(18,112,183,0.35)' }}>
-                    +
-                  </button>
-                </div>
-              )}
               <div className={`flex items-center gap-2 ${isMobile ? 'w-full' : 'w-96'} flex-shrink-0`}>
                 <GlassSearch
                   value={gymStudentSearch}
