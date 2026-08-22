@@ -14,11 +14,10 @@ import { BLUE_GRAD, GREEN_BLUE_GRAD, GREEN } from '../../../data'
 interface TrainerGridProps {
   trainer: any
   onShowInfo: () => void
-  onShowSignature: () => void
   onShowFingerprint: () => void
 }
 
-export function TrainerGrid({ trainer, onShowInfo, onShowSignature, onShowFingerprint }: TrainerGridProps) {
+export function TrainerGrid({ trainer, onShowInfo, onShowFingerprint }: TrainerGridProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -54,9 +53,7 @@ export function TrainerGrid({ trainer, onShowInfo, onShowSignature, onShowFinger
               <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.3)' }} />
               <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad y acceso</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Box Firma */}
-              <TrainerSignatureBox trainer={trainer} onClick={onShowSignature} />
+            <div className="grid grid-cols-1 gap-3">
               {/* Box Huella */}
               <TrainerFingerprintBox trainer={trainer} onClick={onShowFingerprint} />
             </div>
@@ -130,26 +127,6 @@ function TrainerAvatarSection({ trainer, onShowInfo }: { trainer: any; onShowInf
         boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
       }}>
         Ver información
-      </button>
-    </div>
-  )
-}
-
-function TrainerSignatureBox({ trainer, onClick }: { trainer: any; onClick: () => void }) {
-  return (
-    <div className="rounded-xl p-3 flex flex-col" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(0,0,0,0.05)' }}>
-      <p className="text-[9px] font-bold uppercase tracking-wide mb-2" style={{ color: 'rgba(0,0,0,0.4)' }}>Firma</p>
-      <div className="flex items-center justify-center mb-2.5 min-h-[40px]">
-        {trainer.firma ? (
-          <img src={trainer.firma} alt="firma" className="max-h-10" />
-        ) : (
-          <svg viewBox="0 0 400 120" className="w-full h-auto opacity-20" style={{ maxHeight: 40 }}>
-            <path d="M30,90 C40,50 60,30 80,40 C100,50 95,75 110,65 C125,55 130,35 150,30 C170,25 180,50 195,55 C210,60 220,40 240,35 C260,30 270,55 280,60 C290,65 300,45 320,50 C340,55 345,70 355,65 C365,60 370,50 380,55" fill="none" stroke="#0D1B2A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
-      </div>
-      <button onClick={onClick} className="self-center inline-flex items-center gap-1.5 px-4 py-1.5 rounded-3xl text-[10px] font-bold text-white cursor-pointer" style={{ background: 'linear-gradient(135deg, #1270B7, #7ec8e3)', boxShadow: '0 4px 12px rgba(18,112,183,0.25)' }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z" /></svg> {trainer.firma ? 'Editar firma' : 'Firmar ahora'}
       </button>
     </div>
   )

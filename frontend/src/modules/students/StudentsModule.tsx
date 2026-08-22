@@ -5,6 +5,7 @@ import studentsImg from '@/assets/illustrations/characters/students/students_gro
 import NewStudentModal from './NewStudentModal'
 import RegistrationCompletionModal from './RegistrationCompletionModal'
 import type { Student } from '@/data/students'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 const RED = '#F43843'
 const BLUE = '#1270B7'
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function StudentsModule({ students, search, riskFilter, onSelectStudent, showFilters, onToggleFilters }: Props) {
+  const isMobile = useIsMobile()
   const [filterCategory, setFilterCategory] = useState<'status' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
   const [filterSearch, setFilterSearch] = useState('')
@@ -102,9 +104,9 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
   return (
     <>
       <style>{`@keyframes shimmer { 0% { background-position: 200% center } 100% { background-position: -200% center } }`}</style>
-      <div className="p-8 pt-12 space-y-6 max-w-[1440px] mx-auto relative">
+      <div className={`space-y-6 max-w-[1440px] mx-auto relative ${isMobile ? 'px-4 pt-6' : 'p-8 pt-12'}`}>
 
-      {/* Banner card */}
+      {/* Banner card - matches Admin Usuarios banner with image */}
       <motion.div className="relative rounded-3xl mb-8" style={{ background: 'linear-gradient(90deg, #FFFFFF 0%, #F8FBFF 40%, rgba(248,251,255,0) 100%)', boxShadow: '0 8px 30px rgba(0,0,0,0.03)' }}>
         <div className="absolute inset-0 pointer-events-none rounded-3xl overflow-hidden" style={{
           maskImage: 'linear-gradient(to right, black 60%, transparent 100%)',
@@ -117,12 +119,12 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
           }} />
         </div>
 
-        <div className="relative z-10 p-8 flex items-center justify-between"> 
+        <div className="relative z-10 p-8 flex items-center justify-between">
           <div className="flex items-center gap-6 ml-56">
             <div className="w-1 h-12 rounded-full" style={{ background: RED_GRAD }} />
             <div>
-              <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>UniFitters</h1>
-              <p className="text-xs text-black/40">Gestión avanzada y seguimiento de comunidad.</p>
+              <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Usuarios</h1>
+              <p className="text-xs text-black/40">Crea y gestiona administradores y entrenadores del sistema.</p>
             </div>
           </div>
 
@@ -171,12 +173,33 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
         </div>
 
         <div
-          style={{ position: 'absolute', left: 10, top: -38, width: 220, zIndex: 20, opacity: 0, animation: 'blur-fade 0.6s 0.3s ease forwards' }}
+          style={{ position: 'absolute', left: 10, bottom: 0, width: 220, zIndex: 20, opacity: 0, animation: 'blur-fade 0.6s 0.3s ease forwards' }}
         >
           <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', width: '85%', height: '45%', background: 'rgba(18,112,183,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
-          <img src={studentsImg} alt="Students" className="w-full h-auto drop-shadow-xl relative" />
+          <img src={studentsImg} alt="Students" className="w-full h-auto drop-shadow-xl relative" style={{ transform: 'translateY(2%)' }} />
         </div>
       </motion.div>
+
+      {/* Mobile Search Bar */}
+      {isMobile && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+          className="mb-4 px-4"
+        >
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(0,0,0,0.2)' }} />
+            <input
+              value={search}
+              onChange={e => onSearchChange?.(e.target.value)}
+              placeholder="Buscar por nombre o documento..."
+              className="w-full pl-10 pr-3 py-3 rounded-xl text-sm outline-none"
+              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: '#1A1A1E' }}
+            />
+          </div>
+        </motion.div>
+      )}
 
       {/* Filter category pills — full width row */}
       <motion.div
@@ -185,28 +208,28 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
         animate={{ opacity: showFilters ? 1 : 0 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       >
-        {showFilters && (
-          <motion.div
-            initial={{ y: -8 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="mb-4"
-          >
-            <div className="flex items-center justify-between gap-1 p-1 rounded-2xl w-full relative" style={{
-              background: 'rgba(255,255,255,0.35)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.5)',
-            }}>
-              {Object.entries(filterLabels).map(([key, label]) => {
-                const hasSelection = (filterSelections[key]?.size ?? 0) > 0
-                return (
-                  <button key={key}
-                    onClick={() => { setFilterCategory(key as any); setFilterSearch('') }}
-                    className="relative px-4 py-1.5 rounded-xl text-[11px] font-bold transition-colors flex-1 text-center hover:bg-white/40"
-                    style={{
-                      color: filterCategory === key ? '#1A1A1E' : hasSelection ? '#1270B7' : 'rgba(0,0,0,0.35)',
-                    }}
-                  >
+{showFilters && (
+            <motion.div
+              initial={{ y: -8 }}
+              animate={{ y: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="mb-4"
+            >
+              <div className={`flex items-center gap-1 p-1 rounded-2xl w-full ${isMobile ? 'overflow-x-auto pb-2' : 'flex items-center justify-between'}`} style={{
+                background: 'rgba(255,255,255,0.35)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.5)',
+              }}>
+                {Object.entries(filterLabels).map(([key, label]) => {
+                  const hasSelection = (filterSelections[key]?.size ?? 0) > 0
+                  return (
+                    <button key={key}
+                      onClick={() => { setFilterCategory(key as any); setFilterSearch('') }}
+                      className={`relative px-4 py-1.5 rounded-xl text-[11px] font-bold transition-colors ${isMobile ? 'whitespace-nowrap flex-shrink-0' : 'flex-1'} text-center hover:bg-white/40`}
+                      style={{
+                        color: filterCategory === key ? '#1A1A1E' : hasSelection ? '#1270B7' : 'rgba(0,0,0,0.35)',
+                      }}
+                    >
                     {filterCategory === key && (
                       <motion.div
                         layoutId="activeFilterBg"
@@ -370,18 +393,20 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
 
         {/* Student list — blurred when filters are open */}
         <motion.div layout transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} style={{ filter: showFilters ? 'blur(4px)' : 'none', opacity: showFilters ? 0.5 : 1, transition: 'filter 0.3s ease, opacity 0.3s ease', pointerEvents: showFilters ? 'none' : 'auto' }}>
-          <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
-            {tableHeaders.map((h, i) => (
-              <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
-            ))}
-            <div className="w-5" />
-          </div>
+          {!isMobile && (
+            <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
+              {tableHeaders.map((h, i) => (
+                <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
+              ))}
+              <div className="w-5" />
+            </div>
+          )}
 
           <div className="space-y-2">
             {paged.map((s, i) => {
               const isProcess = s.status === 'process'
               return (
-                <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => handleStudentClick(s)} whileHover={{ y: -3, scale: 1.002 }} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer relative overflow-hidden" style={{
+                <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => handleStudentClick(s)} whileHover={{ y: -3, scale: 1.002 }} className={`rounded-2xl premium-card cursor-pointer relative overflow-hidden ${isMobile ? 'p-4 text-center' : 'grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4'}`} style={{
                   background: isProcess ? BLUE_GRAD : undefined,
                   color: isProcess ? '#FFFFFF' : undefined,
                   border: 'none',
@@ -397,22 +422,31 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
                       }}
                     />
                   )}
-                  <div className="flex items-center gap-4 min-w-0 relative z-10">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold truncate" style={{ color: isProcess ? '#FFFFFF' : '#1A1A1E' }}>{s.name}</p>
-                      <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
+                  {isMobile ? (
+                    <div className="relative z-10">
+                      <p className="text-lg font-bold truncate" style={{ color: isProcess ? '#FFFFFF' : '#1A1A1E' }}>{s.name}</p>
+                      <p className="text-xs font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
                     </div>
-                  </div>
-                  <p className="text-xs font-semibold" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.faculty}</p>
-                  <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : s.lastVisit}</p>
-                  <p className="text-xs font-bold" style={{ color: isProcess ? '#FFD6E0' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{s.nextAssessment}</p>
-                  <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : statusMap[s.status].bg, color: isProcess ? '#FFFFFF' : statusMap[s.status].color }}>
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: isProcess ? '#FFFFFF' : statusMap[s.status].color }} />
-                    {statusMap[s.status].label}
-                  </span>
-                  <ChevronRight size={15} style={{ color: isProcess ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.12)' }} />
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-4 min-w-0 relative z-10">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold truncate" style={{ color: isProcess ? '#FFFFFF' : '#1A1A1E' }}>{s.name}</p>
+                          <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs font-semibold" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.faculty}</p>
+                      <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : s.lastVisit}</p>
+                      <p className="text-xs font-bold" style={{ color: isProcess ? '#FFD6E0' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{s.nextAssessment}</p>
+                      <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : statusMap[s.status].bg, color: isProcess ? '#FFFFFF' : statusMap[s.status].color }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: isProcess ? '#FFFFFF' : statusMap[s.status].color }} />
+                        {statusMap[s.status].label}
+                      </span>
+                      <ChevronRight size={15} style={{ color: isProcess ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.12)' }} />
+                    </>
+                  )}
                 </motion.div>
               )
             })}

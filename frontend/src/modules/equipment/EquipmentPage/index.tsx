@@ -190,7 +190,7 @@ export default function EquipmentPage(props: Props) {
         show={deleteToast.show}
         name={deleteToast.name}
         progress={deleteToast.progress}
-        title="MÃ¡quina eliminada"
+        title="Máquina eliminada"
         icon={<TrashView />}
         iconStyle={{ background: `${RED}08` }}
         boxShadow="0 24px 80px rgba(244,56,67,0.12), 0 8px 32px rgba(0,0,0,0.08)"
@@ -214,7 +214,7 @@ export default function EquipmentPage(props: Props) {
         show={createToast.show}
         name={createToast.name}
         progress={createToast.progress}
-        title="Â¡MÃ¡quina creada!"
+        title="Â¡Máquina creada!"
         icon={<WeightsView />}
         iconStyle={{ background: 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), rgba(248,251,255,0.8)' }}
         iconClassName="w-[76px] h-[76px] flex-shrink-0"

@@ -1,4 +1,4 @@
-﻿import { Activity, BarChart2, Calendar, FileText, Target } from 'lucide-react'
+﻿import { Activity, BarChart2, Calendar, Target } from 'lucide-react'
 
 export const ROUTINE_CATEGORIES = ['Pecho', 'Espalda', 'Hombros', 'Brazos', 'Piernas', 'Abdomen/Core', 'Cardio', 'General', 'Tren Superior', 'Tren Inferior']
 
@@ -103,7 +103,6 @@ export const TABS = [
   { id: 'overview', label: 'General', icon: Activity },
   { id: 'progress', label: 'Actividad', icon: Calendar },
   { id: 'assessment', label: 'Evaluación Física', icon: BarChart2 },
-  { id: 'documents', label: 'Documentos', icon: FileText },
 ] as const
 
 export const emptyValuationForm = {

@@ -59,7 +59,7 @@ export function RoutineExerciseSelect({ row, routineViewMode, open, onToggle, on
           >
             {catExercises.length === 0 && !hasCustom ? (
               <p className="text-[11px] py-3 text-center" style={{ color: 'rgba(0,0,0,0.3)' }}>
-                No hay ejercicios en esta categorÃ­a
+                No hay ejercicios en esta categoría
               </p>
             ) : (
               catExercises.map(ex => {

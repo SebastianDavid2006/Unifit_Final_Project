@@ -5,8 +5,7 @@ import { RegisterPage } from '@/auth/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/auth/pages/ForgotPasswordPage'
 import { ChangePasswordPage } from '@/auth/pages/ChangePasswordPage'
 import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
-import { StudentPage } from '@/features/student/pages/StudentPage'
-import StudentOnboardingGate from '@/features/student/StudentOnboardingGate'
+import { StudentApp } from '@/features/student/StudentApp'
 import { AdminPage } from '@/features/admin/pages/AdminPage'
 import BackgroundDecor from '@/shared/components/BackgroundDecor'
 
@@ -160,11 +159,7 @@ export default function App() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              {studentSession ? (
-                <StudentOnboardingGate session={studentSession} onLogout={() => { setStudentSession(null); setScreen('login') }} />
-              ) : (
-                <StudentPage />
-              )}
+              <StudentApp onLogout={() => { setStudentSession(null); setScreen('login') }} />
             </motion.div>
           )}
           {screen === 'admin' && (

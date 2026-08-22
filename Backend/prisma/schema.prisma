@@ -142,12 +142,6 @@ enum DiaSemana {
   sabado
 }
 
-enum TipoDocPersonal {
-  legal
-  informe_medico
-  lesion_seguimiento
-}
-
 enum TipoDocLegal {
   contrato_gym
   tratamiento_datos
@@ -231,7 +225,6 @@ model Usuario {
   acudiente_de   Acudiente?      // si este usuario es menor, su acudiente
 
   huella                Huella?
-  aceptaciones          AceptacionDocumento[]
   valoraciones_creadas  Valoracion[]    @relation("ValoracionCreador")
   valoraciones          Valoracion[]    @relation("ValoracionUsuario")
   rutinas_creadas       Rutina[]        @relation("RutinaCreador")
@@ -240,7 +233,10 @@ model Usuario {
   agenda_usuario        Agenda[]        @relation("AgendaUsuario")
   agenda_creada         Agenda[]        @relation("AgendaCreador")
   cupos_creados         Cupo[]
-  documentos_personales DocumentoPersonal[]
+  aceptaciones          AceptacionDocumento[] @relation("AceptacionUsuario")
+  aceptaciones_creadas  AceptacionDocumento[] @relation("AceptacionActivador")
+  ejercicios_creados    Ejercicio[]
+  maquinas_creadas      Maquina[]
 }
 
 // Tipos de Usuario
@@ -554,27 +550,16 @@ model DocumentoLegal {
   aceptaciones AceptacionDocumento[]
 }
 
-model DocumentoPersonal {
-  id_doc_personal  String   @id @default(uuid())
-  id_usuario       String
-  nombre           String
-  tipo             TipoDocPersonal
-  url_archivo      String?
-  activo           Boolean  @default(true)
-  fecha_creacion   DateTime @default(now())
-
-  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
-}
-
 model AceptacionDocumento {
   id_aceptacion    String   @id @default(uuid())
   id_doc_legal     String
   id_usuario       String
-  firma_imagen     String?
+  id_activador     String
   fecha_aceptacion DateTime @default(now())
 
   documento DocumentoLegal @relation(fields: [id_doc_legal], references: [id_doc_legal])
-  usuario   Usuario        @relation(fields: [id_usuario], references: [id_usuario])
+  usuario   Usuario        @relation("AceptacionUsuario", fields: [id_usuario], references: [id_usuario])
+  activador Usuario        @relation("AceptacionActivador", fields: [id_activador], references: [id_usuario])
 
   @@unique([id_doc_legal, id_usuario])
 }

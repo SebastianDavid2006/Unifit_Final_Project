@@ -4,6 +4,7 @@ import { AttendanceHeader } from './components/AttendanceHeader'
 import { WeekView } from './components/WeekView'
 import { MonthView } from './components/MonthView'
 import { YearView } from './components/YearView'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface Props {
   vistaCalendario: 'semana' | 'mes' | 'año'
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function ProgressTab(props: Props) {
+  const isMobile = useIsMobile()
   const {
     vistaCalendario,
     setVistaCalendario,
@@ -42,7 +44,7 @@ export function ProgressTab(props: Props) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="max-w-[1200px] mx-auto space-y-6"
+      className={`max-w-[1200px] mx-auto ${isMobile ? 'space-y-3 px-2' : 'space-y-6'}`}
     >
       <KpiCards />
 
@@ -60,7 +62,7 @@ export function ProgressTab(props: Props) {
         <WeekView currentDate={currentDate} monthNames={monthNames} getWeekStart={getWeekStart} />
       )}
 
-      {vistaCalendario === 'mes' && (
+      {!isMobile && vistaCalendario === 'mes' && (
         <MonthView
           currentDate={currentDate}
           monthNames={monthNames}
@@ -71,7 +73,7 @@ export function ProgressTab(props: Props) {
         />
       )}
 
-      {vistaCalendario === 'año' && (
+      {!isMobile && vistaCalendario === 'año' && (
         <YearView
           currentDate={currentDate}
           monthNames={monthNames}

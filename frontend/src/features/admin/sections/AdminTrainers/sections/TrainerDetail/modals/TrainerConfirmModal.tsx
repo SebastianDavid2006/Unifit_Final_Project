@@ -42,10 +42,10 @@ export function TrainerConfirmModal({ isOpen, trainer, type, onConfirm, onCancel
         </div>
         <p className="text-sm font-medium mb-6 text-center" style={{ color: 'rgba(0,0,0,0.55)' }}>
           {type === 'save'
-            ? 'Â¿EstÃ¡s seguro de aplicar los cambios realizados?'
+            ? 'Â¿Estás seguro de aplicar los cambios realizados?'
             : trainer.status === 'active'
-              ? 'Â¿EstÃ¡s seguro de desactivar la cuenta de este usuario?'
-              : 'Â¿EstÃ¡s seguro de activar la cuenta de este usuario?'}
+              ? 'Â¿Estás seguro de desactivar la cuenta de este usuario?'
+              : 'Â¿Estás seguro de activar la cuenta de este usuario?'}
         </p>
         <div className="flex items-center justify-center gap-2">
           <motion.button
@@ -67,8 +67,8 @@ export function TrainerConfirmModal({ isOpen, trainer, type, onConfirm, onCancel
             {type === 'save'
               ? 'Aplicar'
               : trainer.status === 'active'
-                ? 'SÃ­, desactivar'
-                : 'SÃ­, activar'}
+                ? 'Sí, desactivar'
+                : 'Sí, activar'}
           </motion.button>
         </div>
       </motion.div>

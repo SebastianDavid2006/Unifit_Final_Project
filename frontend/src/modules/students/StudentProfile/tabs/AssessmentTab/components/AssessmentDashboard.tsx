@@ -8,6 +8,7 @@ import { Plus } from 'lucide-react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
 import { cardStyle, emptyValuationForm } from '@/modules/students/StudentProfileData'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface AssessmentDashboardProps {
   canCreateValuation: boolean
@@ -40,8 +41,10 @@ export function AssessmentDashboard({
   setValuationForm,
   setShowNewValuationModal,
 }: AssessmentDashboardProps) {
+  const isMobile = useIsMobile()
+  const cardCols = isMobile ? 'grid-cols-2' : (canCreateValuation ? 'grid-cols-4' : 'grid-cols-3')
   return (
-    <div className={`grid ${canCreateValuation ? 'grid-cols-4' : 'grid-cols-3'} gap-4`}>
+    <div className={`grid ${cardCols} gap-4`}>
       {items.map((m) => {
         const iconEl = getIcon(m.model)
         return (
@@ -49,11 +52,8 @@ export function AssessmentDashboard({
             key={m.label}
             whileHover={{ scale: 1.03 }}
             transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
-            className="relative rounded-2xl p-4 flex flex-col items-center text-center group"
-            style={{
-              ...cardStyle,
-              ...(m.highlight ? { border: '1px solid rgba(48,209,88,0.15)', boxShadow: '0 8px 32px rgba(48,209,88,0.12), 0 0 40px rgba(48,209,88,0.06)' } : {}),
-            }}
+            className="relative rounded-2xl flex flex-col items-center text-center group"
+            style={{ ...cardStyle, padding: isMobile ? '1rem' : '1.5rem' }}
           >
             <div
               className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.5] mb-5 flex items-center justify-center"
@@ -62,13 +62,14 @@ export function AssessmentDashboard({
               {iconEl}
             </div>
             <p style={{
-              fontSize: '1.8rem', fontWeight: 700, lineHeight: 1,
+              fontSize: isMobile ? '1.4rem' : '1.8rem', fontWeight: 700, lineHeight: 1,
               ...(m.highlight
                 ? { background: 'linear-gradient(135deg, #30D158, #00C7BE)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }
                 : {}),
             }} className={m.highlight ? '' : 'text-gradient-warm'}>{m.value}</p>
-            <p className="text-sm font-semibold mt-2" style={{
+            <p className={isMobile ? 'text-xs' : 'text-sm'} style={{
               color: m.highlight ? '#30D158' : 'rgba(0,0,0,0.5)',
+              marginTop: isMobile ? '0.5rem' : '0.75rem',
             }}>{m.label}</p>
           </motion.div>
         )
@@ -85,13 +86,14 @@ export function AssessmentDashboard({
             backgroundSize: '200% 200%',
             animation: 'mesh-shift 15s ease-in-out infinite',
             boxShadow: '0 8px 32px rgba(230,57,70,0.12), 0 2px 8px rgba(230,57,70,0.06)',
+            padding: isMobile ? '1rem' : '1.5rem',
           }}
           onClick={() => { setValuationStep(1); setValuationSuccess(false); setValuationViewMode(false); setValuationForm(emptyValuationForm); setShowNewValuationModal(true) }}
         >
           <div className="w-full flex flex-col items-center relative z-10">
             <div
               className="transition-all duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.2]"
-              style={{ width: '100%', height: 110, position: 'relative', transformOrigin: 'bottom center' }}
+              style={{ width: '100%', height: isMobile ? 80 : 110, position: 'relative', transformOrigin: 'bottom center' }}
             >
               <img
                 src={physicalAssessmentImg}
@@ -105,8 +107,8 @@ export function AssessmentDashboard({
             }} />
           </div>
           <div className="flex items-center gap-1.5 mb-3 z-10">
-            <span className="text-sm font-bold text-white/90">Nueva Valoración</span>
-            <Plus size={16} className="text-white/90" />
+            <span className={isMobile ? 'text-xs' : 'text-sm'} style={{ fontWeight: 700, color: 'white/90' }}>Nueva Valoración</span>
+            <Plus size={isMobile ? 12 : 16} className="text-white/90" />
           </div>
         </motion.div>
       )}

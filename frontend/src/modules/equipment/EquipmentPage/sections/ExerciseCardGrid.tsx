@@ -4,6 +4,7 @@ import type { Exercise } from '@/data/shared/types'
 import { muscleIcons } from '@/data/shared/constants'
 import { StatusBadge } from '@/shared/components/ui/StatusBadge'
 import { LEVEL_BADGE } from '@/modules/equipment/data'
+import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface ExerciseCardGridProps {
   exercises: Exercise[]
@@ -11,19 +12,20 @@ interface ExerciseCardGridProps {
 }
 
 export function ExerciseCardGrid({ exercises, onPreview }: ExerciseCardGridProps) {
+  const isMobile = useIsMobile()
   if (exercises.length === 0) {
     return (
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-3 py-16 text-center">
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        <div className={`col-span-${isMobile ? 2 : 3} py-16 text-center`}>
           <p className="text-lg font-bold" style={{ color: 'rgba(0,0,0,0.2)' }}>No se encontraron ejercicios</p>
-          <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Agrega ejercicios para verlos aquÃ­.</p>
+          <p className="text-sm mt-1" style={{ color: 'rgba(0,0,0,0.15)' }}>Agrega ejercicios para verlos aquí.</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-3'}`}>
       {exercises.map((e, i) => (
         <motion.div
           key={e.id}
