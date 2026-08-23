@@ -3,16 +3,14 @@ import { motion, AnimatePresence } from 'motion/react'
 import { LoginPage } from '@/auth/pages/LoginPage'
 import { RegisterPage } from '@/auth/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/auth/pages/ForgotPasswordPage'
-import { ChangePasswordPage } from '@/auth/pages/ChangePasswordPage'
 import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
 import { StudentApp } from '@/features/student/StudentApp'
 import { AdminPage } from '@/features/admin/pages/AdminPage'
 import BackgroundDecor from '@/shared/components/BackgroundDecor'
 import type { MockSession } from '@/auth/types'
-import { updateUser } from '@/auth/services/authService'
 
 type Platform = 'trainer' | 'student' | 'admin'
-type Screen = 'login' | 'register' | 'forgot' | 'change-password' | Platform
+type Screen = 'login' | 'register' | 'forgot' | Platform
 
 function ParticleField() {
   const particles = Array.from({ length: 25 }, (_, i) => ({
@@ -46,8 +44,8 @@ function ParticleField() {
 export default function App() {
   const [screen, setScreen] = useState<Screen>('login')
   const [studentSession, setStudentSession] = useState<MockSession | null>(null)
-  const [pendingSession, setPendingSession] = useState<MockSession | null>(null)
-  const [pendingPlatform, setPendingPlatform] = useState<Platform | null>(null)
+  const [trainerSession, setTrainerSession] = useState<MockSession | null>(null)
+  const [adminSession, setAdminSession] = useState<MockSession | null>(null)
 
   return (
     <div
@@ -79,15 +77,13 @@ export default function App() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
               <LoginPage onSelect={(platform, session) => {
-                if (platform === 'student' && session) setStudentSession(session)
-                if (session && session.user.debeCambiarContrasena) {
-                  setPendingSession(session)
-                  setPendingPlatform(platform)
-                  setScreen('change-password')
-                } else {
+                if (session) {
+                  if (platform === 'student') setStudentSession(session)
+                  else if (platform === 'trainer') setTrainerSession(session)
+                  else if (platform === 'admin') setAdminSession(session)
                   setScreen(platform)
                 }
-              }} onRegister={() => setScreen('register')} onForgot={() => setScreen('forgot')} />
+              }} onRegister={() => setScreen('register')} />
             </motion.div>
           )}
           {screen === 'forgot' && (
@@ -112,28 +108,6 @@ export default function App() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
                 <RegisterPage onBack={() => setScreen('login')} />
-            </motion.div>
-          )}
-          {screen === 'change-password' && (
-            <motion.div
-              key="change-password"
-              className="size-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-            >
-              <ChangePasswordPage onBack={() => setScreen('login')} onSuccess={() => {
-                if (pendingSession) {
-                  updateUser(pendingSession.user.email, { debeCambiarContrasena: false })
-                }
-                if (pendingPlatform === 'student' && pendingSession) {
-                  setStudentSession({ ...pendingSession, user: { ...pendingSession.user, debeCambiarContrasena: false } })
-                }
-                setPendingSession(null)
-                setPendingPlatform(null)
-                setScreen(pendingPlatform || 'login')
-              }} />
             </motion.div>
           )}
           {screen === 'trainer' && (

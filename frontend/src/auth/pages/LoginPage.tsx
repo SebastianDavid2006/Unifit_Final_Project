@@ -12,7 +12,6 @@ import secundarioLogo from '@/assets/logo/universitaria_de_bogota.webp'
 interface LoginPageProps {
   onSelect: (platform: 'trainer' | 'student' | 'admin', session?: MockSession) => void
   onRegister: () => void
-  onForgot: () => void
 }
 
 const MESH_BUTTON = `
@@ -25,7 +24,7 @@ const MESH_BUTTON = `
   #1A0B2E
 `
 
-export function LoginPage({ onSelect, onRegister, onForgot }: LoginPageProps) {
+export function LoginPage({ onSelect, onRegister }: LoginPageProps) {
   const [usuario, setUsuario] = useState('admin')
   const [contraseña, setContraseña] = useState('admin123')
   const [error, setError] = useState('')
@@ -100,17 +99,6 @@ export function LoginPage({ onSelect, onRegister, onForgot }: LoginPageProps) {
 
             <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>CONTRASEÑA</label>
             <PasswordField value={contraseña} onChange={setContraseña} className="mb-8" />
-
-            <div className="flex justify-end -mt-4 mb-6">
-              <button
-                type="button"
-                onClick={onForgot}
-                className="text-xs font-semibold cursor-pointer transition-colors hover:underline"
-                style={{ color: 'rgba(255,255,255,0.55)' }}
-              >
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
 
             {error && (
               <motion.p

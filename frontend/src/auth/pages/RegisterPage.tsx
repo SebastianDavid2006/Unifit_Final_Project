@@ -121,18 +121,18 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     const tempPassword = generateTempPassword()
     createAccount({
       email,
-      password: tempPassword,
+      password: form.numDoc || tempPassword,
       nombre: `${form.primerNombre || 'Estudiante'} ${form.primerApellido || ''}`.trim(),
       estado: 'en_proceso',
-      debeCambiarContrasena: true,
+      debeCambiarContrasena: false,
       onboarding: { cita: false, firma: false, huella: false },
     })
-    sendEmail(
-      email,
-      'Tus credenciales de acceso a UniFit',
-      `Hola${form.primerNombre ? ` ${form.primerNombre}` : ''}! Tu cuenta fue creada exitosamente. Tu usuario es tu correo electrónico (${email}) y tu contraseña temporal es la que encuentras abajo. Al ingresar por primera vez deberás cambiarla por una nueva.`,
-      tempPassword,
-    )
+sendEmail(
+        email,
+        'Tus credenciales de acceso a UniFit',
+        `Hola${form.primerNombre ? ` ${form.primerNombre}` : ''}! Tu cuenta fue creada exitosamente. Tu usuario es tu correo electrónico (${email}) y tu contraseña es tu número de documento. Al ingresar por primera vez deberás cambiarla por una nueva.`,
+        form.numDoc || tempPassword,
+      )
   }
 
   const handleNext = () => {

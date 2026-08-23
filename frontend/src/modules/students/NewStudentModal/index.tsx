@@ -147,7 +147,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       password: form.numDoc,
       nombre: `${form.primerNombre || ''} ${form.primerApellido || ''}`.trim(),
       estado: 'activo',
-      debeCambiarContrasena: true,
+      debeCambiarContrasena: false,
       onboarding: { cita: true, firma: true, huella: true },
     })
     sendEmail(
