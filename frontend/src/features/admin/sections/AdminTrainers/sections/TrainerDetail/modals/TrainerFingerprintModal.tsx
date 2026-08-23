@@ -21,10 +21,10 @@ export function TrainerFingerprintModal({ isOpen, trainer, huella, onClose, onCa
   React.useEffect(() => {
     setShowFingerprintModal(isOpen)
     if (isOpen) {
-      setFingerprintStatus('idle')
+      setFingerprintStatus(huella ? 'captured' : 'idle')
       setFingerprintSuccess(false)
     }
-  }, [isOpen])
+  }, [isOpen, huella])
 
   if (!showFingerprintModal) return null
 
@@ -36,6 +36,7 @@ export function TrainerFingerprintModal({ isOpen, trainer, huella, onClose, onCa
   }
 
   const handleStartScan = () => {
+    onCapture?.()
     setFingerprintStatus('scanning')
     setTimeout(() => setFingerprintStatus('captured'), 5000)
   }
