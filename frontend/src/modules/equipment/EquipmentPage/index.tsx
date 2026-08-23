@@ -18,6 +18,7 @@ import { ExerciseManagerModal } from './components/ExerciseManagerModal'
 import { MachinePreviewModal } from './components/MachinePreviewModal'
 import { ExercisePreviewModal } from './components/ExercisePreviewModal'
 import { Toast } from './components/Toast'
+import Pagination from '@/features/admin/components/Pagination'
 
 interface Props {
   search: string
@@ -42,6 +43,23 @@ export default function EquipmentPage(props: Props) {
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'machine' | 'exercise'; id: number } | null>(null)
   const [pendingMachineToast, setPendingMachineToast] = useState<{ name: string; edited: boolean } | null>(null)
   const [pendingExerciseToast, setPendingExerciseToast] = useState<{ name: string } | null>(null)
+
+  // Pagination
+  const PAGE_SIZE = 6
+  const [machinePage, setMachinePage] = useState(1)
+  const [exercisePage, setExercisePage] = useState(1)
+
+  const machineTotalPages = Math.max(1, Math.ceil(machine.filtered.length / PAGE_SIZE))
+  const exerciseTotalPages = Math.max(1, Math.ceil(ex.filtered.length / PAGE_SIZE))
+
+  const pagedMachines = machine.filtered.slice((machinePage - 1) * PAGE_SIZE, machinePage * PAGE_SIZE)
+  const pagedExercises = ex.filtered.slice((exercisePage - 1) * PAGE_SIZE, exercisePage * PAGE_SIZE)
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setMachinePage(1)
+    setExercisePage(1)
+  }, [props.search])
 
   useEffect(() => {
     if (!machine.showModal && pendingMachineToast) {
@@ -110,16 +128,22 @@ export default function EquipmentPage(props: Props) {
       />
 
       {props.viewMode === 'machines' ? (
-        <MachineCardGrid
-          machines={machine.filtered}
-          exercises={ex.exercises}
-          onPreview={m => { setPreviewMachine(m); setPreviewMuscleFilter('all') }}
-        />
+        <>
+          <MachineCardGrid
+            machines={pagedMachines}
+            exercises={ex.exercises}
+            onPreview={m => { setPreviewMachine(m); setPreviewMuscleFilter('all') }}
+          />
+          {machineTotalPages > 1 && <Pagination page={machinePage} totalPages={machineTotalPages} onPage={setMachinePage} />}
+        </>
       ) : (
-        <ExerciseCardGrid
-          exercises={ex.filtered}
-          onPreview={setPreviewExercise}
-        />
+        <>
+          <ExerciseCardGrid
+            exercises={pagedExercises}
+            onPreview={setPreviewExercise}
+          />
+          {exerciseTotalPages > 1 && <Pagination page={exercisePage} totalPages={exerciseTotalPages} onPage={setExercisePage} />}
+        </>
       )}
 
       {/* â”€â”€ Machine Modal â”€â”€ */}
