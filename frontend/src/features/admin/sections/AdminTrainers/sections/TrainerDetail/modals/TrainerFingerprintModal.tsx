@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, RefreshCw, ScanLine } from 'lucide-react'
 import type { Trainer } from '@/data/trainers'
@@ -19,7 +19,7 @@ export function TrainerFingerprintModal({ isOpen, trainer, huella, onClose, onCa
   const [fingerprintSuccess, setFingerprintSuccess] = useState(false)
   const [showFingerprintModal, setShowFingerprintModal] = useState(isOpen)
 
-  React.useEffect(() => {
+  useEffect(() => {
     setShowFingerprintModal(isOpen)
     if (isOpen) {
       setFingerprintStatus(huella ? 'captured' : 'idle')
