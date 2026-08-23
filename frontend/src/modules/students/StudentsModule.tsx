@@ -123,8 +123,8 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
           <div className="flex items-center gap-6 ml-56">
             <div className="w-1 h-12 rounded-full" style={{ background: RED_GRAD }} />
             <div>
-              <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Personal</h1>
-              <p className="text-xs text-black/40">Gestiona los estudiantes de tu gimnasio.</p>
+              <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Usuarios</h1>
+              <p className="text-xs text-black/40">Crea y gestiona administradores y entrenadores del sistema.</p>
             </div>
           </div>
 
@@ -173,10 +173,10 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
         </div>
 
         <div
-          style={{ position: 'absolute', left: 10, bottom: -60, width: 260, zIndex: 20, opacity: 0, animation: 'blur-fade 0.6s 0.3s ease forwards' }}
+          style={{ position: 'absolute', left: 10, bottom: -80, width: 280, zIndex: 20, opacity: 0, animation: 'blur-fade 0.6s 0.3s ease forwards' }}
         >
-          <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', width: '85%', height: '45%', background: 'rgba(18,112,183,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
-          <img src={studentsImg} alt="Students" className="w-full h-auto drop-shadow-xl relative" style={{ transform: 'translateY(-35%)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '85%', height: '50%', background: 'rgba(18,112,183,0.12)', filter: 'blur(25px)', borderRadius: '50%' }} />
+          <img src={studentsImg} alt="Students" className="w-full h-auto drop-shadow-xl relative" style={{ transform: 'translateY(-50%)' }} />
         </div>
       </motion.div>
 
