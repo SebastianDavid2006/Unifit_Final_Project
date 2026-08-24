@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { LoginPage } from '@/auth/pages/LoginPage'
 import { RegisterPage } from '@/auth/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/auth/pages/ForgotPasswordPage'
+import { OnboardingPage } from '@/auth/pages/OnboardingPage'
 import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
 import { StudentApp } from '@/features/student/StudentApp'
 import { AdminPage } from '@/features/admin/pages/AdminPage'
@@ -10,7 +11,7 @@ import BackgroundDecor from '@/shared/components/BackgroundDecor'
 import type { MockSession } from '@/auth/types'
 
 type Platform = 'trainer' | 'student' | 'admin'
-type Screen = 'login' | 'register' | 'forgot' | Platform
+type Screen = 'login' | 'register' | 'forgot' | 'onboarding' | Platform
 
 function ParticleField() {
   const particles = Array.from({ length: 25 }, (_, i) => ({
@@ -78,10 +79,23 @@ export default function App() {
             >
               <LoginPage onSelect={(platform, session) => {
                 if (session) {
-                  if (platform === 'student') setStudentSession(session)
-                  else if (platform === 'trainer') setTrainerSession(session)
-                  else if (platform === 'admin') setAdminSession(session)
-                  setScreen(platform)
+                  if (platform === 'student') {
+                    const onboarding = session.user.onboarding
+                    const needsOnboarding = onboarding && (!onboarding.cita || !onboarding.firma || !onboarding.huella)
+                    if (needsOnboarding && session.user.estado === 'en_proceso') {
+                      setStudentSession(session)
+                      setScreen('onboarding')
+                    } else {
+                      setStudentSession(session)
+                      setScreen(platform)
+                    }
+                  } else if (platform === 'trainer') {
+                    setTrainerSession(session)
+                    setScreen(platform)
+                  } else if (platform === 'admin') {
+                    setAdminSession(session)
+                    setScreen(platform)
+                  }
                 }
               }} onRegister={() => setScreen('register')} />
             </motion.div>
@@ -98,7 +112,7 @@ export default function App() {
                 <ForgotPasswordPage onBack={() => setScreen('login')} onDone={() => setScreen('login')} />
             </motion.div>
           )}
-          {screen === 'register' && (
+{screen === 'register' && (
             <motion.div
               key="register"
               className="size-full"
@@ -108,6 +122,18 @@ export default function App() {
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
                 <RegisterPage onBack={() => setScreen('login')} />
+            </motion.div>
+          )}
+          {screen === 'onboarding' && (
+            <motion.div
+              key="onboarding"
+              className="size-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+                <OnboardingPage session={studentSession!} onComplete={() => setScreen('student')} onBack={() => { setStudentSession(null); setScreen('login') }} />
             </motion.div>
           )}
           {screen === 'trainer' && (
