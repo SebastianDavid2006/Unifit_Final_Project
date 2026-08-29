@@ -376,6 +376,7 @@ model Valoracion {
   observaciones_finales      String?
   dias_disponibles           DiaSemana[]
   rutina                     Rutina?
+  activo                     Boolean           @default(true)
   fecha_creacion             DateTime          @default(now())
 
   usuario            Usuario            @relation("ValoracionUsuario", fields: [id_usuario], references: [id_usuario])
