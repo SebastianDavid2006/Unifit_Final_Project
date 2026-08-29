@@ -1,4 +1,4 @@
-import { User, FileText, ClipboardCheck, Pen, ScanLine } from 'lucide-react'
+import { User, FileText, ClipboardCheck, ScanLine } from 'lucide-react'
 
 export {
   BLUE, GREEN, BLUE_GRAD, GREEN_GRAD,
@@ -27,6 +27,5 @@ export const STEPS = [
   { num: 2, label: 'Tratamiento de datos', icon: FileText },
   { num: 3, label: 'Contrato', icon: FileText },
   { num: 4, label: 'PAR-Q', icon: ClipboardCheck },
-  { num: 5, label: 'Firma', icon: Pen },
-  { num: 6, label: 'Huella digital', icon: ScanLine },
+  { num: 5, label: 'Huella digital', icon: ScanLine },
 ]

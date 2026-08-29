@@ -97,7 +97,10 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
 
   const handleFingerprintStart = () => {
     setFingerprintStatus('scanning')
-    setTimeout(() => setFingerprintStatus('captured'), 5000)
+    setTimeout(() => {
+      setFingerprintStatus('captured')
+      setTrainer(prev => ({ ...prev, huella: 'captured' }))
+    }, 5000)
   }
 
   const handleFingerprintNext = () => {

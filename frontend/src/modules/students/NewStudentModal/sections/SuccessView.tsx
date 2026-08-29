@@ -71,7 +71,7 @@ export function SuccessView({ createdEmail, onShowInbox, onClose }: SuccessViewP
         className="text-xs font-medium mt-2 text-center max-w-xs leading-relaxed"
         style={{ color: 'rgba(0,0,0,0.35)' }}
       >
-        ¡Se han enviado las credenciales al correo! Pronto estarás listo para la experiencia UNIFIT 🚀
+        ¡Registro exitoso! Tu usuario es tu correo electrónico ({createdEmail}) y tu contraseña es tu número de documento. Deberás cambiarla la primera vez que ingreses al sistema. ¡Pronto estarás listo para la experiencia UNIFIT 🚀!
       </motion.p>
       <motion.button
         initial={{ opacity: 0, y: 10 }}

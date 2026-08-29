@@ -14,7 +14,6 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "allowJs": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }

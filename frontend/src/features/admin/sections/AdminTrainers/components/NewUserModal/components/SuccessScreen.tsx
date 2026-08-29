@@ -67,7 +67,7 @@ export default function SuccessScreen({ onClose }: { onClose: () => void }) {
         className="text-xs font-semibold mt-3 text-center max-w-sm leading-relaxed"
         style={{ color: '#555' }}
       >
-        Se ha enviado un correo con las credenciales para comenzar su experiencia en UNIFIT.
+        Registro exitoso. Su usuario es su correo electrónico y su contraseña es su número de documento; deberá cambiarla la primera vez que ingrese al sistema para comenzar su experiencia en UNIFIT.
       </motion.p>
       <motion.button
         initial={{ opacity: 0, y: 10 }}

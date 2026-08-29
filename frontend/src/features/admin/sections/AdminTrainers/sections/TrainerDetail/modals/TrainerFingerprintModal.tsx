@@ -1,4 +1,5 @@
-﻿import { motion, AnimatePresence } from 'motion/react'
+﻿import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { X, RefreshCw, ScanLine } from 'lucide-react'
 import type { Trainer } from '@/data/trainers'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
@@ -14,17 +15,17 @@ interface TrainerFingerprintModalProps {
 }
 
 export function TrainerFingerprintModal({ isOpen, trainer, huella, onClose, onCapture }: TrainerFingerprintModalProps) {
-  const [fingerprintStatus, setFingerprintStatus] = React.useState<'idle' | 'scanning' | 'captured'>('idle')
-  const [fingerprintSuccess, setFingerprintSuccess] = React.useState(false)
-  const [showFingerprintModal, setShowFingerprintModal] = React.useState(isOpen)
+  const [fingerprintStatus, setFingerprintStatus] = useState<'idle' | 'scanning' | 'captured'>('idle')
+  const [fingerprintSuccess, setFingerprintSuccess] = useState(false)
+  const [showFingerprintModal, setShowFingerprintModal] = useState(isOpen)
 
-  React.useEffect(() => {
+  useEffect(() => {
     setShowFingerprintModal(isOpen)
     if (isOpen) {
-      setFingerprintStatus('idle')
+      setFingerprintStatus(huella ? 'captured' : 'idle')
       setFingerprintSuccess(false)
     }
-  }, [isOpen])
+  }, [isOpen, huella])
 
   if (!showFingerprintModal) return null
 
@@ -36,6 +37,7 @@ export function TrainerFingerprintModal({ isOpen, trainer, huella, onClose, onCa
   }
 
   const handleStartScan = () => {
+    onCapture?.()
     setFingerprintStatus('scanning')
     setTimeout(() => setFingerprintStatus('captured'), 5000)
   }

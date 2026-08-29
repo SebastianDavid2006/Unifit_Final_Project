@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { Bell, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
@@ -12,25 +12,7 @@ export default function ProfileMenu({ open, onToggle, onLogout }: {
   const isMobile = useIsMobile()
   return (
     <div className="relative flex-shrink-0">
-      <div className="flex items-center gap-3">
-        {!isMobile && (
-          <motion.button
-            whileHover={{ background: 'rgba(255,255,255,0.28)' }}
-            whileTap={{ scale: 0.95 }}
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{
-              background: 'rgba(255,255,255,0.12)',
-              backdropFilter: 'blur(24px) saturate(1.6)',
-              border: '1px solid rgba(255,255,255,0.25)',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
-            }}
-          >
-            <Bell size={16} style={{ color: 'rgba(0,0,0,0.35)' }} />
-            <div className="dot-alert absolute -top-1 -right-1" style={{ width: 8, height: 8 }} />
-          </motion.button>
-        )}
-
-        <motion.button
+      <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.95 }}
           onClick={onToggle}
@@ -51,7 +33,6 @@ export default function ProfileMenu({ open, onToggle, onLogout }: {
             SM
           </div>
         </motion.button>
-      </div>
 
       <AnimatePresence>
         {open && !isMobile && (

@@ -208,7 +208,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
         top: '-60px', right: '-40px',
       }} />
 
-      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto" style={{ padding: isMobile ? '12px 12px 80px 12px' : '24px 24px 80px 24px', paddingTop: '20px', overflowX: 'auto' }}>
+      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto" style={{ padding: isMobile ? '12px 12px 80px 12px' : '24px 24px 80px 24px', paddingTop: '20px' }}>
 
           <AnimatePresence mode="wait">
             <motion.div key={currentTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">
