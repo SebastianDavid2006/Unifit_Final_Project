@@ -10,7 +10,7 @@ export function responderErrorPrisma(error: unknown, res: Response): boolean {
   }
 
   if (error.code === 'P2003') {
-    res.status(400).json({ mensaje: 'Referencia inexistente: verifica programa, cargo o área' })
+    res.status(400).json({ mensaje: 'Referencia inexistente: verifica los datos enviados' })
     return true
   }
 
