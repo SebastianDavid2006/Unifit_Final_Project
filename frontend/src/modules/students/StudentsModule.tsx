@@ -15,13 +15,14 @@ const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 interface Props {
   students: Student[]
   search: string
+  onSearchChange?: (v: string) => void
   riskFilter: 'all' | 'high' | 'medium' | 'low'
   onSelectStudent: (s: Student) => void
   showFilters: boolean
   onToggleFilters: () => void
 }
 
-export default function StudentsModule({ students, search, riskFilter, onSelectStudent, showFilters, onToggleFilters }: Props) {
+export default function StudentsModule({ students, search, onSearchChange, riskFilter, onSelectStudent, showFilters, onToggleFilters }: Props) {
   const isMobile = useIsMobile()
   const [filterCategory, setFilterCategory] = useState<'status' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
@@ -73,7 +74,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
     })
   }, [students, search, riskFilter, filterSelections])
 
-  const tableHeaders = ['Nombre', 'Carrera', 'Último Ingreso', 'Próxima Valoración', 'Valoraciones', 'Estado']
+  const tableHeaders = ['Nombre', 'PROGRAMA / CARGO', 'PERFIL', 'Último Ingreso', 'Próxima Valoración', 'Valoraciones', 'Estado']
 
   const statusMap: Record<Student['status'], { label: string; color: string; bg: string }> = {
     active: { label: 'Activo', color: '#1E8E3E', bg: 'rgba(34,197,94,0.13)' },
@@ -124,7 +125,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
             <div className="w-1 h-12 rounded-full" style={{ background: RED_GRAD }} />
             <div>
               <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Usuarios</h1>
-              <p className="text-xs text-black/40">Crea y gestiona administradores y entrenadores del sistema.</p>
+              <p className="text-xs text-black/40">Usuarios registrados en el sistema</p>
             </div>
           </div>
 
@@ -394,7 +395,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
         {/* Student list — blurred when filters are open */}
         <motion.div layout transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} style={{ filter: showFilters ? 'blur(4px)' : 'none', opacity: showFilters ? 0.5 : 1, transition: 'filter 0.3s ease, opacity 0.3s ease', pointerEvents: showFilters ? 'none' : 'auto' }}>
           {!isMobile && (
-            <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
+            <div className="grid grid-cols-[1.5fr_1fr_0.7fr_1fr_1fr_1fr_1fr_auto] gap-4 px-6 mb-3">
               {tableHeaders.map((h, i) => (
                 <p key={i} className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>{h}</p>
               ))}
@@ -406,7 +407,7 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
             {paged.map((s, i) => {
               const isProcess = s.status === 'process'
               return (
-                <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => handleStudentClick(s)} whileHover={{ y: -3, scale: 1.002 }} className={`rounded-2xl premium-card cursor-pointer relative overflow-hidden ${isMobile ? 'p-4 text-center' : 'grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4'}`} style={{
+                <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} onClick={() => handleStudentClick(s)} whileHover={{ y: -3, scale: 1.002 }} className={`rounded-2xl premium-card cursor-pointer relative overflow-hidden ${isMobile ? 'p-4 text-center' : 'grid grid-cols-[1.5fr_1fr_0.7fr_1fr_1fr_1fr_1fr_auto] items-center gap-4 p-4'}`} style={{
                   background: isProcess ? BLUE_GRAD : undefined,
                   color: isProcess ? '#FFFFFF' : undefined,
                   border: 'none',
@@ -436,7 +437,8 @@ export default function StudentsModule({ students, search, riskFilter, onSelectS
                           <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>
                         </div>
                       </div>
-                      <p className="text-xs font-semibold" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.faculty}</p>
+                      <p className="text-xs font-semibold truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.tipo_usuario === 'estudiante' ? s.program : `${s.cargo ?? '—'} — ${s.area ?? '—'}`}</p>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : 'rgba(18,112,183,0.1)', color: isProcess ? '#FFFFFF' : '#0E6FBF' }}>{s.tipo_usuario === 'estudiante' ? 'Estudiante' : s.tipo_usuario === 'profesor' ? 'Profesor' : 'Administrativo'}</span>
                       <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : s.lastVisit}</p>
                       <p className="text-xs font-bold" style={{ color: isProcess ? '#FFD6E0' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{s.nextAssessment}</p>
                       <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>

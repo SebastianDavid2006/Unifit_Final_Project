@@ -1,9 +1,9 @@
 import { useState } from 'react'
+import { useLocation, useNavigate, Outlet } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
-import { StudentProfile, TABS } from '@/modules/students/StudentProfile'
+import { cerrarSesion } from '@/lib/auth'
 import StudentsModule from '@/modules/students/StudentsModule'
 import AgendaModule from '@/modules/agenda/AgendaModule'
-import EquipmentPage from '@/modules/equipment/EquipmentPage'
 import TrainerDashboard from '@/features/trainer/sections/TrainerDashboard'
 import TrainerSidebar, { type TrainerSection } from '@/features/trainer/components/TrainerSidebar'
 import TrainerTopbar from '@/features/trainer/components/TrainerTopbar'
@@ -11,12 +11,22 @@ import BackgroundDecor from '@/shared/components/BackgroundDecor'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import { students } from '@/data/students'
 
-export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
+const PATH_TO_SECTION: Record<string, TrainerSection> = {
+  '/entrenador/dashboard': 'dashboard',
+  '/entrenador/usuarios': 'students',
+  '/entrenador/equipamiento/maquinas': 'equipment',
+  '/entrenador/equipamiento/ejercicios': 'equipment',
+  '/entrenador/agenda': 'schedule',
+}
+
+export function TrainerPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const isMobile = useIsMobile()
-  const [section, setSection] = useState<TrainerSection>('dashboard')
+  const section = PATH_TO_SECTION[location.pathname] || 'dashboard'
+  const isSubRoute = /\/entrenador\/(usuarios\/\d+|equipamiento\/(maquinas|ejercicios))/.test(location.pathname)
+  const isStudentDetail = /\/entrenador\/usuarios\/\d+/.test(location.pathname)
   const [expanded, setExpanded] = useState(false)
-  const [selectedStudent, setSelectedStudent] = useState<typeof students[0] | null>(null)
-  const [studentTab, setStudentTab] = useState('overview')
   const [search, setSearch] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [agendaSearch, setAgendaSearch] = useState('')
@@ -24,21 +34,26 @@ export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
   const [riskFilter, setRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
   const [equipSearch, setEquipSearch] = useState('')
   const [equipSearchFocused, setEquipSearchFocused] = useState(false)
-  const [equipViewMode, setEquipViewMode] = useState<'machines' | 'exercises'>('machines')
+  const equipViewMode = location.pathname.includes('/ejercicios') ? 'exercises' : 'machines'
   const [equipSearchHovered, setEquipSearchHovered] = useState(false)
   const [showStudentsFilters, setShowStudentsFilters] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
-  const renderEquipment = () => (
-    <EquipmentPage
-      search={equipSearch}
-      searchFocused={equipSearchFocused}
-      viewMode={equipViewMode}
-      onViewModeChange={setEquipViewMode}
-      onSearchChange={setEquipSearch}
-      onSearchFocus={setEquipSearchFocused}
-    />
-  )
+  const handleSectionChange = (s: TrainerSection) => {
+    const paths: Record<TrainerSection, string> = {
+      dashboard: '/entrenador/dashboard',
+      students: '/entrenador/usuarios',
+      equipment: '/entrenador/equipamiento/maquinas',
+      schedule: '/entrenador/agenda',
+    }
+    navigate(paths[s])
+  }
+
+  const handleLogout = () => {
+    cerrarSesion()
+    navigate('/login')
+  }
+
 
   return (
     <div className="flex size-full overflow-y-auto mesh-bg relative">
@@ -48,7 +63,7 @@ export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
         section={section}
         expanded={expanded}
         onToggle={() => setExpanded(!expanded)}
-        onSectionChange={setSection}
+        onSectionChange={handleSectionChange}
       />
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-10" style={{ scrollbarGutter: 'stable', paddingBottom: isMobile ? '70px' : 0, paddingLeft: expanded ? '208px' : '68px', paddingRight: isMobile ? '16px' : '24px', maxWidth: '100%' }}>
@@ -71,18 +86,18 @@ export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
           equipSearchHovered={equipSearchHovered}
           onEquipSearchHoveredChange={setEquipSearchHovered}
           equipViewMode={equipViewMode}
-          onEquipViewModeChange={setEquipViewMode}
-          selectedStudent={!!selectedStudent}
-          studentTab={studentTab}
-          onStudentTabChange={setStudentTab}
-          onBack={() => setSelectedStudent(null)}
+          onEquipViewModeChange={(v) => navigate(v === 'machines' ? '/entrenador/equipamiento/maquinas' : '/entrenador/equipamiento/ejercicios')}
+          selectedStudent={isStudentDetail}
+          studentTab="overview"
+          onStudentTabChange={() => {}}
+          onBack={() => navigate('/entrenador/usuarios')}
           profileMenuOpen={profileMenuOpen}
           onProfileMenuToggle={() => setProfileMenuOpen(!profileMenuOpen)}
-          onLogout={onLogout}
+          onLogout={handleLogout}
         />
 
-        {selectedStudent ? (
-          <StudentProfile student={selectedStudent} tab={studentTab} onTabChange={setStudentTab} canCreateValuation={false} />
+        {isSubRoute ? (
+          <Outlet />
         ) : (
           <AnimatePresence mode="wait">
             <motion.div
@@ -98,12 +113,11 @@ export function TrainerPage({ onLogout }: { onLogout?: () => void }) {
                   students={students}
                   search={search}
                   riskFilter={riskFilter}
-                  onSelectStudent={setSelectedStudent}
+                  onSelectStudent={(s) => navigate(`/entrenador/usuarios/${s.id}`)}
                   showFilters={showStudentsFilters}
                   onToggleFilters={() => setShowStudentsFilters(!showStudentsFilters)}
                 />
               )}
-              {section === 'equipment' && renderEquipment()}
               {section === 'schedule' && <AgendaModule students={students} />}
             </motion.div>
           </AnimatePresence>

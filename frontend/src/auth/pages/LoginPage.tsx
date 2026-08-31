@@ -4,6 +4,7 @@ import { User, UserPlus, ArrowRight } from 'lucide-react'
 import { LoginBackground } from '@/auth/components/LoginBackground'
 import { PasswordField } from '@/auth/components/PasswordField'
 import { api, mensajeError } from '@/lib/api'
+import { guardarSesion, type UsuarioSesion, type Rol } from '@/lib/auth'
 import logotipo from '@/assets/logo/logo.webp'
 import universidadLogo from '@/assets/logo/universitaria_de_colombia.webp'
 import secundarioLogo from '@/assets/logo/universitaria_de_bogota.webp'
@@ -63,6 +64,20 @@ export function LoginPage({ onSelect, onRegister }: LoginPageProps) {
         },
         token: data.token,
       }
+
+      const usuarioSesion: UsuarioSesion = {
+        id_usuario: u.id_usuario as string,
+        primer_nombre: u.primer_nombre as string,
+        primer_apellido: u.primer_apellido as string,
+        email_contacto: u.email_contacto as string,
+        documento: u.documento as string,
+        rol: u.rol as Rol,
+        tipo_usuario: u.tipo_usuario as string,
+        estado: u.estado as string,
+        debe_cambiar_password: u.debe_cambiar_password as boolean,
+      }
+      guardarSesion(data.token, usuarioSesion)
+
       const platform = session.user.rol === 'entrenador' ? 'trainer' : session.user.rol === 'admin' ? 'admin' : 'student'
       onSelect(platform, session)
     } catch (err) {

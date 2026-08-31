@@ -100,6 +100,18 @@ const USUARIOS: SeedUsuario[] = [
     password: 'directo123',
     debe_cambiar_password: false,
   },
+  {
+    documento: '10000005',
+    primer_nombre: 'Roberto',
+    primer_apellido: 'Inactivo',
+    email_contacto: 'inactivo@unifit.edu.co',
+    genero: 'masculino',
+    rol: 'usuario',
+    tipo_usuario: 'estudiante',
+    estado: 'inactivo',
+    password: 'inactivo123',
+    debe_cambiar_password: false,
+  },
 ]
 
 async function seedCatalogos(): Promise<void> {

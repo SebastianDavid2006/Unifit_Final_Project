@@ -7,7 +7,7 @@ export type TrainerSection = 'dashboard' | 'students' | 'equipment' | 'schedule'
 export const TRAINER_SIDEBAR_ITEMS: { id: TrainerSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'students', label: 'Usuarios', icon: Users },
-  { id: 'equipment', label: 'Máquinas', icon: Dumbbell },
+  { id: 'equipment', label: 'Equipamiento', icon: Dumbbell },
   { id: 'schedule', label: 'Agenda', icon: Calendar },
 ]
 

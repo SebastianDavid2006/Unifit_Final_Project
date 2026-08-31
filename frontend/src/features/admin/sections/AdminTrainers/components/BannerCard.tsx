@@ -22,7 +22,7 @@ export default function BannerCard({ onOpenNewUser }: { onOpenNewUser: () => voi
           <div className="w-1 h-12 rounded-full" style={{ background: RED_GRAD }} />
           <div>
             <h1 style={{ color: '#1A1A1E', fontSize: '2rem', fontWeight: 800 }}>Personal</h1>
-            <p className="text-xs text-black/40">Gestiona estudiantes, entrenadores y administradores del gimnasio.</p>
+            <p className="text-xs text-black/40">Gestiona administradores y entrenadores del sistema.</p>
           </div>
         </div>
 

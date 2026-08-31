@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
+import { useLocation, useNavigate, Outlet } from 'react-router'
 import { AnimatePresence, motion } from 'motion/react'
+import { cerrarSesion } from '@/lib/auth'
 import AdminDashboardView from '@/features/admin/sections/AdminDashboard'
 import AdminTrainers from '@/features/admin/sections/AdminTrainers'
 import AdminGym from '@/features/admin/sections/AdminGym'
@@ -15,9 +17,32 @@ import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import { students } from '@/data/students'
 import type { AdminSection } from './data'
 
-export function AdminPage({ onLogout }: { onLogout?: () => void }) {
+const PATH_TO_SECTION: Record<string, AdminSection> = {
+  '/admin/dashboard': 'dashboard',
+  '/admin/personal': 'trainers',
+  '/admin/estadisticas': 'stats',
+  '/admin/gestion': 'gym',
+  '/admin/configuracion': 'config',
+}
+
+const SECTION_PATHS: Record<AdminSection, string> = {
+  dashboard: '/admin/dashboard',
+  trainers: '/admin/personal',
+  stats: '/admin/estadisticas',
+  gym: '/admin/gestion',
+  config: '/admin/configuracion',
+}
+
+function isGestionPath(pathname: string): boolean {
+  return pathname.startsWith('/admin/gestion')
+}
+
+export function AdminPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const isMobile = useIsMobile()
-  const [section, setSection] = useState<AdminSection>('dashboard')
+  const isGestion = isGestionPath(location.pathname)
+  const section = isGestion ? 'gym' : (PATH_TO_SECTION[location.pathname] || 'dashboard')
   const [expanded, setExpanded] = useState(false)
   const [trainerSearch, setTrainerSearch] = useState('')
   const [trainerSearchFocused, setTrainerSearchFocused] = useState(false)
@@ -32,7 +57,10 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
   const [gymStudentTab, setGymStudentTab] = useState('overview')
   const [equipSearch, setEquipSearch] = useState('')
   const [equipSearchFocused, setEquipSearchFocused] = useState(false)
-  const [equipViewMode, setEquipViewMode] = useState<'machines' | 'exercises'>('machines')
+  const equipViewMode = location.pathname.includes('/ejercicios') ? 'exercises' : 'machines'
+  const gymTabFromUrl = location.pathname.includes('/equipamiento') ? 'equipment'
+    : location.pathname.includes('/agenda') ? 'schedule'
+    : 'students'
   const [equipSearchHovered, setEquipSearchHovered] = useState(false)
   const [statsTab, setStatsTab] = useState('overview')
   const [configTab, setConfigTab] = useState('carreras')
@@ -43,6 +71,15 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
   const calendarBtnRef = useRef<HTMLButtonElement>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
+  const handleSectionChange = (s: AdminSection) => {
+    navigate(SECTION_PATHS[s])
+  }
+
+  const handleLogout = () => {
+    cerrarSesion()
+    navigate('/login')
+  }
+
   useEffect(() => {
     if (showStatsCalendar && calendarBtnRef.current) {
       const r = calendarBtnRef.current.getBoundingClientRect()
@@ -52,9 +89,11 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
 
   useEffect(() => {
     setShowStatsCalendar(false)
-    setGymSelectedStudent(null)
-    setShowGymStudentFilters(false)
-  }, [section])
+    if (!isGestion) {
+      setGymSelectedStudent(null)
+      setShowGymStudentFilters(false)
+    }
+  }, [section, isGestion])
   const trainerRef = useRef<{ clearSelection: () => void }>(null)
   const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
 
@@ -66,14 +105,14 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
         expanded={expanded}
         section={section}
         onToggle={() => setExpanded(!expanded)}
-        onSectionChange={setSection}
+        onSectionChange={handleSectionChange}
       />
 
       <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden relative" style={{ paddingBottom: isMobile ? '70px' : 0, paddingLeft: expanded ? '208px' : '68px', paddingRight: isMobile ? '16px' : '24px', maxWidth: '100%' }}>
         <PermissionsOverlay visible={isPermissions} />
 
         <Topbar
-          section={section}
+          section={isGestion ? 'gym' : section}
           isPermissions={isPermissions}
           trainerDetailOpen={trainerDetailOpen}
           trainerTab={trainerTab}
@@ -87,7 +126,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
           gymStudentTab={gymStudentTab}
           onGymStudentTabChange={setGymStudentTab}
           onGymBack={() => setGymSelectedStudent(null)}
-          gymTab={gymTab}
+          gymTab={isGestion ? gymTabFromUrl : gymTab}
           gymStudentSearch={gymStudentSearch}
           onGymStudentSearchChange={setGymStudentSearch}
           gymStudentSearchFocused={gymStudentSearchFocused}
@@ -101,7 +140,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
           equipSearchHovered={equipSearchHovered}
           onEquipSearchHoveredChange={setEquipSearchHovered}
           equipViewMode={equipViewMode}
-          onEquipViewModeChange={setEquipViewMode}
+          onEquipViewModeChange={(v) => navigate(v === 'machines' ? '/admin/gestion/equipamiento/maquinas' : '/admin/gestion/equipamiento/ejercicios')}
           configTab={configTab}
           onConfigTabChange={setConfigTab}
           showCareerFilter={showCareerFilter}
@@ -113,7 +152,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
           calendarBtnRef={calendarBtnRef}
           profileMenuOpen={profileMenuOpen}
           onProfileMenuToggle={() => setProfileMenuOpen(!profileMenuOpen)}
-          onLogout={onLogout}
+          onLogout={handleLogout}
         />
 
         <AnimatePresence mode="wait">
@@ -129,7 +168,8 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
             {section === 'dashboard' && <AdminDashboardView />}
             {section === 'stats' && <AdminStats tab={statsTab} showCareerFilter={showCareerFilter} statsRange={statsRange} />}
             {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
-            {section === 'gym' && (
+            {section === 'gym' && isGestion && <Outlet />}
+            {section === 'gym' && !isGestion && (
               <AdminGym
                 tab={gymTab}
                 students={students}
@@ -144,7 +184,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
                 equipSearch={equipSearch}
                 equipSearchFocused={equipSearchFocused}
                 equipViewMode={equipViewMode}
-                onEquipViewModeChange={setEquipViewMode}
+                onEquipViewModeChange={(v) => navigate(v === 'machines' ? '/admin/gestion/equipamiento/maquinas' : '/admin/gestion/equipamiento/ejercicios')}
                 onEquipSearchChange={setEquipSearch}
                 onEquipSearchFocus={setEquipSearchFocused}
               />
@@ -166,7 +206,7 @@ export function AdminPage({ onLogout }: { onLogout?: () => void }) {
         />
       )}
 
-      {section === 'gym' && (
+      {section === 'gym' && !isGestion && (
         <GymFloatingToolbar
           tab={gymTab}
           onTabChange={id => { setGymSelectedStudent(null); setGymTab(id) }}

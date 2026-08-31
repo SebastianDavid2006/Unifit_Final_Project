@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
+import { cerrarSesion } from '@/lib/auth'
 import { LogOut } from 'lucide-react'
 import { StudentLayout } from '@/features/student/components/layout/StudentLayout'
 import { HomePage } from '@/features/student/modules/inicio/HomePage'
@@ -11,17 +13,38 @@ import { FIRE } from '@/features/student/components/ui/fitness'
 
 type Tab = 'home' | 'routines' | 'agenda' | 'profile'
 
-interface StudentAppProps {
-  onLogout: () => void
+const PATH_TO_TAB: Record<string, Tab> = {
+  '/usuario/inicio': 'home',
+  '/usuario/rutinas': 'routines',
+  '/usuario/agenda': 'agenda',
+  '/usuario/perfil': 'profile',
 }
 
-export function StudentApp({ onLogout }: StudentAppProps) {
-  const [tab, setTab] = useState<Tab>('home')
+const TAB_PATHS: Record<Tab, string> = {
+  home: '/usuario/inicio',
+  routines: '/usuario/rutinas',
+  agenda: '/usuario/agenda',
+  profile: '/usuario/perfil',
+}
+
+export function StudentApp() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const tab = PATH_TO_TAB[location.pathname] || 'home'
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+
+  const handleTabChange = (t: Tab) => {
+    navigate(TAB_PATHS[t])
+  }
+
+  const handleLogout = () => {
+    cerrarSesion()
+    navigate('/login')
+  }
 
   return (
     <StudentAppProvider>
-      <StudentLayout tab={tab} onTabChange={setTab} onLogoutClick={() => setShowLogoutModal(true)}>
+      <StudentLayout tab={tab} onTabChange={handleTabChange} onLogoutClick={() => setShowLogoutModal(true)}>
         <AnimatePresence mode="wait">
           {tab === 'home' && <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><HomePage /></motion.div>}
           {tab === 'routines' && <motion.div key="routines" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><RoutinesPage /></motion.div>}
@@ -54,10 +77,10 @@ export function StudentApp({ onLogout }: StudentAppProps) {
                 <LogOut size={24} color={FIRE} />
               </div>
               <h3 className="uppercase italic font-black text-white tracking-wide" style={{ fontSize: 18 }}>
-                ¿Cerrar sesión?
+                Cerrar sesion?
               </h3>
               <p className="mt-2 mb-6" style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12.5, lineHeight: 1.55 }}>
-                Tu progreso queda guardado. Podrás volver cuando quieras.
+                Tu progreso queda guardado. Podras volver cuando quieras.
               </p>
               <div className="grid grid-cols-2 gap-2.5">
                 <button
@@ -68,11 +91,11 @@ export function StudentApp({ onLogout }: StudentAppProps) {
                   Cancelar
                 </button>
                 <button
-                  onClick={onLogout}
+                  onClick={handleLogout}
                   className="rounded-xl py-2.5 font-black uppercase italic tracking-wide text-white transition-transform hover:-translate-y-0.5"
                   style={{ background: `linear-gradient(135deg, ${FIRE}, #C1121F)`, fontSize: 13, boxShadow: `0 8px 24px ${FIRE}44` }}
                 >
-                  Cerrar sesión
+                  Cerrar sesion
                 </button>
               </div>
             </motion.div>
