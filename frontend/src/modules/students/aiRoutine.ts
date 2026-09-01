@@ -76,10 +76,9 @@ function detectHealthFlags(input: AiRoutineInput): string[] {
 
 function resolveLevel(input: AiRoutineInput): 'Principiante' | 'Intermedio' | 'Avanzado' {
   switch (input.nivelActividad) {
-    case 'Muy activo':
-    case 'Extremadamente activo':
+    case 'muy_activo':
       return 'Avanzado'
-    case 'Activo':
+    case 'activo':
       return 'Intermedio'
     default:
       return 'Principiante'

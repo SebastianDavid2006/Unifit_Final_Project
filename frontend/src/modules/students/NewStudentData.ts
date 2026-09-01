@@ -1,4 +1,4 @@
-import { User, FileText, ClipboardCheck, ScanLine } from 'lucide-react'
+import { User, FileText, ClipboardCheck, Users } from 'lucide-react'
 
 export {
   BLUE, GREEN, BLUE_GRAD, GREEN_GRAD,
@@ -22,10 +22,15 @@ export const MESH_BUTTON = `
   #1270B7
 `
 
-export const STEPS = [
+export const STEPS_ADULT = [
   { num: 1, label: 'Información personal', icon: User },
-  { num: 2, label: 'Tratamiento de datos', icon: FileText },
-  { num: 3, label: 'Contrato', icon: FileText },
+  { num: 2, label: 'Términos y condiciones', icon: FileText },
+  { num: 3, label: 'PAR-Q', icon: ClipboardCheck },
+]
+
+export const STEPS_MINOR = [
+  { num: 1, label: 'Información personal', icon: User },
+  { num: 2, label: 'Datos del acudiente', icon: Users },
+  { num: 3, label: 'Términos y condiciones', icon: FileText },
   { num: 4, label: 'PAR-Q', icon: ClipboardCheck },
-  { num: 5, label: 'Huella digital', icon: ScanLine },
 ]

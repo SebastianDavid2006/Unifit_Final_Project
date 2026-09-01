@@ -33,10 +33,11 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ mensaje: 'Error interno del servidor' })
 })
 
-const PORT = Number(process.env.PORT) || 3000
-
-app.listen(PORT, () => {
-  console.log(`API UNIFIT escuchando en http://localhost:${PORT}`)
-})
+if (require.main === module) {
+  const PORT = Number(process.env.PORT) || 3000
+  app.listen(PORT, () => {
+    console.log(`API UNIFIT escuchando en http://localhost:${PORT}`)
+  })
+}
 
 export default app

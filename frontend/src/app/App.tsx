@@ -175,14 +175,20 @@ function AppShell() {
             <Route path="gestion" element={<GestionLayout />}>
               <Route index element={<Navigate to="usuarios" replace />} />
               <Route path="usuarios" element={<UsuariosPage />} />
-              <Route path="usuarios/:id" element={<UsuarioDetalle />} />
+              <Route path="usuarios/:id" element={<UsuarioDetalle />}>
+                <Route index element={<Navigate to="general" replace />} />
+                <Route path=":tab" element={null} />
+              </Route>
               <Route path="equipamiento/maquinas" element={<AdminEquipamientoMaquinas />} />
               <Route path="equipamiento/ejercicios" element={<AdminEquipamientoEjercicios />} />
               <Route path="agenda" element={<AgendaPage />} />
             </Route>
           </Route>
           <Route path="/entrenador/*" element={<ProtectedRoute rolesPermitidos={['entrenador']}><TrainerPage /></ProtectedRoute>}>
-            <Route path="usuarios/:id" element={<UsuarioDetalle />} />
+            <Route path="usuarios/:id" element={<UsuarioDetalle />}>
+              <Route index element={<Navigate to="general" replace />} />
+              <Route path=":tab" element={null} />
+            </Route>
             <Route path="equipamiento/maquinas" element={<TrainerEquipamientoMaquinas />} />
             <Route path="equipamiento/ejercicios" element={<TrainerEquipamientoEjercicios />} />
           </Route>

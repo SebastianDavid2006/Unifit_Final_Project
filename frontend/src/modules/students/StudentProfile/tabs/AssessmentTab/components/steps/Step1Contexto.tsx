@@ -45,11 +45,11 @@ export function Step1Contexto({ valuationForm, setValuationForm, valuationViewMo
             onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
           >
             <option value="">Seleccionar nivel</option>
-            <option value="Sedentario">Sedentario</option>
-            <option value="Ligeramente activo">Ligeramente activo</option>
-            <option value="Activo">Activo</option>
-            <option value="Muy activo">Muy activo</option>
-            <option value="Extremadamente activo">Extremadamente activo</option>
+            <option value="sedentario">Sedentario</option>
+            <option value="ligero">Ligero</option>
+            <option value="moderado">Moderado</option>
+            <option value="activo">Activo</option>
+            <option value="muy_activo">Muy activo</option>
           </select>
           <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 group-hover:opacity-60" style={{ color: 'rgba(0,0,0,0.2)' }}>
             <svg width="10" height="6" viewBox="0 0 10 6" fill="none">

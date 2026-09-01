@@ -4,6 +4,7 @@ import { Fingerprint, RefreshCw, ScanLine, X } from 'lucide-react'
 import type { Student } from '../StudentProfileData'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
+import { api, mensajeError } from '@/lib/api'
 
 interface Props {
   student: Student
@@ -21,6 +22,7 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
   const [fpOpen, setFpOpen] = useState(false)
   const [fpStatus, setFpStatus] = useState<FingerprintStatus>('idle')
   const [fpSuccess, setFpSuccess] = useState(false)
+  const [fpError, setFpError] = useState('')
   const fpTimer = useRef<number | null>(null)
 
   useEffect(() => () => {
@@ -31,6 +33,7 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
     setFpOpen(false)
     setFpStatus('idle')
     setFpSuccess(false)
+    setFpError('')
   }
 
   const startScan = () => {
@@ -39,9 +42,15 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
     fpTimer.current = window.setTimeout(() => setFpStatus('captured'), 5000)
   }
 
-  const confirmFingerprint = () => {
-    onUpdate({ huella: 'capturada' })
-    setFpSuccess(true)
+  const confirmFingerprint = async () => {
+    setFpError('')
+    try {
+      await api.post(`/usuarios/${student.id}/huella`, { indice_sensor: 1 })
+      onUpdate({ huella: 'capturada' })
+      setFpSuccess(true)
+    } catch (err) {
+      setFpError(mensajeError(err))
+    }
   }
 
   return (
@@ -161,6 +170,7 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
                       {fpStatus === 'idle' && <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>Coloca tu dedo sobre el sensor para capturar tu huella digital.</p>}
                       {fpStatus === 'scanning' && <motion.div className="flex items-center gap-2 justify-center" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><RefreshCw size={16} color={GREEN} /></motion.div><span className="text-xs font-medium" style={{ color: GREEN }}>Escaneando huella...</span></motion.div>}
                       {fpStatus === 'captured' && <p className="text-xs font-medium" style={{ color: GREEN }}>Huella capturada exitosamente</p>}
+                      {fpError && <p className="text-xs font-medium mt-2" style={{ color: '#D32F2F' }}>{fpError}</p>}
                     </div>
                   </>
                 )}

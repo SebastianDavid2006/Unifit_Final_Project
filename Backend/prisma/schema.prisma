@@ -339,7 +339,7 @@ model Area {
 model Huella {
   id_huella      String   @id @default(uuid())
   id_usuario     String   @unique
-  id_sensor      Int      @unique
+  indice_sensor  Int      @unique    // índice/slot interno asignado por el sensor AS608 
   activo         Boolean  @default(true)
   fecha_creacion DateTime @default(now())
 

@@ -517,6 +517,7 @@ export default function StudentsModule({ students, search, onSearchChange, riskF
         onClose={() => { setShowRegModal(false); setSelectedProcessStudent(null) }}
         onComplete={() => { onSelectStudent(selectedProcessStudent!); }}
         studentName={selectedProcessStudent?.name || ''}
+        userId={selectedProcessStudent?.id || ''}
       />
     </>
   )

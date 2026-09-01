@@ -33,5 +33,6 @@ export const INITIAL_FORM = {
   programa: 'Auxiliar Administrativo',
   semestre: '1', modalidad: 'Presencial',
   jornada: 'Mañana', estado: 'Activo', cargo: '', area: '',
-  nombreAcudiente: '', parentescoAcudiente: '', otroParentescoAcudiente: '', telefonoAcudiente: '',
+  acudientePrimerNombre: '', acudientePrimerApellido: '', acudienteDocumento: '',
+  acudienteTipoDoc: 'CC', acudienteTelefono: '',
 }

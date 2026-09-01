@@ -17,6 +17,40 @@ interface StepDocAgreementProps {
   setAceptaParq: (val: boolean) => void
 }
 
+function Checkbox({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
+  return (
+    <label className="flex items-start gap-3 cursor-pointer group">
+      <div
+        onClick={onToggle}
+        className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
+        style={{
+          background: checked ? BLUE_GRAD : 'transparent',
+          border: `1.5px solid ${checked ? BLUE : 'rgba(0,0,0,0.06)'}`,
+        }}
+      >
+        {checked && (
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
+            <Check size={12} color="white" strokeWidth={3} />
+          </motion.span>
+        )}
+      </div>
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: 500,
+          lineHeight: 1.6,
+          color: checked ? 'transparent' : 'rgba(0,0,0,0.55)',
+          background: checked ? BLUE_GRAD : 'none',
+          backgroundClip: checked ? 'text' : 'none',
+          WebkitBackgroundClip: checked ? 'text' : 'none',
+        }}
+      >
+        {label}
+      </span>
+    </label>
+  )
+}
+
 export function StepDocAgreement({
   step,
   docs,
@@ -27,85 +61,31 @@ export function StepDocAgreement({
   aceptaParq,
   setAceptaParq,
 }: StepDocAgreementProps) {
+  // Combined treatment + contrato step (step 2 passed from parent)
   if (step === 2) {
     return (
       <div className="space-y-5">
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
           <img src={dataProcessingBanner} alt="Autorización para el tratamiento de datos personales" className="w-full h-auto object-cover" />
         </div>
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <div
-            onClick={() => setAceptaDatos(!aceptaDatos)}
-            className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
-            style={{
-              background: aceptaDatos ? BLUE_GRAD : 'transparent',
-              border: `1.5px solid ${aceptaDatos ? BLUE : 'rgba(0,0,0,0.06)'}`,
-            }}
-          >
-            {aceptaDatos && (
-              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
-                <Check size={12} color="white" strokeWidth={3} />
-              </motion.span>
-            )}
-          </div>
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              lineHeight: 1.6,
-              color: aceptaDatos ? 'transparent' : 'rgba(0,0,0,0.55)',
-              background: aceptaDatos ? BLUE_GRAD : 'none',
-              backgroundClip: aceptaDatos ? 'text' : 'none',
-              WebkitBackgroundClip: aceptaDatos ? 'text' : 'none',
-            }}
-          >
-            Autorizo el tratamiento de mis datos personales de acuerdo con la política de privacidad de UniFit.
-          </span>
-        </label>
-      </div>
-    )
-  }
-
-  if (step === 3) {
-    return (
-      <div className="space-y-5">
+        <Checkbox
+          checked={aceptaDatos}
+          onToggle={() => setAceptaDatos(!aceptaDatos)}
+          label="Doy fé de que el usuario ha leído y aceptado el Tratamiento de Datos Personales de UniFit."
+        />
         <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
-          <img src={contractIUDCBanner} alt="Contrato de prestación de servicios estudiantiles" className="w-full h-auto object-cover" />
+          <img src={contractIUDCBanner} alt="Contrato de prestación de servicios" className="w-full h-auto object-cover" />
         </div>
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <div
-            onClick={() => setAceptaContrato(!aceptaContrato)}
-            className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
-            style={{
-              background: aceptaContrato ? BLUE_GRAD : 'transparent',
-              border: `1.5px solid ${aceptaContrato ? BLUE : 'rgba(0,0,0,0.06)'}`,
-            }}
-          >
-            {aceptaContrato && (
-              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
-                <Check size={12} color="white" strokeWidth={3} />
-              </motion.span>
-            )}
-          </div>
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              lineHeight: 1.6,
-              color: aceptaContrato ? 'transparent' : 'rgba(0,0,0,0.55)',
-              background: aceptaContrato ? BLUE_GRAD : 'none',
-              backgroundClip: aceptaContrato ? 'text' : 'none',
-              WebkitBackgroundClip: aceptaContrato ? 'text' : 'none',
-            }}
-          >
-            Acepto los términos y condiciones del contrato de prestación de servicios estudiantiles de UniFit.
-          </span>
-        </label>
+        <Checkbox
+          checked={aceptaContrato}
+          onToggle={() => setAceptaContrato(!aceptaContrato)}
+          label="Doy fé de que el usuario ha leído y aceptado el Contrato de Prestación de Servicios de UniFit."
+        />
       </div>
     )
   }
 
-  // Step 4: PAR-Q
+  // PAR-Q step (step 4 passed from parent)
   return (
     <div className="flex flex-col flex-1 min-h-0 gap-5">
       <div className="flex-1 min-h-0 overflow-y-auto">
@@ -119,35 +99,11 @@ export function StepDocAgreement({
           </div>
         )}
       </div>
-      <label className="flex items-start gap-3 cursor-pointer group">
-        <div
-          onClick={() => setAceptaParq(!aceptaParq)}
-          className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-200 cursor-pointer"
-          style={{
-            background: aceptaParq ? BLUE_GRAD : 'transparent',
-            border: `1.5px solid ${aceptaParq ? BLUE : 'rgba(0,0,0,0.06)'}`,
-          }}
-        >
-          {aceptaParq && (
-            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
-              <Check size={12} color="white" strokeWidth={3} />
-            </motion.span>
-          )}
-        </div>
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 500,
-            lineHeight: 1.6,
-            color: aceptaParq ? 'transparent' : 'rgba(0,0,0,0.55)',
-            background: aceptaParq ? BLUE_GRAD : 'none',
-            backgroundClip: aceptaParq ? 'text' : 'none',
-            WebkitBackgroundClip: aceptaParq ? 'text' : 'none',
-          }}
-        >
-          He completado el cuestionario PAR-Q y acepto continuar con mi registro.
-        </span>
-      </label>
+      <Checkbox
+        checked={aceptaParq}
+        onToggle={() => setAceptaParq(!aceptaParq)}
+        label="Doy fé de que el usuario ha completado el cuestionario PAR-Q satisfactoriamente."
+      />
     </div>
   )
 }

@@ -7,6 +7,9 @@ import { PILL_GRAD, EQUIP_GRAD, EQUIP_SHADOW } from '../data'
 import type { Student } from '@/data/students'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import MobileStudentTabs from '@/features/shared/components/MobileStudentTabs'
+import { useLocation, useNavigate } from 'react-router'
+
+const PROFILE_REGEX = /\/admin\/gestion\/usuarios\/([^/]+)(?:\/(general|actividad|valoracion))?/
 
 export default function GymToolbar({
   gymSelectedStudent, gymStudentTab, onGymStudentTabChange, onGymBack,
@@ -36,15 +39,41 @@ export default function GymToolbar({
   onEquipViewModeChange: (v: 'machines' | 'exercises') => void
 }) {
   const isMobile = useIsMobile()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const profileMatch = PROFILE_REGEX.exec(location.pathname)
+  const isProfileView = !!profileMatch
+  const profileStudentId = profileMatch?.[1]
+  const profileTab = profileMatch?.[2] ?? 'general'
+
+  const showStudentTabs = gymSelectedStudent || isProfileView
+  const activeTab = gymSelectedStudent ? gymStudentTab : profileTab
+
+  const handleTabClick = (tabId: string) => {
+    if (isProfileView && profileStudentId) {
+      navigate(`/admin/gestion/usuarios/${profileStudentId}/${tabId}`)
+    } else {
+      onGymStudentTabChange(tabId)
+    }
+  }
+
+  const handleBack = () => {
+    if (isProfileView) {
+      navigate('/admin/gestion/usuarios')
+    } else {
+      onGymBack()
+    }
+  }
 
   return (
     <div className="flex-1 flex items-center justify-center gap-3 relative">
-      {gymSelectedStudent ? (
+      {showStudentTabs ? (
         <>
           <MobileStudentTabs
-            studentTab={gymStudentTab}
-            onStudentTabChange={onGymStudentTabChange}
-            onBack={onGymBack}
+            studentTab={activeTab}
+            onStudentTabChange={handleTabClick}
+            onBack={handleBack}
           />
 
           {!isMobile && (
@@ -53,7 +82,7 @@ export default function GymToolbar({
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={onGymBack}
+                  onClick={handleBack}
                   className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{
                     background: 'rgba(255,255,255,0.2)',
@@ -72,12 +101,12 @@ export default function GymToolbar({
                 boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
               }}>
                 {TABS.map(t => (
-                  <motion.button key={t.id} onClick={() => onGymStudentTabChange(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  <motion.button key={t.id} onClick={() => handleTabClick(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
                     style={{
-                      background: gymStudentTab === t.id ? PILL_GRAD : 'transparent',
-                      color: gymStudentTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
-                      boxShadow: gymStudentTab === t.id ? '0 2px 8px rgba(230,57,70,0.2), 0 0 20px rgba(230,57,70,0.1)' : 'none',
+                      background: activeTab === t.id ? PILL_GRAD : 'transparent',
+                      color: activeTab === t.id ? '#FFFFFF' : 'rgba(0,0,0,0.3)',
+                      boxShadow: activeTab === t.id ? '0 2px 8px rgba(230,57,70,0.2), 0 0 20px rgba(230,57,70,0.1)' : 'none',
                     }}
                   >
                     <t.icon size={14} />

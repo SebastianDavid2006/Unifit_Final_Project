@@ -9,8 +9,19 @@ import {
   TipoDocumento,
   TipoUsuario,
 } from '@prisma/client'
-import { registrarUsuario, usuarioPublico } from '../services/usuario.service'
+import {
+  registrarUsuario,
+  usuarioPublico,
+  listarUsuarios,
+  obtenerUsuarioPorId,
+  aceptarDocumento,
+  marcarParq,
+  registrarHuella,
+  desactivarUsuario,
+  activarUsuario,
+} from '../services/usuario.service'
 import { responderErrorPrisma } from '../utils/prisma-errors'
+import { HttpError } from '../utils/HttpError'
 
 export const registrarSchema = z
   .object({
@@ -42,6 +53,12 @@ export const registrarSchema = z
     // Profesor / Administrativo
     id_cargo: z.string().uuid().optional(),
     id_area: z.string().uuid().optional(),
+    // Acudiente (requerido si menor de 18)
+    acudiente_primer_nombre: z.string().min(1).optional(),
+    acudiente_primer_apellido: z.string().min(1).optional(),
+    acudiente_documento: z.string().min(1).optional(),
+    acudiente_tipo_documento: z.enum(TipoDocumento).optional(),
+    acudiente_telefono_contacto: z.string().optional(),
   })
   .superRefine((val, ctx) => {
     if (val.tipo_usuario === TipoUsuario.estudiante && !val.id_programa) {
@@ -55,6 +72,26 @@ export const registrarSchema = z
     }
     if (val.parentesco_emergencia === Parentesco.otro && !val.parentesco_otro?.trim()) {
       ctx.addIssue({ code: 'custom', path: ['parentesco_otro'], message: 'parentesco_otro es requerido cuando parentesco_emergencia es otro' })
+    }
+    // Validación acudiente para menores de edad
+    if (val.fecha_nacimiento) {
+      const hoy = new Date()
+      let edad = hoy.getFullYear() - val.fecha_nacimiento.getFullYear()
+      const mes = hoy.getMonth() - val.fecha_nacimiento.getMonth()
+      if (mes < 0 || (mes === 0 && hoy.getDate() < val.fecha_nacimiento.getDate())) {
+        edad--
+      }
+      if (edad < 18) {
+        if (!val.acudiente_primer_nombre?.trim()) {
+          ctx.addIssue({ code: 'custom', path: ['acudiente_primer_nombre'], message: 'Nombre del acudiente es requerido para menores de edad' })
+        }
+        if (!val.acudiente_primer_apellido?.trim()) {
+          ctx.addIssue({ code: 'custom', path: ['acudiente_primer_apellido'], message: 'Apellido del acudiente es requerido para menores de edad' })
+        }
+        if (!val.acudiente_documento?.trim()) {
+          ctx.addIssue({ code: 'custom', path: ['acudiente_documento'], message: 'Documento del acudiente es requerido para menores de edad' })
+        }
+      }
     }
   })
 
@@ -73,6 +110,125 @@ export async function registrar(req: Request, res: Response): Promise<void> {
       usuario: usuarioPublico(usuario),
     })
   } catch (error) {
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function getUsuarios(_req: Request, res: Response): Promise<void> {
+  try {
+    const usuarios = await listarUsuarios()
+    res.json(usuarios)
+  } catch (error) {
+    throw error
+  }
+}
+
+export async function getUsuarioPorId(req: Request, res: Response): Promise<void> {
+  const id = req.params.id as string
+
+  try {
+    const usuario = await obtenerUsuarioPorId(id)
+    if (!usuario) {
+      res.status(404).json({ mensaje: 'Usuario no encontrado' })
+      return
+    }
+    res.json(usuario)
+  } catch (error) {
+    throw error
+  }
+}
+
+const aceptarDocumentoSchema = z.object({
+  tipo_documento_legal: z.enum(['contrato_gym', 'tratamiento_datos']),
+})
+
+export async function aceptarDocumentoHandler(req: Request, res: Response): Promise<void> {
+  const id = req.params.id as string
+  const parsed = aceptarDocumentoSchema.safeParse(req.body)
+
+  if (!parsed.success) {
+    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+    return
+  }
+
+  try {
+    await aceptarDocumento(id, req.usuario!.id_usuario, parsed.data.tipo_documento_legal)
+    res.json({ mensaje: `Documento "${parsed.data.tipo_documento_legal}" aceptado correctamente` })
+  } catch (error) {
+    if (error instanceof HttpError) {
+      res.status(error.status).json({ mensaje: error.message })
+      return
+    }
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function marcarParqHandler(req: Request, res: Response): Promise<void> {
+  const id = req.params.id as string
+
+  try {
+    const usuario = await obtenerUsuarioPorId(id)
+    if (!usuario) {
+      res.status(404).json({ mensaje: 'Usuario no encontrado' })
+      return
+    }
+
+    await marcarParq(id)
+    res.json({ mensaje: 'PAR-Q marcado como completado' })
+  } catch (error) {
+    throw error
+  }
+}
+
+const registrarHuellaSchema = z.object({
+  indice_sensor: z.number().int().positive(),
+})
+
+export async function registrarHuellaHandler(req: Request, res: Response): Promise<void> {
+  const id = req.params.id as string
+  const parsed = registrarHuellaSchema.safeParse(req.body)
+
+  if (!parsed.success) {
+    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+    return
+  }
+
+  try {
+    const usuario = await obtenerUsuarioPorId(id)
+    if (!usuario) {
+      res.status(404).json({ mensaje: 'Usuario no encontrado' })
+      return
+    }
+
+    await registrarHuella(id, parsed.data.indice_sensor)
+    res.status(201).json({ mensaje: 'Huella registrada correctamente' })
+  } catch (error) {
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function desactivarUsuarioHandler(req: Request, res: Response): Promise<void> {
+  try {
+    await desactivarUsuario(req.params.id as string)
+    res.json({ mensaje: 'Usuario desactivado correctamente' })
+  } catch (error) {
+    if (error instanceof HttpError) {
+      res.status(error.status).json({ mensaje: error.message })
+      return
+    }
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function activarUsuarioHandler(req: Request, res: Response): Promise<void> {
+  try {
+    await activarUsuario(req.params.id as string)
+    res.json({ mensaje: 'Usuario activado correctamente' })
+  } catch (error) {
+    if (error instanceof HttpError) {
+      res.status(error.status).json({ mensaje: error.message })
+      return
+    }
     if (!responderErrorPrisma(error, res)) throw error
   }
 }

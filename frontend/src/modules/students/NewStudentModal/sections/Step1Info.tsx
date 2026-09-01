@@ -44,24 +44,6 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
         <Select label="Género" value={form.genero} onChange={v => set('genero', v)} options={GENEROS} />
       </div>
 
-      {isMinor && (
-        <>
-          {sectionTitle('Información del acudiente')}
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="Nombre completo del acudiente" value={form.nombreAcudiente} onChange={v => set('nombreAcudiente', v)} required />
-            <Field label="Teléfono del acudiente" value={form.telefonoAcudiente} onChange={v => set('telefonoAcudiente', v)} required />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Select label="Parentesco" value={form.parentescoAcudiente} onChange={v => set('parentescoAcudiente', v)} options={PARENTESCOS} required />
-            {form.parentescoAcudiente === 'Otro' ? (
-              <Field label="Especifique el parentesco" value={form.otroParentescoAcudiente} onChange={v => set('otroParentescoAcudiente', v)} required />
-            ) : (
-              <span />
-            )}
-          </div>
-        </>
-      )}
-
       {sectionTitle('Información de contacto')}
       <div className="grid grid-cols-2 gap-4">
         <Field label="Email" value={form.email} onChange={v => set('email', v)} type="email" />

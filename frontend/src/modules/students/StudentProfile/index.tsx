@@ -40,10 +40,10 @@ import { NewValuationModal } from '@/modules/students/StudentProfile/tabs/Assess
 import { NewRoutineModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/NewRoutineModal'
 
 export { TABS } from '../StudentProfileData'
-export function StudentProfile({ student, tab = 'overview', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
+export function StudentProfile({ student, tab = 'general', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
   const [editable, setEditable] = useState<Student>(student)
   useEffect(() => setEditable(student), [student])
-  const [localTab, setLocalTab] = useState('overview')
+  const [localTab, setLocalTab] = useState('general')
   const [modalOpen, setModalOpen] = useState(false)
   const [showInfoModal, setShowInfoModal] = useState(false)
   const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'año'>('mes')
@@ -214,10 +214,10 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
             <motion.div key={currentTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="h-full">
               <div className="text-left h-full">
 
-              {currentTab === 'overview' && (
+              {currentTab === 'general' && (
                 <OverviewTab student={editable} imc={imc} onShowInfo={() => setShowInfoModal(true)} onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))} />
               )}
-              {currentTab === 'progress' && (
+              {currentTab === 'actividad' && (
                 <ProgressTab
                   vistaCalendario={vistaCalendario}
                   setVistaCalendario={setVistaCalendario}
@@ -234,7 +234,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                   getWeekStart={calendarNav.getWeekStart}
                 />
               )}
-              {currentTab === 'assessment' && (
+              {currentTab === 'valoracion' && (
                 <AssessmentTab
                   canCreateValuation={canCreateValuation}
                   pagedAssessments={pagedAssessments}

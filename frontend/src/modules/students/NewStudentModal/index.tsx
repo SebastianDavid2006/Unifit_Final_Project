@@ -1,25 +1,23 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, ChevronLeft, ChevronRight, ExternalLink, ScanLine } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import DemoInbox from '@/modules/students/components/DemoInbox'
 import { api, mensajeError } from '@/lib/api'
 import { getNiveles, getPrograms } from '@/data/config/academicPrograms'
 import { loadDocs, type StoredDocs } from '@/data/documents'
-import { BLUE_GRAD, GREEN_GRAD, RED, STEPS, INITIAL_FORM } from '@/modules/students/NewStudentData'
+import { BLUE_GRAD, RED, STEPS_ADULT, STEPS_MINOR, INITIAL_FORM } from '@/modules/students/NewStudentData'
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
 
 import { Step1Info } from './sections/Step1Info'
+import { StepAcudiente } from './sections/StepAcudiente'
 import { StepDocAgreement } from './sections/StepDocAgreement'
-import { StepFingerprint } from './sections/StepFingerprint'
 import { SuccessView } from './sections/SuccessView'
 
 interface NewStudentModalProps {
   open: boolean
   onClose: () => void
 }
-
-type FingerprintStatus = 'idle' | 'scanning' | 'captured'
 
 export default function NewStudentModal({ open, onClose }: NewStudentModalProps) {
   const [step, setStep] = useState(1)
@@ -29,13 +27,27 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const [aceptaContrato, setAceptaContrato] = useState(false)
   const [aceptaParq, setAceptaParq] = useState(false)
   const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
-  const [fingerprintStatus, setFingerprintStatus] = useState<FingerprintStatus>('idle')
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
   const [showInbox, setShowInbox] = useState(false)
   const [createdEmail, setCreatedEmail] = useState('')
   const [error, setError] = useState('')
+
+  const isMinor = useMemo(() => {
+    if (!form.fechaNac) return false
+    const birth = new Date(form.fechaNac)
+    if (isNaN(birth.getTime())) return false
+    const now = new Date()
+    let age = now.getFullYear() - birth.getFullYear()
+    const m = now.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+    return age < 18
+  }, [form.fechaNac])
+
+  const steps = isMinor ? STEPS_MINOR : STEPS_ADULT
+  const totalSteps = steps.length
+  const currentStepLabel = steps.find(s => s.num === step)?.label ?? ''
 
   useEffect(() => {
     if (open) {
@@ -46,7 +58,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       setAceptaContrato(false)
       setAceptaParq(false)
       setDocs(loadDocs())
-      setFingerprintStatus('idle')
       setSuccess(false)
       setShake(false)
       setConfirmClose(false)
@@ -86,10 +97,13 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     if (step === 1) {
       return !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc)
     }
-    if (step === 2) return aceptaDatos
-    if (step === 3) return aceptaContrato
-    if (step === 4) return aceptaParq
-    if (step === 5) return fingerprintStatus === 'captured'
+    if (isMinor && step === 2) {
+      return !!(form.acudientePrimerNombre && form.acudientePrimerApellido && form.acudienteDocumento)
+    }
+    const termsStep = isMinor ? 3 : 2
+    if (step === termsStep) return aceptaDatos && aceptaContrato
+    const parqStep = isMinor ? 4 : 3
+    if (step === parqStep) return aceptaParq
     return true
   }
 
@@ -98,7 +112,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       triggerShake()
       return
     }
-    if (step === 5) {
+    if (step === totalSteps) {
       submitForm()
       return
     }
@@ -109,20 +123,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     if (step > 1) setStep(p => p - 1)
   }
 
-  const stepDoc = step === 2 ? docs.tratamiento : step === 3 ? docs.contrato : step === 4 ? docs.parq : null
-
-  const stepLocked = step === 5 && fingerprintStatus !== 'captured'
-
-  const isMinor = useMemo(() => {
-    if (!form.fechaNac) return false
-    const birth = new Date(form.fechaNac)
-    if (isNaN(birth.getTime())) return false
-    const now = new Date()
-    let age = now.getFullYear() - birth.getFullYear()
-    const m = now.getMonth() - birth.getMonth()
-    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
-    return age < 18
-  }, [form.fechaNac])
+  const termsStep = isMinor ? 3 : 2
+  const stepDoc = step === termsStep ? docs.tratamiento : step === totalSteps ? docs.parq : null
 
   const submitForm = async () => {
     const MAP_TIPO_DOC: Record<string, string> = { CC: 'CC', TI: 'TI', CE: 'CE', Pasaporte: 'PA', RC: 'RC' }
@@ -156,13 +158,14 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       telefono_emergencia: form.telefonoContacto?.trim() || undefined,
       parentesco_emergencia: form.parentesco ? MAP_PARENTESCO[form.parentesco] : undefined,
       tipo_usuario: MAP_ROL[tipoUsuario!] ?? 'estudiante',
-      acepta_datos: aceptaDatos,
-      acepta_contrato: aceptaContrato,
-      parq: { acepta: aceptaParq, fecha: new Date().toISOString() },
-      nombre_acudiente: isMinor ? form.nombreAcudiente : null,
-      parentesco_acudiente: isMinor ? (form.parentescoAcudiente === 'Otro' ? form.otroParentescoAcudiente : form.parentescoAcudiente) : null,
-      telefono_acudiente: isMinor ? form.telefonoAcudiente : null,
-      huella: fingerprintStatus === 'captured' ? 'capturada' : null,
+    }
+
+    if (isMinor) {
+      payload.acudiente_primer_nombre = form.acudientePrimerNombre?.trim()
+      payload.acudiente_primer_apellido = form.acudientePrimerApellido?.trim()
+      payload.acudiente_documento = form.acudienteDocumento?.trim()
+      payload.acudiente_tipo_documento = MAP_TIPO_DOC[form.acudienteTipoDoc] ?? 'CC'
+      payload.acudiente_telefono_contacto = form.acudienteTelefono?.trim() || undefined
     }
 
     if (tipoUsuario === 'estudiante') {
@@ -178,7 +181,15 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     }
 
     try {
-      await api.post('/auth/registro', payload)
+      const res = await api.post('/usuarios', payload)
+      const userId = res.data.usuario?.id_usuario
+      if (userId) {
+        await Promise.all([
+          api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'tratamiento_datos' }),
+          api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'contrato_gym' }),
+          api.put(`/usuarios/${userId}/parq`),
+        ])
+      }
       const email = (form.email || '').trim()
       setCreatedEmail(email)
       setSuccess(true)
@@ -192,14 +203,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       setError(mensajeError(err))
       triggerShake()
     }
-  }
-
-  const handleCaptureFingerprint = () => {
-    if (fingerprintStatus !== 'idle') return
-    setFingerprintStatus('scanning')
-    setTimeout(() => {
-      setFingerprintStatus('captured')
-    }, 5000)
   }
 
   return (
@@ -220,7 +223,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: 8 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className={`rounded-3xl w-full max-w-2xl flex flex-col mx-4 relative ${success ? 'overflow-visible' : 'overflow-hidden'} ${success ? '' : step === 1 ? 'h-[90vh] max-h-[700px]' : step === 5 ? 'min-h-[520px] max-h-[660px] h-auto' : 'min-h-[480px] max-h-[600px] h-auto'}`}
+              className={`rounded-3xl w-full max-w-2xl flex flex-col mx-4 relative ${success ? 'overflow-visible' : 'overflow-hidden'} ${success ? '' : step === 1 ? 'h-[90vh] max-h-[700px]' : 'min-h-[480px] max-h-[600px] h-auto'}`}
               style={{
                 background: '#FFFFFF',
                 border: '1px solid rgba(0,0,0,0.04)',
@@ -266,7 +269,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                         </motion.button>
                       </div>
                       <div className="flex items-center justify-center gap-1.5" style={{ marginTop: 12, marginBottom: 16 }}>
-                        {STEPS.map((s) => (
+                        {steps.map((s) => (
                           <motion.div
                             key={s.num}
                             animate={{
@@ -283,14 +286,14 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                         color: '#1A1A1E',
                         marginBottom: 10,
                       }}>
-                        {STEPS.find(s => s.num === step)!.label}
+                        {currentStepLabel}
                       </span>
                     </div>
 
                     {/* Body (scrollable) */}
                     <div className="flex-1 flex flex-col min-h-0 px-6 pb-6 pt-5 overflow-y-auto">
                       <motion.div
-                        className={step === 4 ? 'flex flex-col flex-1 min-h-0' : ''}
+                        className={step === totalSteps ? 'flex flex-col flex-1 min-h-0' : ''}
                         animate={shake ? { x: [0, -4, 4, -4, 4, 0] } : {}}
                         transition={{ duration: 0.4 }}
                       >
@@ -304,9 +307,12 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             isMinor={isMinor}
                           />
                         )}
-                        {(step === 2 || step === 3 || step === 4) && (
+                        {isMinor && step === 2 && (
+                          <StepAcudiente form={form} set={set} />
+                        )}
+                        {step === termsStep && (
                           <StepDocAgreement
-                            step={step}
+                            step={2}
                             docs={docs}
                             aceptaDatos={aceptaDatos}
                             setAceptaDatos={setAceptaDatos}
@@ -316,9 +322,16 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             setAceptaParq={setAceptaParq}
                           />
                         )}
-                        {step === 5 && (
-                          <StepFingerprint
-                            fingerprintStatus={fingerprintStatus}
+                        {step === totalSteps && (
+                          <StepDocAgreement
+                            step={4}
+                            docs={docs}
+                            aceptaDatos={aceptaDatos}
+                            setAceptaDatos={setAceptaDatos}
+                            aceptaContrato={aceptaContrato}
+                            setAceptaContrato={setAceptaContrato}
+                            aceptaParq={aceptaParq}
+                            setAceptaParq={setAceptaParq}
                           />
                         )}
                       </motion.div>
@@ -364,19 +377,6 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                               Abrir documento
                             </motion.button>
                           )}
-                          {step === 5 && fingerprintStatus === 'idle' && (
-                            <motion.button
-                              type="button"
-                              whileHover={{ scale: 1.03 }}
-                              whileTap={{ scale: 0.97 }}
-                              onClick={handleCaptureFingerprint}
-                              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                              style={{ background: BLUE_GRAD }}
-                            >
-                              <ScanLine size={16} />
-                              Capturar huella
-                            </motion.button>
-                          )}
                         </div>
 
                         <div className="flex-1 flex justify-end">
@@ -384,28 +384,28 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             type="button"
                             variants={{
                               rest: { scale: 1, boxShadow: '0 4px 15px rgba(18,112,183,0)' },
-                              hover: stepLocked ? {} : {
+                              hover: {
                                 scale: 1.06,
-                                boxShadow: step === 5
+                                boxShadow: step === totalSteps
                                   ? '0 8px 30px rgba(0,251,100,0.35), 0 0 60px rgba(0,155,149,0.15)'
                                   : '0 8px 30px rgba(18,112,183,0.35), 0 0 60px rgba(18,112,183,0.1)',
                                 transition: { type: 'spring', stiffness: 400, damping: 12 },
                               },
-                              tap: stepLocked ? {} : {
+                              tap: {
                                 scale: 0.92,
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                 transition: { type: 'spring', stiffness: 500, damping: 10 },
                               },
                             }}
                             initial="rest"
-                            whileHover={stepLocked ? undefined : "hover"}
-                            whileTap={stepLocked ? undefined : "tap"}
+                            whileHover="hover"
+                            whileTap="tap"
                             onClick={handleNext}
-                            disabled={stepLocked}
+                            disabled={!canGoNext()}
                             className="relative flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white overflow-hidden cursor-pointer"
                             style={{
-                              background: stepLocked ? 'rgba(0,0,0,0.15)' : step === 5 ? GREEN_GRAD : BLUE_GRAD,
-                              cursor: stepLocked ? 'not-allowed' : 'pointer',
+                              background: !canGoNext() ? 'rgba(0,0,0,0.15)' : step === totalSteps ? 'linear-gradient(135deg, #22C55E, #1270B7)' : BLUE_GRAD,
+                              cursor: !canGoNext() ? 'not-allowed' : 'pointer',
                             }}
                           >
                             <motion.span
@@ -419,13 +419,13 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                               style={{ background: 'rgba(255,255,255,0.2)' }}
                             />
                             <motion.span
-                              animate={step === 5 ? {} : { x: [0, 3, 0] }}
+                              animate={{ x: [0, 3, 0] }}
                               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                               className="relative z-10"
                             >
-                              {step === 5 ? 'Finalizar' : 'Siguiente'}
+                              {step === totalSteps ? 'Finalizar' : 'Siguiente'}
                             </motion.span>
-                            {step < 5 && (
+                            {step < totalSteps && (
                               <motion.span
                                 animate={{ x: [0, 2, 0] }}
                                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
