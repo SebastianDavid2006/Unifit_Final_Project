@@ -9,6 +9,7 @@ import TrainerDashboard from '@/features/trainer/sections/TrainerDashboard'
 import TrainerSidebar, { type TrainerSection } from '@/features/trainer/components/TrainerSidebar'
 import TrainerTopbar from '@/features/trainer/components/TrainerTopbar'
 import BackgroundDecor from '@/shared/components/BackgroundDecor'
+import StaffProfile from '@/shared/components/StaffProfile'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import type { Student } from '@/data/students'
 
@@ -103,6 +104,7 @@ export function TrainerPage() {
   const [equipSearchHovered, setEquipSearchHovered] = useState(false)
   const [showStudentsFilters, setShowStudentsFilters] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [showStaffProfile, setShowStaffProfile] = useState(false)
   const [students, setStudents] = useState<Student[]>([])
   const [studentsLoading, setStudentsLoading] = useState(true)
 
@@ -175,6 +177,7 @@ export function TrainerPage() {
           profileMenuOpen={profileMenuOpen}
           onProfileMenuToggle={() => setProfileMenuOpen(!profileMenuOpen)}
           onLogout={handleLogout}
+          onOpenProfile={() => { setProfileMenuOpen(false); setShowStaffProfile(true) }}
         />
 
         {isSubRoute ? (
@@ -204,6 +207,8 @@ export function TrainerPage() {
           </AnimatePresence>
         )}
       </div>
+
+      <StaffProfile open={showStaffProfile} onClose={() => setShowStaffProfile(false)} />
     </div>
   )
 }

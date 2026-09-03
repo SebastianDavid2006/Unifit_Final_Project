@@ -27,7 +27,7 @@ export function ViewHeader({ viewMode, onViewModeChange, viewTitle, onPrev, onNe
           <button key={mode} onClick={() => onViewModeChange(mode)}
             className="px-3 py-1 rounded-md text-[10px] font-bold transition-all"
             style={{ background: viewMode === mode ? BLUE_GRAD : 'transparent', color: viewMode === mode ? '#fff' : 'rgba(0,0,0,0.3)' }}
-          >{mode === 'day' ? 'Día' : mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Año'}</button>
+          >{mode === 'month' ? 'Mes' : mode === 'week' ? 'Semana' : 'Año'}</button>
         ))}
       </div>
       <button onClick={onToggleExpand}

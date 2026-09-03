@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { LogOut } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 
-export default function ProfileMenu({ open, onToggle, onLogout }: {
+export default function ProfileMenu({ open, onToggle, onLogout, onOpenProfile }: {
   open: boolean
   onToggle: () => void
   onLogout?: () => void
+  onOpenProfile?: () => void
 }) {
   const isMobile = useIsMobile()
   return (
@@ -50,6 +51,16 @@ export default function ProfileMenu({ open, onToggle, onLogout }: {
                 <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>Sebastián Morales</p>
                 <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Plataforma de Entrenadores</p>
               </div>
+              <motion.button
+                whileHover={{ background: 'rgba(0,0,0,0.04)' }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => { onToggle(); onOpenProfile?.() }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-xs font-bold text-left"
+                style={{ color: '#1A1A1E' }}
+              >
+                <User size={14} />
+                Perfil
+              </motion.button>
               <motion.button
                 whileHover={{ background: 'rgba(244,56,67,0.06)' }}
                 whileTap={{ scale: 0.97 }}

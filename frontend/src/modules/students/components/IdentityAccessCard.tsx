@@ -4,7 +4,8 @@ import { Fingerprint, RefreshCw, ScanLine, X } from 'lucide-react'
 import type { Student } from '../StudentProfileData'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
-import { api, mensajeError } from '@/lib/api'
+import { mensajeError } from '@/lib/api'
+import { iniciarEnrolamiento, obtenerEstadoHuella } from '@/services/biometria.service'
 
 interface Props {
   student: Student
@@ -23,31 +24,42 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
   const [fpStatus, setFpStatus] = useState<FingerprintStatus>('idle')
   const [fpSuccess, setFpSuccess] = useState(false)
   const [fpError, setFpError] = useState('')
-  const fpTimer = useRef<number | null>(null)
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => () => {
-    if (fpTimer.current) window.clearTimeout(fpTimer.current)
+    if (pollingRef.current) clearInterval(pollingRef.current)
   }, [])
 
   const closeFingerprint = () => {
+    if (pollingRef.current) clearInterval(pollingRef.current)
+    pollingRef.current = null
     setFpOpen(false)
     setFpStatus('idle')
     setFpSuccess(false)
     setFpError('')
   }
 
-  const startScan = () => {
-    setFpStatus('scanning')
-    if (fpTimer.current) window.clearTimeout(fpTimer.current)
-    fpTimer.current = window.setTimeout(() => setFpStatus('captured'), 5000)
-  }
-
-  const confirmFingerprint = async () => {
+  const startScan = async () => {
     setFpError('')
     try {
-      await api.post(`/usuarios/${student.id}/huella`, { indice_sensor: 1 })
-      onUpdate({ huella: 'capturada' })
-      setFpSuccess(true)
+      await iniciarEnrolamiento(student.id)
+      setFpStatus('scanning')
+      pollingRef.current = setInterval(async () => {
+        try {
+          const estado = await obtenerEstadoHuella(student.id)
+          if (estado.tiene_huella) {
+            if (pollingRef.current) clearInterval(pollingRef.current)
+            pollingRef.current = null
+            onUpdate({ huella: 'capturada' })
+            setFpStatus('captured')
+          }
+        } catch {
+          if (pollingRef.current) clearInterval(pollingRef.current)
+          pollingRef.current = null
+          setFpError('Error al verificar estado de la huella')
+          setFpStatus('idle')
+        }
+      }, 2000)
     } catch (err) {
       setFpError(mensajeError(err))
     }
@@ -193,8 +205,8 @@ export function IdentityAccessCard({ student, onUpdate, className = '' }: Props)
                       </motion.button>
                     )}
                     {fpStatus === 'captured' && (
-                      <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={confirmFingerprint} className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: BLUE_GRAD }}>
-                        Siguiente →
+                      <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} onClick={() => closeFingerprint()} className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer" style={{ background: BLUE_GRAD }}>
+                        Finalizar
                       </motion.button>
                     )}
                   </div>

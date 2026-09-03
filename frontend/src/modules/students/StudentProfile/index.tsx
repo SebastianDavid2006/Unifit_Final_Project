@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   Activity, X,
@@ -18,7 +18,7 @@ import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_cong
 import coachMagicImg from '@/assets/illustrations/characters/coach/coach_magic.png'
 import assessmentSceneImg from '@/assets/scenes/physical_assessment.webp'
 import routineSceneImg from '@/assets/scenes/physical_routine.webp'
-import { AiRoutine, RoutineRow } from '../aiRoutine'
+import { AiRoutine, RoutineRow } from '../aiRoutineTypes'
 import { cardStyle, emptyValuationForm, monthNames, numOnly } from '../StudentProfileData'
 import type { Student, ValuationForm } from '../StudentProfileData'
 import type { AssessmentItem } from '@/services/valoracion.service'

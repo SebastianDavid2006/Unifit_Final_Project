@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   dayKey, dayLabelsGetDay, monthNames,
 } from '../AgendaData'
 import type { Appointment } from '../AgendaData'
 import {
-  defaultAppointments, defaultWeeklyTemplate, fmtDate, getMonthGrid, getWeekDates, overlapsRange, typeLabels,
+  defaultWeeklyTemplate, fmtDate, getMonthGrid, getWeekDates, overlapsRange, typeLabels,
 } from './data'
 import type { DayStatus } from './data'
 import { getHoliday } from './holidays'
@@ -17,8 +17,32 @@ import { YearView } from './views/YearView'
 import { MonthView } from './views/MonthView'
 import { WeekView } from './views/WeekView'
 import { DayView } from './views/DayView'
+import { agendaToAppointment, apptTipoToAgenda } from './backend'
+import {
+  crearAgenda, editarAgenda, eliminarAgenda,
+  getAgenda, getCuposDisponibles, publicarCupos, type HorarioPorDia,
+} from '@/services/agenda.service'
 
-export default function AgendaModule({ students = [] }: { students?: { name: string; carnetId?: string; program?: string; faculty?: string; avatar?: string }[] }) {
+interface AgendaStudent {
+  name: string
+  id_usuario?: string
+  carnetId?: string
+  program?: string
+  faculty?: string
+  avatar?: string
+}
+
+const DIA_KEY_TO_LABEL: Record<string, HorarioPorDia['dia']> = {
+  DOM: 'dom',
+  LUN: 'lun',
+  MAR: 'mar',
+  MIÉ: 'mié',
+  JUE: 'jue',
+  VIE: 'vie',
+  SÁB: 'sáb',
+}
+
+export default function AgendaModule({ students = [] }: { students?: AgendaStudent[] }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [showApptModal, setShowApptModal] = useState(false)
@@ -33,8 +57,12 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
 
   const [dayExceptions, setDayExceptions] = useState<Record<string, { active: boolean; open?: string; close?: string; reason?: string }>>({})
 
-  const [appointments, setAppointments] = useState<Appointment[]>(defaultAppointments)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
   const [editingApptId, setEditingApptId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const byName = useRef<Map<string, string>>(new Map())
 
   const [newApptType, setNewApptType] = useState<AppointmentType>('initial_assessment')
   const [showPublishModal, setShowPublishModal] = useState(false)
@@ -60,6 +88,29 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     return students.filter(s => s.name.toLowerCase().includes(q))
   }, [students, newApptStudent])
 
+  useEffect(() => {
+    const mapa = new Map<string, string>()
+    for (const s of students) if (s.id_usuario) mapa.set(s.name, s.id_usuario)
+    byName.current = mapa
+
+    let activo = true
+    setIsLoading(true)
+    setLoadError(null)
+    Promise.all([getAgenda(), getCuposDisponibles()])
+      .then(([agenda, cupos]) => {
+        if (!activo) return
+        setAppointments(agenda.map(agendaToAppointment))
+        setPublishedDates(new Set(cupos.map(c => c.fecha)))
+      })
+      .catch(() => {
+        if (activo) setLoadError('No se pudo cargar la agenda')
+      })
+      .finally(() => {
+        if (activo) setIsLoading(false)
+      })
+    return () => { activo = false }
+  }, [students])
+
   function getDayStatus(dateStr: string): DayStatus {
     const dt = new Date(dateStr + 'T12:00:00')
     const dk = dayKey[dt.getDay()]
@@ -77,28 +128,41 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     return appointments.filter(a => a.date === dateStr)
   }
 
-  function handleSaveAppointment() {
+  async function handleSaveAppointment() {
     if (!selectedDate) return
     if (getDayStatus(selectedDate).holiday) return
-    if (editingApptId) {
-      setAppointments(prev => prev.map(a => a.id === editingApptId ? {
-        ...a, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
-        type: newApptType, title: typeLabels[newApptType] || 'Cita',
-        studentName: newApptStudent || undefined,
-      } : a))
-      setEditingApptId(null)
+    setActionError(null)
+    const fecha = selectedDate
+    const hora_inicio = newApptStart
+    const hora_fin = newApptEnd || undefined
+    const tipo = apptTipoToAgenda[newApptType]
+    const tipo_otro = (newApptType === 'class' || newApptType === 'event') ? (typeLabels[newApptType] || 'Otro') : undefined
+    try {
+      if (editingApptId) {
+        await editarAgenda(editingApptId, { fecha, hora_inicio, hora_fin, tipo, tipo_otro })
+        const fallbackEnd = `${String(Number(newApptStart.split(':')[0]) + 1).padStart(2, '0')}:${newApptStart.split(':')[1] || '00'}`
+        setAppointments(prev => prev.map(a => a.id === editingApptId ? {
+          ...a, date: fecha, startTime: newApptStart, endTime: newApptEnd || fallbackEnd,
+          type: newApptType, title: typeLabels[newApptType] || 'Cita',
+          studentName: newApptStudent || undefined,
+        } : a))
+        setEditingApptId(null)
+        setShowApptModal(false)
+        setNewApptStudent('')
+        return
+      }
+      const idUsuario = byName.current.get(newApptStudent)
+      if (!idUsuario) {
+        setActionError('Selecciona un estudiante de la lista para crear la cita')
+        return
+      }
+      const creada = await crearAgenda({ id_usuario: idUsuario, fecha, hora_inicio, hora_fin, tipo, tipo_otro })
+      setAppointments(prev => [...prev, agendaToAppointment(creada)])
       setShowApptModal(false)
       setNewApptStudent('')
-      return
+    } catch (e) {
+      setActionError('No se pudo guardar la cita')
     }
-    const newId = String(Date.now())
-    setAppointments(prev => [...prev, {
-      id: newId, date: selectedDate, startTime: newApptStart, endTime: newApptEnd,
-      type: newApptType, title: typeLabels[newApptType] || 'Cita',
-      studentName: newApptStudent || undefined,
-    }])
-    setShowApptModal(false)
-    setNewApptStudent('')
   }
 
   function handleEditAppointment(a: Appointment) {
@@ -112,10 +176,15 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     setShowApptModal(true)
   }
 
-  function handleDeleteAppointment(id: string) {
-    setAppointments(prev => prev.filter(a => a.id !== id))
-    setShowApptModal(false)
-    setEditingApptId(null)
+  async function handleDeleteAppointment(id: string) {
+    try {
+      await eliminarAgenda(id)
+      setAppointments(prev => prev.filter(a => a.id !== id))
+      setShowApptModal(false)
+      setEditingApptId(null)
+    } catch (e) {
+      setActionError('No se pudo eliminar la cita')
+    }
   }
 
   function handleSlotClick(dateStr: string, timeStr: string) {
@@ -171,25 +240,49 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     return cfg.ranges.length > 0 && cfg.ranges.every(r => r.open && r.close && r.open < r.close)
   }
 
-  function handlePublish() {
+  async function handlePublish() {
     if (!publishStart || !publishEnd) return
-    const start = new Date(publishStart + 'T00:00:00')
-    const end = new Date(publishEnd + 'T00:00:00')
-    const newDates = new Set(publishedDates)
-    const current = new Date(start)
-    while (current <= end) {
-      const ds = fmtDate(current)
-      const dk = dayKey[current.getDay()]
-      if (publishDays.includes(dk) && !getDayStatus(ds).holiday) {
-        if (newDates.has(ds)) newDates.delete(ds)
-        else newDates.add(ds)
-      }
-      current.setDate(current.getDate() + 1)
+    setActionError(null)
+
+    const horariosPorDia = publishDays
+      .map(key => {
+        const cfg = getDayConfig(key)
+        if (cfg.ranges.length === 0) return null
+        return {
+          dia: DIA_KEY_TO_LABEL[key],
+          rangos: cfg.ranges.map(r => ({ inicio: r.open, fin: r.close })),
+        }
+      })
+      .filter((x): x is HorarioPorDia => x !== null)
+
+    if (horariosPorDia.length === 0) {
+      setActionError('Configura al menos un horario por día para publicar')
+      return
     }
-    setPublishedDates(newDates)
-    setRangeConflict(null)
-    setShowPublishConfirm(false)
-    setShowPublishSuccess(true)
+
+    try {
+      await publicarCupos({
+        fecha_inicio: publishStart,
+        fecha_fin: publishEnd,
+        duracion_min: 120,
+        horarios_por_dia: horariosPorDia,
+      })
+      const start = new Date(publishStart + 'T00:00:00')
+      const end = new Date(publishEnd + 'T00:00:00')
+      const newDates = new Set(publishedDates)
+      const current = new Date(start)
+      while (current <= end) {
+        newDates.add(fmtDate(current))
+        current.setDate(current.getDate() + 1)
+      }
+      setPublishedDates(newDates)
+      setRangeConflict(null)
+      setShowPublishConfirm(false)
+      setShowPublishSuccess(true)
+    } catch (e) {
+      setActionError('No se pudo publicar los cupos')
+      setShowPublishConfirm(false)
+    }
   }
 
   function openPublishModal() {
@@ -318,9 +411,26 @@ export default function AgendaModule({ students = [] }: { students?: { name: str
     <div className="p-8 pt-12 max-w-[1440px] mx-auto relative overflow-x-hidden" style={{ maxWidth: '100%' }}>
       <Banner onOpenPublish={openPublishModal} />
 
-      <div className="space-y-4">
-        {renderView(false)}
-      </div>
+      {loadError && (
+        <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.35)', color: '#FF8FA3', fontSize: 12 }}>
+          {loadError}
+        </div>
+      )}
+      {actionError && (
+        <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.35)', color: '#FF8FA3', fontSize: 12 }}>
+          {actionError}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="py-16 text-center" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12.5, fontWeight: 600 }}>
+          Cargando agenda…
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {renderView(false)}
+        </div>
+      )}
 
       <DayModal
         date={dayModalDate}

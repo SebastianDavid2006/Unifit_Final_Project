@@ -19,6 +19,7 @@ export const roleMeta: Record<'trainer' | 'admin', { label: string; icon: typeof
 export const statusMeta = {
   active: { label: 'Activo', color: '#1E8E3E', bg: 'rgba(34,197,94,0.13)' },
   inactive: { label: 'Inactivo', color: '#E31B23', bg: 'rgba(244,67,54,0.12)' },
+  process: { label: 'En proceso', color: '#1270B7', bg: 'rgba(18,112,183,0.12)' },
 }
 
 export const tableHeaders = ['Nombre', 'Cargo', 'Estado', 'Fecha de creación']

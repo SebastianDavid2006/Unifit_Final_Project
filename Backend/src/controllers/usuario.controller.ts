@@ -19,6 +19,8 @@ import {
   registrarHuella,
   desactivarUsuario,
   activarUsuario,
+  cambiarRol,
+  actualizarPerfil,
 } from '../services/usuario.service'
 import { responderErrorPrisma } from '../utils/prisma-errors'
 import { HttpError } from '../utils/HttpError'
@@ -43,6 +45,7 @@ export const registrarSchema = z
     parentesco_emergencia: z.enum(Parentesco).optional(),
     parentesco_otro: z.string().optional(),
     tipo_usuario: z.enum(TipoUsuario),
+    rol: z.enum(['admin', 'entrenador', 'usuario']).optional().default('usuario'),
     // Estudiante
     id_programa: z.string().uuid().optional(),
     numero_carnet: z.string().optional(),
@@ -66,6 +69,9 @@ export const registrarSchema = z
     }
     if (val.tipo_usuario !== TipoUsuario.estudiante && (!val.id_cargo || !val.id_area)) {
       ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'id_cargo e id_area son requeridos' })
+    }
+    if ((val.rol === 'admin' || val.rol === 'entrenador') && val.tipo_usuario === TipoUsuario.estudiante) {
+      ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Un estudiante no puede tener rol de admin o entrenador' })
     }
     if (val.genero === Genero.otro && !val.genero_otro?.trim()) {
       ctx.addIssue({ code: 'custom', path: ['genero_otro'], message: 'genero_otro es requerido cuando genero es otro' })
@@ -224,6 +230,56 @@ export async function activarUsuarioHandler(req: Request, res: Response): Promis
   try {
     await activarUsuario(req.params.id as string)
     res.json({ mensaje: 'Usuario activado correctamente' })
+  } catch (error) {
+    if (error instanceof HttpError) {
+      res.status(error.status).json({ mensaje: error.message })
+      return
+    }
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+const cambiarRolSchema = z.object({
+  rol: z.enum(['admin', 'entrenador', 'usuario']),
+})
+
+export async function cambiarRolHandler(req: Request, res: Response): Promise<void> {
+  const parsed = cambiarRolSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+    return
+  }
+
+  try {
+    await cambiarRol(req.params.id as string, parsed.data.rol)
+    res.json({ mensaje: 'Rol actualizado correctamente' })
+  } catch (error) {
+    if (error instanceof HttpError) {
+      res.status(error.status).json({ mensaje: error.message })
+      return
+    }
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+const actualizarPerfilSchema = z.object({
+  nombre_completo: z.string().optional(),
+  email_contacto: z.string().email().optional(),
+  telefono_contacto: z.string().optional(),
+  id_cargo: z.string().uuid().optional(),
+  id_area: z.string().uuid().optional(),
+})
+
+export async function actualizarPerfilHandler(req: Request, res: Response): Promise<void> {
+  const parsed = actualizarPerfilSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+    return
+  }
+
+  try {
+    const usuario = await actualizarPerfil(req.params.id as string, parsed.data)
+    res.json(usuario)
   } catch (error) {
     if (error instanceof HttpError) {
       res.status(error.status).json({ mensaje: error.message })

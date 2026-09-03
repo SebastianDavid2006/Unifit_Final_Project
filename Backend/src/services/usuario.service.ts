@@ -33,6 +33,7 @@ export interface RegistrarUsuarioData {
   parentesco_emergencia?: Parentesco
   parentesco_otro?: string
   tipo_usuario: TipoUsuario
+  rol?: 'admin' | 'entrenador' | 'usuario'
   // Estudiante
   id_programa?: string
   numero_carnet?: string
@@ -88,7 +89,7 @@ export async function registrarUsuario(data: RegistrarUsuarioData) {
         parentesco_emergencia: data.parentesco_emergencia,
         parentesco_otro: data.parentesco_otro,
         tipo_usuario: data.tipo_usuario,
-        rol: 'usuario',
+        rol: data.rol ?? 'usuario',
         estado: 'pendiente',
         password_hash: passwordHash,
         debe_cambiar_password: true,
@@ -301,6 +302,72 @@ export async function activarUsuario(id: string) {
   })
 }
 
+export async function cambiarRol(id: string, nuevoRol: 'admin' | 'entrenador' | 'usuario') {
+  const usuario = await prisma.usuario.findUnique({ where: { id_usuario: id } })
+  if (!usuario) throw new HttpError(404, 'Usuario no encontrado')
+
+  if (nuevoRol === 'admin' || nuevoRol === 'entrenador') {
+    if (usuario.tipo_usuario === 'estudiante') {
+      throw new HttpError(400, 'Un estudiante no puede tener rol de admin o entrenador. Cambia tipo_usuario a profesor o administrativo primero.')
+    }
+  }
+
+  return prisma.usuario.update({
+    where: { id_usuario: id },
+    data: { rol: nuevoRol },
+  })
+}
+
+export async function actualizarPerfil(id: string, data: { nombre_completo?: string; email_contacto?: string; telefono_contacto?: string; id_cargo?: string; id_area?: string }) {
+  const usuario = await prisma.usuario.findUnique({ where: { id_usuario: id } })
+  if (!usuario) throw new HttpError(404, 'Usuario no encontrado')
+
+  const updateData: Record<string, unknown> = {}
+  if (data.email_contacto) updateData.email_contacto = data.email_contacto
+  if (data.telefono_contacto !== undefined) updateData.telefono_contacto = data.telefono_contacto
+
+  if (data.nombre_completo) {
+    const partes = data.nombre_completo.trim().split(/\s+/)
+    if (partes.length >= 2) {
+      updateData.primer_nombre = partes[0]
+      updateData.primer_apellido = partes[partes.length - 1]
+      if (partes.length >= 3) {
+        updateData.segundo_nombre = partes.slice(1, partes.length - 1).join(' ')
+      }
+    }
+  }
+
+  return prisma.$transaction(async (tx: Tx) => {
+    if (Object.keys(updateData).length > 0) {
+      await tx.usuario.update({ where: { id_usuario: id }, data: updateData })
+    }
+
+    if (usuario.tipo_usuario === 'profesor') {
+      const prof = await tx.profesor.findUnique({ where: { id_usuario: id } })
+      if (prof) {
+        const profData: Record<string, string> = {}
+        if (data.id_cargo) profData.id_cargo = data.id_cargo
+        if (data.id_area) profData.id_area = data.id_area
+        if (Object.keys(profData).length > 0) {
+          await tx.profesor.update({ where: { id_usuario: id }, data: profData })
+        }
+      }
+    } else if (usuario.tipo_usuario === 'administrativo') {
+      const admin = await tx.administrativo.findUnique({ where: { id_usuario: id } })
+      if (admin) {
+        const adminData: Record<string, string> = {}
+        if (data.id_cargo) adminData.id_cargo = data.id_cargo
+        if (data.id_area) adminData.id_area = data.id_area
+        if (Object.keys(adminData).length > 0) {
+          await tx.administrativo.update({ where: { id_usuario: id }, data: adminData })
+        }
+      }
+    }
+
+    return obtenerUsuarioPorId(id)
+  })
+}
+
 export async function registrarHuella(idUsuario: string, idSensor: number) {
   return prisma.$transaction(async (tx: Tx) => {
     const huella = await tx.huella.upsert({
@@ -315,7 +382,33 @@ export async function registrarHuella(idUsuario: string, idSensor: number) {
   })
 }
 
-async function verificarYActivarSiCompleto(tx: Tx, idUsuario: string) {
+export async function verificarYActivarSiCompleto(tx: Tx, idUsuario: string) {
+  const usuario = await tx.usuario.findUnique({
+    where: { id_usuario: idUsuario },
+    select: { parq_realizado: true, estado: true, fecha_nacimiento: true, rol: true },
+  })
+
+  if (!usuario || usuario.estado === 'activo') return
+
+  const esStaff = usuario.rol === 'admin' || usuario.rol === 'entrenador'
+
+  if (esStaff) {
+    const [tratamientoDoc, tratamiento] = await Promise.all([
+      tx.documentoLegal.findFirst({ where: { tipo: 'tratamiento_datos', estado: 'vigente' }, select: { id_doc_legal: true } }),
+      tx.aceptacionDocumento.findFirst({
+        where: { id_usuario: idUsuario, documento: { tipo: 'tratamiento_datos', estado: 'vigente' } },
+      }),
+    ])
+
+    if (!tratamientoDoc || !tratamiento) return
+
+    await tx.usuario.update({
+      where: { id_usuario: idUsuario },
+      data: { estado: 'activo' },
+    })
+    return
+  }
+
   const [contratoDoc, tratamientoDoc] = await Promise.all([
     tx.documentoLegal.findFirst({ where: { tipo: 'contrato_gym', estado: 'vigente' }, select: { id_doc_legal: true } }),
     tx.documentoLegal.findFirst({ where: { tipo: 'tratamiento_datos', estado: 'vigente' }, select: { id_doc_legal: true } }),
@@ -323,7 +416,7 @@ async function verificarYActivarSiCompleto(tx: Tx, idUsuario: string) {
 
   if (!contratoDoc || !tratamientoDoc) return
 
-  const [huella, contrato, tratamiento, usuario] = await Promise.all([
+  const [huella, contrato, tratamiento] = await Promise.all([
     tx.huella.findUnique({ where: { id_usuario: idUsuario } }),
     tx.aceptacionDocumento.findUnique({
       where: { id_doc_legal_id_usuario: { id_doc_legal: contratoDoc.id_doc_legal, id_usuario: idUsuario } },
@@ -331,18 +424,11 @@ async function verificarYActivarSiCompleto(tx: Tx, idUsuario: string) {
     tx.aceptacionDocumento.findUnique({
       where: { id_doc_legal_id_usuario: { id_doc_legal: tratamientoDoc.id_doc_legal, id_usuario: idUsuario } },
     }),
-    tx.usuario.findUnique({
-      where: { id_usuario: idUsuario },
-      select: { parq_realizado: true, estado: true, fecha_nacimiento: true },
-    }),
   ])
-
-  if (!usuario || usuario.estado === 'activo') return
 
   const todasCondiciones = !!huella && !!contrato && !!tratamiento && usuario.parq_realizado
   if (!todasCondiciones) return
 
-  // Si es menor de edad, verificar que exista acudiente
   if (usuario.fecha_nacimiento) {
     const hoy = new Date()
     let edad = hoy.getFullYear() - usuario.fecha_nacimiento.getFullYear()

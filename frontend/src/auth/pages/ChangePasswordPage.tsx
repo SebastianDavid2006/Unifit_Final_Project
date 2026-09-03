@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { motion } from 'motion/react'
-import { Lock, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { api, mensajeError } from '@/lib/api'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { PasswordField } from '@/auth/components/PasswordField'
@@ -15,6 +15,7 @@ interface ChangePasswordPageProps {
 }
 
 export function ChangePasswordPage({ email, onSuccess, onBack }: ChangePasswordPageProps) {
+  const [currentPass, setCurrentPass] = useState('')
   const [newPass, setNewPass] = useState('')
   const [confirmPass, setConfirmPass] = useState('')
   const [error, setError] = useState('')
@@ -27,8 +28,13 @@ export function ChangePasswordPage({ email, onSuccess, onBack }: ChangePasswordP
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (newPass.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
+    if (!currentPass) {
+      setError('Ingresa tu contraseña actual')
+      triggerShake()
+      return
+    }
+    if (newPass.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres')
       triggerShake()
       return
     }
@@ -38,7 +44,7 @@ export function ChangePasswordPage({ email, onSuccess, onBack }: ChangePasswordP
       return
     }
     try {
-      await api.put('/auth/cambiar-password', { email, newPassword: newPass })
+      await api.put('/auth/cambiar-password', { password_actual: currentPass, password_nueva: newPass, confirmar_password: confirmPass })
       onSuccess()
     } catch (err) {
       setError(mensajeError(err))
@@ -71,20 +77,8 @@ export function ChangePasswordPage({ email, onSuccess, onBack }: ChangePasswordP
           </p>
         </div>
 
-        <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>CONTRASEÑA TEMPORAL</label>
-        <div className="flex items-center gap-3 px-5 rounded-2xl mb-4 h-14" style={{
-          background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(255,255,255,0.12)',
-        }}>
-          <Lock size={18} style={{ color: 'rgba(255,255,255,0.45)' }} />
-          <input
-            type="text"
-            value=""
-            readOnly
-            className="bg-transparent border-none outline-none text-sm w-full"
-            style={{ color: '#7ec8e3', fontFamily: 'monospace' }}
-          />
-        </div>
+        <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>CONTRASEÑA ACTUAL</label>
+        <PasswordField value={currentPass} onChange={setCurrentPass} autoComplete="current-password" />
 
         <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>NUEVA CONTRASEÑA</label>
         <PasswordField value={newPass} onChange={setNewPass} autoComplete="new-password" />

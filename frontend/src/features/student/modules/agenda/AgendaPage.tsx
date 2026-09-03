@@ -1,11 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Lock, CheckCircle2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { DayAvailability } from '@/features/student/types/student'
 import { SectionTitle, FIRE, AMBER, GREEN } from '@/features/student/components/ui/fitness'
-import { colombianHolidays, offset, sameDay, weekStart, sessionDateTimeOf, HOURS_24_MS } from './agendaUtils'
+import {
+  colombianHolidays, offset, sameDay, weekStart, sessionDateTimeOf, HOURS_24_MS,
+  setCuposDisponiblesPorFecha, getCupoIdPorSlot, type CupoSlot,
+} from './agendaUtils'
+import { getCuposDisponibles, getMiAgenda, reservarCupo } from '@/services/agenda.service'
 import { MonthView } from './components/MonthView'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
@@ -30,13 +34,59 @@ export function AgendaPage() {
   const [pendingBooking, setPendingBooking] = useState<{ info: DayAvailability; time: string } | null>(null)
   const [booked, setBooked] = useState<{ date: Date; time: string } | null>(null)
   const [successOpen, setSuccessOpen] = useState(false)
+  const [cuposTick, setCuposTick] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const confirmBooking = () => {
+  const refresh = () => {
+    setIsLoading(true)
+    setError(null)
+    Promise.all([getCuposDisponibles(), getMiAgenda()])
+      .then(([cupos, miagenda]) => {
+        const porFecha: Record<string, CupoSlot[]> = {}
+        const refs: Record<string, string> = {}
+        for (const c of cupos) {
+          const fecha = c.fecha
+          ;(porFecha[fecha] ||= []).push({ time: c.horaInicio, taken: false })
+          refs[`${fecha}@${c.horaInicio}`] = c.id
+        }
+        setCuposDisponiblesPorFecha(porFecha, refs)
+
+        const activa = miagenda.find(a => a.estado === 'pendiente')
+        if (activa) {
+          setBooked({ date: new Date(activa.fecha + 'T12:00:00'), time: activa.horaInicio })
+        } else {
+          setBooked(null)
+        }
+        setCuposTick(t => t + 1)
+      })
+      .catch(() => setError('No se pudo cargar la disponibilidad'))
+      .finally(() => setIsLoading(false))
+  }
+
+  useEffect(() => {
+    refresh()
+  }, [])
+
+  const confirmBooking = async () => {
     if (!pendingBooking) return
-    setBooked({ date: pendingBooking.info.date, time: pendingBooking.time })
-    setPendingBooking(null)
-    setSelected(null)
-    setSuccessOpen(true)
+    const idCupo = getCupoIdPorSlot(pendingBooking.info.date, pendingBooking.time)
+    if (!idCupo) {
+      setError('Este cupo ya no está disponible')
+      setPendingBooking(null)
+      return
+    }
+    try {
+      await reservarCupo(idCupo)
+      setBooked({ date: pendingBooking.info.date, time: pendingBooking.time })
+      setPendingBooking(null)
+      setSelected(null)
+      setSuccessOpen(true)
+      refresh()
+    } catch {
+      setError('No se pudo completar tu reserva')
+      setPendingBooking(null)
+    }
   }
 
   const cancelSession = () => {
@@ -55,6 +105,12 @@ export function AgendaPage() {
   return (
     <div className="space-y-4">
       <SectionTitle>Disponibilidad del entrenador</SectionTitle>
+
+      {error && (
+        <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.35)', color: '#FF8FA3', fontSize: 12 }}>
+          {error}
+        </div>
+      )}
 
       {/* Switch de vista */}
       <div className="flex justify-center">
@@ -122,44 +178,50 @@ export function AgendaPage() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence mode="wait">
-        {view === 'month' && (
-          <MonthView
-            key="month"
-            currentDate={currentDate}
-            onChangeMonth={delta => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + delta, 1))}
-            today={today}
-            holidays={holidays}
-            selected={selected}
-            onSelect={setSelected}
-            hasBooking={!!booked}
-            isBookedDay={isBookedDay}
-          />
-        )}
-        {view === 'week' && (
-          <WeekView
-            key="week"
-            baseWeek={baseWeek}
-            onChangeWeek={delta => setWeekOffset(w => w + delta)}
-            today={today}
-            holidays={holidays}
-            hasBooking={!!booked}
-            isBookedDay={isBookedDay}
-            onBook={(info, time) => setPendingBooking({ info, time })}
-          />
-        )}
-        {view === 'day' && (
-          <DayView
-            key="day"
-            currentDate={currentDate}
-            onChangeDate={delta => setCurrentDate(d => offset(d, delta))}
-            holidays={holidays}
-            hasBooking={!!booked}
-            isBookedDay={isBookedDay}
-            onBook={(info, time) => setPendingBooking({ info, time })}
-          />
-        )}
-      </AnimatePresence>
+      {isLoading ? (
+        <div className="py-16 text-center" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12.5, fontWeight: 600 }}>
+          Cargando disponibilidad…
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
+          {view === 'month' && (
+            <MonthView
+              key={'month' + cuposTick}
+              currentDate={currentDate}
+              onChangeMonth={delta => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + delta, 1))}
+              today={today}
+              holidays={holidays}
+              selected={selected}
+              onSelect={setSelected}
+              hasBooking={!!booked}
+              isBookedDay={isBookedDay}
+            />
+          )}
+          {view === 'week' && (
+            <WeekView
+              key={'week' + cuposTick}
+              baseWeek={baseWeek}
+              onChangeWeek={delta => setWeekOffset(w => w + delta)}
+              today={today}
+              holidays={holidays}
+              hasBooking={!!booked}
+              isBookedDay={isBookedDay}
+              onBook={(info, time) => setPendingBooking({ info, time })}
+            />
+          )}
+          {view === 'day' && (
+            <DayView
+              key={'day' + cuposTick}
+              currentDate={currentDate}
+              onChangeDate={delta => setCurrentDate(d => offset(d, delta))}
+              holidays={holidays}
+              hasBooking={!!booked}
+              isBookedDay={isBookedDay}
+              onBook={(info, time) => setPendingBooking({ info, time })}
+            />
+          )}
+        </AnimatePresence>
+      )}
 
       {/* Detalle del día: modal solo en vista mes */}
       <AnimatePresence>

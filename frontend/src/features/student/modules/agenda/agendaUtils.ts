@@ -1,14 +1,32 @@
 import type { DayAvailability } from '@/features/student/types/student'
 
-/* Horario del entrenador */
-export const COACH_SCHEDULE: Record<number, string[]> = {
-  0: [],                                  // Domingo cerrado
-  1: ['06:00', '07:00', '08:00', '16:00', '17:00', '18:00'],
-  2: ['06:00', '07:00', '17:00', '18:00', '19:00'],
-  3: ['07:00', '08:00', '16:00', '17:00'],
-  4: ['06:00', '07:00', '08:00', '18:00', '19:00'],
-  5: ['06:00', '09:00', '10:00'],
-  6: ['09:00', '10:00'],                  // Sábado medio día
+export interface CupoSlot {
+  time: string
+  taken: boolean
+}
+
+export interface CupoRef {
+  time: string
+  idCupo: string
+}
+
+let cuposPorFecha: Record<string, CupoSlot[]> = {}
+let cuposRefPorSlot: Record<string, string> = {}
+
+export function setCuposDisponiblesPorFecha(cupos: Record<string, CupoSlot[]>, refs?: Record<string, string>): void {
+  cuposPorFecha = cupos
+  if (refs) cuposRefPorSlot = refs
+}
+
+export function getCupoIdPorSlot(date: Date, time: string): string | undefined {
+  return cuposRefPorSlot[`${fmtDateKey(date)}@${time}`]
+}
+
+function fmtDateKey(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${dd}`
 }
 
 /* Festivos Colombia (Emiliani) — cálculo con Pascua */
@@ -79,22 +97,12 @@ export function colombianHolidays(year: number): Map<string, string> {
   return map
 }
 
-/* Determinista: mismos cupos ocupados para una fecha */
-function hashDate(d: Date): number {
-  return (d.getDate() * 7 + (d.getMonth() + 1) * 13 + d.getFullYear() * 3) % 97
-}
-
+/* Disponibilidad real: consulta los cupos publicados cargados del backend */
 export function getDayInfo(date: Date, holidays: Map<string, string>): DayAvailability {
   const holidayName = holidays.get(`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`)
   if (holidayName) return { date, isHoliday: true, holidayName, isCoachDay: false, slots: [] }
-  const times = COACH_SCHEDULE[date.getDay()] || []
-  if (times.length === 0) return { date, isHoliday: false, isCoachDay: false, slots: [] }
-  const takenCount = hashDate(date) % times.length // nunca todos ocupados salvo forzado abajo
-  const allFull = hashDate(date) % 11 === 5 // ~9% de días completamente llenos
-  const slots = times.map((time, i) => ({
-    time,
-    taken: allFull ? true : i < takenCount,
-  }))
+  const slots = cuposPorFecha[fmtDateKey(date)] || []
+  if (slots.length === 0) return { date, isHoliday: false, isCoachDay: false, slots: [] }
   return { date, isHoliday: false, isCoachDay: true, slots }
 }
 

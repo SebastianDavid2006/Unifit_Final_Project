@@ -6,6 +6,9 @@ import maquinasRoutes from './maquinas.routes'
 import usuarioRoutes from './usuario.routes'
 import valoracionRoutes from './valoracion.routes'
 import rutinaRoutes from './rutina.routes'
+import agendaRoutes from './agenda.routes'
+import aiRoutes from './ai.routes'
+import biometriaRoutes from './biometria.routes'
 
 const router = Router()
 
@@ -16,5 +19,8 @@ router.use(maquinasRoutes)
 router.use(usuarioRoutes)
 router.use(valoracionRoutes)
 router.use(rutinaRoutes)
+router.use(agendaRoutes)
+router.use(aiRoutes)
+router.use(biometriaRoutes)
 
 export default router

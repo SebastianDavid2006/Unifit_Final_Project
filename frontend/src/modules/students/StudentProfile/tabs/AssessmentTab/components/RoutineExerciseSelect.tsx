@@ -1,6 +1,6 @@
-﻿import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDown, Check, Dumbbell, Sparkles } from 'lucide-react'
-import type { RoutineRow } from '@/modules/students/aiRoutine'
+import type { RoutineRow } from '@/modules/students/aiRoutineTypes'
 import { ROUTINE_MUSCLE_TO_CAT } from '@/modules/students/StudentProfileData'
 import type { FrontendExercise } from '@/services/ejercicio.service'
 

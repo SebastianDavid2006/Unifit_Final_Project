@@ -1,4 +1,4 @@
-import type { AiRoutine } from '@/modules/students/aiRoutine'
+import type { AiRoutine } from '@/modules/students/aiRoutineTypes'
 
 interface RoutineStep1InfoProps {
   routineForm: { name: string; description: string; duration: string; frequency: string; level: string }

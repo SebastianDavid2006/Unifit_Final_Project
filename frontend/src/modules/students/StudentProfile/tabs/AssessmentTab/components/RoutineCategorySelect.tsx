@@ -1,7 +1,7 @@
-﻿import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { List, ChevronDown, Check } from 'lucide-react'
 import { muscleIcons } from '@/data/shared/constants'
-import type { RoutineRow } from '@/modules/students/aiRoutine'
+import type { RoutineRow } from '@/modules/students/aiRoutineTypes'
 import { ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from '@/modules/students/StudentProfileData'
 
 const ROUTINE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'

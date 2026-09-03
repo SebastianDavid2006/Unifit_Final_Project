@@ -23,7 +23,7 @@ export default function TrainerRow({ trainer, index, onClick }: {
       className="grid grid-cols-[1.9fr_1.1fr_1.3fr_1.3fr_auto] items-center gap-4 p-4 rounded-2xl premium-card cursor-pointer"
     >
       <div className="flex items-center gap-4 min-w-0">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: trainer.status === 'active' ? 'linear-gradient(135deg, #30D158, #20A040)' : 'linear-gradient(135deg, #8E8E93, #636366)', fontSize: 13 }}>{trainer.avatar}</div>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: trainer.status === 'active' ? 'linear-gradient(135deg, #30D158, #20A040)' : trainer.status === 'process' ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : 'linear-gradient(135deg, #8E8E93, #636366)', fontSize: 13 }}>{trainer.avatar}</div>
         <p className="text-[#1A1A1E] text-sm font-bold truncate">{trainer.name}</p>
       </div>
 

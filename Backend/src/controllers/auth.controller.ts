@@ -4,15 +4,28 @@ import { cambiarPassword, login } from '../services/auth.service'
 import { registrarUsuario } from '../services/usuario.service'
 import { registrarSchema } from './usuario.controller'
 import { responderErrorPrisma } from '../utils/prisma-errors'
+import { HttpError } from '../utils/HttpError'
 
 const loginSchema = z.object({
   email_contacto: z.string().email(),
   password: z.string().min(1),
 })
 
-const cambiarPasswordSchema = z.object({
-  password_nueva: z.string().min(8),
-})
+const cambiarPasswordSchema = z
+  .object({
+    password_actual: z.string().min(1),
+    password_nueva: z.string().min(8),
+    confirmar_password: z.string().min(8),
+  })
+  .superRefine((v, ctx) => {
+    if (v.password_nueva !== v.confirmar_password) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['confirmar_password'],
+        message: 'Las contraseñas no coinciden',
+      })
+    }
+  })
 
 export async function iniciarSesion(req: Request, res: Response): Promise<void> {
   const parsed = loginSchema.safeParse(req.body)
@@ -34,8 +47,16 @@ export async function cambiarContrasena(req: Request, res: Response): Promise<vo
     return
   }
 
-  await cambiarPassword(req.usuario!.id_usuario, parsed.data.password_nueva)
-  res.json({ mensaje: 'Contraseña actualizada correctamente' })
+  try {
+    await cambiarPassword(req.usuario!.id_usuario, parsed.data.password_actual, parsed.data.password_nueva)
+    res.json({ mensaje: 'Contraseña actualizada correctamente' })
+  } catch (error) {
+    if (error instanceof HttpError) {
+      res.status(error.status).json({ mensaje: error.message })
+      return
+    }
+    throw error
+  }
 }
 
 export async function registroWeb(req: Request, res: Response): Promise<void> {

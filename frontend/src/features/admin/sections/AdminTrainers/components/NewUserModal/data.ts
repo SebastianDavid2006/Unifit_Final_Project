@@ -1,4 +1,4 @@
-import { User, FileText, Shield, ScanLine, ClipboardCheck } from 'lucide-react'
+import { User, FileText, Shield } from 'lucide-react'
 
 export const BLUE = '#1270B7'
 export const RED = '#F43843'
@@ -17,10 +17,7 @@ export const PARENTESCOS = ['Padre', 'Madre', 'Hermano(a)', 'Abuelo(a)', 'Tío(a
 export const STEPS = [
   { num: 1, label: 'Información personal', icon: User },
   { num: 2, label: 'Tratamiento de datos', icon: FileText },
-  { num: 3, label: 'Contrato', icon: FileText },
-  { num: 4, label: 'PAR-Q', icon: ClipboardCheck },
-  { num: 5, label: 'Rol del usuario', icon: Shield },
-  { num: 6, label: 'Huella digital', icon: ScanLine },
+  { num: 3, label: 'Rol del usuario', icon: Shield },
 ]
 
 export const INITIAL_FORM = {
@@ -31,8 +28,8 @@ export const INITIAL_FORM = {
 }
 
 export type NewUserForm = typeof INITIAL_FORM
-export type FingerprintStatus = 'idle' | 'scanning' | 'captured'
 export type UserRole = 'trainer' | 'admin'
+export type TipoUsuarioStaff = 'profesor' | 'administrativo'
 
 export const meshInputBg = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'
 export const meshInputHover = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'

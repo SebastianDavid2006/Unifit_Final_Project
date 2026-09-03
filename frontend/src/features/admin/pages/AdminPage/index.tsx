@@ -8,6 +8,7 @@ import AdminGym from '@/features/admin/sections/AdminGym'
 import AdminConfig from '@/features/admin/sections/AdminConfig'
 import AdminStats from '@/features/admin/sections/AdminStats'
 import BackgroundDecor from '@/shared/components/BackgroundDecor'
+import StaffProfile from '@/shared/components/StaffProfile'
 import Sidebar from './components/Sidebar'
 import PermissionsOverlay from './components/PermissionsOverlay'
 import Topbar from './components/Topbar'
@@ -70,6 +71,7 @@ export function AdminPage() {
   const [calendarPos, setCalendarPos] = useState({ top: 0, right: 0 })
   const calendarBtnRef = useRef<HTMLButtonElement>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [showStaffProfile, setShowStaffProfile] = useState(false)
 
   const handleSectionChange = (s: AdminSection) => {
     navigate(SECTION_PATHS[s])
@@ -153,6 +155,7 @@ export function AdminPage() {
           profileMenuOpen={profileMenuOpen}
           onProfileMenuToggle={() => setProfileMenuOpen(!profileMenuOpen)}
           onLogout={handleLogout}
+          onOpenProfile={() => { setProfileMenuOpen(false); setShowStaffProfile(true) }}
         />
 
         <AnimatePresence mode="wait">
@@ -212,6 +215,8 @@ export function AdminPage() {
           onTabChange={id => { setGymSelectedStudent(null); setGymTab(id) }}
         />
       )}
+
+      <StaffProfile open={showStaffProfile} onClose={() => setShowStaffProfile(false)} />
     </div>
   )
 }

@@ -1,8 +1,8 @@
-﻿import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { X, Loader2 } from 'lucide-react'
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import routineGenLottie from '@/assets/icons/animated/ai/routine_generation.lottie?url'
-import { AI_GENERATION_STEPS } from '@/modules/students/aiRoutine'
+import { AI_GENERATION_STEPS } from '@/modules/students/aiRoutineTypes'
 
 interface AIGenerationModalProps {
   isOpen: boolean

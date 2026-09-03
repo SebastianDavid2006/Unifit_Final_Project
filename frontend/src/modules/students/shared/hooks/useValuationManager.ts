@@ -1,8 +1,10 @@
 import { useCallback } from 'react'
-import type { Student, ValuationForm, RoutineRow } from '../../StudentProfileData'
-import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine } from '../../aiRoutine'
+import type { Student, ValuationForm } from '../../StudentProfileData'
+import { AI_GENERATION_STEPS, type AiRoutine, type RoutineRow } from '../../aiRoutineTypes'
 import { numOnly } from '../../StudentProfileData'
 import type { FrontendExercise } from '@/services/ejercicio.service'
+import { generarRutinaIA } from '@/services/ai.service'
+import { mensajeError } from '@/lib/api'
 
 interface UseValuationManagerDeps {
   student: Student
@@ -149,26 +151,31 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     let step = 0
     const interval = window.setInterval(() => {
       step += 1
-      if (step >= AI_GENERATION_STEPS.length) {
-        window.clearInterval(interval)
-        aiIntervalRef.current = null
-        const routine = buildAiRoutine({
-          nivelActividad: valuationForm.nivelActividad,
-          objetivoTarjetas: valuationForm.objetivoTarjetas,
-          objetivoDetalle: valuationForm.objetivoDetalle,
-          peso: valuationForm.peso,
-          estatura: valuationForm.estatura,
-          imc: valuationForm.imc,
-          grasaCorporal: valuationForm.grasaCorporal,
-          masaMuscular: valuationForm.masaMuscular,
-          presionArterial: valuationForm.presionArterial,
-          resistenciaMuscular: valuationForm.resistenciaMuscular,
-          antecedentesSalud: valuationForm.antecedentesSalud,
-          observacionesEntrenador: valuationForm.observacionesEntrenador,
-          diasDisponibles: valuationForm.diasDisponibles,
-          observacionesFinales: valuationForm.observacionesFinales,
-          studentName: student.firstName,
-        })
+      setAiGenStep(Math.min(step, AI_GENERATION_STEPS.length - 1))
+    }, 500)
+    aiIntervalRef.current = interval
+
+    generarRutinaIA({
+      nivelActividad: valuationForm.nivelActividad,
+      objetivoTarjetas: valuationForm.objetivoTarjetas,
+      objetivoDetalle: valuationForm.objetivoDetalle,
+      peso: valuationForm.peso,
+      estatura: valuationForm.estatura,
+      imc: valuationForm.imc,
+      grasaCorporal: valuationForm.grasaCorporal,
+      masaMuscular: valuationForm.masaMuscular,
+      presionArterial: valuationForm.presionArterial,
+      resistenciaMuscular: valuationForm.resistenciaMuscular,
+      antecedentesSalud: valuationForm.antecedentesSalud,
+      observacionesEntrenador: valuationForm.observacionesEntrenador,
+      diasDisponibles: valuationForm.diasDisponibles,
+      observacionesFinales: valuationForm.observacionesFinales,
+    })
+      .then((routine) => {
+        if (aiIntervalRef.current !== null) {
+          window.clearInterval(aiIntervalRef.current)
+          aiIntervalRef.current = null
+        }
         setAiGeneratedRoutine(routine)
         setRoutineForm({
           name: routine.name,
@@ -182,15 +189,21 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
         setRoutineDayPage(1)
         setRoutineDays([...new Set(routine.rows.map(r => r.dia))])
         setRoutineStep(1)
+        setAiGenStep(AI_GENERATION_STEPS.length - 1)
         setTimeout(() => {
           setAiGenerating(false)
           setShowNewRoutineModal(true)
-        }, 900)
-        return
-      }
-      setAiGenStep(step)
-    }, 900)
-    aiIntervalRef.current = interval
+        }, 600)
+      })
+      .catch((error: unknown) => {
+        if (aiIntervalRef.current !== null) {
+          window.clearInterval(aiIntervalRef.current)
+          aiIntervalRef.current = null
+        }
+        setAiGenerating(false)
+        setRoutineFromAI(false)
+        alert(mensajeError(error))
+      })
   }, [
     setShowNewValuationModal,
     setValuationSuccess,

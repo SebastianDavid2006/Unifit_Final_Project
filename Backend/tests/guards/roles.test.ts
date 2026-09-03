@@ -120,16 +120,42 @@ describe('Admin+entrenador → sin token recibe 401', () => {
 
 // ─────────────────────────────────────────────────────────────
 // CAMBIAR-PASSWORD (token required, no requiereRol)
+// Requiere password_actual + password_nueva + confirmar_password
 // ─────────────────────────────────────────────────────────────
 
 describe('cambiar-password → sin token recibe 401', () => {
   it('PUT /api/auth/cambiar-password', async () => {
-    const res = await put('/api/auth/cambiar-password', { password_nueva: 'nueva1234' })
+    const res = await put('/api/auth/cambiar-password', { password_actual: 'x', password_nueva: 'nueva1234', confirmar_password: 'nueva1234' })
     expect(res.status).toBe(401)
   })
 
   it('PUT /api/auth/cambiar-password → token inválido recibe 401', async () => {
-    const res = await put('/api/auth/cambiar-password', { password_nueva: 'nueva1234' }, 'token-falso-123')
+    const res = await put('/api/auth/cambiar-password', { password_actual: 'x', password_nueva: 'nueva1234', confirmar_password: 'nueva1234' }, 'token-falso-123')
+    expect(res.status).toBe(401)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────
+// PERFIL — admin+dueño. Entrenador/usuario sin token = 403
+// ─────────────────────────────────────────────────────────────
+
+describe('PUT /usuarios/:id/perfil → entrenador no dueño recibe 403', () => {
+  it('entrenador intentando editar perfil ajeno', async () => {
+    const res = await put(`/api/usuarios/${FAKE_ID}/perfil`, { email_contacto: 'x@x.com' }, (globalThis as any).entrenadorToken)
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('PUT /usuarios/:id/perfil → usuario no dueño recibe 403', () => {
+  it('usuario intentando editar perfil ajeno', async () => {
+    const res = await put(`/api/usuarios/${FAKE_ID}/perfil`, { email_contacto: 'x@x.com' }, (globalThis as any).usuarioToken)
+    expect(res.status).toBe(403)
+  })
+})
+
+describe('PUT /usuarios/:id/perfil → sin token recibe 401', () => {
+  it('sin token', async () => {
+    const res = await put(`/api/usuarios/${FAKE_ID}/perfil`, { email_contacto: 'x@x.com' })
     expect(res.status).toBe(401)
   })
 })

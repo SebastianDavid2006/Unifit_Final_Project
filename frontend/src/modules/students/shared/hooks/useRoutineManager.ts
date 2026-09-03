@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import type { RoutineRow } from '../../aiRoutine'
+import type { RoutineRow } from '../../aiRoutineTypes'
 import { getEjercicios, type FrontendExercise } from '@/services/ejercicio.service'
 import { ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from '../../StudentProfileData'
 

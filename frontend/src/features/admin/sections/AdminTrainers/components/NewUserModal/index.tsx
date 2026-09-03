@@ -1,34 +1,28 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import confetti from 'canvas-confetti'
-import permissionsScene from '@/assets/scenes/permmisions_scene.png'
 import ModalHeader from './components/ModalHeader'
 import ModalFooter from './components/ModalFooter'
 import ConfirmCloseDialog from './components/ConfirmCloseDialog'
 import RoleSelector from './components/RoleSelector'
-import FingerprintScanner from './components/FingerprintScanner'
 import SuccessScreen from './components/SuccessScreen'
 import PersonalInfoSection from './sections/PersonalInfoSection'
 import DataConsentSection from './sections/DataConsentSection'
-import ContractSection from './sections/ContractSection'
-import ParqSection from './sections/ParqSection'
 import { INITIAL_FORM } from './data'
-import type { FingerprintStatus, NewUserForm, UserRole } from './data'
+import type { NewUserForm, UserRole, TipoUsuarioStaff } from './data'
 
 interface NewUserModalProps {
   open: boolean
   onClose: () => void
-  onSuccess?: (user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string }) => void
+  onSuccess?: (user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string; tipo_usuario: string; id_cargo?: string; id_area?: string }) => void
 }
 
 export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalProps) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<NewUserForm>({ ...INITIAL_FORM })
   const [aceptaDatos, setAceptaDatos] = useState(false)
-  const [aceptaContrato, setAceptaContrato] = useState(false)
-  const [aceptaParq, setAceptaParq] = useState(false)
   const [role, setRole] = useState<UserRole | null>(null)
-  const [fingerprintStatus, setFingerprintStatus] = useState<FingerprintStatus>('idle')
+  const [tipoUsuario, setTipoUsuario] = useState<TipoUsuarioStaff | null>(null)
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
@@ -38,10 +32,8 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       setStep(1)
       setForm({ ...INITIAL_FORM })
       setAceptaDatos(false)
-      setAceptaContrato(false)
-      setAceptaParq(false)
       setRole(null)
-      setFingerprintStatus('idle')
+      setTipoUsuario(null)
       setSuccess(false)
       setShake(false)
       setConfirmClose(false)
@@ -68,10 +60,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       return !!(form.primerNombre && form.primerApellido && form.numDoc)
     }
     if (step === 2) return aceptaDatos
-    if (step === 3) return aceptaContrato
-    if (step === 4) return aceptaParq
-    if (step === 5) return role !== null
-    if (step === 6) return fingerprintStatus === 'captured'
+    if (step === 3) return role !== null && tipoUsuario !== null
     return true
   }
 
@@ -80,7 +69,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       triggerShake()
       return
     }
-    if (step === 6) {
+    if (step === 3) {
       submitForm()
       return
     }
@@ -92,16 +81,22 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   }
 
   const submitForm = () => {
-    const payload = {
-      ...form,
-      aceptaDatos,
-      aceptaContrato,
-      role,
-      huella: fingerprintStatus === 'captured' ? 'capturada' : null,
-    }
-    console.log('Nuevo usuario:', payload)
     const nombreCompleto = `${form.primerNombre} ${form.segundoNombre} ${form.primerApellido} ${form.segundoApellido}`.replace(/\s+/g, ' ').trim()
-    onSuccess?.({ name: nombreCompleto, email: form.email, phone: form.telefono, role: role ?? 'trainer', contactName: form.nombreContacto, contactPhone: form.telefonoContacto, contactRelation: form.parentesco === 'Otro' ? form.otroParentesco : form.parentesco, document: `${form.tipoDoc}. ${form.numDoc}`, birthDate: form.fechaNac, gender: form.genero, eps: form.eps, bloodType: form.grupoSanguineo })
+    onSuccess?.({
+      name: nombreCompleto,
+      email: form.email,
+      phone: form.telefono,
+      role: role ?? 'trainer',
+      contactName: form.nombreContacto,
+      contactPhone: form.telefonoContacto,
+      contactRelation: form.parentesco === 'Otro' ? form.otroParentesco : form.parentesco,
+      document: `${form.tipoDoc}. ${form.numDoc}`,
+      birthDate: form.fechaNac,
+      gender: form.genero,
+      eps: form.eps,
+      bloodType: form.grupoSanguineo,
+      tipo_usuario: tipoUsuario ?? 'profesor',
+    })
     setSuccess(true)
     confetti({
       particleCount: 120,
@@ -109,14 +104,6 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       origin: { y: 0.55 },
       colors: ['#1270B7', '#F43843', '#22C55E', '#F5A623'],
     })
-  }
-
-  const handleCaptureFingerprint = () => {
-    if (fingerprintStatus !== 'idle') return
-    setFingerprintStatus('scanning')
-    setTimeout(() => {
-      setFingerprintStatus('captured')
-    }, 5000)
   }
 
   return (
@@ -136,51 +123,16 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className={`flex flex-col relative ${success ? 'overflow-visible' : 'overflow-hidden'} ${step === 5 && !success
-              ? 'w-full h-full'
-              : `rounded-3xl w-full max-w-2xl mx-4 ${success ? '' : step === 1 ? 'h-[90vh] max-h-[700px]' : step === 6 ? 'min-h-[520px] max-h-[660px] h-auto' : 'min-h-[480px] max-h-[600px] h-auto'}`}`}
+            className={`flex flex-col relative overflow-hidden rounded-3xl w-full max-w-2xl mx-4 ${
+              success ? '' : step === 1 ? 'h-[90vh] max-h-[700px]' : 'min-h-[480px] max-h-[600px] h-auto'
+            }`}
             style={{
               background: '#FFFFFF',
-              border: step === 5 && !success ? 'none' : '1px solid rgba(0,0,0,0.04)',
-              boxShadow: step === 5 && !success ? 'none' : '0 25px 60px rgba(0,0,0,0.12)',
+              border: '1px solid rgba(0,0,0,0.04)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.12)',
             }}
             onClick={e => e.stopPropagation()}
           >
-            {step === 5 && !success && (
-              <>
-                <div className="absolute inset-0 z-0" style={{
-                  background: 'radial-gradient(ellipse at center, #182634 0%, #0a1017 78%)',
-                }} />
-                <img
-                  src={permissionsScene}
-                  alt="Escena de permisos"
-                  className="absolute inset-0 z-0 w-full h-full object-cover select-none pointer-events-none"
-                  draggable={false}
-                />
-                <motion.div
-                  initial={{ opacity: 1 }}
-                  animate={{ opacity: 0 }}
-                  transition={{ duration: 0.6, ease: 'easeInOut', delay: 0.05 }}
-                  className="absolute inset-0 z-0 pointer-events-none"
-                  style={{ background: '#000000' }}
-                />
-                <div
-                  className="absolute inset-0 z-0 pointer-events-none"
-                  style={{
-                    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0) 38%, rgba(0,0,0,0.65) 100%)',
-                  }}
-                />
-                <div
-                  className="absolute inset-0 z-0 pointer-events-none"
-                  style={{
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    maskImage: 'radial-gradient(ellipse at center, transparent 45%, black 100%)',
-                    WebkitMaskImage: 'radial-gradient(ellipse at center, transparent 45%, black 100%)',
-                  }}
-                />
-              </>
-            )}
             {success ? (
               <SuccessScreen onClose={onClose} />
             ) : (
@@ -193,30 +145,31 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                   transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   className="flex flex-col flex-1 min-h-0"
                 >
-                  {step !== 5 && (
-                    <ModalHeader step={step} onClose={handleCloseClick} />
-                  )}
+                  <ModalHeader step={step} onClose={handleCloseClick} />
 
-                  <div className={step === 5 ? 'relative z-10 flex-1 overflow-hidden' : 'flex-1 overflow-y-auto px-6 pb-6 pt-5'}>
+                  <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
                     <motion.div
-                      className={step === 5 ? 'h-full' : ''}
                       animate={shake ? { x: [0, -4, 4, -4, 4, 0] } : {}}
                       transition={{ duration: 0.4 }}
                     >
                       {step === 1 && <PersonalInfoSection form={form} onChange={set} />}
                       {step === 2 && <DataConsentSection accepted={aceptaDatos} onChange={setAceptaDatos} />}
-                      {step === 3 && <ContractSection accepted={aceptaContrato} onChange={setAceptaContrato} />}
-                      {step === 4 && <ParqSection accepted={aceptaParq} onChange={setAceptaParq} />}
-                      {step === 5 && <RoleSelector role={role} onRoleChange={setRole} />}
-                      {step === 6 && <FingerprintScanner status={fingerprintStatus} />}
+                      {step === 3 && (
+                        <RoleSelector
+                          role={role}
+                          onRoleChange={setRole}
+                          tipoUsuario={tipoUsuario}
+                          onTipoUsuarioChange={setTipoUsuario}
+                        />
+                      )}
                     </motion.div>
                   </div>
 
                   <ModalFooter
                     step={step}
-                    fingerprintStatus={fingerprintStatus}
+                    fingerprintStatus="idle"
                     onPrev={handlePrev}
-                    onCapture={handleCaptureFingerprint}
+                    onCapture={() => {}}
                     onNext={handleNext}
                   />
                 </motion.div>

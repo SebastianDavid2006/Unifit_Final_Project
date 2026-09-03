@@ -37,7 +37,21 @@ export async function login(datos: { email_contacto: string; password: string })
   return { token, usuario: usuarioPublico(usuario) }
 }
 
-export async function cambiarPassword(idUsuario: string, passwordNueva: string) {
+export async function cambiarPassword(idUsuario: string, passwordActual: string, passwordNueva: string) {
+  const usuario = await prisma.usuario.findUnique({
+    where: { id_usuario: idUsuario },
+    select: { password_hash: true },
+  })
+
+  if (!usuario) {
+    throw new HttpError(404, 'Usuario no encontrado')
+  }
+
+  const passwordValida = await bcrypt.compare(passwordActual, usuario.password_hash)
+  if (!passwordValida) {
+    throw new HttpError(401, 'Contraseña actual incorrecta')
+  }
+
   const passwordHash = await bcrypt.hash(passwordNueva, SALT_ROUNDS)
 
   await prisma.usuario.update({

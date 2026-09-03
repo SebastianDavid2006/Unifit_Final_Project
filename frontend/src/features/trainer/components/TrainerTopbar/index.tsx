@@ -37,6 +37,7 @@ interface Props {
   profileMenuOpen: boolean
   onProfileMenuToggle: () => void
   onLogout?: () => void
+  onOpenProfile?: () => void
 }
 
 export default function TrainerTopbar(props: Props) {
@@ -50,7 +51,7 @@ export default function TrainerTopbar(props: Props) {
     equipSearchHovered, onEquipSearchHoveredChange,
     equipViewMode, onEquipViewModeChange,
     selectedStudent, studentTab, onStudentTabChange, onBack,
-    profileMenuOpen, onProfileMenuToggle, onLogout,
+    profileMenuOpen, onProfileMenuToggle, onLogout, onOpenProfile,
   } = props
 
   return (
@@ -110,6 +111,7 @@ export default function TrainerTopbar(props: Props) {
             open={profileMenuOpen}
             onToggle={onProfileMenuToggle}
             onLogout={onLogout}
+            onOpenProfile={onOpenProfile}
           />
         </div>
       </div>

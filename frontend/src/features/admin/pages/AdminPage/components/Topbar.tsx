@@ -18,7 +18,7 @@ export default function Topbar({
   configTab, onConfigTabChange,
   showCareerFilter, onToggleCareerFilter, statsTab, onStatsTabChange,
   showStatsCalendar, onToggleStatsCalendar, calendarBtnRef,
-  profileMenuOpen, onProfileMenuToggle, onLogout,
+  profileMenuOpen, onProfileMenuToggle, onLogout, onOpenProfile,
 }: {
   section: AdminSection
   isPermissions: boolean
@@ -61,6 +61,7 @@ export default function Topbar({
   profileMenuOpen: boolean
   onProfileMenuToggle: () => void
   onLogout?: () => void
+  onOpenProfile?: () => void
 }) {
   return (
     <div className="sticky top-0 z-30">
@@ -116,7 +117,7 @@ export default function Topbar({
           />
         )}
         <div className="flex items-center gap-3 ml-auto">
-          <ProfileMenu isPermissions={isPermissions} open={profileMenuOpen} onToggle={onProfileMenuToggle} onLogout={onLogout} />
+          <ProfileMenu isPermissions={isPermissions} open={profileMenuOpen} onToggle={onProfileMenuToggle} onLogout={onLogout} onOpenProfile={onOpenProfile} />
         </div>
       </div>
     </div>

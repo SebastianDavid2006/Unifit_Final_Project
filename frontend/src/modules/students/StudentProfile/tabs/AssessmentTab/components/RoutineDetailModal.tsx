@@ -1,8 +1,8 @@
-﻿import { motion } from 'motion/react'
+import { motion } from 'motion/react'
 import { X, Dumbbell } from 'lucide-react'
 import { ModalShell } from '@/modules/students/StudentProfile/shared/components/ModalShell'
 import { RoutineDayCard } from './RoutineDayCard'
-import type { AiRoutine } from '../../aiRoutine'
+import type { AiRoutine } from '@/modules/students/aiRoutineTypes'
 
 interface RoutineDetailModalProps {
   isOpen: boolean

@@ -8,10 +8,13 @@ import {
   registrarHuellaHandler,
   desactivarUsuarioHandler,
   activarUsuarioHandler,
+  cambiarRolHandler,
+  actualizarPerfilHandler,
 } from '../controllers/usuario.controller'
 import { verificarToken } from '../middlewares/verificarToken'
 import { verificarEstado } from '../middlewares/verificarEstado'
 import { requiereRol } from '../middlewares/requiereRol'
+import { requierePropiedad } from '../middlewares/requierePropiedad'
 
 const router = Router()
 
@@ -85,6 +88,24 @@ router.put(
   verificarEstado(),
   requiereRol('admin'),
   activarUsuarioHandler,
+)
+
+// Cambiar rol (solo admin)
+router.put(
+  '/usuarios/:id/rol',
+  verificarToken,
+  verificarEstado(),
+  requiereRol('admin'),
+  cambiarRolHandler,
+)
+
+// Actualizar perfil (dueño o admin)
+router.put(
+  '/usuarios/:id/perfil',
+  verificarToken,
+  verificarEstado(),
+  requierePropiedad(async (req) => req.params.id, ['admin']),
+  actualizarPerfilHandler,
 )
 
 export default router
