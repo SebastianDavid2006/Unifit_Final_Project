@@ -8,7 +8,7 @@ import { ALL_GROUPS } from '@/modules/equipment/data'
 interface ExerciseSelectorProps {
   form: {
     muscleGroups: string[]
-    selectedIds: number[]
+    selectedIds: string[]
   }
   exercises: Exercise[]
   muscleExercises: Exercise[]
@@ -17,7 +17,7 @@ interface ExerciseSelectorProps {
   muscleDropdownRef: RefObject<HTMLButtonElement | null>
   onToggleMuscleDropdown: () => void
   onMuscleFilterChange: (filter: string) => void
-  onToggleExerciseSelection: (id: number) => void
+  onToggleExerciseSelection: (id: string) => void
 }
 
 export function ExerciseSelector(props: ExerciseSelectorProps) {

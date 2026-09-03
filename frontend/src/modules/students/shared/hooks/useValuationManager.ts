@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
 import type { Student, ValuationForm, RoutineRow } from '../../StudentProfileData'
 import { buildAiRoutine, AI_GENERATION_STEPS, AiRoutine } from '../../aiRoutine'
-import { routineExercises } from '../../StudentProfileData'
 import { numOnly } from '../../StudentProfileData'
+import type { FrontendExercise } from '@/services/ejercicio.service'
 
 interface UseValuationManagerDeps {
   student: Student
@@ -30,6 +30,7 @@ interface UseValuationManagerDeps {
   setShowNewRoutineModal: (v: boolean) => void
   setConfirmCancel: (c: 'valuation' | 'routine' | 'ai' | null) => void
   aiIntervalRef: React.MutableRefObject<number | null>
+  exerciseCatalog: FrontendExercise[]
 }
 
 export function useValuationManager(deps: UseValuationManagerDeps) {
@@ -59,6 +60,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     setConfirmCancel,
     confirmCancel,
     aiIntervalRef,
+    exerciseCatalog,
   } = deps
 
   const loadAssessmentIntoForm = useCallback((a: any) => {
@@ -217,20 +219,21 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     setRoutineFromAssessment(true)
     setRoutineFromAI(false)
     const days = (a.diasDisponibles?.length ? a.diasDisponibles : ['Lunes', 'Miércoles', 'Viernes']) as string[]
-    const perDay = Math.max(2, Math.ceil(routineExercises.length / days.length))
+    const catalog = exerciseCatalog.length > 0 ? exerciseCatalog : []
+    const perDay = Math.max(1, Math.ceil(catalog.length / days.length))
     const rows: RoutineRow[] = []
     days.forEach((dia: string, di: number) => {
-      const chunk = routineExercises.slice(di * perDay, (di + 1) * perDay)
+      const chunk = catalog.slice(di * perDay, (di + 1) * perDay)
       chunk.forEach((ex, ei) => {
         rows.push({
           id: `rv-${di}-${ei}`,
           dia,
-          muscle: ex.muscle,
+          muscle: ex.muscleGroups[0] ?? '',
           name: ex.name,
-          sets: String(ex.sets),
-          reps: ex.reps,
+          sets: '3',
+          reps: '10-12',
           rest: '60 s',
-          weight: ex.weight,
+          weight: '',
         })
       })
     })
@@ -272,6 +275,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     setShowNewRoutineModal(true)
   }, [
     loadAssessmentIntoForm,
+    exerciseCatalog,
     setRoutineFromAssessment,
     setRoutineFromAI,
     setAiGeneratedRoutine,

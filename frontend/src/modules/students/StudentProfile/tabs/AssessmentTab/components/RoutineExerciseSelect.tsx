@@ -2,7 +2,7 @@
 import { ChevronDown, Check, Dumbbell, Sparkles } from 'lucide-react'
 import type { RoutineRow } from '@/modules/students/aiRoutine'
 import { ROUTINE_MUSCLE_TO_CAT } from '@/modules/students/StudentProfileData'
-import { exerciseCatalog } from '@/data/exercises'
+import type { FrontendExercise } from '@/services/ejercicio.service'
 
 const ROUTINE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const meshInputBg = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'
@@ -12,14 +12,18 @@ interface RoutineExerciseSelectProps {
   row: RoutineRow
   routineViewMode: boolean
   open: boolean
+  exerciseCatalog: FrontendExercise[]
   onToggle: () => void
   onSelect: (name: string, muscle: string, sets: string, reps: string) => void
   onClose: () => void
 }
 
-export function RoutineExerciseSelect({ row, routineViewMode, open, onToggle, onSelect, onClose }: RoutineExerciseSelectProps) {
+export function RoutineExerciseSelect({ row, routineViewMode, open, exerciseCatalog, onToggle, onSelect, onClose }: RoutineExerciseSelectProps) {
   const category = ROUTINE_MUSCLE_TO_CAT[row.muscle] || row.muscle
-  const catExercises = exerciseCatalog.filter(e => (ROUTINE_MUSCLE_TO_CAT[e.muscle] || e.muscle) === category)
+  const catExercises = exerciseCatalog.filter(e => {
+    const primaryMuscle = e.muscleGroups[0] ?? ''
+    return (ROUTINE_MUSCLE_TO_CAT[primaryMuscle] || primaryMuscle) === category
+  })
   const hasCustom = row.name && !catExercises.some(e => e.name === row.name)
   return (
     <div className="relative">
@@ -68,7 +72,7 @@ export function RoutineExerciseSelect({ row, routineViewMode, open, onToggle, on
                   <button
                     key={ex.id}
                     type="button"
-                    onClick={() => onSelect(ex.name, ex.muscle, String(ex.sets), ex.reps)}
+                    onClick={() => onSelect(ex.name, ex.muscleGroups[0] ?? '', '3', '10-12')}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-[11px] font-medium transition-colors relative"
                     style={{
                       color: isActive ? '#FFFFFF' : 'rgba(0,0,0,0.6)',

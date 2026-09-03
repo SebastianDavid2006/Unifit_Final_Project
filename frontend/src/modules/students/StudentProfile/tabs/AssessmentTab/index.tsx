@@ -4,14 +4,15 @@ import { motion } from 'motion/react'
 import { AssessmentDashboard } from './components/AssessmentDashboard'
 import { AssessmentList } from './components/AssessmentList'
 import type { Dispatch, SetStateAction } from 'react'
-import { assessmentItems } from '@/modules/students/StudentProfileData'
+import type { AssessmentItem } from '@/services/valoracion.service'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
-
-type AssessmentItem = (typeof assessmentItems)[number]
 
 interface Props {
   canCreateValuation: boolean
   pagedAssessments: AssessmentItem[]
+  totalAssessments: number
+  ultimaRutina: string
+  proximaValoracion: string | null
   assessmentPage: number
   setAssessmentPage: Dispatch<SetStateAction<number>>
   assessmentTotalPages: number
@@ -29,6 +30,9 @@ interface Props {
 export function AssessmentTab({
   canCreateValuation,
   pagedAssessments,
+  totalAssessments,
+  ultimaRutina,
+  proximaValoracion,
   setAssessmentPage,
   assessmentTotalPages,
   assessmentCurrentPage,
@@ -51,6 +55,9 @@ export function AssessmentTab({
     >
       <AssessmentDashboard
         canCreateValuation={canCreateValuation}
+        totalAssessments={totalAssessments}
+        ultimaRutina={ultimaRutina}
+        proximaValoracion={proximaValoracion}
         setValuationStep={setValuationStep}
         setValuationSuccess={setValuationSuccess}
         setValuationViewMode={setValuationViewMode}
@@ -60,6 +67,7 @@ export function AssessmentTab({
 
       <AssessmentList
         pagedAssessments={pagedAssessments}
+        totalAssessments={totalAssessments}
         setAssessmentPage={setAssessmentPage}
         assessmentTotalPages={assessmentTotalPages}
         assessmentCurrentPage={assessmentCurrentPage}

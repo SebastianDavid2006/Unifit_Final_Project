@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import type { Machine } from '@/data/shared/types'
+import * as maquinaService from '@/services/maquina.service'
 
 interface MachineForm {
   name: string
@@ -10,7 +11,7 @@ interface MachineForm {
   muscleGroups: string[]
   recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
   observations: string
-  selectedIds: number[]
+  selectedIds: string[]
 }
 
 const defaultForm: MachineForm = {
@@ -19,8 +20,9 @@ const defaultForm: MachineForm = {
   recommendedLevel: 'principiante', observations: '', selectedIds: [],
 }
 
-export function useMachines(initialMachines: Machine[], search: string) {
-  const [machines, setMachines] = useState<Machine[]>(initialMachines)
+export function useMachines(search: string) {
+  const [machines, setMachines] = useState<Machine[]>([])
+  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editingMachine, setEditingMachine] = useState<Machine | null>(null)
   const [step, setStep] = useState(0)
@@ -28,7 +30,19 @@ export function useMachines(initialMachines: Machine[], search: string) {
   const [showConfirmClose, setShowConfirmClose] = useState(false)
   const [form, setForm] = useState<MachineForm>(defaultForm)
 
-  const nextId = useMemo(() => Math.max(...machines.map(m => m.id), 0) + 1, [machines])
+  const loadMachines = useCallback(async () => {
+    try {
+      setLoading(true)
+      const data = await maquinaService.getMaquinas()
+      setMachines(data)
+    } catch (err) {
+      console.error('Error loading machines:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadMachines() }, [loadMachines])
 
   const filtered = useMemo(() => {
     let list = machines
@@ -61,7 +75,7 @@ export function useMachines(initialMachines: Machine[], search: string) {
     setShowModal(true)
   }
 
-  function save() {
+  async function save() {
     if (!form.name.trim()) return null
     const data = {
       name: form.name.trim(),
@@ -74,16 +88,20 @@ export function useMachines(initialMachines: Machine[], search: string) {
       observations: form.observations.trim(),
       exerciseIds: form.selectedIds,
     }
-    let edited = false
-    if (editingMachine) {
-      setMachines(prev => prev.map(m =>
-        m.id === editingMachine.id ? { ...m, ...data } : m
-      ))
-      edited = true
-    } else {
-      setMachines(prev => [...prev, { id: nextId, ...data }])
+    try {
+      if (editingMachine) {
+        const updated = await maquinaService.editarMaquina(editingMachine.id, data)
+        setMachines(prev => prev.map(m => m.id === editingMachine.id ? updated : m))
+        return { edited: true, name: data.name }
+      } else {
+        const created = await maquinaService.crearMaquina(data)
+        setMachines(prev => [...prev, created])
+        return { edited: false, name: data.name }
+      }
+    } catch (err) {
+      console.error('Error saving machine:', err)
+      return null
     }
-    return { edited, name: data.name }
   }
 
   function closeModal() {
@@ -93,15 +111,20 @@ export function useMachines(initialMachines: Machine[], search: string) {
     setShowConfirmClose(false)
   }
 
-  function remove(id: number) {
-    setMachines(prev => prev.filter(m => m.id !== id))
+  async function remove(id: string) {
+    try {
+      await maquinaService.desactivarMaquina(id)
+      setMachines(prev => prev.filter(m => m.id !== id))
+    } catch (err) {
+      console.error('Error deactivating machine:', err)
+    }
   }
 
-  function changeStatus(id: number, status: Machine['status']) {
+  function changeStatus(id: string, status: Machine['status']) {
     setMachines(prev => prev.map(m => m.id === id ? { ...m, status } : m))
   }
 
-  function toggleExerciseSelection(id: number) {
+  function toggleExerciseSelection(id: string) {
     setForm(f => ({
       ...f,
       selectedIds: f.selectedIds.includes(id)
@@ -114,6 +137,7 @@ export function useMachines(initialMachines: Machine[], search: string) {
     machines,
     setMachines,
     filtered,
+    loading,
     showModal,
     setShowModal,
     editingMachine,
@@ -125,7 +149,6 @@ export function useMachines(initialMachines: Machine[], search: string) {
     setShowConfirmClose,
     form,
     setForm,
-    nextId,
     openAdd,
     openEdit,
     save,

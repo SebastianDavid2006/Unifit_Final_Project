@@ -1,15 +1,13 @@
 import { motion } from 'motion/react'
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
-import { assessmentItems } from '@/modules/students/StudentProfileData'
 import listImg from '@/assets/icons/objects/list.webp'
 import type { Dispatch, SetStateAction } from 'react'
-import type { ValuationForm } from '@/modules/students/StudentProfileData'
+import type { AssessmentItem } from '@/services/valoracion.service'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
-
-type AssessmentItem = (typeof assessmentItems)[number]
 
 interface AssessmentListProps {
   pagedAssessments: AssessmentItem[]
+  totalAssessments: number
   assessmentPage: number
   setAssessmentPage: Dispatch<SetStateAction<number>>
   assessmentTotalPages: number
@@ -21,6 +19,7 @@ interface AssessmentListProps {
 
 export function AssessmentList({
   pagedAssessments,
+  totalAssessments,
   setAssessmentPage,
   assessmentTotalPages,
   assessmentCurrentPage,
@@ -42,7 +41,7 @@ export function AssessmentList({
       <div className="space-y-2">
         {pagedAssessments.map((v, i) => {
           const isFirst = v.num === 1
-          const isLast = v.num === assessmentItems.length
+          const isLast = v.num === totalAssessments
           const status = isFirst ? 'Actual' : isLast ? 'Inicial' : 'Seguimiento'
           const statusColor = v.color
           const statusBg = statusColor === '#1270B7' ? 'rgba(18,112,183,0.12)' : statusColor === '#E63946' ? 'rgba(230,57,70,0.12)' : 'rgba(255,149,0,0.12)'

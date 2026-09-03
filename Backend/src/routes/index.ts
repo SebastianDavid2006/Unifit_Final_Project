@@ -5,6 +5,7 @@ import ejerciciosRoutes from './ejercicios.routes'
 import maquinasRoutes from './maquinas.routes'
 import usuarioRoutes from './usuario.routes'
 import valoracionRoutes from './valoracion.routes'
+import rutinaRoutes from './rutina.routes'
 
 const router = Router()
 
@@ -14,5 +15,6 @@ router.use(ejerciciosRoutes)
 router.use(maquinasRoutes)
 router.use(usuarioRoutes)
 router.use(valoracionRoutes)
+router.use(rutinaRoutes)
 
 export default router

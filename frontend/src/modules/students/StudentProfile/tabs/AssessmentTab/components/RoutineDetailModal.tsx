@@ -1,7 +1,6 @@
 ﻿import { motion } from 'motion/react'
 import { X, Dumbbell } from 'lucide-react'
 import { ModalShell } from '@/modules/students/StudentProfile/shared/components/ModalShell'
-import { routineExercises } from '@/modules/students/StudentProfileData'
 import { RoutineDayCard } from './RoutineDayCard'
 import type { AiRoutine } from '../../aiRoutine'
 
@@ -79,33 +78,8 @@ export function RoutineDetailModal({ isOpen, assessment, routine, viewRoutineDay
           )
         })()
       ) : (
-        <div className="space-y-2">
-          <div className="grid gap-3 px-1 mb-2" style={{ gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr' }}>
-            {['Ejercicio', 'Series', 'Repeticiones', 'Peso', 'Calorías'].map(h => (
-              <div key={h} className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{h}</div>
-            ))}
-          </div>
-          {routineExercises.map((ex, i) => (
-            <motion.div
-              key={ex.name}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.04 }}
-              className="grid gap-3 items-center px-3 py-2.5 rounded-xl"
-              style={{
-                gridTemplateColumns: '2fr 0.7fr 0.7fr 0.9fr 0.7fr',
-                background: i % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent',
-              }}
-            >
-              <div className="flex items-center gap-2.5">
-                <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.name}</span>
-              </div>
-              <span className="text-sm font-bold" style={{ color: '#0D1B2A' }}>{ex.sets}</span>
-              <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.reps}</span>
-              <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{ex.weight}</span>
-              <span className="text-sm" style={{ color: 'rgba(0,0,0,0.6)' }}>{ex.calories}</span>
-            </motion.div>
-          ))}
+        <div className="text-center py-8" style={{ color: 'rgba(0,0,0,0.4)' }}>
+          <p className="text-sm">Sin rutina asociada a esta valoración.</p>
         </div>
       )}
 

@@ -12,18 +12,15 @@ import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface AssessmentDashboardProps {
   canCreateValuation: boolean
+  totalAssessments: number
+  ultimaRutina: string
+  proximaValoracion: string | null
   setValuationStep: Dispatch<SetStateAction<number>>
   setValuationSuccess: (v: boolean) => void
   setValuationViewMode: (v: boolean) => void
   setValuationForm: Dispatch<SetStateAction<ValuationForm>>
   setShowNewValuationModal: (v: boolean) => void
 }
-
-const items = [
-  { label: 'Total de rutinas', value: `${4}`, model: 'list' },
-  { label: 'Última rutina realizada', value: '15 May 2026', model: 'calendar' },
-  { label: 'Fecha de la próxima valoración', value: '01 Ago 2026', model: 'calendar', highlight: true },
-]
 
 function getIcon(model: string) {
   const common = { width: 52, height: 52, objectFit: 'contain' as const }
@@ -35,6 +32,9 @@ function getIcon(model: string) {
 
 export function AssessmentDashboard({
   canCreateValuation,
+  totalAssessments,
+  ultimaRutina,
+  proximaValoracion,
   setValuationStep,
   setValuationSuccess,
   setValuationViewMode,
@@ -43,6 +43,11 @@ export function AssessmentDashboard({
 }: AssessmentDashboardProps) {
   const isMobile = useIsMobile()
   const cardCols = isMobile ? 'grid-cols-2' : (canCreateValuation ? 'grid-cols-4' : 'grid-cols-3')
+  const items = [
+    { label: 'Total de valoraciones', value: `${totalAssessments}`, model: 'list' },
+    { label: 'Última rutina realizada', value: ultimaRutina || 'N/A', model: 'calendar' },
+    { label: 'Fecha de la próxima valoración', value: proximaValoracion || 'N/A', model: 'calendar', highlight: true },
+  ]
   return (
     <div className={`grid ${cardCols} gap-4`}>
       {items.map((m) => {

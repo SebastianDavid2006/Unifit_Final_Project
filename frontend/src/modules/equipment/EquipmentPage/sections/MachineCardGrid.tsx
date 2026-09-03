@@ -46,7 +46,7 @@ export function MachineCardGrid({ machines, exercises, onPreview }: MachineCardG
                 style={{
                   objectFit: m.imageDataUrl ? 'cover' : 'contain',
                   objectPosition: m.imageDataUrl ? 'center' : 'bottom center',
-                  filter: m.imageDataUrl ? 'none' : `grayscale(${0.1 + (m.id * 0.05) % 0.5}) contrast(${0.8 + (m.id * 0.03) % 0.4})`,
+                  filter: m.imageDataUrl ? 'none' : `grayscale(${0.1 + (m.id.charCodeAt(0) % 5) * 0.1}) contrast(${0.8 + (m.id.charCodeAt(1) % 4) * 0.1})`,
                   padding: m.imageDataUrl ? 0 : '8px',
                 }}
               />

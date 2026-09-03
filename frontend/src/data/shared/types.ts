@@ -1,7 +1,7 @@
 export type Status = 'active' | 'maintenance' | 'inactive'
 
 export interface Exercise {
-  id: number
+  id: string
   name: string
   zone: string
   description: string
@@ -13,7 +13,7 @@ export interface Exercise {
 }
 
 export interface Machine {
-  id: number
+  id: string
   name: string
   zone: string
   status: Status
@@ -22,5 +22,5 @@ export interface Machine {
   muscleGroups: string[]
   recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
   observations: string
-  exerciseIds: number[]
+  exerciseIds: string[]
 }

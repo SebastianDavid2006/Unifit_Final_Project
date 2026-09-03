@@ -19,8 +19,10 @@ import coachMagicImg from '@/assets/illustrations/characters/coach/coach_magic.p
 import assessmentSceneImg from '@/assets/scenes/physical_assessment.webp'
 import routineSceneImg from '@/assets/scenes/physical_routine.webp'
 import { AiRoutine, RoutineRow } from '../aiRoutine'
-import { assessmentItems, cardStyle, emptyValuationForm, monthNames, numOnly } from '../StudentProfileData'
+import { cardStyle, emptyValuationForm, monthNames, numOnly } from '../StudentProfileData'
 import type { Student, ValuationForm } from '../StudentProfileData'
+import type { AssessmentItem } from '@/services/valoracion.service'
+import { getValoracionesPorUsuario, crearValoracion } from '@/services/valoracion.service'
 import { OverviewTab } from '@/modules/students/StudentProfile/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/StudentProfile/tabs/ProgressTab'
 import { AssessmentTab } from '@/modules/students/StudentProfile/tabs/AssessmentTab'
@@ -86,6 +88,8 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
   const [valuationSuccess, setValuationSuccess] = useState(false)
   const [valuationStep, setValuationStep] = useState(1)
   const [lastValuationObjectives, setLastValuationObjectives] = useState(0)
+  const [assessments, setAssessments] = useState<AssessmentItem[]>([])
+  const [loadingAssessments, setLoadingAssessments] = useState(true)
   const [valuationForm, setValuationForm] = useState({
     nivelActividad: '', objetivoTarjetas: [] as string[], objetivoDetalle: '',
     peso: '', estatura: '', imc: '', grasaCorporal: '',
@@ -99,46 +103,21 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
   const calendarNav = useCalendarNavigation({ monthNames })
   const meshInput = useMeshInput()
 
+  // Fetch assessments from backend
+  useEffect(() => {
+    if (!student.id) return
+    setLoadingAssessments(true)
+    getValoracionesPorUsuario(student.id)
+      .then(setAssessments)
+      .catch(() => setAssessments([]))
+      .finally(() => setLoadingAssessments(false))
+  }, [student.id])
+
 const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   const currentTab = tab ?? localTab
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
-
-  const {
-    numOnly: _numOnly,
-    loadAssessmentIntoForm,
-    cancelAiRoutine,
-    handleConfirmCancel,
-    startAiRoutine,
-    openRoutineFromAssessment,
-  } = useValuationManager({
-    student,
-    valuationForm,
-    setValuationForm,
-    confirmCancel,
-    setShowNewValuationModal,
-    setValuationSuccess,
-    setValuationStep,
-    setValuationViewMode,
-    setRoutineViewMode,
-    setRoutineFromAssessment,
-    setRoutineSnapshot,
-    setRoutineFromAI,
-    setAiGenerating,
-    setAiGenStep,
-    setAiGeneratedRoutine,
-    setRoutineForm,
-    setRoutineRows,
-    setSelectedRoutineDay,
-    setRoutineDayPage,
-    setRoutineDays,
-    setRoutineStep,
-    setRoutineSuccess,
-    setShowNewRoutineModal,
-    setConfirmCancel,
-    aiIntervalRef,
-  })
 
   const {
     WEEK_DAYS,
@@ -190,10 +169,46 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
     valuationDiasDisponibles: valuationForm.diasDisponibles,
   })
 
+  const {
+    numOnly: _numOnly,
+    loadAssessmentIntoForm,
+    cancelAiRoutine,
+    handleConfirmCancel,
+    startAiRoutine,
+    openRoutineFromAssessment,
+  } = useValuationManager({
+    student,
+    valuationForm,
+    setValuationForm,
+    confirmCancel,
+    setShowNewValuationModal,
+    setValuationSuccess,
+    setValuationStep,
+    setValuationViewMode,
+    setRoutineViewMode,
+    setRoutineFromAssessment,
+    setRoutineSnapshot,
+    setRoutineFromAI,
+    setAiGenerating,
+    setAiGenStep,
+    setAiGeneratedRoutine,
+    setRoutineForm,
+    setRoutineRows,
+    setSelectedRoutineDay,
+    setRoutineDayPage,
+    setRoutineDays,
+    setRoutineStep,
+    setRoutineSuccess,
+    setShowNewRoutineModal,
+    setConfirmCancel,
+    aiIntervalRef,
+    exerciseCatalog,
+  })
+
   const ASSESSMENT_PAGE_SIZE = 6
-  const assessmentTotalPages = Math.max(1, Math.ceil(assessmentItems.length / ASSESSMENT_PAGE_SIZE))
+  const assessmentTotalPages = Math.max(1, Math.ceil(assessments.length / ASSESSMENT_PAGE_SIZE))
   const assessmentCurrentPage = Math.min(assessmentPage, assessmentTotalPages)
-  const pagedAssessments = assessmentItems.slice((assessmentCurrentPage - 1) * ASSESSMENT_PAGE_SIZE, assessmentCurrentPage * ASSESSMENT_PAGE_SIZE)
+  const pagedAssessments = assessments.slice((assessmentCurrentPage - 1) * ASSESSMENT_PAGE_SIZE, assessmentCurrentPage * ASSESSMENT_PAGE_SIZE)
   const assessmentPageNumbers = Array.from({ length: assessmentTotalPages }, (_, i) => i + 1)
   const routineEdited = routineSnapshot !== '' && JSON.stringify({ form: routineForm, rows: routineRows }) !== routineSnapshot
 
@@ -238,6 +253,9 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                 <AssessmentTab
                   canCreateValuation={canCreateValuation}
                   pagedAssessments={pagedAssessments}
+                  totalAssessments={assessments.length}
+                  ultimaRutina={assessments[0]?.routine ?? ''}
+                  proximaValoracion={assessments[0]?.next ?? null}
                   assessmentPage={assessmentPage}
                   setAssessmentPage={setAssessmentPage}
                   assessmentTotalPages={assessmentTotalPages}
@@ -402,7 +420,17 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
             setAiGeneratedRoutine(null)
             setShowNewRoutineModal(true)
           }}
-          onSave={() => {
+          onSave={async () => {
+            try {
+              await crearValoracion({
+                ...valuationForm,
+                id_usuario: student.id,
+              })
+              const updated = await getValoracionesPorUsuario(student.id)
+              setAssessments(updated)
+            } catch (err) {
+              console.error('Error saving valuation:', err)
+            }
             setLastValuationObjectives(valuationForm.objetivoTarjetas.length)
             setValuationSuccess(true)
           }}
@@ -534,7 +562,29 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           meshInput={meshInput}
           onClose={() => setShowNewRoutineModal(false)}
           onRequestClose={() => setConfirmCancel('routine')}
-          onCreated={() => {
+          onCreated={async () => {
+            try {
+              const { crearRutina } = await import('@/services/rutina.service')
+              const exerciseMap = new Map(exerciseCatalog.map(e => [e.name, e.id]))
+              await crearRutina({
+                id_usuario: student.id,
+                nombre: routineForm.name || 'Rutina personalizada',
+                duracion: routineForm.duration || '8 semanas',
+                nivel: routineForm.level || 'Intermedio',
+                observaciones: routineForm.description || '',
+                ejercicios: routineRows
+                  .filter(r => r.name && exerciseMap.has(r.name))
+                  .map(r => ({
+                    id_ejercicio: exerciseMap.get(r.name)!,
+                    dia: r.dia,
+                    series: parseInt(r.sets) || 3,
+                    reps: r.reps || '10-12',
+                    rest: parseInt(r.rest) || 60,
+                  })),
+              })
+            } catch (err) {
+              console.error('Error saving routine:', err)
+            }
             setShowNewRoutineModal(false)
             setRoutineFromAssessment(false)
             setRoutineSnapshot('')

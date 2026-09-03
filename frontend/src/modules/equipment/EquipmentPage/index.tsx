@@ -1,7 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import type { Machine, Exercise } from '@/data/shared/types'
 import { BLUE, RED } from '@/data/shared/constants'
-import { initialMachines, initialExercises } from '@/data/shared/mockData'
 import { WeightsView } from '@/assets/models/ui/equipment/weights/WeightsModel'
 import { TrashView } from '@/assets/models/ui/actions/trash/TrashModel'
 import { PenView } from '@/assets/models/ui/actions/pen/PenModel'
@@ -30,8 +29,8 @@ interface Props {
 }
 
 export default function EquipmentPage(props: Props) {
-  const machine = useMachines(initialMachines, props.search)
-  const ex = useExercises(initialExercises)
+  const machine = useMachines(props.search)
+  const ex = useExercises()
   const createToast = useToast()
   const deleteToast = useToast()
   const editToast = useToast()
@@ -40,7 +39,7 @@ export default function EquipmentPage(props: Props) {
   const [previewMachine, setPreviewMachine] = useState<Machine | null>(null)
   const [previewMuscleFilter, setPreviewMuscleFilter] = useState<string>('all')
   const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'machine' | 'exercise'; id: number } | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'machine' | 'exercise'; id: string } | null>(null)
   const [pendingMachineToast, setPendingMachineToast] = useState<{ name: string; edited: boolean } | null>(null)
   const [pendingExerciseToast, setPendingExerciseToast] = useState<{ name: string } | null>(null)
 
@@ -77,15 +76,15 @@ export default function EquipmentPage(props: Props) {
     }
   }, [ex.showModal])
 
-  function handleSaveMachine() {
-    const result = machine.save()
+  async function handleSaveMachine() {
+    const result = await machine.save()
     if (!result) return
     machine.setShowSuccess(true)
     setPendingMachineToast({ name: result.name, edited: result.edited })
   }
 
-  function handleSaveExercise() {
-    const result = ex.save()
+  async function handleSaveExercise() {
+    const result = await ex.save()
     if (!result) return
     if (result.wasNew) {
       ex.setAskCreateAnother(true)
@@ -100,17 +99,17 @@ export default function EquipmentPage(props: Props) {
     ex.setCreatedCount(0)
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!deleteConfirm) return
     const name = deleteConfirm.type === 'machine'
       ? machine.machines.find(m => m.id === deleteConfirm.id)?.name
       : ex.exercises.find(e => e.id === deleteConfirm.id)?.name
     if (deleteConfirm.type === 'machine') {
-      machine.remove(deleteConfirm.id)
+      await machine.remove(deleteConfirm.id)
       setPreviewMachine(null)
       if (name) deleteToast.trigger(name)
     } else {
-      ex.remove(deleteConfirm.id)
+      await ex.remove(deleteConfirm.id)
       setPreviewExercise(null)
     }
     setDeleteConfirm(null)

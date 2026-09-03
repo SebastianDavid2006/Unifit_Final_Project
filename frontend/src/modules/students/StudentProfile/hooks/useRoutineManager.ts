@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import type { RoutineRow } from '../../aiRoutine'
-import { exerciseCatalog } from '@/data/exercises'
-import { routineExercises, ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from '../../StudentProfileData'
+import { getEjercicios, type FrontendExercise } from '@/services/ejercicio.service'
+import { ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from '../../StudentProfileData'
 
 const WEEK_DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const ROUTINE_DAY_PAGE_SIZE = 6
@@ -61,6 +61,12 @@ export function useRoutineManager(deps: UseRoutineManagerDeps) {
     valuationDiasDisponibles,
   } = deps
 
+  const [exerciseCatalog, setExerciseCatalog] = useState<FrontendExercise[]>([])
+
+  useEffect(() => {
+    getEjercicios().then(setExerciseCatalog).catch(console.error)
+  }, [])
+
   const sourceDays = valuationDiasDisponibles.length > 0 ? valuationDiasDisponibles : routineRows.map(r => r.dia)
 
   const routineDayList = useMemo(() => {
@@ -112,22 +118,22 @@ export function useRoutineManager(deps: UseRoutineManagerDeps) {
       setRoutineDays(d => [...d, day])
       if (!routineRows.some(r => r.dia === day)) {
         const stamp = Date.now()
-        const defaults = routineExercises.slice(0, 2).map((ex, ei) => ({
+        const defaults = exerciseCatalog.slice(0, 2).map((ex, ei) => ({
           id: `ad-${stamp}-${ei}`,
           dia: day,
-          muscle: ex.muscle,
+          muscle: ex.muscleGroups[0] ?? '',
           name: ex.name,
-          sets: String(ex.sets),
-          reps: ex.reps,
+          sets: '3',
+          reps: '10-12',
           rest: '60 s',
-          weight: ex.weight,
+          weight: '',
         }))
         setRoutineRows(p => [...p, ...defaults])
       }
       setSelectedRoutineDay(day)
       setShowAddDayMenu(false)
     },
-    [routineRows, setRoutineDays, setRoutineRows, setSelectedRoutineDay, setShowAddDayMenu]
+    [exerciseCatalog, routineRows, setRoutineDays, setRoutineRows, setSelectedRoutineDay, setShowAddDayMenu]
   )
 
   const removeRoutineDay = useCallback(

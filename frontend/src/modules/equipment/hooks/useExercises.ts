@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import type { Exercise } from '@/data/shared/types'
 import { muscleToZones } from '@/data/shared/constants'
+import * as ejercicioService from '@/services/ejercicio.service'
 
 interface ExForm {
   name: string
@@ -19,8 +20,9 @@ const defaultForm: ExForm = {
   imageUrl: '', videoUrl: '',
 }
 
-export function useExercises(initialExercises: Exercise[]) {
-  const [exercises, setExercises] = useState<Exercise[]>(initialExercises)
+export function useExercises() {
+  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Exercise | null>(null)
   const [step, setStep] = useState(0)
@@ -31,7 +33,19 @@ export function useExercises(initialExercises: Exercise[]) {
   const [form, setForm] = useState<ExForm>(defaultForm)
   const [filterZone, setFilterZone] = useState('')
 
-  const nextId = useMemo(() => Math.max(...exercises.map(e => e.id), 0) + 1, [exercises])
+  const loadExercises = useCallback(async () => {
+    try {
+      setLoading(true)
+      const data = await ejercicioService.getEjercicios()
+      setExercises(data)
+    } catch (err) {
+      console.error('Error loading exercises:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadExercises() }, [loadExercises])
 
   const zones = useMemo(() => [...new Set(exercises.map(e => e.zone))], [exercises])
 
@@ -60,7 +74,7 @@ export function useExercises(initialExercises: Exercise[]) {
     })
   }
 
-  function save() {
+  async function save() {
     if (!form.name.trim()) return null
     const zoneFromGroups = form.muscleGroups.length > 0
       ? (form.muscleGroups.includes('General') ? [...new Set(['Cardio', 'Pesas Libres'])] : form.muscleGroups.flatMap(g => muscleToZones[g] || []))
@@ -72,22 +86,31 @@ export function useExercises(initialExercises: Exercise[]) {
       muscleGroups: form.muscleGroups, recommendedLevel: form.recommendedLevel,
       imageUrl: form.imageUrl, videoUrl: form.videoUrl,
     }
-    let edited = false
-    if (!editing) {
-      setExercises(prev => [...prev, { id: nextId, ...data }])
-      setCreatedCount(c => c + 1)
-      setAskCreateAnother(true)
-    } else {
-      setExercises(prev => prev.map(e =>
-        e.id === editing.id ? { ...e, ...data } : e
-      ))
-      edited = true
+    try {
+      if (!editing) {
+        const created = await ejercicioService.crearEjercicio(data)
+        setExercises(prev => [...prev, created])
+        setCreatedCount(c => c + 1)
+        setAskCreateAnother(true)
+        return { edited: false, name: data.name, wasNew: true }
+      } else {
+        const updated = await ejercicioService.editarEjercicio(editing.id, data)
+        setExercises(prev => prev.map(e => e.id === editing.id ? updated : e))
+        return { edited: true, name: data.name, wasNew: false }
+      }
+    } catch (err) {
+      console.error('Error saving exercise:', err)
+      return null
     }
-    return { edited, name: data.name, wasNew: !editing }
   }
 
-  function remove(id: number) {
-    setExercises(prev => prev.filter(e => e.id !== id))
+  async function remove(id: string) {
+    try {
+      await ejercicioService.desactivarEjercicio(id)
+      setExercises(prev => prev.filter(e => e.id !== id))
+    } catch (err) {
+      console.error('Error deactivating exercise:', err)
+    }
   }
 
   function closeModal() {
@@ -103,6 +126,7 @@ export function useExercises(initialExercises: Exercise[]) {
     setExercises,
     filtered,
     zones,
+    loading,
     showModal,
     setShowModal,
     editing,
@@ -117,7 +141,6 @@ export function useExercises(initialExercises: Exercise[]) {
     setConfirmClose,
     form,
     setForm,
-    nextId,
     filterZone,
     setFilterZone,
     openAdd,

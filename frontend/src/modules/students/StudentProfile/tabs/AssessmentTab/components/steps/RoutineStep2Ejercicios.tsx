@@ -3,6 +3,7 @@ import { Plus, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import calendarImg from '@/assets/icons/objects/calendar.webp'
 import { meshInputBg } from '@/data/shared/constants'
 import type { RoutineRow, AiRoutine } from '@/modules/students/aiRoutine'
+import type { FrontendExercise } from '@/services/ejercicio.service'
 import { RoutineDayCard } from '../RoutineDayCard'
 import { RoutineCategorySelect } from '../RoutineCategorySelect'
 import { RoutineExerciseSelect } from '../RoutineExerciseSelect'
@@ -15,10 +16,10 @@ interface RoutineStep2EjerciciosProps {
   selectedRoutineDay: string | null
   setSelectedRoutineDay: (d: string | null) => void
   routineDayPage: number
-  setRoutineDayPage: (p: number) => void
+  setRoutineDayPage: (p: number | ((prev: number) => number)) => void
   setRoutineSnapshot: (s: string) => void
   showAddDayMenu: boolean
-  setShowAddDayMenu: (v: boolean) => void
+  setShowAddDayMenu: (v: boolean | ((prev: boolean) => boolean)) => void
   routineDropdown: { id: string; field: 'muscle' | 'exercise' } | null
   setRoutineDropdown: (d: { id: string; field: 'muscle' | 'exercise' } | null) => void
   WEEK_DAYS: string[]
@@ -33,7 +34,7 @@ interface RoutineStep2EjerciciosProps {
   addRoutineRow: (day?: string) => void
   addRoutineDay: (day: string) => void
   removeRoutineDay: (day: string) => void
-  exerciseCatalog: { muscle: string; name: string }[]
+  exerciseCatalog: FrontendExercise[]
   ROUTINE_MUSCLE_TO_CAT: Record<string, string>
   meshInput: {
     enterMesh: (el: HTMLElement) => void
@@ -69,7 +70,7 @@ function ExerciseRow({
   removeRoutineRow: (id: string) => void
   routineDropdown: { id: string; field: 'muscle' | 'exercise' } | null
   setRoutineDropdown: (d: { id: string; field: 'muscle' | 'exercise' } | null) => void
-  exerciseCatalog: { muscle: string; name: string }[]
+  exerciseCatalog: FrontendExercise[]
   ROUTINE_MUSCLE_TO_CAT: Record<string, string>
   meshInput: {
     enterMesh: (el: HTMLElement) => void
@@ -98,7 +99,10 @@ function ExerciseRow({
               open={routineDropdown?.id === row.id && routineDropdown.field === 'muscle'}
               onToggle={() => { if (!routineViewMode) setRoutineDropdown(routineDropdown?.id === row.id && routineDropdown.field === 'muscle' ? null : { id: row.id, field: 'muscle' }) }}
               onSelect={(m) => {
-                const nameInNewCat = exerciseCatalog.some(x => (ROUTINE_MUSCLE_TO_CAT[x.muscle] || x.muscle) === m && x.name === row.name)
+                const nameInNewCat = exerciseCatalog.some(x => {
+                  const muscle = x.muscleGroups[0] ?? ''
+                  return (ROUTINE_MUSCLE_TO_CAT[muscle] || muscle) === m && x.name === row.name
+                })
                 updateRoutineRow(row.id, {
                   muscle: m,
                   name: nameInNewCat ? row.name : '',
@@ -116,6 +120,7 @@ function ExerciseRow({
               row={row}
               routineViewMode={routineViewMode}
               open={routineDropdown?.id === row.id && routineDropdown.field === 'exercise'}
+              exerciseCatalog={exerciseCatalog}
               onToggle={() => { if (!routineViewMode) setRoutineDropdown(routineDropdown?.id === row.id && routineDropdown.field === 'exercise' ? null : { id: row.id, field: 'exercise' }) }}
               onSelect={(name, muscle, sets, reps) => {
                 updateRoutineRow(row.id, { name, muscle, sets, reps })
@@ -137,68 +142,67 @@ function ExerciseRow({
           </motion.button>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-2 mt-2" style={{ paddingLeft: 34 }}>
-        <div>
-          <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Series</label>
+      <div className="flex items-center justify-center gap-10 mt-2" style={{ paddingLeft: 34 }}>
+        <div className="flex flex-col items-start" style={{ minWidth: 48 }}>
+          <span className="text-[9px] font-bold mb-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Series</span>
           <input
             value={row.sets}
             readOnly={routineViewMode}
             onChange={e => updateRoutineRow(row.id, { sets: e.target.value })}
-            placeholder="Series"
+            placeholder="3"
             onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
             onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
             onFocus={e => meshInput.focusMesh(e.currentTarget)}
             onBlur={e => meshInput.blurMesh(e.currentTarget)}
-            className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+            className="w-30 px-1.5 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
             style={INPUT_STYLE.base}
           />
         </div>
-        <div>
-          <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Reps</label>
+        <div className="flex-none">
+          <span className="text-[9px] font-bold mb-0.5 block" style={{ color: 'rgba(0,0,0,0.35)' }}>Reps</span>
           <div className="flex items-center gap-1">
+            <span className="text-[9px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>min:</span>
             <input
               value={(row.reps.split('-')[0] ?? '').trim()}
               readOnly={routineViewMode}
               onChange={e => updateRoutineRow(row.id, { reps: `${e.target.value}-${(row.reps.split('-')[1] ?? '').trim()}` })}
-              placeholder="Mín"
               onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
               onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
               onFocus={e => meshInput.focusMesh(e.currentTarget)}
               onBlur={e => meshInput.blurMesh(e.currentTarget)}
-              className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+              className="w-18 px-1.5 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
               style={INPUT_STYLE.base}
             />
-            <span className="text-[11px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>–</span>
+            <span className="text-[9px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>max:</span>
             <input
               value={(row.reps.split('-')[1] ?? '').trim()}
               readOnly={routineViewMode}
               onChange={e => updateRoutineRow(row.id, { reps: `${(row.reps.split('-')[0] ?? '').trim()}-${e.target.value}` })}
-              placeholder="Máx"
               onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
               onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
               onFocus={e => meshInput.focusMesh(e.currentTarget)}
               onBlur={e => meshInput.blurMesh(e.currentTarget)}
-              className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+              className="w-18 px-1.5 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
               style={INPUT_STYLE.base}
             />
           </div>
         </div>
-        <div>
-          <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Descanso</label>
+        <div className="flex flex-col items-start" style={{ minWidth: 104 }}>
+          <span className="text-[9px] font-bold mb-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Descanso</span>
           <div className="flex items-center gap-1">
             <input
               value={row.rest.replace(/[^\d]/g, '')}
               readOnly={routineViewMode}
-              onChange={e => updateRoutineRow(row.id, { rest: e.target.value ? `${e.target.value} s` : '' })}
-              placeholder="Segundos"
+              onChange={e => updateRoutineRow(row.id, { rest: e.target.value ? `${e.target.value} seg` : '' })}
+              placeholder="0"
               onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
               onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
               onFocus={e => meshInput.focusMesh(e.currentTarget)}
               onBlur={e => meshInput.blurMesh(e.currentTarget)}
-              className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
+              className="w-30 px-1.5 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
               style={INPUT_STYLE.base}
             />
-            <span className="text-[11px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>s</span>
+            <span className="text-[10px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>seg</span>
           </div>
         </div>
       </div>
@@ -363,7 +367,7 @@ export function RoutineStep2Ejercicios({
         }
         const dayRows = routineRows.filter(r => r.dia === activeDay)
         return (
-          <div className="rounded-2xl p-4 space-y-2.5 overflow-y-auto flex-1 min-h-0"
+          <div className="rounded-2xl p-4 space-y-2.5 overflow-y-auto flex-1 min-h-0 w-full"
             style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)', maxHeight: 'calc(86vh - 320px)', minHeight: 200, scrollbarWidth: 'thin' }}>
             <div className="flex items-center justify-between sticky top-0 pt-0.5 pb-1" style={{ background: 'rgba(0,0,0,0.02)' }}>
               <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{dayRows.length} ejercicio{dayRows.length !== 1 ? 's' : ''}</span>

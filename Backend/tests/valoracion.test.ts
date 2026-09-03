@@ -30,13 +30,19 @@ beforeAll(async () => {
 
   await prisma.datosMedicos.deleteMany()
   await prisma.medidasCorporales.deleteMany()
+  await prisma.sesionRutina.deleteMany()
+  await prisma.rutinaEjercicio.deleteMany()
+  await prisma.rutina.deleteMany()
   await prisma.valoracion.deleteMany()
 })
 
 afterAll(async () => {
-  await prisma.usuario.update({ where: { id_usuario: directoId }, data: { parq_realizado: originalParqDirecto } })
+  if (directoId) await prisma.usuario.update({ where: { id_usuario: directoId }, data: { parq_realizado: originalParqDirecto } }).catch(() => {})
   await prisma.datosMedicos.deleteMany()
   await prisma.medidasCorporales.deleteMany()
+  await prisma.sesionRutina.deleteMany()
+  await prisma.rutinaEjercicio.deleteMany()
+  await prisma.rutina.deleteMany()
   await prisma.valoracion.deleteMany()
 })
 
@@ -78,10 +84,26 @@ describe('Valoración - CRUD', () => {
     valoracionId = res.body.id_valoracion
   })
 
-  it('POST /valoraciones - entrenador crea segunda valoración (seguimiento)', async () => {
+  it('POST /valoraciones - entrenador no puede crear valoración (403)', async () => {
     const res = await request(app)
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('entrenadorToken')}`)
+      .send({
+        id_usuario: directoId,
+        nivel_actividad: 'ligero',
+        objetivos: ['salud'],
+        tipo_antecedentes: ['cardiovascular'],
+        observaciones_antecedentes: 'Controlar presión',
+        dias_disponibles: ['martes', 'jueves'],
+      })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('POST /valoraciones - admin crea segunda valoración (seguimiento)', async () => {
+    const res = await request(app)
+      .post('/api/valoraciones')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
         nivel_actividad: 'ligero',
@@ -165,7 +187,7 @@ describe('Valoración - CRUD', () => {
     expect(res.body.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('PUT /valoraciones/:id - entrenador puede editar', async () => {
+  it('PUT /valoraciones/:id - entrenador no puede editar (403)', async () => {
     const res = await request(app)
       .put(`/api/valoraciones/${valoracionId}`)
       .set('Authorization', `Bearer ${token('entrenadorToken')}`)
@@ -174,8 +196,7 @@ describe('Valoración - CRUD', () => {
         observaciones_finales: 'Actualización de rutina',
       })
 
-    expect(res.status).toBe(200)
-    expect(res.body.nivel_actividad).toBe('muy_activo')
+    expect(res.status).toBe(403)
   })
 
   it('PUT /valoraciones/:id/desactivar - solo admin puede desactivar', async () => {
@@ -254,20 +275,21 @@ describe('Valoración - Tipo calculado (inicial/seguimiento/actual)', () => {
 })
 
 describe('Valoración - Escalabilidad horizontal (cross-user)', () => {
-  it('GET /valoraciones/usuario/:id - entrenador no puede ver valoraciones de usuario (403)', async () => {
+  it('GET /valoraciones/usuario/:id - entrenador puede ver valoraciones de usuario', async () => {
     const res = await request(app)
       .get(`/api/valoraciones/usuario/${directoId}`)
       .set('Authorization', `Bearer ${token('entrenadorToken')}`)
 
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
   })
 
-  it('GET /valoraciones/:id - entrenador no puede ver valoración de usuario (403)', async () => {
+  it('GET /valoraciones/:id - entrenador puede ver valoración de usuario', async () => {
     const res = await request(app)
       .get(`/api/valoraciones/${valoracionId}`)
       .set('Authorization', `Bearer ${token('entrenadorToken')}`)
 
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(200)
   })
 })
 

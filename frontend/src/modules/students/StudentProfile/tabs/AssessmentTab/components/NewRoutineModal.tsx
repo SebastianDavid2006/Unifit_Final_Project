@@ -4,6 +4,7 @@ import editGif from '@/assets/icons/animated/actions/edit.gif'
 import calendarImg from '@/assets/icons/objects/calendar.webp'
 import { meshInputBg } from '@/data/shared/constants'
 import type { AiRoutine, RoutineRow } from '@/modules/students/aiRoutine'
+import type { FrontendExercise } from '@/services/ejercicio.service'
 import { RoutineDayCard } from './RoutineDayCard'
 import { RoutineCategorySelect } from './RoutineCategorySelect'
 import { RoutineExerciseSelect } from './RoutineExerciseSelect'
@@ -54,7 +55,7 @@ interface NewRoutineModalProps {
   addRoutineRow: (day?: string) => void
   addRoutineDay: (day: string) => void
   removeRoutineDay: (day: string) => void
-  exerciseCatalog: { muscle: string; name: string }[]
+  exerciseCatalog: FrontendExercise[]
   ROUTINE_MUSCLE_TO_CAT: Record<string, string>
   meshInput: MeshInput
   onClose: () => void

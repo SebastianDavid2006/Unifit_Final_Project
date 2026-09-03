@@ -461,7 +461,7 @@ model Rutina {
   id_rutina          String           @id @default(uuid())
   id_usuario         String
   id_creador         String
-  id_valoracion      String?          @unique
+  id_valoracion      String           @unique
   nombre             String
   duracion           RutinaDuracion?
   nivel              NivelExperiencia @default(principiante)
@@ -472,7 +472,7 @@ model Rutina {
 
   usuario    Usuario           @relation("RutinaUsuario", fields: [id_usuario], references: [id_usuario])
   creador    Usuario           @relation("RutinaCreador", fields: [id_creador], references: [id_usuario])
-  valoracion Valoracion?       @relation(fields: [id_valoracion], references: [id_valoracion])
+  valoracion Valoracion       @relation(fields: [id_valoracion], references: [id_valoracion])
   ejercicios RutinaEjercicio[]
   sesiones   SesionRutina[]
 }

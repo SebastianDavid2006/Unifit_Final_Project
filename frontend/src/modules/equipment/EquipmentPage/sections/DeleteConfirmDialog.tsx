@@ -3,7 +3,7 @@ import { TrashView } from '@/assets/models/ui/actions/trash/TrashModel'
 import { RED } from '@/data/shared/constants'
 
 interface DeleteConfirmDialogProps {
-  confirm: { type: 'machine' | 'exercise'; id: number } | null
+  confirm: { type: 'machine' | 'exercise'; id: string } | null
   onCancel: () => void
   onConfirm: () => void
 }
