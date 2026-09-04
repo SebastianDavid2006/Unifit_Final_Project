@@ -5,8 +5,12 @@ import type { Prisma } from '@prisma/client'
 
 type Tx = Prisma.TransactionClient
 
-const SENSOR_SLOTS_MAX = 100
+const SENSOR_SLOTS_MAX = 250
 const ENROLAMIENTO_TIMEOUT_MIN = 10
+
+function logBiometria(msg: string, data?: any) {
+  console.log(`[BIOMETRIA] ${new Date().toISOString()} | ${msg}`, data ?? '')
+}
 
 export async function iniciarEnrolamiento(idUsuario: string) {
   const usuario = await prisma.usuario.findUnique({
@@ -18,36 +22,50 @@ export async function iniciarEnrolamiento(idUsuario: string) {
   const huellaExistente = await prisma.huella.findUnique({
     where: { id_usuario: idUsuario },
   })
-  if (huellaExistente && huellaExistente.activo) {
-    throw new HttpError(409, 'El usuario ya tiene una huella registrada. Use actualizar si desea reemplazarla.')
-  }
 
-  const slotsOcupados = await prisma.huella.findMany({
-    select: { indice_sensor: true },
-  })
-  const ocupados = new Set(slotsOcupados.map((h) => h.indice_sensor))
-  let indiceSensor = 1
-  while (ocupados.has(indiceSensor) && indiceSensor <= SENSOR_SLOTS_MAX) {
-    indiceSensor++
-  }
-  if (indiceSensor > SENSOR_SLOTS_MAX) {
-    throw new HttpError(507, 'No hay slots disponibles en el sensor AS608')
+  logBiometria('iniciarEnrolamiento', { idUsuario, huellaExistente: huellaExistente ? { id_huella: huellaExistente.id_huella, indice_sensor: huellaExistente.indice_sensor, activo: huellaExistente.activo, paso_enrolamiento: huellaExistente.paso_enrolamiento, fecha_creacion: huellaExistente.fecha_creacion } : null })
+
+  // Se reutiliza slot en caso de actualizar huella
+  let indiceSensor: number
+  if (huellaExistente && huellaExistente.indice_sensor) {
+    indiceSensor = huellaExistente.indice_sensor
+    logBiometria('Reutilizando slot existente', { idUsuario, indiceSensor })
+  } else {
+    const slotsOcupados = await prisma.huella.findMany({
+      where: { activo: true },
+      select: { indice_sensor: true },
+    })
+    const ocupados = new Set(slotsOcupados.map((h) => h.indice_sensor))
+    indiceSensor = 1
+    while (ocupados.has(indiceSensor) && indiceSensor <= SENSOR_SLOTS_MAX) {
+      indiceSensor++
+    }
+    if (indiceSensor > SENSOR_SLOTS_MAX) {
+      throw new HttpError(507, 'No hay slots disponibles en el sensor AS608')
+    }
+    logBiometria('Nuevo slot asignado', { idUsuario, indiceSensor, slotsOcupados: Array.from(ocupados) })
   }
 
   const huella = await prisma.huella.upsert({
     where: { id_usuario: idUsuario },
-    update: { indice_sensor: indiceSensor, activo: false },
-    create: { id_usuario: idUsuario, indice_sensor: indiceSensor, activo: false },
+    update: { indice_sensor: indiceSensor, activo: false, paso_enrolamiento: 1 },
+    create: { id_usuario: idUsuario, indice_sensor: indiceSensor, activo: false, paso_enrolamiento: 1 },
   })
+
+  logBiometria('Enrolamiento creado/actualizado', { idUsuario, id_huella: huella.id_huella, indice_sensor: huella.indice_sensor, activo: huella.activo, paso_enrolamiento: huella.paso_enrolamiento })
 
   return { indice_sensor: huella.indice_sensor }
 }
 
-export async function registrarHuellaDesdeSensor(idUsuario: string, indiceSensor: number, templateHuella: string) {
+export async function registrarHuellaDesdeSensor(idUsuario: string, indiceSensor: number) {
+  logBiometria('registrarHuellaDesdeSensor INICIO', { idUsuario, indiceSensor })
+
   return prisma.$transaction(async (tx: Tx) => {
     const huella = await tx.huella.findUnique({
       where: { id_usuario: idUsuario },
     })
+
+    logBiometria('registrarHuellaDesdeSensor - huella encontrada', { idUsuario, huella: huella ? { id_huella: huella.id_huella, indice_sensor: huella.indice_sensor, activo: huella.activo, paso_enrolamiento: huella.paso_enrolamiento } : null })
 
     if (!huella) {
       throw new HttpError(404, 'No hay enrolamiento pendiente para este usuario. Inicie enrolamiento primero.')
@@ -62,8 +80,11 @@ export async function registrarHuellaDesdeSensor(idUsuario: string, indiceSensor
       data: {
         indice_sensor: indiceSensor,
         activo: true,
+        paso_enrolamiento: null,
       },
     })
+
+    logBiometria('registrarHuellaDesdeSensor - huella ACTIVADA', { idUsuario, id_huella: actualizada.id_huella, indice_sensor: actualizada.indice_sensor, activo: actualizada.activo })
 
     await verificarYActivarSiCompleto(tx, idUsuario)
 
@@ -74,9 +95,13 @@ export async function registrarHuellaDesdeSensor(idUsuario: string, indiceSensor
 export async function obtenerHuellasPendientes() {
   const limite = new Date(Date.now() - ENROLAMIENTO_TIMEOUT_MIN * 60 * 1000)
 
-  await prisma.huella.deleteMany({
+  const borrados = await prisma.huella.deleteMany({
     where: { activo: false, fecha_creacion: { lt: limite } },
   })
+
+  if (borrados.count > 0) {
+    logBiometria('obtenerHuellasPendientes - EXPIRADOS BORRADOS', { count: borrados.count, limite: limite.toISOString() })
+  }
 
   return prisma.huella.findMany({
     where: { activo: false, fecha_creacion: { gte: limite } },
@@ -97,6 +122,7 @@ export async function obtenerEstadoHuella(idUsuario: string) {
       indice_sensor: true,
       activo: true,
       fecha_creacion: true,
+      paso_enrolamiento: true,
     },
   })
 
@@ -124,5 +150,16 @@ export async function listarHuellas() {
       },
     },
     orderBy: { fecha_creacion: 'desc' },
+  })
+}
+
+export async function actualizarPasoEnrolamiento(idUsuario: string, paso: number): Promise<void> {
+  const huella = await prisma.huella.findUnique({ where: { id_usuario: idUsuario } })
+  if (!huella) throw new HttpError(404, 'No hay enrolamiento pendiente para este usuario')
+  if (huella.activo) throw new HttpError(409, 'El usuario ya tiene huella activa')
+  if (paso < 1 || paso > 3) throw new HttpError(400, 'Paso inválido (1-3)')
+  await prisma.huella.update({
+    where: { id_usuario: idUsuario },
+    data: { paso_enrolamiento: paso },
   })
 }

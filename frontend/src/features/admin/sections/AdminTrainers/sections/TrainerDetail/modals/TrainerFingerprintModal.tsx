@@ -1,45 +1,90 @@
-﻿import { useState, useEffect } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, RefreshCw, ScanLine } from 'lucide-react'
 import type { Trainer } from '@/data/trainers'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
 import { BLUE_GRAD, GREEN_BLUE_GRAD, GREEN } from '../../../data'
+import { iniciarEnrolamiento, obtenerEstadoHuella } from '@/services/biometria.service'
+import { mensajeError } from '@/lib/api'
+
+type EnrollStep = 1 | 2 | 3
+
+const STEP_MESSAGES: Record<EnrollStep, string> = {
+  1: 'Coloca tu dedo sobre el sensor...',
+  2: 'Retira el dedo y espera...',
+  3: 'Vuelve a acercar tu dedo (acerca nuevamente la huella)...',
+}
 
 interface TrainerFingerprintModalProps {
   isOpen: boolean
   trainer: Trainer
   huella: string | null
   onClose: () => void
-  onCapture: () => void
 }
 
-export function TrainerFingerprintModal({ isOpen, trainer, huella, onClose, onCapture }: TrainerFingerprintModalProps) {
+export function TrainerFingerprintModal({ isOpen, trainer, huella, onClose }: TrainerFingerprintModalProps) {
   const [fingerprintStatus, setFingerprintStatus] = useState<'idle' | 'scanning' | 'captured'>('idle')
   const [fingerprintSuccess, setFingerprintSuccess] = useState(false)
+  const [fpStep, setFpStep] = useState<EnrollStep | null>(null)
+  const [fpError, setFpError] = useState('')
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [showFingerprintModal, setShowFingerprintModal] = useState(isOpen)
+
+  useEffect(() => () => {
+    if (pollingRef.current) clearInterval(pollingRef.current)
+  }, [])
 
   useEffect(() => {
     setShowFingerprintModal(isOpen)
     if (isOpen) {
       setFingerprintStatus(huella ? 'captured' : 'idle')
       setFingerprintSuccess(false)
+      setFpStep(null)
+      setFpError('')
     }
   }, [isOpen, huella])
 
   if (!showFingerprintModal) return null
 
   const handleReset = () => {
+    if (pollingRef.current) clearInterval(pollingRef.current)
+    pollingRef.current = null
     setShowFingerprintModal(false)
     onClose()
     setFingerprintStatus('idle')
     setFingerprintSuccess(false)
+    setFpStep(null)
+    setFpError('')
   }
 
-  const handleStartScan = () => {
-    onCapture?.()
-    setFingerprintStatus('scanning')
-    setTimeout(() => setFingerprintStatus('captured'), 5000)
+  const handleStartScan = async () => {
+    setFpError('')
+    setFpStep(null)
+    try {
+      await iniciarEnrolamiento(trainer.id)
+      setFingerprintStatus('scanning')
+      pollingRef.current = setInterval(async () => {
+        try {
+          const estado = await obtenerEstadoHuella(trainer.id)
+          if (estado.huella?.paso_enrolamiento) {
+            setFpStep(estado.huella.paso_enrolamiento as EnrollStep)
+          }
+          if (estado.tiene_huella) {
+            if (pollingRef.current) clearInterval(pollingRef.current)
+            pollingRef.current = null
+            setFingerprintStatus('captured')
+          }
+        } catch {
+          if (pollingRef.current) clearInterval(pollingRef.current)
+          pollingRef.current = null
+          setFpError('Error al verificar estado de la huella')
+          setFingerprintStatus('idle')
+        }
+      }, 2000)
+    } catch (err) {
+      setFpError(mensajeError(err))
+    }
   }
 
   const handleNext = () => {
@@ -156,8 +201,9 @@ export function TrainerFingerprintModal({ isOpen, trainer, huella, onClose, onCa
 
                 <div className="mt-6 text-center">
                   {fingerprintStatus === 'idle' && <p className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.4)' }}>Coloca tu dedo sobre el sensor para capturar tu huella digital.</p>}
-                  {fingerprintStatus === 'scanning' && <motion.div className="flex items-center gap-2 justify-center" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><RefreshCw size={16} color={GREEN} /></motion.div><span className="text-xs font-medium" style={{ color: GREEN }}>Escaneando huella...</span></motion.div>}
+                  {fingerprintStatus === 'scanning' && <motion.div className="flex items-center gap-2 justify-center" animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}><RefreshCw size={16} color={GREEN} /></motion.div><span className="text-xs font-medium" style={{ color: GREEN }}>{fpStep ? STEP_MESSAGES[fpStep] : 'Escaneando huella...'}</span></motion.div>}
                   {fingerprintStatus === 'captured' && <p className="text-xs font-medium" style={{ color: GREEN }}>Huella capturada exitosamente</p>}
+                  {fpError && <p className="text-xs font-medium mt-2" style={{ color: '#D32F2F' }}>{fpError}</p>}
                 </div>
               </motion.div>
             )}

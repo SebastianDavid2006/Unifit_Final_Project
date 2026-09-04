@@ -264,7 +264,6 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
       await publicarCupos({
         fecha_inicio: publishStart,
         fecha_fin: publishEnd,
-        duracion_min: 120,
         horarios_por_dia: horariosPorDia,
       })
       const start = new Date(publishStart + 'T00:00:00')

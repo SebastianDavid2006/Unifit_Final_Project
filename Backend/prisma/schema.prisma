@@ -337,11 +337,12 @@ model Area {
 // BIOMETRIA
 
 model Huella {
-  id_huella      String   @id @default(uuid())
-  id_usuario     String   @unique
-  indice_sensor  Int      @unique    // índice/slot interno asignado por el sensor AS608 
-  activo         Boolean  @default(true)
-  fecha_creacion DateTime @default(now())
+  id_huella         String   @id @default(uuid())
+  id_usuario        String   @unique
+  indice_sensor     Int      @unique    // índice/slot interno asignado por el sensor AS608 
+  activo            Boolean  @default(true)
+  paso_enrolamiento Int?                 // paso actual del enrolamiento (1=colocar, 2=retirar, 3=volver a colocar)
+  fecha_creacion    DateTime @default(now())
 
   usuario Usuario @relation(fields: [id_usuario], references: [id_usuario])
 }

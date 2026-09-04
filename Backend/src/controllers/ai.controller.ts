@@ -15,7 +15,7 @@ const generarRutinaSchema = z.object({
   resistenciaMuscular: z.string().optional().default(''),
   antecedentesSalud: z.array(z.string()).optional().default([]),
   observacionesEntrenador: z.string().optional().default(''),
-  diasDisponibles: z.array(z.string()).optional().default([]),
+  diasDisponibles: z.array(z.string()).min(1, 'Debe seleccionar al menos un día disponible'),
   observacionesFinales: z.string().optional().default(''),
 })
 

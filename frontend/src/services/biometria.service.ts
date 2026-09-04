@@ -7,6 +7,7 @@ export interface HuellaEstado {
     indice_sensor: number
     activo: boolean
     fecha_creacion: string
+    paso_enrolamiento?: 1 | 2 | 3
   } | null
 }
 

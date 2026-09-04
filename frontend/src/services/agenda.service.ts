@@ -67,21 +67,7 @@ export interface FrontendCupo {
 }
 
 function normFecha(v: string): string {
-  const m = v.slice(0, 10)
-  if (/^\d{4}-\d{2}-\d{2}$/.test(m)) return m
-  const d = new Date(v)
-  if (isNaN(d.getTime())) return v
-  const y = d.getFullYear()
-  const mo = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${y}-${mo}-${dd}`
-}
-
-function normHora(v: string | null | undefined): string {
-  if (!v) return ''
-  const m = v.match(/^(\d{2}):(\d{2})/)
-  if (m) return `${m[1]}:${m[2]}`
-  return v
+  return v.slice(0, 10)
 }
 
 function mapAgendaBackToFront(a: BackendAgenda): FrontendAgenda {
@@ -95,8 +81,8 @@ function mapAgendaBackToFront(a: BackendAgenda): FrontendAgenda {
     id: a.id_agenda,
     id_usuario: a.id_usuario,
     fecha: normFecha(a.fecha),
-    horaInicio: normHora(a.hora_inicio),
-    horaFin: normHora(a.hora_fin),
+    horaInicio: a.hora_inicio,
+    horaFin: a.hora_fin ?? '',
     tipo: a.tipo,
     tipoOtro: a.tipo_otro ?? '',
     estado: a.estado,
@@ -110,8 +96,8 @@ function mapCupoBackToFront(c: BackendCupo): FrontendCupo {
   return {
     id: c.id_cupo,
     fecha: normFecha(c.fecha),
-    horaInicio: normHora(c.hora_inicio),
-    horaFin: normHora(c.hora_fin),
+    horaInicio: c.hora_inicio,
+    horaFin: c.hora_fin,
   }
 }
 
@@ -145,14 +131,14 @@ export async function crearAgenda(payload: CrearAgendaPayload): Promise<Frontend
   return mapAgendaBackToFront(data)
 }
 
-export async function editarAgenda(id: string, payload: Partial<CrearAgendaPayload>) {
-  const { data } = await api.put(`/agenda/${id}`, payload)
-  return data
+export async function editarAgenda(id: string, payload: Partial<CrearAgendaPayload>): Promise<FrontendAgenda> {
+  const { data } = await api.put<BackendAgenda>(`/agenda/${id}`, payload)
+  return mapAgendaBackToFront(data)
 }
 
-export async function cambiarEstadoAgenda(id: string, estado: FrontendAgenda['estado']) {
-  const { data } = await api.put(`/agenda/${id}/estado`, { estado })
-  return data
+export async function cambiarEstadoAgenda(id: string, estado: FrontendAgenda['estado']): Promise<FrontendAgenda> {
+  const { data } = await api.put<BackendAgenda>(`/agenda/${id}/estado`, { estado })
+  return mapAgendaBackToFront(data)
 }
 
 export async function eliminarAgenda(id: string) {
@@ -175,7 +161,6 @@ export interface HorarioPorDia {
 export interface PublicarCuposPayload {
   fecha_inicio: string
   fecha_fin: string
-  duracion_min: number
   horarios_por_dia: HorarioPorDia[]
 }
 

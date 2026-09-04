@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLocation, useNavigate, Outlet } from 'react-router'
 import { AnimatePresence, motion } from 'motion/react'
+import { api, mensajeError } from '@/lib/api'
 import { cerrarSesion } from '@/lib/auth'
 import AdminDashboardView from '@/features/admin/sections/AdminDashboard'
 import AdminTrainers from '@/features/admin/sections/AdminTrainers'
@@ -15,7 +16,8 @@ import Topbar from './components/Topbar'
 import StatsCalendar from './components/StatsCalendar'
 import GymFloatingToolbar from './components/GymFloatingToolbar'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
-import { students } from '@/data/students'
+import { mapBackendToStudent, getUsuarios } from '@/services/usuario.service'
+import type { Student } from '@/data/students'
 import type { AdminSection } from './data'
 
 const PATH_TO_SECTION: Record<string, AdminSection> = {
@@ -54,7 +56,7 @@ export function AdminPage() {
   const [gymStudentSearchFocused, setGymStudentSearchFocused] = useState(false)
   const [showGymStudentFilters, setShowGymStudentFilters] = useState(false)
   const [gymStudentRiskFilter, setGymStudentRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
-  const [gymSelectedStudent, setGymSelectedStudent] = useState<(typeof students)[0] | null>(null)
+  const [gymSelectedStudent, setGymSelectedStudent] = useState<Student | null>(null)
   const [gymStudentTab, setGymStudentTab] = useState('general')
   const [equipSearch, setEquipSearch] = useState('')
   const [equipSearchFocused, setEquipSearchFocused] = useState(false)
@@ -70,8 +72,11 @@ export function AdminPage() {
   const [statsRange, setStatsRange] = useState({ start: '', end: '' })
   const [calendarPos, setCalendarPos] = useState({ top: 0, right: 0 })
   const calendarBtnRef = useRef<HTMLButtonElement>(null)
+  const trainerRef = useRef<{ clearSelection: () => void }>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [showStaffProfile, setShowStaffProfile] = useState(false)
+  const [students, setStudents] = useState<Student[]>([])
+  const [studentsLoading, setStudentsLoading] = useState(true)
 
   const handleSectionChange = (s: AdminSection) => {
     navigate(SECTION_PATHS[s])
@@ -96,7 +101,14 @@ export function AdminPage() {
       setShowGymStudentFilters(false)
     }
   }, [section, isGestion])
-  const trainerRef = useRef<{ clearSelection: () => void }>(null)
+
+  useEffect(() => {
+    setStudentsLoading(true)
+    getUsuarios()
+      .then(res => setStudents(res.map(mapBackendToStudent)))
+      .catch(() => {})
+      .finally(() => setStudentsLoading(false))
+  }, [])
   const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
 
   return (

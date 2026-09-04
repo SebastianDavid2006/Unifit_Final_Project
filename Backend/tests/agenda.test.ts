@@ -9,6 +9,8 @@ let directoId: string
 let pendienteId: string
 let citaId: string
 let cupoId: string
+let citaEditableId: string
+let citaConCupoId: string
 
 beforeAll(async () => {
   const admin = await prisma.usuario.findUnique({ where: { email_contacto: 'admin@unifit.edu.co' } })
@@ -123,12 +125,48 @@ describe.sequential('Agenda - CRUD', () => {
     expect(res.body.estado).toBe('completado')
   })
 
+  it('PUT /agenda/:id - admin edita fecha y hora de cita (sin cupo)', async () => {
+    const createRes = await request(app)
+      .post('/api/agenda')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        fecha: '2026-12-01',
+        hora_inicio: '09:00:00',
+        tipo: 'seguimiento',
+      })
+
+    expect(createRes.status).toBe(201)
+    citaEditableId = createRes.body.id_agenda
+
+    const res = await request(app)
+      .put(`/api/agenda/${citaEditableId}`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        fecha: '2026-12-08',
+        hora_inicio: '15:30:00',
+      })
+
+    expect(res.status).toBe(200)
+    expect(res.body.id_agenda).toBe(citaEditableId)
+    expect(res.body.fecha.slice(0, 10)).toBe('2026-12-08')
+    // hora_inicio ahora viene como "HH:mm:ss" limpio en UTC (15:30 local = 20:30 UTC)
+    expect(res.body.hora_inicio).toBe('20:30:00')
+  })
+
   it('DELETE /agenda/:id - admin elimina cita', async () => {
     const res = await request(app)
       .delete(`/api/agenda/${citaId}`)
       .set('Authorization', `Bearer ${token('adminToken')}`)
 
     expect(res.status).toBe(200)
+    expect(res.body).toEqual({ id_agenda: citaId })
+
+    const getRes = await request(app)
+      .get(`/api/agenda/${citaId}`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+
+    expect(getRes.status).toBe(404)
   })
 
   it('DELETE /agenda/:id - entrenador no puede eliminar (403)', async () => {
@@ -158,7 +196,6 @@ describe.sequential('Cupos - Publicación y reserva', () => {
       .send({
         fecha_inicio: '2026-12-02',
         fecha_fin: '2026-12-02',
-        duracion_min: 120,
         horarios_por_dia: [
           { dia: 'mié', rangos: [{ inicio: '06:00', fin: '08:00' }, { inicio: '14:00', fin: '16:00' }] },
         ],
@@ -178,7 +215,6 @@ describe.sequential('Cupos - Publicación y reserva', () => {
       .send({
         fecha_inicio: '2026-12-04',
         fecha_fin: '2026-12-04',
-        duracion_min: 120,
         horarios_por_dia: [
           { dia: 'vie', rangos: [{ inicio: '06:00', fin: '09:00' }, { inicio: '07:00', fin: '10:00' }] },
         ],
@@ -194,7 +230,6 @@ describe.sequential('Cupos - Publicación y reserva', () => {
       .send({
         fecha_inicio: '2026-12-03',
         fecha_fin: '2026-12-03',
-        duracion_min: 120,
         horarios_por_dia: [
           { dia: 'mié', rangos: [{ inicio: '08:00', fin: '10:00' }] },
         ],
@@ -220,6 +255,7 @@ describe.sequential('Cupos - Publicación y reserva', () => {
     expect(res.status).toBe(201)
     expect(res.body.id_agenda).toBeDefined()
     expect(res.body.id_cupo).toBe(cupoId)
+    citaConCupoId = res.body.id_agenda
   })
 
   it('POST /cupos/:id/reservar - cupo ya reservado → 400', async () => {
@@ -237,5 +273,134 @@ describe.sequential('Cupos - Publicación y reserva', () => {
       .set('Authorization', `Bearer ${token('pendienteToken')}`)
 
     expect(res.status).toBe(201)
+  })
+
+  it('PUT /agenda/:id - cita reservada por cupo NO se puede editar (400)', async () => {
+    const res = await request(app)
+      .put(`/api/agenda/${citaConCupoId}`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ fecha: '2026-12-10' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toContain('cupo')
+  })
+})
+
+describe.sequential('Agenda - Seguridad y escalada', () => {
+  let citaDirectoA: string
+  let citaDirectoB: string
+  let cupoParaVencimiento: string
+
+  it('POST /agenda - admin crea cita para pendiente (usuario diferente al dueño)', async () => {
+    const res = await request(app)
+      .post('/api/agenda')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: pendienteId,
+        fecha: '2026-12-10',
+        hora_inicio: '09:00:00',
+        tipo: 'registro',
+      })
+    expect(res.status).toBe(201)
+    citaDirectoA = res.body.id_agenda
+  })
+
+  it('POST /cupos/publicar - admin publica cupo para test vencimiento', async () => {
+    const admin = await prisma.usuario.findUnique({ where: { email_contacto: 'admin@unifit.edu.co' } })
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    const fechaPasada = new Date(hoy)
+    fechaPasada.setDate(fechaPasada.getDate() - 1)
+    const horaInicio = new Date('1970-01-01T06:00:00')
+    const horaFin = new Date('1970-01-01T08:00:00')
+    const cupo = await prisma.cupo.create({
+      data: {
+        id_creador: admin!.id_usuario,
+        fecha: fechaPasada,
+        hora_inicio: horaInicio,
+        hora_fin: horaFin,
+      },
+    })
+    cupoParaVencimiento = cupo.id_cupo
+  })
+
+  it('Sin token → GET /agenda → 401', async () => {
+    const res = await request(app).get('/api/agenda')
+    expect(res.status).toBe(401)
+  })
+
+  it('Sin token → POST /cupos/publicar → 401', async () => {
+    const res = await request(app)
+      .post('/api/cupos/publicar')
+      .send({ fecha_inicio: '2026-12-01', fecha_fin: '2026-12-01', horarios_por_dia: [] })
+    expect(res.status).toBe(401)
+  })
+
+  it('Sin token → GET /cupos/disponibles → 401', async () => {
+    const res = await request(app).get('/api/cupos/disponibles')
+    expect(res.status).toBe(401)
+  })
+
+  it('Sin token → POST /cupos/:id/reservar → 401', async () => {
+    const res = await request(app).post(`/api/cupos/${cupoParaVencimiento}/reservar`)
+    expect(res.status).toBe(401)
+  })
+
+  it('Horizontal: usuario no puede ver cita de otro usuario → 403', async () => {
+    const res = await request(app)
+      .get(`/api/agenda/${citaDirectoA}`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+    expect(res.status).toBe(403)
+  })
+
+  it('Horizontal: entrenador SÍ puede ver cita de usuario (privilegiado)', async () => {
+    const res = await request(app)
+      .get(`/api/agenda/${citaDirectoA}`)
+      .set('Authorization', `Bearer ${token('entrenadorToken')}`)
+    expect(res.status).toBe(200)
+  })
+
+  it('Vertical: usuario no puede publicar cupos → 403', async () => {
+    const res = await request(app)
+      .post('/api/cupos/publicar')
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+      .send({
+        fecha_inicio: '2026-12-15',
+        fecha_fin: '2026-12-15',
+        horarios_por_dia: [{ dia: 'lun', rangos: [{ inicio: '08:00', fin: '10:00' }] }],
+      })
+    expect(res.status).toBe(403)
+  })
+
+  it('Vertical: pendiente no puede publicar cupos → 403', async () => {
+    const res = await request(app)
+      .post('/api/cupos/publicar')
+      .set('Authorization', `Bearer ${token('pendienteToken')}`)
+      .send({
+        fecha_inicio: '2026-12-15',
+        fecha_fin: '2026-12-15',
+        horarios_por_dia: [{ dia: 'lun', rangos: [{ inicio: '08:00', fin: '10:00' }] }],
+      })
+    expect(res.status).toBe(403)
+  })
+
+  it('Vertical: pendiente no puede crear cita → 403', async () => {
+    const res = await request(app)
+      .post('/api/agenda')
+      .set('Authorization', `Bearer ${token('pendienteToken')}`)
+      .send({
+        id_usuario: directoId,
+        fecha: '2026-12-15',
+        hora_inicio: '08:00:00',
+        tipo: 'registro',
+      })
+    expect(res.status).toBe(403)
+  })
+
+  it('Seguridad: no se puede reservar cupo ya vencido → 400', async () => {
+    const res = await request(app)
+      .post(`/api/cupos/${cupoParaVencimiento}/reservar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+    expect(res.status).toBe(400)
   })
 })

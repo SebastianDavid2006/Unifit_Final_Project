@@ -5,6 +5,7 @@ import {
   obtenerHuellasPendientesHandler,
   obtenerEstadoHandler,
   listarHuellasHandler,
+  actualizarPasoEnrolamientoHandler,
 } from '../controllers/biometria.controller'
 import { verificarToken } from '../middlewares/verificarToken'
 import { verificarEstado } from '../middlewares/verificarEstado'
@@ -74,6 +75,13 @@ router.get(
   verificarApiKey,
   rateLimit(20, 60000),
   obtenerHuellasPendientesHandler,
+)
+
+router.patch(
+  '/biometria/paso',
+  verificarApiKey,
+  rateLimit(30, 60000),
+  actualizarPasoEnrolamientoHandler,
 )
 
 router.get(

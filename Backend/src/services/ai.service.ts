@@ -3,9 +3,9 @@ import Groq from 'groq-sdk'
 import { prisma } from '../utils/prisma'
 import { HttpError } from '../utils/HttpError'
 
-export const MODELO_IA = process.env.GROQ_MODELO ?? 'llama3-8b-8192'
+export const MODELO_IA = process.env.GROQ_MODELO ?? 'openai/gpt-oss-20b'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY, timeout: 30_000 })
 
 export interface GenerarRutinaInput {
   nivelActividad: string
@@ -85,7 +85,9 @@ function construirPrompt(ejercicios: Array<{ id: string; nombre: string; grupos:
       '"level": "Principiante" | "Intermedio" | "Avanzado", ' +
       '"rows": [ { "id_ejercicio": string, "dia": string, "muscle": string, "name": string, ' +
       '"sets": string, "reps": string, "rest": string, "weight": string } ] }. ' +
-      'Los días deben pertenecer a los días disponibles del usuario. No inventes id_ejercicio: usa solo ids del catálogo.',
+      'Los días deben pertenecer a los días disponibles del usuario. No inventes id_ejercicio: usa solo ids del catálogo. ' +
+      'Aquí está el catálogo de ejercicios disponibles con sus IDs reales:\n' +
+      JSON.stringify(catalogo),
   }
 }
 
@@ -101,10 +103,11 @@ function extraerJson(texto: string): unknown {
 async function llamarModelo(
   ejercicios: Array<{ id: string; nombre: string; grupos: string[]; nivel: string }>,
   datosAnonimos: unknown,
-): Promise<RoutineRow[]> {
+): Promise<{ name: string; description: string; duration: string; frequency: string; level: string; rows: RoutineRow[] }> {
   const response = await groq.chat.completions.create({
     model: MODELO_IA,
     temperature: 0.4,
+    max_tokens: 4000,
     messages: [
       construirPrompt(ejercicios),
       { role: 'user', content: `Datos para la rutina (sin datos personales): ${JSON.stringify(datosAnonimos)}` },
@@ -116,7 +119,7 @@ async function llamarModelo(
   if (!contenido) throw new Error('La IA no devolvió contenido')
 
   const json = extraerJson(contenido)
-  return routineResponseSchema.parse(json).rows
+  return routineResponseSchema.parse(json)
 }
 
 export async function generarRutinaIA(input: GenerarRutinaInput) {
@@ -146,24 +149,24 @@ export async function generarRutinaIA(input: GenerarRutinaInput) {
   }))
 
   const datosAnonimos = anonimizar(input)
-  const dias = input.diasDisponibles.length ? input.diasDisponibles.slice(0, 6) : ['Lunes', 'Miércoles', 'Viernes']
+  const dias = input.diasDisponibles.slice(0, 6)
 
-  let rows: RoutineRow[] = []
+  let respuesta: { name: string; description: string; duration: string; frequency: string; level: string; rows: RoutineRow[] }
   try {
-    rows = await llamarModelo(ejercicios, datosAnonimos)
+    respuesta = await llamarModelo(ejercicios, datosAnonimos)
   } catch (primerError) {
     if (primerError instanceof HttpError) throw primerError
     try {
-      rows = await llamarModelo(ejercicios, datosAnonimos)
+      respuesta = await llamarModelo(ejercicios, datosAnonimos)
     } catch {
       throw new HttpError(502, 'La IA no generó una rutina válida. Inténtalo de nuevo.')
     }
   }
 
   const catalogoPorId = new Map(ejercicios.map((e) => [e.id, e]))
-  const filasValidas = rows.filter((r) => catalogoPorId.has(r.id_ejercicio))
+  const filasValidas = respuesta.rows.filter((r) => catalogoPorId.has(r.id_ejercicio))
 
-  const rowsFinales = filasValidas.map((r, i) => ({
+  const rowsFinales = filasValidas.map((r) => ({
     id: r.id_ejercicio,
     dia: r.dia,
     muscle: r.muscle,
@@ -175,11 +178,11 @@ export async function generarRutinaIA(input: GenerarRutinaInput) {
   }))
 
   return {
-    name: `Rutina IA`,
-    description: `Rutina generada con inteligencia artificial según la valoración: ${dias.length} días por semana.`,
-    duration: '8 semanas',
-    frequency: `${dias.length} días/semana`,
-    level: rowsFinales.length ? 'Intermedio' : 'Principiante',
+    name: respuesta.name || 'Rutina IA',
+    description: respuesta.description || `Rutina generada con inteligencia artificial: ${dias.length} días por semana.`,
+    duration: respuesta.duration || '8 semanas',
+    frequency: respuesta.frequency || `${dias.length} días/semana`,
+    level: respuesta.level || (rowsFinales.length ? 'Intermedio' : 'Principiante'),
     rows: rowsFinales,
   }
 }

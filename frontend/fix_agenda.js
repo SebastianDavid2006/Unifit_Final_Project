@@ -1,4 +1,4 @@
-const fs = require('fs');
+// const fs = require('fs');
 const f = fs.readFileSync('frontend/src/features/student/pages/AgendaPage.tsx', 'utf8');
 
 let fixed = f;

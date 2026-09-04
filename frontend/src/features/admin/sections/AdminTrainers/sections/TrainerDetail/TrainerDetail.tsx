@@ -26,8 +26,6 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<Record<string, string> | null>(null)
   const [confirm, setConfirm] = useState<'save' | 'status' | null>(null)
-  const [fingerprintStatus, setFingerprintStatus] = useState<'idle' | 'scanning' | 'captured'>('idle')
-  const [fingerprintSuccess, setFingerprintSuccess] = useState(false)
 
   function buildDraft(): Record<string, string> {
     return {
@@ -95,18 +93,6 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
     setConfirm(null)
   }
 
-  const handleFingerprintStart = () => {
-    setFingerprintStatus('scanning')
-    setTimeout(() => {
-      setFingerprintStatus('captured')
-      setTrainer(prev => ({ ...prev, huella: 'captured' }))
-    }, 5000)
-  }
-
-  const handleFingerprintNext = () => {
-    setFingerprintSuccess(true)
-  }
-
   return (
     <div className="relative z-10 p-8 overflow-hidden">
       <div className="w-full">
@@ -150,8 +136,7 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             isOpen={true}
             trainer={trainer}
             huella={trainer.huella}
-            onClose={() => { setShowFingerprintModal(false); setFingerprintStatus('idle'); setFingerprintSuccess(false); }}
-            onCapture={() => { setFingerprintStatus('scanning'); setTimeout(() => setFingerprintStatus('captured'), 5000); }}
+            onClose={() => setShowFingerprintModal(false)}
           />
         )}
       </AnimatePresence>

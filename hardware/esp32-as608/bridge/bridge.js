@@ -6,8 +6,10 @@ const PUERTO_SERIAL_FORZADO = process.env.PUERTO_SERIAL || ''
 const BAUD_RATE = parseInt(process.env.BAUD_RATE || '115200', 10)
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000/api'
 const API_KEY = process.env.BIOMETRIA_API_KEY || ''
-const INTERVALO_POLL_MS = parseInt(process.env.INTERVALO_POLL_MS || '2000', 10)
+const INTERVALO_POLL_MS = parseInt(process.env.INTERVALO_POLL_MS || '5000', 10)
 const TIMEOUT_DETECCION_MS = parseInt(process.env.TIMEOUT_DETECCION_MS || '4000', 10)
+
+let backoffMs = INTERVALO_POLL_MS
 
 // Vendor IDs de chips USB-serial usados por placas ESP32
 const VENDOR_IDS_ESP32 = new Set(['1a86', '10c4', '303a', '1a6e', '0403'])
@@ -151,6 +153,19 @@ function conectarSerial(pathPort) {
 
   puerto.on('open', () => {
     log(`Puerto serial ${pathPort} abierto`)
+    // Reset agresivo: DTR false -> wait -> DTR true -> wait para boot limpio
+    try {
+      puerto.set({ dtr: false }, () => {
+        setTimeout(() => {
+          try { puerto.set({ dtr: true }) } catch {}
+          // Esperar a que el ESP32 bootee y envíe 'ready'
+          setTimeout(() => {
+            // Limpiar buffer por si llegó basura al abrir
+            parser.emit('data', '') // Forzar flush
+          }, 1000)
+        }, 300)
+      })
+    } catch {}
   })
 
   puerto.on('error', (err) => {
@@ -167,12 +182,19 @@ function conectarSerial(pathPort) {
   parser.on('data', (linea) => {
     linea = linea.trim()
     if (!linea) return
+    // Solo procesar líneas que parezcan JSON (empiecen con {)
+    if (!linea.startsWith('{')) {
+      return // Ignorar basura silenciosamente
+    }
 
     try {
       const datos = JSON.parse(linea)
-      procesarMensajeESP32(datos)
+      // Validar que tenga la estructura esperada
+      if (datos.tipo) {
+        procesarMensajeESP32(datos)
+      }
     } catch {
-      log(`Serial no JSON: ${linea}`)
+      // Silencioso: ignorar JSON malformado
     }
   })
 }
@@ -221,6 +243,16 @@ function procesarMensajeESP32(datos) {
       }
       break
 
+    case 'enroll_step':
+      log(`Enrolamiento paso ${datos.paso}: ${datos.mensaje}`)
+      if (enrolamientoActivo) {
+        api.patch('/biometria/paso', {
+          id_usuario: enrolamientoActivo.id_usuario,
+          paso: datos.paso,
+        }).catch(err => log(`Error actualizando paso: ${err.message}`))
+      }
+      break
+
     default:
       log(`Mensaje desconocido: ${JSON.stringify(datos)}`)
   }
@@ -243,8 +275,14 @@ async function verificarPendientes() {
 
       puerto.write(`ENROLL:${siguiente.indice_sensor}\n`)
     }
+    // Reset backoff si éxito
+    backoffMs = INTERVALO_POLL_MS
   } catch (err) {
-    if (err.response) {
+    if (err.response && err.response.status === 429) {
+      // Backoff exponencial: 5s -> 10s -> 20s -> max 60s
+      backoffMs = Math.min(backoffMs * 2, 60000)
+      log(`Rate limit 429. Backoff a ${backoffMs}ms`)
+    } else if (err.response) {
       log(`Error backend GET pendientes: ${err.response.status} - ${err.response.data?.mensaje || ''}`)
     } else {
       log(`Error backend GET pendientes: ${err.message}`)
@@ -273,7 +311,6 @@ async function completarEnrolamiento(slot) {
     await api.post('/biometria/registrar', {
       id_usuario,
       indice_sensor,
-      template_huella: `slot_${slot}`,
     })
     log(`Huella registrada en backend para usuario ${id_usuario}`)
   } catch (err) {
@@ -296,10 +333,22 @@ log(`API Key: ${API_KEY ? '***configurada***' : 'NO CONFIGURADA'} (usa la misma 
   const ruta = await detectarPuertoEsp32()
   if (ruta) {
     conectarSerial(ruta)
+
+    // Esperar a que el ESP32 esté listo antes de arrancar el polling
+    while (!esp32Listo) {
+      await new Promise(r => setTimeout(r, 500))
+    }
+
+    log('ESP32 listo. Iniciando polling de enrolamientos pendientes...')
+    function pollLoop() {
+      if (!detectando && esp32Listo && !enrolamientoActivo) {
+        verificarPendientes()
+      }
+      setTimeout(pollLoop, backoffMs)
+    }
+    pollLoop()
   } else {
     log('No se pudo detectar el ESP32. Reintentando en 5s...')
     setTimeout(reintentarConexion, 5000)
   }
 })()
-
-setInterval(verificarPendientes, INTERVALO_POLL_MS)

@@ -46,7 +46,6 @@ const rangoHorarioSchema = z.object({
 const publicarCuposSchema = z.object({
   fecha_inicio: z.string().min(1),
   fecha_fin: z.string().min(1),
-  duracion_min: z.coerce.number().int().min(1).max(480),
   horarios_por_dia: z
     .array(
       z.object({
