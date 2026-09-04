@@ -47,6 +47,10 @@ export async function cambiarPassword(idUsuario: string, passwordActual: string,
     throw new HttpError(404, 'Usuario no encontrado')
   }
 
+  if (!usuario.password_hash) {
+    throw new HttpError(401, 'Usuario sin contraseña configurada')
+  }
+
   const passwordValida = await bcrypt.compare(passwordActual, usuario.password_hash)
   if (!passwordValida) {
     throw new HttpError(401, 'Contraseña actual incorrecta')

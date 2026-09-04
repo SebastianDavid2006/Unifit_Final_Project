@@ -21,6 +21,7 @@ export interface BackendUsuario {
   tiene_huella?: boolean
   acepta_contrato?: boolean
   acepta_tratamiento?: boolean
+  huella?: { id_huella: string; indice_sensor: number; activo: boolean; paso_enrolamiento: number | null } | null
   estudiante?: { id_programa: string; semestre: number; modalidad: string; jornada: string; programa?: { nombre_programa: string } } | null
   profesor?: { id_cargo: string; id_area: string; cargo?: { nombre_cargo: string }; area?: { nombre_area: string } } | null
   administrativo?: { id_cargo: string; id_area: string; cargo?: { nombre_cargo: string }; area?: { nombre_area: string } } | null
@@ -51,6 +52,7 @@ export interface Trainer {
   accessLevel: 'Completo' | 'Parcial'
   lastAccess: string
   certificaciones: string[]
+  huella?: string
 }
 
 const STATUS_MAP: Record<string, Student['status']> = {
@@ -152,11 +154,22 @@ export function mapBackendToTrainer(u: BackendUsuario): Trainer {
     accessLevel: u.rol === 'admin' ? 'Completo' : 'Parcial',
     lastAccess: '',
     certificaciones: [],
+    huella: u.huella?.indice_sensor ? 'capturada' : 'sin_capturar',
   }
 }
 
 export async function getUsuarios(): Promise<BackendUsuario[]> {
   const res = await api.get('/usuarios')
+  return res.data
+}
+
+export async function getMiPerfil(): Promise<BackendUsuario> {
+  const res = await api.get('/usuarios/me')
+  return res.data
+}
+
+export async function getPersonal(): Promise<BackendUsuario[]> {
+  const res = await api.get('/usuarios/personal')
   return res.data
 }
 

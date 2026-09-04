@@ -202,14 +202,15 @@ export default function StudentsModule({ students, search, onSearchChange, riskF
         </motion.div>
       )}
 
-      {/* Filter category pills — full width row */}
+      {/* Filter category pills + Dropdown container */}
       <motion.div
         layout
-        style={{ overflow: 'clip' }}
-        animate={{ opacity: showFilters ? 1 : 0 }}
+        style={{ overflow: 'visible', position: 'relative' }}
+        animate={{ opacity: showFilters ? 1 : 0, height: showFilters ? 'auto' : 0 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       >
-{showFilters && (
+        {showFilters && (
+          <>
             <motion.div
               initial={{ y: -8 }}
               animate={{ y: 0 }}
@@ -248,25 +249,23 @@ export default function StudentsModule({ students, search, onSearchChange, riskF
               })}
             </div>
           </motion.div>
-        )}
-      </motion.div>
 
-      {/* Dropdown — overlays student list */}
-      <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              key={filterCategory}
-              initial={{ opacity: 0, y: -6, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.96 }}
-              className="absolute left-6 right-6 z-30 rounded-2xl p-3"
-              style={{
-                background: 'rgba(255,255,255,0.85)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.6)',
-                boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
-              }}
-            >
+          {/* Dropdown — overlays student list */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                key={filterCategory}
+                initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                className="absolute left-4 right-4 top-[calc(100%+8px)] z-50 rounded-2xl p-3"
+                style={{
+                  background: 'rgba(255,255,255,0.92)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.6)',
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.1)',
+                }}
+              >
               <div className="relative mb-2">
                 <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(0,0,0,0.2)' }} />
                 <input
@@ -391,6 +390,10 @@ export default function StudentsModule({ students, search, onSearchChange, riskF
             </motion.div>
           )}
         </AnimatePresence>
+        </>
+      )}
+
+      </motion.div>
 
         {/* Student list — blurred when filters are open */}
         <motion.div layout transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} style={{ filter: showFilters ? 'blur(4px)' : 'none', opacity: showFilters ? 0.5 : 1, transition: 'filter 0.3s ease, opacity 0.3s ease', pointerEvents: showFilters ? 'none' : 'auto' }}>

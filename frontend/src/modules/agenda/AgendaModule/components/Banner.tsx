@@ -4,7 +4,7 @@ import calendarImg from '@/assets/illustrations/modules/calendar_module.webp'
 import { BLUE_GRAD } from '../../AgendaData'
 import { MESH_GRAD } from '../data'
 
-export function Banner({ onOpenPublish }: { onOpenPublish: () => void }) {
+export function Banner({ onOpenPublish }: { onOpenPublish?: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -40,29 +40,31 @@ export function Banner({ onOpenPublish }: { onOpenPublish: () => void }) {
             <p className="text-xs text-black/40">Organiza tus clases, valoraciones y eventos.</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 pr-4">
-          <motion.button
-            initial="initial"
-            whileHover="hover"
-            whileTap={{ scale: 0.95 }}
-            onClick={onOpenPublish}
-            className="flex items-center rounded-full overflow-hidden text-white"
-            style={{ height: 44, padding: '0 12px', background: MESH_GRAD }}
-          >
-            <motion.div
-              variants={{
-                hover: { maxWidth: 80, opacity: 1, marginRight: 6, transition: { delay: 0.12, duration: 0.35, ease: 'easeOut' } },
-                initial: { maxWidth: 0, opacity: 0, marginRight: 0, transition: { duration: 0.2 } }
-              }}
-              className="overflow-hidden whitespace-nowrap"
+        {onOpenPublish && (
+          <div className="flex items-center gap-3 pr-4">
+            <motion.button
+              initial="initial"
+              whileHover="hover"
+              whileTap={{ scale: 0.95 }}
+              onClick={onOpenPublish}
+              className="flex items-center rounded-full overflow-hidden text-white"
+              style={{ height: 44, padding: '0 12px', background: MESH_GRAD }}
             >
-              <span className="text-xs font-bold">Nueva Agenda</span>
-            </motion.div>
-            <div className="flex items-center justify-center flex-shrink-0">
-              <Plus size={18} strokeWidth={3} />
-            </div>
-          </motion.button>
-        </div>
+              <motion.div
+                variants={{
+                  hover: { maxWidth: 80, opacity: 1, marginRight: 6, transition: { delay: 0.12, duration: 0.35, ease: 'easeOut' } },
+                  initial: { maxWidth: 0, opacity: 0, marginRight: 0, transition: { duration: 0.2 } }
+                }}
+                className="overflow-hidden whitespace-nowrap"
+              >
+                <span className="text-xs font-bold">Nueva Agenda</span>
+              </motion.div>
+              <div className="flex items-center justify-center flex-shrink-0">
+                <Plus size={18} strokeWidth={3} />
+              </div>
+            </motion.button>
+          </div>
+        )}
       </div>
     </motion.div>
   )

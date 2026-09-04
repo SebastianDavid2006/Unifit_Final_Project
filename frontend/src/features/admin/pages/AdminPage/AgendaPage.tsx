@@ -38,5 +38,5 @@ export default function AgendaPage() {
       .catch(() => setStudents([]))
   }, [])
 
-  return <AgendaModule students={students} />
+  return <AgendaModule students={students} userRole="admin" />
 }

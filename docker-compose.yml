@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: unifit_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-unifit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-unifit}
+      POSTGRES_DB: ${POSTGRES_DB:-unifit}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-unifit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - unifit_net
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: unifit_backend
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-unifit}:${POSTGRES_PASSWORD:-unifit}@postgres:5432/${POSTGRES_DB:-unifit}?schema=public
+      PORT: 3000
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODELO: ${GROQ_MODELO:-openai/gpt-oss-20b}
+      BIOMETRIA_API_KEY: ${BIOMETRIA_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - unifit_net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: unifit_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - unifit_net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  unifit_net:
+    driver: bridge

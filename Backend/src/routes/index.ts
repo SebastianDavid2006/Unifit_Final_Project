@@ -9,6 +9,7 @@ import rutinaRoutes from './rutina.routes'
 import agendaRoutes from './agenda.routes'
 import aiRoutes from './ai.routes'
 import biometriaRoutes from './biometria.routes'
+import asistenciaRoutes from './asistencia.routes'
 
 const router = Router()
 
@@ -22,5 +23,6 @@ router.use(rutinaRoutes)
 router.use(agendaRoutes)
 router.use(aiRoutes)
 router.use(biometriaRoutes)
+router.use(asistenciaRoutes)
 
 export default router

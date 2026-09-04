@@ -13,7 +13,9 @@ import {
   registrarUsuario,
   usuarioPublico,
   listarUsuarios,
+  listarPersonal,
   obtenerUsuarioPorId,
+  obtenerMiPerfil,
   aceptarDocumento,
   marcarParq,
   registrarHuella,
@@ -124,6 +126,15 @@ export async function getUsuarios(_req: Request, res: Response): Promise<void> {
   try {
     const usuarios = await listarUsuarios()
     res.json(usuarios)
+  } catch (error) {
+    throw error
+  }
+}
+
+export async function getPersonal(_req: Request, res: Response): Promise<void> {
+  try {
+    const personal = await listarPersonal()
+    res.json(personal)
   } catch (error) {
     throw error
   }
@@ -286,5 +297,18 @@ export async function actualizarPerfilHandler(req: Request, res: Response): Prom
       return
     }
     if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function getMiPerfil(req: Request, res: Response): Promise<void> {
+  try {
+    const usuario = await obtenerMiPerfil(req.usuario!.id_usuario)
+    if (!usuario) {
+      res.status(404).json({ mensaje: 'Usuario no encontrado' })
+      return
+    }
+    res.json(usuario)
+  } catch (error) {
+    throw error
   }
 }

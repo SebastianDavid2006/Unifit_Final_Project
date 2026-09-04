@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { INITIAL_FORM, BLUE_GRAD } from '@/data/config/registration'
 import type { TipoUsuario } from '@/data/config/registration'
-import { getNiveles, getPrograms } from '@/data/config/academicPrograms'
+import { getNiveles, agruparProgramas } from '@/types/catalogo'
+import { listarProgramas } from '@/services/catalogo.service'
 import { api, mensajeError } from '@/lib/api'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { RegisterFormSections } from '@/auth/components/RegisterFormSections'
@@ -53,18 +54,16 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
 
     const el = introContainerRef.current
     if (el && !isPhonePreview) {
-      const doc = document as any
-      if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
-        const req = el.requestFullscreen?.() ?? el.webkitRequestFullscreen?.()
+      if (!document.fullscreenElement) {
+        const req = el.requestFullscreen?.()
         if (req?.catch) req.catch(() => {})
       }
     }
 
     return () => {
       clearTimeout(t)
-      const doc = document as any
-      if (doc.fullscreenElement || doc.webkitFullscreenElement) {
-        const exit = doc.exitFullscreen?.() ?? doc.webkitExitFullscreen?.()
+      if (document.fullscreenElement) {
+        const exit = document.exitFullscreen?.()
         if (exit?.catch) exit.catch(() => {})
       }
     }
@@ -78,6 +77,29 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       bg.play().catch(() => {})
     }
     setPhase('form')
+  }
+
+  const [programasAgrupados, setProgramasAgrupados] = useState<Record<string, Record<string, { id_programa: string; nombre: string }[]>>>({})
+  const [programasLoading, setProgramasLoading] = useState(true)
+
+  useEffect(() => {
+    setProgramasLoading(true)
+    listarProgramas()
+      .then(res => {
+        const agrupados: Record<string, Record<string, { id_programa: string; nombre: string }[]>> = {}
+        res.forEach(p => {
+          if (!agrupados[p.universidad]) agrupados[p.universidad] = {}
+          if (!agrupados[p.universidad][p.tipo_programa]) agrupados[p.universidad][p.tipo_programa] = []
+          agrupados[p.universidad][p.tipo_programa].push({ id_programa: p.id_programa, nombre: p.nombre })
+        })
+        setProgramasAgrupados(agrupados)
+      })
+      .catch(() => {})
+      .finally(() => setProgramasLoading(false))
+  }, [])
+
+  const getPrograms = (institucion: string, nivel: string) => {
+    return programasAgrupados[institucion]?.[nivel]?.map(p => p.nombre) ?? []
   }
 
   const toggleTipoUsuario = (tipo: TipoUsuario) => {

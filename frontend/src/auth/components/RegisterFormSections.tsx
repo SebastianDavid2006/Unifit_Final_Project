@@ -1,10 +1,12 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import {
   TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
   TIPOS_USUARIO, BLUE, BLUE_GRAD,
 } from '@/data/config/registration'
 import type { TipoUsuario } from '@/data/config/registration'
-import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/config/academicPrograms'
+import { INSTITUCIONES, getNiveles } from '@/types/catalogo'
+import { listarProgramas } from '@/services/catalogo.service'
 
 interface RegisterFormSectionsProps {
   form: Record<string, string>
@@ -16,6 +18,30 @@ interface RegisterFormSectionsProps {
 
 export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsuario, isMinor }: RegisterFormSectionsProps) {
   const set = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }))
+
+  const [programasAgrupados, setProgramasAgrupados] = useState<Record<string, Record<string, { id_programa: string; nombre: string }[]>>>({})
+  const [programasLoading, setProgramasLoading] = useState(true)
+
+  useEffect(() => {
+    setProgramasLoading(true)
+    listarProgramas()
+      .then(res => {
+        const agrupados: Record<string, Record<string, { id_programa: string; nombre: string }[]>> = {}
+        res.forEach(p => {
+          if (!agrupados[p.universidad]) agrupados[p.universidad] = {}
+          if (!agrupados[p.universidad][p.tipo_programa]) agrupados[p.universidad][p.tipo_programa] = []
+          agrupados[p.universidad][p.tipo_programa].push({ id_programa: p.id_programa, nombre: p.nombre })
+        })
+        setProgramasAgrupados(agrupados)
+      })
+      .catch(() => {})
+      .finally(() => setProgramasLoading(false))
+  }, [])
+
+  const getPrograms = (institucion: string, nivel: string) => {
+    return programasAgrupados[institucion]?.[nivel]?.map(p => p.nombre) ?? []
+  }
+
   const inputStyle = {
     background: 'rgba(255,255,255,0.06)',
     border: '1px solid rgba(255,255,255,0.09)',
@@ -185,7 +211,7 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
             {select('Estado', 'estado', ESTADOS)}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {select('Institución', 'institucion', INSTITUCIONES, {
+            {select('Institución', 'institucion', INSTITUCIONES as unknown as string[], {
               onChange: (inst) => {
                 const level = getNiveles(inst)[0]
                 const prog = getPrograms(inst, level)[0] ?? ''

@@ -264,8 +264,3 @@ export const studentRoutines: StudentRoutine[] = [
     progress: { completedSessions: 1, totalSessions: 12, adherence: 20, lastSession: null },
   },
 ]
-
-export const studentDocuments = [
-  { name: 'Contrato de prestación de servicios', status: 'firmado', date: '12 Ago 2025' },
-  { name: 'Tratamiento de datos personales', status: 'firmado', date: '12 Ago 2025' },
-]

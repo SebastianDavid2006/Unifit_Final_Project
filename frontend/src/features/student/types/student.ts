@@ -1,4 +1,4 @@
-import { Activity, BarChart2, Calendar, FileText, Target, Dumbbell, Trophy, User, Flame, Zap, Heart, Star, Zap } from 'lucide-react'
+import { Activity, BarChart2, Calendar, FileText, Target, Dumbbell, Trophy, User, Flame, Zap, Heart, Star } from 'lucide-react'
 import { AiRoutine, RoutineRow } from '@/modules/students/aiRoutineTypes'
 import type { Student as ProfileStudent, AssessmentItem, ValuationForm } from '@/modules/students/StudentProfileData'
 

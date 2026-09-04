@@ -5,7 +5,16 @@ import CareerFilter from './components/CareerFilter'
 import OverviewSection from './sections/OverviewSection'
 import CareersSection from './sections/CareersSection'
 import StudentsSection from './sections/StudentsSection'
-import { evolutionData, institutionOf, normalizeNivel, type FilterCategory } from './data'
+import { evolutionData, institutionOf, normalizeNivel, type FilterCategory, type EvolutionPoint } from './data'
+import { useAsistenciaEvolucion } from '@/hooks/useAsistencia'
+
+const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+function toDate(value: string): Date | null {
+  if (!value) return null
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d
+}
 
 export default function AdminStats({ tab, showCareerFilter, statsRange }: {
   tab: string
@@ -15,9 +24,29 @@ export default function AdminStats({ tab, showCareerFilter, statsRange }: {
   const [filterCategory, setFilterCategory] = useState<FilterCategory>('institucion')
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
 
-  const filteredEvolution = (statsRange.start && statsRange.end)
-    ? evolutionData.filter(m => m.date >= statsRange.start && m.date <= statsRange.end)
-    : evolutionData
+  const startDate = toDate(statsRange.start)
+  const endDate = toDate(statsRange.end)
+  const { data: evolucionReal } = useAsistenciaEvolucion(startDate, endDate, 'mes')
+
+  const filteredEvolution = useMemo<EvolutionPoint[]>(() => {
+    const base = (statsRange.start && statsRange.end)
+      ? evolutionData.filter(m => m.date >= statsRange.start && m.date <= statsRange.end)
+      : evolutionData
+
+    if (!evolucionReal || evolucionReal.length === 0) return base
+
+    let acumulado = 0
+    return evolucionReal.map(p => {
+      const mes = Number(p.fecha.split('-')[1]) - 1
+      acumulado += p.usuarios
+      return {
+        mes: MESES_CORTOS[mes] ?? p.fecha,
+        date: p.fecha,
+        usuarios: acumulado,
+        asistencia: p.usuarios,
+      }
+    })
+  }, [evolucionReal, statsRange.start, statsRange.end])
 
   const careerData = useMemo(() => CAREER_STATS.filter(c => {
     const entries = Object.entries(filterSelections).filter(([, v]) => v.size > 0)

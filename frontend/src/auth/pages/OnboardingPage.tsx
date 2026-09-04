@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react'
 import { Calendar, CheckCircle2, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { updateUser } from '@/auth/services/authService'
-import type { MockSession } from '@/auth/types'
 import logotipo from '@/assets/logo/logo.webp'
 import missingIllustration from '@/assets/illustrations/characters/coach/coach_missing_fingerprint_and_signature.webp'
 import successVideoDesktop from '@/assets/scenes/videos/desktop/registration_pending_dekstop.mp4'
@@ -559,8 +558,21 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
   )
 }
 
+interface SessionUser {
+  id_usuario: string
+  email: string
+  nombre: string
+  rol: 'admin' | 'entrenador' | 'usuario'
+  tipo_usuario: 'estudiante' | 'profesor' | 'administrativo'
+  estado: 'pendiente' | 'activo' | 'inactivo'
+  debeCambiarContrasena: boolean
+}
+
 interface OnboardingPageProps {
-  session: MockSession
+  session: {
+    user: SessionUser
+    token: string
+  }
   onComplete: () => void
   onBack: () => void
 }

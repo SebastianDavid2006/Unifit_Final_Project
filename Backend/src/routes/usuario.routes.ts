@@ -2,7 +2,9 @@ import { Router } from 'express'
 import {
   registrar,
   getUsuarios,
+  getPersonal,
   getUsuarioPorId,
+  getMiPerfil,
   aceptarDocumentoHandler,
   marcarParqHandler,
   registrarHuellaHandler,
@@ -27,13 +29,30 @@ router.post(
   registrar,
 )
 
-// Listar usuarios (admin/entrenador)
+// Listar usuarios (admin/entrenador) - solo rol 'usuario'
 router.get(
   '/usuarios',
   verificarToken,
   verificarEstado(),
   requiereRol('admin', 'entrenador'),
   getUsuarios,
+)
+
+// Listar personal (solo admin) - rol 'admin' o 'entrenador'
+router.get(
+  '/usuarios/personal',
+  verificarToken,
+  verificarEstado(),
+  requiereRol('admin'),
+  getPersonal,
+)
+
+// Obtener perfil propio (dueño)
+router.get(
+  '/usuarios/me',
+  verificarToken,
+  verificarEstado(),
+  getMiPerfil,
 )
 
 // Obtener usuario por ID (admin/entrenador)
@@ -104,7 +123,7 @@ router.put(
   '/usuarios/:id/perfil',
   verificarToken,
   verificarEstado(),
-  requierePropiedad(async (req) => req.params.id, ['admin']),
+  requierePropiedad(async (req) => req.params.id as string, ['admin']),
   actualizarPerfilHandler,
 )
 

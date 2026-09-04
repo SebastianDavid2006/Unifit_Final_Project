@@ -1,8 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { Plus, X } from 'lucide-react'
+import { Plus, X, Check } from 'lucide-react'
 import { meshInputBg } from '@/data/shared/constants'
 import { BLUE, BLUE_GRAD, RED, WEEK_DAYS_6 } from '../../AgendaData'
-import { DayCard } from '../../AgendaDayCard'
 import { blurMesh, enterMesh, focusMesh, leaveMesh, MESH_GRAD } from '../data'
 import { PublishConfirm } from './PublishConfirm'
 import { PublishSuccess } from './PublishSuccess'
@@ -127,7 +126,35 @@ export function PublishModal({ show, publishStep, onClose, publishStart, publish
                       <div className="grid grid-cols-6 gap-2">
                         {WEEK_DAYS_6.map(({ key, label }) => {
                           const active = publishDays.includes(key)
-                          return <DayCard key={key} label={label} selected={active} onClick={() => onToggleDay(key)} />
+                          return (
+                            <motion.button
+                              key={key}
+                              type="button"
+                              whileHover={!active ? { scale: 1.05 } : {}}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => onToggleDay(key)}
+                              className="relative flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
+                              style={{
+                                background: active ? BLUE_GRAD : 'rgba(0,0,0,0.03)',
+                                color: active ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                                border: '1px solid transparent',
+                                boxShadow: active ? '0 4px 20px rgba(18,112,183,0.25)' : 'none',
+                              }}
+                              onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
+                              onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                            >
+                              <motion.div
+                                animate={{
+                                  width: active ? 48 : 24,
+                                  height: active ? 48 : 24,
+                                  marginTop: active ? -24 : 0,
+                                }}
+                                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                                style={{ width: active ? 48 : 24, height: active ? 48 : 24, marginTop: active ? -24 : 0 }}
+                              />
+                              <span className="text-sm leading-none text-center">{label}</span>
+                            </motion.button>
+                          )
                         })}
                       </div>
                     </div>
@@ -144,7 +171,43 @@ export function PublishModal({ show, publishStep, onClose, publishStart, publish
                     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${publishDays.length}, minmax(0, 1fr))` }}>
                       {WEEK_DAYS_6.map(({ key, label }) => {
                         if (!publishDays.includes(key)) return null
-                        return <DayCard key={key} label={label} selected={selDay === key} done={dayIsComplete(key)} onClick={() => onSelectDay(key)} />
+                        const active = selDay === key
+                        const done = dayIsComplete(key)
+                        return (
+                          <motion.button
+                            key={key}
+                            type="button"
+                            whileHover={!active ? { scale: 1.05 } : {}}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => onSelectDay(key)}
+                            className="relative flex flex-col items-center gap-1.5 px-2 py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
+                            style={{
+                              background: active ? BLUE_GRAD : 'rgba(0,0,0,0.03)',
+                              color: active ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
+                              border: '1px solid transparent',
+                              boxShadow: active ? '0 4px 20px rgba(18,112,183,0.25)' : 'none',
+                            }}
+                            onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
+                            onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; e.currentTarget.style.color = 'rgba(0,0,0,0.35)' } }}
+                          >
+                            <motion.div
+                              animate={{
+                                width: active ? 48 : 24,
+                                height: active ? 48 : 24,
+                                marginTop: active ? -24 : 0,
+                              }}
+                              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                              style={{ width: active ? 48 : 24, height: active ? 24 : 24, marginTop: active ? -24 : 0 }}
+                            />
+                            <span className="text-sm leading-none text-center">{label}</span>
+                            {done !== undefined && (
+                              <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
+                                style={{ background: done ? '#30D158' : 'rgba(0,0,0,0.1)' }}>
+                                <Check size={10} color="#fff" strokeWidth={3.5} />
+                              </span>
+                            )}
+                          </motion.button>
+                        )
                       })}
                     </div>
                     {selDay && (() => {

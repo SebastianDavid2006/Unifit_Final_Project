@@ -10,6 +10,7 @@ interface ExercisePreviewModalProps {
   onEdit: (exercise: Exercise) => void
   onDelete: (exercise: Exercise) => void
   onClose: () => void
+  userRole?: 'admin' | 'entrenador'
 }
 
 export function ExercisePreviewModal(props: ExercisePreviewModalProps) {
@@ -103,28 +104,32 @@ export function ExercisePreviewModal(props: ExercisePreviewModalProps) {
               )}
 
               <div className="flex items-center gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => { props.onClose(); props.onEdit(props.exercise) }}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
-                  style={{ background: `${BLUE}10`, color: BLUE, border: `1px solid ${BLUE}25` }}
-                >
-                  <div className="flex items-center justify-center gap-1.5">
-                    <Pencil size={13} /> Editar
-                  </div>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => props.onDelete(props.exercise)}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                  style={{ background: RED }}
-                >
-                  <div className="flex items-center justify-center gap-1.5">
-                    <Trash2 size={13} /> Eliminar
-                  </div>
-                </motion.button>
+                {props.userRole !== 'entrenador' && (
+                  <>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => { props.onClose(); props.onEdit(props.exercise) }}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                      style={{ background: `${BLUE}10`, color: BLUE, border: `1px solid ${BLUE}25` }}
+                    >
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Pencil size={13} /> Editar
+                      </div>
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => props.onDelete(props.exercise)}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
+                      style={{ background: RED }}
+                    >
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Trash2 size={13} /> Eliminar
+                      </div>
+                    </motion.button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

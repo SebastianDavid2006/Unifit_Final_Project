@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { ClipboardList, FileText, UserCog, X, ChevronRight } from 'lucide-react'
+import { ClipboardList, UserCog, X, ChevronRight } from 'lucide-react'
 import { useStudentApp } from '@/features/student/hooks/useStudentApp'
 import { assessmentItems } from '@/modules/students/StudentProfileData'
-import { SectionTitle, cardStyle, AMBER, BLUE, GREEN } from '@/features/student/components/ui/fitness'
+import { SectionTitle, cardStyle, BLUE, GREEN } from '@/features/student/components/ui/fitness'
 import { ProfileHeader } from './components/ProfileHeader'
 import { MetricsRow } from './components/MetricsRow'
 import { HistoryPanel } from './components/HistoryPanel'
-import { DocumentsPanel } from './components/DocumentsPanel'
 import { PersonalDataPanel } from './components/PersonalDataPanel'
 
-type ModalId = 'history' | 'documents' | 'personal' | null
+type ModalId = 'history' | 'personal' | null
 
 export function ProfilePage() {
   const { student } = useStudentApp()
@@ -19,7 +18,6 @@ export function ProfilePage() {
 
   const menuItems = [
     { id: 'history' as const, label: 'Historial de valoraciones', desc: `${assessmentItems.length} valoraciones registradas`, icon: ClipboardList, color: BLUE },
-    { id: 'documents' as const, label: 'Documentos', desc: 'PAR-Q, consentimientos y más', icon: FileText, color: AMBER },
     { id: 'personal' as const, label: 'Datos personales', desc: 'Información de tu perfil', icon: UserCog, color: GREEN },
   ]
 
@@ -86,7 +84,7 @@ export function ProfilePage() {
             >
               <div className="sticky top-0 z-10 flex items-center justify-between p-5" style={{ background: 'rgba(18,18,28,0.95)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                 <h3 className="uppercase italic font-black text-white" style={{ fontSize: 16 }}>
-                  {modal === 'history' ? 'Historial de valoraciones' : modal === 'documents' ? 'Documentos' : 'Datos personales'}
+                  {modal === 'history' ? 'Historial de valoraciones' : 'Datos personales'}
                 </h3>
                 <button onClick={() => { setModal(null); setHistorySel(null) }} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.6)' }}>
                   <X size={17} />
@@ -101,7 +99,6 @@ export function ProfilePage() {
                     onBack={() => setHistorySel(null)}
                   />
                 )}
-                {modal === 'documents' && <DocumentsPanel />}
                 {modal === 'personal' && <PersonalDataPanel />}
               </div>
             </motion.div>

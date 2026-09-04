@@ -1,6 +1,5 @@
 import { BLUE, monthNames } from '../AgendaData'
 import { meshInputBg, meshInputHover } from '@/data/shared/constants'
-import type { Appointment } from '../AgendaData'
 
 export const typeColors: Record<string, string> = {
   class: BLUE,
@@ -38,25 +37,6 @@ export const defaultWeeklyTemplate: Record<string, { active: boolean; open: stri
   SÁB: { active: true, open: '08:00', close: '18:00' },
   DOM: { active: false, open: '08:00', close: '14:00' },
 }
-
-export const defaultAppointments: Appointment[] = [
-  { id: '1', date: '2026-06-22', startTime: '07:00', endTime: '08:00', type: 'class', title: 'Spinning', trainer: 'Carlos' },
-  { id: '2', date: '2026-06-22', startTime: '10:00', endTime: '11:00', type: 'initial_assessment', title: 'Valoración Inicial', studentName: 'Ana Pérez' },
-  { id: '3', date: '2026-06-23', startTime: '08:00', endTime: '09:00', type: 'class', title: 'CrossFit', trainer: 'Luis' },
-  { id: '4', date: '2026-06-23', startTime: '14:00', endTime: '15:00', type: 'class', title: 'Funcional', trainer: 'María' },
-  { id: '5', date: '2026-06-24', startTime: '07:00', endTime: '08:00', type: 'class', title: 'Spinning', trainer: 'Carlos' },
-  { id: '6', date: '2026-06-24', startTime: '16:00', endTime: '17:00', type: 'class', title: 'Boxeo', trainer: 'Pedro' },
-  { id: '7', date: '2026-06-25', startTime: '09:00', endTime: '10:00', type: 'physical_assessment', title: 'Valoración Física', studentName: 'Lucía Gómez' },
-  { id: '8', date: '2026-06-25', startTime: '15:00', endTime: '16:00', type: 'event', title: 'Mantenimiento General' },
-  { id: '9', date: '2026-06-26', startTime: '17:00', endTime: '18:00', type: 'class', title: 'Zumba', trainer: 'María' },
-  { id: '10', date: '2026-06-27', startTime: '09:00', endTime: '10:00', type: 'registration', title: 'Registro Nuevo Ingreso', studentName: 'Diego Ramírez' },
-  { id: '11', date: '2026-06-28', startTime: '10:00', endTime: '11:00', type: 'initial_assessment', title: 'Valoración Inicial', studentName: 'Carlos Ruiz' },
-  { id: '12', date: '2026-06-21', startTime: '09:00', endTime: '10:00', type: 'class', title: 'Yoga Restaurativo', trainer: 'Ana', studentName: 'María Fernández' },
-  { id: '13', date: '2026-06-21', startTime: '11:00', endTime: '12:00', type: 'initial_assessment', title: 'Valoración Inicial', studentName: 'Pedro Sánchez' },
-  { id: '14', date: '2026-06-21', startTime: '15:00', endTime: '16:00', type: 'registration', title: 'Registro Membresía', studentName: 'Laura Vega' },
-  { id: '15', date: '2026-06-24', startTime: '10:00', endTime: '11:00', type: 'physical_assessment', title: 'Valoración Física', studentName: 'Sofía Morales' },
-  { id: '16', date: '2026-06-20', startTime: '08:00', endTime: '09:00', type: 'registration', title: 'Registro Nuevo Ingreso', studentName: 'Jorge Torres' },
-]
 
 export function fmtDate(d: Date) {
   const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0')

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import type { Trainer } from '@/data/trainers'
+import type { Trainer } from '@/services/usuario.service'
 import Pagination from '@/features/admin/components/Pagination'
 import BannerCard from '../components/BannerCard'
 import TrainerRow from '../components/TrainerRow'

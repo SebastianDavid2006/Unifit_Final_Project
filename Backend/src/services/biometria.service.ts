@@ -25,14 +25,20 @@ export async function iniciarEnrolamiento(idUsuario: string) {
 
   logBiometria('iniciarEnrolamiento', { idUsuario, huellaExistente: huellaExistente ? { id_huella: huellaExistente.id_huella, indice_sensor: huellaExistente.indice_sensor, activo: huellaExistente.activo, paso_enrolamiento: huellaExistente.paso_enrolamiento, fecha_creacion: huellaExistente.fecha_creacion } : null })
 
-  // Se reutiliza slot en caso de actualizar huella
+  // Se reutiliza slot en caso de actualizar/reemplazar huella
   let indiceSensor: number
   if (huellaExistente && huellaExistente.indice_sensor) {
     indiceSensor = huellaExistente.indice_sensor
-    logBiometria('Reutilizando slot existente', { idUsuario, indiceSensor })
+    logBiometria('Reutilizando slot existente (re-enrollment)', { idUsuario, indiceSensor })
   } else {
+    const limiteReciente = new Date(Date.now() - ENROLAMIENTO_TIMEOUT_MIN * 60 * 1000)
     const slotsOcupados = await prisma.huella.findMany({
-      where: { activo: true },
+      where: {
+        OR: [
+          { activo: true },
+          { activo: false, paso_enrolamiento: { not: null }, fecha_creacion: { gte: limiteReciente } },
+        ],
+      },
       select: { indice_sensor: true },
     })
     const ocupados = new Set(slotsOcupados.map((h) => h.indice_sensor))
@@ -71,8 +77,8 @@ export async function registrarHuellaDesdeSensor(idUsuario: string, indiceSensor
       throw new HttpError(404, 'No hay enrolamiento pendiente para este usuario. Inicie enrolamiento primero.')
     }
 
-    if (huella.activo) {
-      throw new HttpError(409, 'El usuario ya tiene una huella activa.')
+    if (indiceSensor !== huella.indice_sensor) {
+      throw new HttpError(400, 'Slot no coincide con enrolamiento asignado')
     }
 
     const actualizada = await tx.huella.update({
@@ -92,16 +98,19 @@ export async function registrarHuellaDesdeSensor(idUsuario: string, indiceSensor
   })
 }
 
-export async function obtenerHuellasPendientes() {
+export async function limpiarEnrolamientosExpirados(): Promise<number> {
   const limite = new Date(Date.now() - ENROLAMIENTO_TIMEOUT_MIN * 60 * 1000)
-
   const borrados = await prisma.huella.deleteMany({
     where: { activo: false, fecha_creacion: { lt: limite } },
   })
-
   if (borrados.count > 0) {
-    logBiometria('obtenerHuellasPendientes - EXPIRADOS BORRADOS', { count: borrados.count, limite: limite.toISOString() })
+    logBiometria('limpiarEnrolamientosExpirados - EXPIRADOS BORRADOS', { count: borrados.count, limite: limite.toISOString() })
   }
+  return borrados.count
+}
+
+export async function obtenerHuellasPendientes() {
+  const limite = new Date(Date.now() - ENROLAMIENTO_TIMEOUT_MIN * 60 * 1000)
 
   return prisma.huella.findMany({
     where: { activo: false, fecha_creacion: { gte: limite } },

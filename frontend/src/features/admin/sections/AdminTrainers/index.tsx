@@ -1,5 +1,5 @@
 ﻿import { useState, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react'
-import { getUsuarios, mapBackendToTrainer, registrarUsuario } from '@/services/usuario.service'
+import { getPersonal, mapBackendToTrainer, registrarUsuario } from '@/services/usuario.service'
 import type { Trainer } from '@/services/usuario.service'
 import NewUserModal from './components/NewUserModal'
 import TrainersList from './sections/TrainersList'
@@ -24,11 +24,9 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
   const [showNewUser, setShowNewUser] = useState(false)
 
   useEffect(() => {
-    getUsuarios()
+    getPersonal()
       .then(data => {
-        const staff = data
-          .filter(u => u.rol === 'admin' || u.rol === 'entrenador')
-          .map(mapBackendToTrainer)
+        const staff = data.map(mapBackendToTrainer)
         setTrainers(staff)
       })
       .catch(err => setError(mensajeError(err)))
@@ -88,12 +86,10 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
 
     registrarUsuario(payload)
       .then(() => {
-        return getUsuarios()
+        return getPersonal()
       })
       .then(data => {
-        const staff = data
-          .filter(u => u.rol === 'admin' || u.rol === 'entrenador')
-          .map(mapBackendToTrainer)
+        const staff = data.map(mapBackendToTrainer)
         setTrainers(staff)
         setShowNewUser(false)
       })

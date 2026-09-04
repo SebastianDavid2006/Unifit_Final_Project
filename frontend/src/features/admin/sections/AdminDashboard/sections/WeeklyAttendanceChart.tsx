@@ -1,16 +1,48 @@
+import { useMemo } from 'react'
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts'
 import GlassCard from '@/features/admin/components/GlassCard'
 import ChartTooltip from '../components/ChartTooltip'
 import ChartTitle from '../components/ChartTitle'
 import { weeklyAttendance } from '../data'
+import { useAsistenciaSemana } from '@/hooks/useAsistencia'
+
+const DIAS_CORTOS: Record<string, string> = {
+  Domingo: 'Dom', Lunes: 'Lun', Martes: 'Mar', Miércoles: 'Mié', Jueves: 'Jue', Viernes: 'Vie', Sábado: 'Sáb',
+}
+
+function computeWeekRange() {
+  const today = new Date()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+  monday.setHours(0, 0, 0, 0)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  sunday.setHours(23, 59, 59, 999)
+  return { monday, sunday }
+}
 
 export default function WeeklyAttendanceChart() {
+  const { monday, sunday } = useMemo(computeWeekRange, [])
+  const { data } = useAsistenciaSemana(monday, sunday)
+
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) return weeklyAttendance
+    const today = new Date()
+    const DIAS_COMPLETOS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+    const todayName = DIAS_COMPLETOS[today.getDay()]
+    return data.map(d => ({
+      day: DIAS_CORTOS[d.dia] ?? d.dia,
+      asistentes: d.asistentes,
+      isToday: d.dia === todayName,
+    }))
+  }, [data])
+
   return (
     <GlassCard delay={0.25}>
       <ChartTitle>ASISTENCIA SEMANAL</ChartTitle>
       <div style={{ overflow: 'visible' }} className="no-clip-chart">
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={weeklyAttendance} margin={{ top: 40, bottom: 0, left: 0, right: 0 }}>
+          <BarChart data={chartData} margin={{ top: 40, bottom: 0, left: 0, right: 0 }}>
             <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,0,0,0.12)" />
             <XAxis
               dataKey="day"
@@ -46,7 +78,7 @@ export default function WeeklyAttendanceChart() {
               </filter>
             </defs>
             <Bar dataKey="asistentes" radius={[12, 12, 0, 0]} className="bar-hover">
-              {weeklyAttendance.map((entry, i) => (
+              {chartData.map((entry, i) => (
                 <Cell
                   key={i}
                   fill={entry.isToday ? 'url(#barGreenGlow)' : 'url(#barGradient)'}
@@ -58,7 +90,7 @@ export default function WeeklyAttendanceChart() {
                 dataKey="asistentes"
                 position="top"
                 content={({ x, y, width, value, index }: any) => {
-                  const entry = weeklyAttendance[index]
+                  const entry = chartData[index]
                   const isToday = entry?.isToday
                   const label = isToday ? 'Hoy' : value
                   const pillW = isToday ? 50 : 30

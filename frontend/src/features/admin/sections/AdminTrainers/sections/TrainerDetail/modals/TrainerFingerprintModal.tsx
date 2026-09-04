@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, RefreshCw, ScanLine } from 'lucide-react'
-import type { Trainer } from '@/data/trainers'
+import type { Trainer } from '@/services/usuario.service'
 import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
 import { BLUE_GRAD, GREEN_BLUE_GRAD, GREEN } from '../../../data'

@@ -26,6 +26,7 @@ interface Props {
   onViewModeChange: (v: 'machines' | 'exercises') => void
   onSearchChange: (v: string) => void
   onSearchFocus: (v: boolean) => void
+  userRole?: 'admin' | 'entrenador'
 }
 
 export default function EquipmentPage(props: Props) {
@@ -191,6 +192,7 @@ export default function EquipmentPage(props: Props) {
         onEdit={m => { setPreviewMachine(null); machine.openEdit(m) }}
         onDelete={m => setDeleteConfirm({ type: 'machine', id: m.id })}
         onClose={() => setPreviewMachine(null)}
+        userRole={props.userRole}
       />
 
       {/* â”€â”€ Exercise Preview Modal â”€â”€ */}
@@ -199,6 +201,7 @@ export default function EquipmentPage(props: Props) {
         onEdit={e => { setPreviewExercise(null); ex.openEdit(e) }}
         onDelete={e => setDeleteConfirm({ type: 'exercise', id: e.id })}
         onClose={() => setPreviewExercise(null)}
+        userRole={props.userRole}
       />
 
       {/* â”€â”€ Delete Confirm â”€â”€ */}

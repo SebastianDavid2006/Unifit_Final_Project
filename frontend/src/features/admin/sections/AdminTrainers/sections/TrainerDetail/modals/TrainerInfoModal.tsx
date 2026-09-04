@@ -1,6 +1,6 @@
 ﻿import { motion, AnimatePresence } from 'motion/react'
 import { X, Power, PenLine, Check } from 'lucide-react'
-import type { Trainer } from '@/data/trainers'
+import type { Trainer } from '@/services/usuario.service'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
 import { LockView } from '@/assets/models/ui/objects/lock/LockModel'

@@ -202,7 +202,7 @@ export function TrainerPage() {
                   onToggleFilters={() => setShowStudentsFilters(!showStudentsFilters)}
                 />
               )}
-              {section === 'schedule' && <AgendaModule students={students} />}
+              {section === 'schedule' && <AgendaModule students={students} userRole="entrenador" />}
             </motion.div>
           </AnimatePresence>
         )}

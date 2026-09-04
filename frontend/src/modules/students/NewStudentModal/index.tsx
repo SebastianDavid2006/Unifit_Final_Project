@@ -4,7 +4,8 @@ import { X, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import DemoInbox from '@/modules/students/components/DemoInbox'
 import { api, mensajeError } from '@/lib/api'
-import { getNiveles, getPrograms } from '@/data/config/academicPrograms'
+import { getNiveles } from '@/types/catalogo'
+import { listarProgramas } from '@/services/catalogo.service'
 import { loadDocs, type StoredDocs } from '@/data/documents'
 import { BLUE_GRAD, RED, STEPS_ADULT, STEPS_MINOR, INITIAL_FORM } from '@/modules/students/NewStudentData'
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
@@ -48,6 +49,29 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const steps = isMinor ? STEPS_MINOR : STEPS_ADULT
   const totalSteps = steps.length
   const currentStepLabel = steps.find(s => s.num === step)?.label ?? ''
+
+  const [programasAgrupados, setProgramasAgrupados] = useState<Record<string, Record<string, { id_programa: string; nombre: string }[]>>>({})
+  const [programasLoading, setProgramasLoading] = useState(true)
+
+  useEffect(() => {
+    setProgramasLoading(true)
+    listarProgramas()
+      .then(res => {
+        const agrupados: Record<string, Record<string, { id_programa: string; nombre: string }[]>> = {}
+        res.forEach(p => {
+          if (!agrupados[p.universidad]) agrupados[p.universidad] = {}
+          if (!agrupados[p.universidad][p.tipo_programa]) agrupados[p.universidad][p.tipo_programa] = []
+          agrupados[p.universidad][p.tipo_programa].push({ id_programa: p.id_programa, nombre: p.nombre })
+        })
+        setProgramasAgrupados(agrupados)
+      })
+      .catch(() => {})
+      .finally(() => setProgramasLoading(false))
+  }, [])
+
+  const getPrograms = (institucion: string, nivel: string) => {
+    return programasAgrupados[institucion]?.[nivel]?.map(p => p.nombre) ?? []
+  }
 
   useEffect(() => {
     if (open) {

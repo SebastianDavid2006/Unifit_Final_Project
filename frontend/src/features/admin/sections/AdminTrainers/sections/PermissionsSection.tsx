@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { Shield } from 'lucide-react'
-import type { Trainer } from '@/data/trainers'
+import type { Trainer } from '@/services/usuario.service'
 
 export default function PermissionsSection({ trainer, globalAdmin, onToggleGlobalAdmin }: {
   trainer: Trainer

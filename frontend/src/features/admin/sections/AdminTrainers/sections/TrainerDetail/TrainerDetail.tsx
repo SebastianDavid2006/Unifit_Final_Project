@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import type { Trainer } from '@/data/trainers'
+import type { Trainer } from '@/services/usuario.service'
 import { BLUE_GRAD, GREEN_BLUE_GRAD, RED, GREEN, gymTenure } from '../../data'
 
 import DetailCard from '../../components/DetailCard'

@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { ChevronRight, CalendarDays } from 'lucide-react'
-import type { Trainer } from '@/data/trainers'
+import type { Trainer } from '@/services/usuario.service'
 import Tag from '@/features/admin/components/Tag'
 import { roleMeta, statusMeta } from '../data'
 

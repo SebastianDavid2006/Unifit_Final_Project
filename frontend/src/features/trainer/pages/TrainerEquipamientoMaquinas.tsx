@@ -12,6 +12,7 @@ export default function TrainerEquipamientoMaquinas() {
       onViewModeChange={() => {}}
       onSearchChange={setSearch}
       onSearchFocus={setSearchFocused}
+      userRole="entrenador"
     />
   )
 }

@@ -167,6 +167,48 @@ export function usuarioPublico(usuario: { id_usuario: string; primer_nombre: str
 
 export async function listarUsuarios() {
   const usuarios = await prisma.usuario.findMany({
+    where: { rol: 'usuario' },
+    orderBy: { fecha_creacion: 'desc' },
+    include: {
+      estudiante: { include: { programa: true } },
+      profesor: { include: { cargo: true, area: true } },
+      administrativo: { include: { cargo: true, area: true } },
+      huella: { select: { id_huella: true, indice_sensor: true } },
+      aceptaciones: { select: { id_doc_legal: true, documento: { select: { tipo: true } } } },
+      acudiente_de: true,
+    },
+  })
+
+  return usuarios.map((u) => ({
+    ...usuarioPublico(u),
+    fecha_nacimiento: u.fecha_nacimiento,
+    fecha_creacion: u.fecha_creacion,
+    parq_realizado: u.parq_realizado,
+    tiene_huella: !!u.huella,
+    acepta_contrato: u.aceptaciones.some((a) => a.documento.tipo === 'contrato_gym'),
+    acepta_tratamiento: u.aceptaciones.some((a) => a.documento.tipo === 'tratamiento_datos'),
+    acudiente: u.acudiente_de ?? null,
+    estudiante: u.estudiante
+      ? {
+          id_programa: u.estudiante.id_programa,
+          semestre: u.estudiante.semestre,
+          modalidad: u.estudiante.modalidad,
+          jornada: u.estudiante.jornada,
+          programa: u.estudiante.programa,
+        }
+      : null,
+    profesor: u.profesor
+      ? { id_cargo: u.profesor.id_cargo, id_area: u.profesor.id_area, cargo: u.profesor.cargo, area: u.profesor.area }
+      : null,
+    administrativo: u.administrativo
+      ? { id_cargo: u.administrativo.id_cargo, id_area: u.administrativo.id_area, cargo: u.administrativo.cargo, area: u.administrativo.area }
+      : null,
+  }))
+}
+
+export async function listarPersonal() {
+  const usuarios = await prisma.usuario.findMany({
+    where: { rol: { in: ['admin', 'entrenador'] } },
     orderBy: { fecha_creacion: 'desc' },
     include: {
       estudiante: { include: { programa: true } },
@@ -382,7 +424,11 @@ export async function registrarHuella(idUsuario: string, idSensor: number) {
   })
 }
 
-export async function verificarYActivarSiCompleto(tx: Tx, idUsuario: string) {
+export async function obtenerMiPerfil(idUsuario: string) {
+  return obtenerUsuarioPorId(idUsuario)
+}
+
+export async function verificarYActivarSiCompleto(tx: Tx, idUsuario: string): Promise<void> {
   const usuario = await tx.usuario.findUnique({
     where: { id_usuario: idUsuario },
     select: { parq_realizado: true, estado: true, fecha_nacimiento: true, rol: true },

@@ -42,7 +42,7 @@ const DIA_KEY_TO_LABEL: Record<string, HorarioPorDia['dia']> = {
   SÁB: 'sáb',
 }
 
-export default function AgendaModule({ students = [] }: { students?: AgendaStudent[] }) {
+export default function AgendaModule({ students = [], userRole }: { students?: AgendaStudent[]; userRole?: 'admin' | 'entrenador' }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [showApptModal, setShowApptModal] = useState(false)
@@ -408,7 +408,7 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
 
   return (
     <div className="p-8 pt-12 max-w-[1440px] mx-auto relative overflow-x-hidden" style={{ maxWidth: '100%' }}>
-      <Banner onOpenPublish={openPublishModal} />
+      <Banner onOpenPublish={userRole !== 'entrenador' ? openPublishModal : undefined} />
 
       {loadError && (
         <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.35)', color: '#FF8FA3', fontSize: 12 }}>

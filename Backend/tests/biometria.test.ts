@@ -148,6 +148,35 @@ describe.sequential('Biometría - Sensor (ESP32)', () => {
     expect(res.status).toBe(401)
   })
 
+  it('Re-enrollment: reemplaza huella activa reutilizando el mismo slot', async () => {
+    // 1. Iniciar enrolamiento de nuevo (el usuario ya tiene huella activa)
+    const enrolRes = await request(app)
+      .post('/api/biometria/enrolar')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ id_usuario: directoId })
+
+    expect(enrolRes.status).toBe(201)
+    const slotReutilizado = enrolRes.body.indice_sensor
+
+    // 2. El slot debe ser el mismo que ya tenía (no genera colisión)
+    const huellaAntes = await prisma.huella.findUnique({ where: { id_usuario: directoId } })
+    expect(slotReutilizado).toBe(huellaAntes?.indice_sensor)
+
+    // 3. Tras re-enrolar, queda inactiva esperando registrar la nueva
+    expect(huellaAntes?.activo).toBe(false)
+    expect(huellaAntes?.paso_enrolamiento).toBe(1)
+
+    // 4. Sensor registra la nueva huella en el mismo slot
+    const res = await request(app)
+      .post('/api/biometria/registrar')
+      .set('x-api-key', API_KEY)
+      .send({ id_usuario: directoId, indice_sensor: slotReutilizado })
+
+    expect(res.status).toBe(201)
+    expect(res.body.huella.activo).toBe(true)
+    expect(res.body.huella.indice_sensor).toBe(slotReutilizado)
+  })
+
   it('GET /biometria/pendientes - con API key', async () => {
     const res = await request(app)
       .get('/api/biometria/pendientes')

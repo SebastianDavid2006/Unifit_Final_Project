@@ -112,6 +112,32 @@ export const numOnly = (s: any) => String(s ?? '').replace(/[^\d.]/g, '')
 
 export type ValuationForm = typeof emptyValuationForm
 
-export const assessmentItems: any[] = []
+export interface AssessmentItem {
+  num: number
+  date: string
+  next?: string | null
+  color: string
+  type: string
+  evaluator?: string
+  evaluador?: string
+  score: number
+  metrics: { label: string; value: string }[]
+  nivelActividad: string
+  objetivoTarjetas: string[]
+  objetivoDetalle: string
+  estatura: string
+  masaMagra: string
+  grasaVisceral: string
+  presionArterial: string
+  edadMetabolica: string
+  aguaCorporal: string
+  resistenciaMuscular: string
+  antecedentesSalud: string[]
+  observacionesEntrenador: string
+  diasDisponibles?: string[]
+  observacionesFinales: string
+}
+
+export const assessmentItems: AssessmentItem[] = []
 
 

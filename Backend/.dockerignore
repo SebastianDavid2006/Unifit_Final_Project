@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.local
+.env.docker
+*.log
+.git
+.vscode
+*.md
+docker-entrypoint.sh
+Dockerfile
+.dockerignore

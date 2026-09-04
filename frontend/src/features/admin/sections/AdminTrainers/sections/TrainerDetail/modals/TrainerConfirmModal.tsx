@@ -1,6 +1,6 @@
 ﻿import { motion } from 'motion/react'
 import { Power, AlertTriangle } from 'lucide-react'
-import type { Trainer } from '@/data/trainers'
+import type { Trainer } from '@/services/usuario.service'
 import { BLUE_GRAD, GREEN_BLUE_GRAD, RED } from '../../../data'
 
 interface TrainerConfirmModalProps {
