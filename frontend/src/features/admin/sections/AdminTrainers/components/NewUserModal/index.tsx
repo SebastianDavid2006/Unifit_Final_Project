@@ -10,6 +10,7 @@ import PersonalInfoSection from './sections/PersonalInfoSection'
 import DataConsentSection from './sections/DataConsentSection'
 import { INITIAL_FORM } from './data'
 import type { NewUserForm, UserRole, TipoUsuarioStaff } from './data'
+import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
 
 interface NewUserModalProps {
   open: boolean
@@ -23,9 +24,12 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   const [aceptaDatos, setAceptaDatos] = useState(false)
   const [role, setRole] = useState<UserRole | null>(null)
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuarioStaff | null>(null)
+  const [idCargo, setIdCargo] = useState('')
+  const [idArea, setIdArea] = useState('')
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
+  const { cargos, areas } = useCatalogoStaff()
 
   useEffect(() => {
     if (open) {
@@ -34,6 +38,8 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       setAceptaDatos(false)
       setRole(null)
       setTipoUsuario(null)
+      setIdCargo('')
+      setIdArea('')
       setSuccess(false)
       setShake(false)
       setConfirmClose(false)
@@ -60,7 +66,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       return !!(form.primerNombre && form.primerApellido && form.numDoc)
     }
     if (step === 2) return aceptaDatos
-    if (step === 3) return role !== null && tipoUsuario !== null
+    if (step === 3) return role !== null && tipoUsuario !== null && idCargo !== '' && idArea !== ''
     return true
   }
 
@@ -96,6 +102,8 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       eps: form.eps,
       bloodType: form.grupoSanguineo,
       tipo_usuario: tipoUsuario ?? 'profesor',
+      id_cargo: idCargo,
+      id_area: idArea,
     })
     setSuccess(true)
     confetti({
@@ -139,10 +147,10 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
               <AnimatePresence mode="wait">
                 <motion.div
                   key={step}
-                  initial={{ opacity: 0, filter: 'blur(6px)' }}
-                  animate={{ opacity: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, filter: 'blur(6px)' }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
                   className="flex flex-col flex-1 min-h-0"
                 >
                   <ModalHeader step={step} onClose={handleCloseClick} />
@@ -160,6 +168,12 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                           onRoleChange={setRole}
                           tipoUsuario={tipoUsuario}
                           onTipoUsuarioChange={setTipoUsuario}
+                          cargos={cargos}
+                          areas={areas}
+                          idCargo={idCargo}
+                          idArea={idArea}
+                          onCargoChange={setIdCargo}
+                          onAreaChange={setIdArea}
                         />
                       )}
                     </motion.div>
@@ -167,9 +181,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
 
                   <ModalFooter
                     step={step}
-                    fingerprintStatus="idle"
                     onPrev={handlePrev}
-                    onCapture={() => {}}
                     onNext={handleNext}
                   />
                 </motion.div>

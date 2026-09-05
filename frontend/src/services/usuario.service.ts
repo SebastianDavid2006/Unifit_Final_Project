@@ -17,12 +17,14 @@ export interface BackendUsuario {
   debe_cambiar_password: boolean
   fecha_nacimiento?: string
   fecha_creacion?: string
+  genero?: 'masculino' | 'femenino' | 'otro'
+  genero_otro?: string
   parq_realizado?: boolean
   tiene_huella?: boolean
   acepta_contrato?: boolean
   acepta_tratamiento?: boolean
   huella?: { id_huella: string; indice_sensor: number; activo: boolean; paso_enrolamiento: number | null } | null
-  estudiante?: { id_programa: string; semestre: number; modalidad: string; jornada: string; programa?: { nombre_programa: string } } | null
+  estudiante?: { id_programa: string; semestre: number; modalidad: string; jornada: string; programa?: { nombre_programa: string; universidad?: string } } | null
   profesor?: { id_cargo: string; id_area: string; cargo?: { nombre_cargo: string }; area?: { nombre_area: string } } | null
   administrativo?: { id_cargo: string; id_area: string; cargo?: { nombre_cargo: string }; area?: { nombre_area: string } } | null
 }
@@ -76,6 +78,28 @@ function formatDate(dateStr?: string): string {
   return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+const GENERO_LABEL: Record<string, string> = {
+  masculino: 'Masculino',
+  femenino: 'Femenino',
+  otro: 'Otro',
+}
+
+const UNIVERSIDAD_LABEL: Record<string, string> = {
+  uni_colombia: 'Universitaria de Colombia',
+  uni_bogota: 'Universitaria de Bogotá',
+}
+
+function mapGenero(u: BackendUsuario): string {
+  if (!u.genero) return ''
+  if (u.genero === 'otro' && u.genero_otro?.trim()) return u.genero_otro.trim()
+  return GENERO_LABEL[u.genero] ?? u.genero
+}
+
+function mapInstitucion(u: BackendUsuario): string {
+  const universidad = u.estudiante?.programa?.universidad
+  return universidad ? (UNIVERSIDAD_LABEL[universidad] ?? universidad) : ''
+}
+
 export function mapBackendToStudent(u: BackendUsuario): Student {
   const estudiante = u.estudiante
   const profesor = u.profesor
@@ -95,7 +119,7 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     documentType: u.tipo_documento,
     documentNumber: u.documento,
     birthDate: u.fecha_nacimiento ?? '',
-    gender: '',
+    gender: mapGenero(u),
     eps: '',
     bloodType: '',
     email: u.email_contacto,
@@ -105,7 +129,7 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     contactRelation: '',
     carnetId: '',
     program,
-    institution: 'Universitaria de Colombia',
+    institution: mapInstitucion(u),
     faculty: '',
     semestre: estudiante?.semestre ?? 0,
     semester: String(estudiante?.semestre ?? ''),
@@ -113,7 +137,6 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     jornada: estudiante?.jornada ?? '',
     graduationStatus: 'No egresado',
     adherence: 0,
-    risk: 'low' as const,
     status: STATUS_MAP[u.estado] ?? 'process',
     lastVisit: '',
     nextAssessment: 'Por agendar',

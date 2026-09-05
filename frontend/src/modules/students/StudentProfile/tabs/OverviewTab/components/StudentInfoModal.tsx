@@ -112,11 +112,7 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
         <div className="flex-shrink-0 flex items-center justify-between px-7 pt-6 pb-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{
-              background: student.risk === 'high'
-                ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
-                : student.risk === 'medium'
-                ? 'linear-gradient(135deg, #FF9500, #E68600)'
-                : 'linear-gradient(135deg, #30D158, #20A040)',
+              background: 'linear-gradient(135deg, #30D158, #20A040)',
               fontSize: 14,
             }}>
               {student.avatar}

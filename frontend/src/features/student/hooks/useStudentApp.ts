@@ -30,7 +30,6 @@ function mapBackendToStudent(u: BackendUsuario): Student {
     gender: 'F',
     avatar,
     goal: 'Sin definir',
-    risk: 'low',
     adherence: 0,
   }
 }

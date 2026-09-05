@@ -11,7 +11,6 @@ export interface Student {
   gender: 'M' | 'F'
   avatar: string
   goal: string
-  risk: 'low' | 'medium' | 'high'
   adherence: number
 }
 

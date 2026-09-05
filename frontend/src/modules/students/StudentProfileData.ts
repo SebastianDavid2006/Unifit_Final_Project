@@ -42,7 +42,6 @@ export interface Student {
   jornada: string
   graduationStatus: string
   adherence: number
-  risk: 'low' | 'medium' | 'high'
   lastVisit: string
   avatar: string
   goal: string

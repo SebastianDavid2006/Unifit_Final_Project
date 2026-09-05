@@ -8,7 +8,6 @@ interface Props {
   tab: string
   students: Student[]
   search: string
-  riskFilter: 'all' | 'high' | 'medium' | 'low'
   showFilters: boolean
   onToggleFilters: () => void
   onSelectStudent: (s: Student) => void
@@ -39,7 +38,6 @@ export default function AdminGym(props: Props) {
       <StudentsModule
         students={props.students}
         search={props.search}
-        riskFilter={props.riskFilter}
         onSelectStudent={props.onSelectStudent}
         showFilters={props.showFilters}
         onToggleFilters={props.onToggleFilters}

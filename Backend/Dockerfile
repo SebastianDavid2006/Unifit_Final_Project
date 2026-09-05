@@ -1,6 +1,6 @@
 # Backend/Dockerfile
 # ---- STAGE 1: BUILDER ----
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Instalar dependencias de build (incluye prisma)
@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # ---- STAGE 2: RUNTIME ----
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 
 # Solo dependencias de producción
@@ -27,6 +27,20 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Copiar CLI de Prisma (necesario para `migrate deploy`) y sus dependencias
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+
+# tsx (para ejecutar el seed manualmente: `npx tsx prisma/seed.ts`)
+COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
+COPY --from=builder /app/node_modules/.bin/tsx ./node_modules/.bin/tsx
+
+# Entrypoint para ejecutar migraciones antes de arrancar
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Usuario no-root
 RUN addgroup -g 1001 -S nodejs && \

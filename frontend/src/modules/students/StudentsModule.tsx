@@ -16,13 +16,12 @@ interface Props {
   students: Student[]
   search: string
   onSearchChange?: (v: string) => void
-  riskFilter: 'all' | 'high' | 'medium' | 'low'
   onSelectStudent: (s: Student) => void
   showFilters: boolean
   onToggleFilters: () => void
 }
 
-export default function StudentsModule({ students, search, onSearchChange, riskFilter, onSelectStudent, showFilters, onToggleFilters }: Props) {
+export default function StudentsModule({ students, search, onSearchChange, onSelectStudent, showFilters, onToggleFilters }: Props) {
   const isMobile = useIsMobile()
   const [filterCategory, setFilterCategory] = useState<'status' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
@@ -59,11 +58,10 @@ export default function StudentsModule({ students, search, onSearchChange, riskF
   const filtered = useMemo(() => {
     const filteredStudents = students.filter(s => {
       const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.faculty.toLowerCase().includes(search.toLowerCase())
-      const matchRisk = riskFilter === 'all' || s.risk === riskFilter
       const entries = Object.entries(filterSelections).filter(([, v]) => v.size > 0)
       const statusLabel: Record<string, string> = { active: 'Activo', inactive: 'Inactivo', process: 'En proceso' }
       const matchCategory = entries.length === 0 || entries.every(([cat, vals]) => vals.has(cat === 'status' ? statusLabel[s.status] : (s as any)[cat]))
-      return matchSearch && matchRisk && matchCategory
+      return matchSearch && matchCategory
     })
 
     // Sort: "process" status first, then by name
@@ -72,7 +70,7 @@ export default function StudentsModule({ students, search, onSearchChange, riskF
       if (a.status !== 'process' && b.status === 'process') return 1
       return a.name.localeCompare(b.name)
     })
-  }, [students, search, riskFilter, filterSelections])
+  }, [students, search, filterSelections])
 
   const tableHeaders = ['Nombre', 'PROGRAMA / CARGO', 'PERFIL', 'Último Ingreso', 'Próxima Valoración', 'Valoraciones', 'Estado']
 
@@ -82,7 +80,7 @@ export default function StudentsModule({ students, search, onSearchChange, riskF
     process: { label: 'En proceso', color: '#0E6FBF', bg: 'rgba(18,112,183,0.12)' },
   }
 
-  useEffect(() => { setPage(1) }, [search, riskFilter, filterSelections])
+  useEffect(() => { setPage(1) }, [search, filterSelections])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -434,7 +432,7 @@ export default function StudentsModule({ students, search, onSearchChange, riskF
                   ) : (
                     <>
                       <div className="flex items-center gap-4 min-w-0 relative z-10">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: s.risk === 'high' ? 'linear-gradient(135deg, #FF3B30, #D32F2F)' : s.risk === 'medium' ? 'linear-gradient(135deg, #FF9500, #E68600)' : 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0" style={{ background: 'linear-gradient(135deg, #30D158, #20A040)', fontSize: 13 }}>{s.avatar}</div>
                         <div className="min-w-0">
                           <p className="text-sm font-bold truncate" style={{ color: isProcess ? '#FFFFFF' : '#1A1A1E' }}>{s.name}</p>
                           <p className="text-[10px] font-mono font-medium mt-0.5 truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.8)' : '#1A1A1E' }}>CC 1098{s.id}76{s.id}</p>

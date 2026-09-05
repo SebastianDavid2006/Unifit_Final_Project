@@ -2,6 +2,7 @@ import { motion } from 'motion/react'
 import { Check, GraduationCap, Shield, UserCheck, Building2 } from 'lucide-react'
 import { BLUE, RED } from '../data'
 import type { UserRole, TipoUsuarioStaff } from '../data'
+import type { Cargo, Area } from '@/types/catalogo'
 
 const ROLE_OPTIONS: { id: UserRole; label: string; desc: string; features: string[]; icon: typeof GraduationCap; gradient: string; accent: string; glow: string }[] = [
   {
@@ -31,11 +32,17 @@ const TIPO_OPTIONS: { id: TipoUsuarioStaff; label: string; desc: string; icon: t
   { id: 'administrativo', label: 'Administrativo', desc: 'Puede gestionar configuración, usuarios y reportes.', icon: Building2 },
 ]
 
-export default function RoleSelector({ role, onRoleChange, tipoUsuario, onTipoUsuarioChange }: {
+export default function RoleSelector({ role, onRoleChange, tipoUsuario, onTipoUsuarioChange, cargos, areas, idCargo, idArea, onCargoChange, onAreaChange }: {
   role: UserRole | null
   onRoleChange: (r: UserRole) => void
   tipoUsuario: TipoUsuarioStaff | null
   onTipoUsuarioChange: (t: TipoUsuarioStaff) => void
+  cargos: Cargo[]
+  areas: Area[]
+  idCargo: string
+  idArea: string
+  onCargoChange: (v: string) => void
+  onAreaChange: (v: string) => void
 }) {
   return (
     <div className="relative h-full min-h-[400px] flex flex-col overflow-hidden rounded-2xl">
@@ -194,6 +201,62 @@ export default function RoleSelector({ role, onRoleChange, tipoUsuario, onTipoUs
                   </motion.button>
                 )
               })}
+            </div>
+          </motion.div>
+        )}
+
+        {tipoUsuario && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-2xl"
+          >
+            <p className="text-xs font-bold mb-2 text-center" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Cargo y área del personal
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Cargo <span style={{ color: '#F43843' }}>*</span>
+                </label>
+                <select
+                  value={idCargo}
+                  onChange={e => onCargoChange(e.target.value)}
+                  className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full appearance-none cursor-pointer"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    color: '#FFFFFF',
+                    border: '1px solid rgba(255,255,255,0.09)',
+                    paddingRight: 32,
+                  }}
+                >
+                  <option value="" style={{ color: '#1A1A1E' }}>Seleccionar cargo</option>
+                  {cargos.map(c => (
+                    <option key={c.id_cargo ?? c.id} value={c.id_cargo ?? c.id} style={{ color: '#1A1A1E' }}>{c.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  Área <span style={{ color: '#F43843' }}>*</span>
+                </label>
+                <select
+                  value={idArea}
+                  onChange={e => onAreaChange(e.target.value)}
+                  className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full appearance-none cursor-pointer"
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    color: '#FFFFFF',
+                    border: '1px solid rgba(255,255,255,0.09)',
+                    paddingRight: 32,
+                  }}
+                >
+                  <option value="" style={{ color: '#1A1A1E' }}>Seleccionar área</option>
+                  {areas.map(a => (
+                    <option key={a.id_area ?? a.id} value={a.id_area ?? a.id} style={{ color: '#1A1A1E' }}>{a.nombre}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </motion.div>
         )}

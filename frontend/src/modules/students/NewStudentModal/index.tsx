@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti'
 import DemoInbox from '@/modules/students/components/DemoInbox'
 import { api, mensajeError } from '@/lib/api'
 import { useProgramasAgrupados } from '@/hooks/useCatalogo'
+import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
 import type { Universidad, NivelPrograma } from '@/types/catalogo'
 import { loadDocs, type StoredDocs } from '@/data/documents'
 import { BLUE_GRAD, RED, STEPS_ADULT, STEPS_MINOR, INITIAL_FORM } from '@/modules/students/NewStudentData'
@@ -51,6 +52,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const currentStepLabel = steps.find(s => s.num === step)?.label ?? ''
 
   const catalogo = useProgramasAgrupados()
+  const { cargos, areas } = useCatalogoStaff()
 
   useEffect(() => {
     if (open) {
@@ -98,7 +100,12 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const canGoNext = (): boolean => {
     if (step === 1) {
-      return !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc)
+      const base = !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc)
+      if (!base) return false
+      if (tipoUsuario === 'profesor' || tipoUsuario === 'administrador') {
+        return !!(form.cargo && form.area)
+      }
+      return true
     }
     if (isMinor && step === 2) {
       return !!(form.acudientePrimerNombre && form.acudientePrimerApellido && form.acudienteDocumento)
@@ -313,6 +320,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             setForm={setForm}
                             isMinor={isMinor}
                             catalogo={catalogo}
+                            cargos={cargos}
+                            areas={areas}
                           />
                         )}
                         {isMinor && step === 2 && (

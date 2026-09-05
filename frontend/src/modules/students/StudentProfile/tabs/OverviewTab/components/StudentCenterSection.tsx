@@ -17,11 +17,7 @@ export function StudentCenterSection({ student, onShowInfo, className = '' }: St
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-4 relative z-10"
             style={{
-              background: student.risk === 'high'
-                ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
-                : student.risk === 'medium'
-                ? 'linear-gradient(135deg, #FF9500, #E68600)'
-                : 'linear-gradient(135deg, #30D158, #20A040)',
+              background: 'linear-gradient(135deg, #30D158, #20A040)',
               fontSize: 26,
             }}
           >
@@ -69,11 +65,7 @@ export function StudentCenterSection({ student, onShowInfo, className = '' }: St
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold shadow-lg mb-3 relative z-10"
             style={{
-              background: student.risk === 'high'
-                ? 'linear-gradient(135deg, #FF3B30, #D32F2F)'
-                : student.risk === 'medium'
-                ? 'linear-gradient(135deg, #FF9500, #E68600)'
-                : 'linear-gradient(135deg, #30D158, #20A040)',
+              background: 'linear-gradient(135deg, #30D158, #20A040)',
               fontSize: 26,
             }}
           >

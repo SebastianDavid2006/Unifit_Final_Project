@@ -23,10 +23,10 @@ export default function FormSelect({ label, value, onChange, options, required }
             border: '1px solid transparent',
             paddingRight: 32,
           }}
-          onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-          onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
-          onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = meshInputFocus; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-          onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
+          onMouseEnter={e => { if (e.currentTarget !== document.activeElement) { e.currentTarget.style.background = meshInputHover; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+          onMouseLeave={e => { if (e.currentTarget !== document.activeElement) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
+          onFocus={e => { e.currentTarget.style.borderColor = BLUE; e.currentTarget.style.background = meshInputFocus; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+          onBlur={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = meshInputBg; e.currentTarget.style.boxShadow = 'none' }}
           required={required}
         >
           {options.map(o => <option key={o} value={o}>{o}</option>)}

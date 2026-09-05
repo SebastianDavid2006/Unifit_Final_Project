@@ -7,6 +7,7 @@ import {
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
 import { UNIVERSIDADES, NIVELES, UNIVERSIDAD_LABELS, NIVEL_LABELS, type Universidad, type NivelPrograma } from '@/types/catalogo'
 import type { useProgramasAgrupados } from '@/hooks/useCatalogo'
+import type { Cargo, Area } from '@/types/catalogo'
 
 interface Step1InfoProps {
   form: any
@@ -16,9 +17,11 @@ interface Step1InfoProps {
   setForm: React.Dispatch<React.SetStateAction<any>>
   isMinor: boolean
   catalogo: ReturnType<typeof useProgramasAgrupados>
+  cargos: Cargo[]
+  areas: Area[]
 }
 
-export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, isMinor, catalogo }: Step1InfoProps) {
+export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, isMinor, catalogo, cargos, areas }: Step1InfoProps) {
   const sectionTitle = (title: string) => (
     <div className="flex items-center gap-2 pt-2 pb-1">
       <div className="w-0.5 h-5 rounded-full" style={{ background: BLUE_GRAD }} />
@@ -176,8 +179,20 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
         <>
           {sectionTitle('Información laboral')}
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Cargo" value={form.cargo} onChange={v => set('cargo', v)} required />
-            <Field label="Área" value={form.area} onChange={v => set('area', v)} required />
+            <Select
+              label="Cargo"
+              value={form.cargo}
+              onChange={v => set('cargo', v)}
+              options={cargos.map(c => ({ value: c.id_cargo ?? c.id, label: c.nombre }))}
+              required
+            />
+            <Select
+              label="Área"
+              value={form.area}
+              onChange={v => set('area', v)}
+              options={areas.map(a => ({ value: a.id_area ?? a.id, label: a.nombre }))}
+              required
+            />
           </div>
         </>
       )}

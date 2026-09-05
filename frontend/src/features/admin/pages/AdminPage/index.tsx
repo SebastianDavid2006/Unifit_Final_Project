@@ -55,7 +55,6 @@ export function AdminPage() {
   const [gymStudentSearch, setGymStudentSearch] = useState('')
   const [gymStudentSearchFocused, setGymStudentSearchFocused] = useState(false)
   const [showGymStudentFilters, setShowGymStudentFilters] = useState(false)
-  const [gymStudentRiskFilter, setGymStudentRiskFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
   const [gymSelectedStudent, setGymSelectedStudent] = useState<Student | null>(null)
   const [gymStudentTab, setGymStudentTab] = useState('general')
   const [equipSearch, setEquipSearch] = useState('')
@@ -189,7 +188,6 @@ export function AdminPage() {
                 tab={gymTab}
                 students={students}
                 search={gymStudentSearch}
-                riskFilter={gymStudentRiskFilter}
                 showFilters={showGymStudentFilters}
                 onToggleFilters={() => setShowGymStudentFilters(!showGymStudentFilters)}
                 onSelectStudent={(s) => navigate(`/admin/gestion/usuarios/${s.id}/overview`)}
