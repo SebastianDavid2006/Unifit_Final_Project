@@ -92,6 +92,29 @@ export async function historialUsuarioHandler(req: Request, res: Response): Prom
   }
 }
 
+export async function historialPropioHandler(req: Request, res: Response): Promise<void> {
+  const id = req.usuario!.id_usuario
+
+  const schema = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().positive().max(100).default(20),
+  })
+
+  const parsed = schema.safeParse(req.query)
+
+  if (!parsed.success) {
+    res.status(400).json({ mensaje: 'Parámetros inválidos', errores: parsed.error.flatten() })
+    return
+  }
+
+  try {
+    const resultado = await obtenerHistorialUsuario(id, parsed.data.page, parsed.data.pageSize)
+    res.json(resultado)
+  } catch (error) {
+    throw error
+  }
+}
+
 const resumenSemanaSchema = z.object({
   fecha_inicio: z.string().datetime(),
   fecha_fin: z.string().datetime(),

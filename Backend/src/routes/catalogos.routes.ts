@@ -9,6 +9,9 @@ import {
   putCargo,
   deleteArea,
   deleteCargo,
+  postPrograma,
+  putPrograma,
+  deletePrograma,
 } from '../controllers/catalogo.controller'
 import { verificarToken } from '../middlewares/verificarToken'
 import { verificarEstado } from '../middlewares/verificarEstado'
@@ -28,5 +31,9 @@ router.put('/areas/:id', verificarToken, verificarEstado(), requiereRol('admin')
 
 router.delete('/cargos/:id', verificarToken, verificarEstado(), requiereRol('admin'), deleteCargo)
 router.delete('/areas/:id', verificarToken, verificarEstado(), requiereRol('admin'), deleteArea)
+
+router.post('/programas', verificarToken, verificarEstado(), requiereRol('admin'), postPrograma)
+router.put('/programas/:id', verificarToken, verificarEstado(), requiereRol('admin'), putPrograma)
+router.delete('/programas/:id', verificarToken, verificarEstado(), requiereRol('admin'), deletePrograma)
 
 export default router

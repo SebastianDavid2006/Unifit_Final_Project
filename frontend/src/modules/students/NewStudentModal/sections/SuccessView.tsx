@@ -3,6 +3,7 @@ import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_cong
 
 interface SuccessViewProps {
   createdEmail: string
+  onShowInbox: () => void
   onClose: () => void
 }
 

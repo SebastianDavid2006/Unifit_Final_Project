@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import {
   TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
   TIPOS_USUARIO, BLUE, BLUE_GRAD,
 } from '@/data/config/registration'
 import type { TipoUsuario } from '@/data/config/registration'
-import { INSTITUCIONES, getNiveles } from '@/types/catalogo'
-import { listarProgramas } from '@/services/catalogo.service'
+import { useProgramasAgrupados } from '@/hooks/useCatalogo'
+import { UNIVERSIDADES, NIVELES, UNIVERSIDAD_LABELS, NIVEL_LABELS, type Universidad, type NivelPrograma } from '@/types/catalogo'
 
 interface RegisterFormSectionsProps {
   form: Record<string, string>
@@ -19,28 +18,7 @@ interface RegisterFormSectionsProps {
 export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsuario, isMinor }: RegisterFormSectionsProps) {
   const set = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }))
 
-  const [programasAgrupados, setProgramasAgrupados] = useState<Record<string, Record<string, { id_programa: string; nombre: string }[]>>>({})
-  const [programasLoading, setProgramasLoading] = useState(true)
-
-  useEffect(() => {
-    setProgramasLoading(true)
-    listarProgramas()
-      .then(res => {
-        const agrupados: Record<string, Record<string, { id_programa: string; nombre: string }[]>> = {}
-        res.forEach(p => {
-          if (!agrupados[p.universidad]) agrupados[p.universidad] = {}
-          if (!agrupados[p.universidad][p.tipo_programa]) agrupados[p.universidad][p.tipo_programa] = []
-          agrupados[p.universidad][p.tipo_programa].push({ id_programa: p.id_programa, nombre: p.nombre })
-        })
-        setProgramasAgrupados(agrupados)
-      })
-      .catch(() => {})
-      .finally(() => setProgramasLoading(false))
-  }, [])
-
-  const getPrograms = (institucion: string, nivel: string) => {
-    return programasAgrupados[institucion]?.[nivel]?.map(p => p.nombre) ?? []
-  }
+  const catalogo = useProgramasAgrupados()
 
   const inputStyle = {
     background: 'rgba(255,255,255,0.06)',
@@ -68,25 +46,29 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
     </div>
   )
 
-  const select = (label: string, key: string, options: string[], opts?: { required?: boolean; onChange?: (v: string) => void }) => (
-    <div className="flex flex-col gap-1">
-      <label className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>
-        {label}{opts?.required && <span style={{ color: '#F43843' }}> *</span>}
-      </label>
-      <select
-        value={form[key] ?? ''}
-        onChange={e => {
-          const v = e.target.value
-          set(key, v)
-          opts?.onChange?.(v)
-        }}
-        className="appearance-none cursor-pointer"
-        style={inputStyle}
-      >
-        {options.map(o => <option key={o} value={o}>{o}</option>)}
-      </select>
-    </div>
-  )
+  const select = (label: string, key: string, options: (string | { value: string; label: string })[], opts?: { required?: boolean; onChange?: (v: string) => void }) => {
+    const optValue = (o: string | { value: string; label: string }) => typeof o === 'string' ? o : o.value
+    const optLabel = (o: string | { value: string; label: string }) => typeof o === 'string' ? o : o.label
+    return (
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          {label}{opts?.required && <span style={{ color: '#F43843' }}> *</span>}
+        </label>
+        <select
+          value={form[key] ?? ''}
+          onChange={e => {
+            const v = e.target.value
+            set(key, v)
+            opts?.onChange?.(v)
+          }}
+          className="appearance-none cursor-pointer"
+          style={inputStyle}
+        >
+          {options.map(o => <option key={optValue(o)} value={optValue(o)}>{optLabel(o)}</option>)}
+        </select>
+      </div>
+    )
+  }
 
   const sectionTitle = (label: string) => (
     <div className="flex items-center gap-2 mt-1">
@@ -211,23 +193,26 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
             {select('Estado', 'estado', ESTADOS)}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {select('Institución', 'institucion', INSTITUCIONES as unknown as string[], {
+            {select('Institución', 'institucion', UNIVERSIDADES.map(u => ({ value: u, label: UNIVERSIDAD_LABELS[u] })), {
               onChange: (inst) => {
-                const level = getNiveles(inst)[0]
-                const prog = getPrograms(inst, level)[0] ?? ''
-                setForm(prev => ({ ...prev, institucion: inst, nivelFormacion: level, programa: prog }))
+                const u = inst as Universidad
+                const level = (NIVELES[0] ?? 'tecnico') as NivelPrograma
+                const prog = catalogo.nombres(u, level)[0] ?? ''
+                setForm(prev => ({ ...prev, institucion: u, nivelFormacion: level, programa: prog }))
               }
             })}
             {select('Modalidad', 'modalidad', MODALIDADES)}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {select('Nivel de formación', 'nivelFormacion', getNiveles(form.institucion), {
+            {select('Nivel de formación', 'nivelFormacion', NIVELES.map(n => ({ value: n, label: NIVEL_LABELS[n] })), {
               onChange: (level) => {
-                const prog = getPrograms(form.institucion, level)[0] ?? ''
-                setForm(prev => ({ ...prev, nivelFormacion: level, programa: prog }))
+                const n = level as NivelPrograma
+                const u = (form.institucion as Universidad) || 'uni_colombia'
+                const prog = catalogo.nombres(u, n)[0] ?? ''
+                setForm(prev => ({ ...prev, nivelFormacion: n, programa: prog }))
               }
             })}
-            {select('Carrera', 'programa', getPrograms(form.institucion, form.nivelFormacion), { required: true })}
+            {select('Carrera', 'programa', catalogo.nombres((form.institucion as Universidad) || 'uni_colombia', (form.nivelFormacion as NivelPrograma) || 'tecnico'), { required: true })}
           </div>
           <div className="grid grid-cols-2 gap-3">
             {select('Semestre', 'semestre', ['1', '2', '3', '4', '5', '6', '7', '8', '9'])}

@@ -1,8 +1,28 @@
 import { prisma } from '../utils/prisma'
 import { HttpError } from '../utils/HttpError'
+import type { Universidad, NivelPrograma } from '@prisma/client'
 
 export async function listarProgramas() {
   return prisma.programa.findMany({ where: { activo: true }, orderBy: { nombre: 'asc' } })
+}
+
+export async function crearPrograma(nombre: string, universidad: Universidad, tipo_programa: NivelPrograma) {
+  return prisma.programa.create({ data: { nombre, universidad, tipo_programa } })
+}
+
+export async function actualizarPrograma(
+  id: string,
+  data: { nombre?: string; universidad?: Universidad; tipo_programa?: NivelPrograma; activo?: boolean },
+) {
+  const existente = await prisma.programa.findUnique({ where: { id_programa: id } })
+  if (!existente) throw new HttpError(404, 'Programa no encontrado')
+  return prisma.programa.update({ where: { id_programa: id }, data })
+}
+
+export async function eliminarPrograma(id: string) {
+  const existente = await prisma.programa.findUnique({ where: { id_programa: id } })
+  if (!existente) throw new HttpError(404, 'Programa no encontrado')
+  await prisma.programa.update({ where: { id_programa: id }, data: { activo: false } })
 }
 
 export async function listarCargos() {

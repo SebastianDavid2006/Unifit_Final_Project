@@ -4,8 +4,8 @@ import { X, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import DemoInbox from '@/modules/students/components/DemoInbox'
 import { api, mensajeError } from '@/lib/api'
-import { getNiveles } from '@/types/catalogo'
-import { listarProgramas } from '@/services/catalogo.service'
+import { useProgramasAgrupados } from '@/hooks/useCatalogo'
+import type { Universidad, NivelPrograma } from '@/types/catalogo'
 import { loadDocs, type StoredDocs } from '@/data/documents'
 import { BLUE_GRAD, RED, STEPS_ADULT, STEPS_MINOR, INITIAL_FORM } from '@/modules/students/NewStudentData'
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
@@ -50,28 +50,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const totalSteps = steps.length
   const currentStepLabel = steps.find(s => s.num === step)?.label ?? ''
 
-  const [programasAgrupados, setProgramasAgrupados] = useState<Record<string, Record<string, { id_programa: string; nombre: string }[]>>>({})
-  const [programasLoading, setProgramasLoading] = useState(true)
-
-  useEffect(() => {
-    setProgramasLoading(true)
-    listarProgramas()
-      .then(res => {
-        const agrupados: Record<string, Record<string, { id_programa: string; nombre: string }[]>> = {}
-        res.forEach(p => {
-          if (!agrupados[p.universidad]) agrupados[p.universidad] = {}
-          if (!agrupados[p.universidad][p.tipo_programa]) agrupados[p.universidad][p.tipo_programa] = []
-          agrupados[p.universidad][p.tipo_programa].push({ id_programa: p.id_programa, nombre: p.nombre })
-        })
-        setProgramasAgrupados(agrupados)
-      })
-      .catch(() => {})
-      .finally(() => setProgramasLoading(false))
-  }, [])
-
-  const getPrograms = (institucion: string, nivel: string) => {
-    return programasAgrupados[institucion]?.[nivel]?.map(p => p.nombre) ?? []
-  }
+  const catalogo = useProgramasAgrupados()
 
   useEffect(() => {
     if (open) {
@@ -100,9 +79,9 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
 
   const toggleTipoUsuario = (tipo: TipoUsuario) => {
     setTipoUsuario(prev => (prev === tipo ? null : tipo))
-    const inst = 'Universitaria de Colombia'
-    const level = getNiveles(inst)[0]
-    const prog = getPrograms(inst, level)[0] ?? ''
+    const inst: Universidad = 'uni_colombia'
+    const level: NivelPrograma = 'tecnico'
+    const prog = catalogo.nombres(inst, level)[0] ?? ''
     setForm(prev => ({
       ...prev,
       numCarnet: '', estado: 'Activo',
@@ -193,7 +172,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
     }
 
     if (tipoUsuario === 'estudiante') {
-      payload.id_programa = form.programa || undefined
+      payload.id_programa = catalogo.resolverId(
+        (form.institucion as Universidad) || 'uni_colombia',
+        (form.nivelFormacion as NivelPrograma) || 'tecnico',
+        form.programa,
+      )
       payload.numero_carnet = form.numCarnet?.trim() || undefined
       payload.semestre = form.semestre ? Number(form.semestre) : undefined
       payload.modalidad = MAP_MODALIDAD[form.modalidad]
@@ -329,6 +312,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             toggleTipoUsuario={toggleTipoUsuario}
                             setForm={setForm}
                             isMinor={isMinor}
+                            catalogo={catalogo}
                           />
                         )}
                         {isMinor && step === 2 && (

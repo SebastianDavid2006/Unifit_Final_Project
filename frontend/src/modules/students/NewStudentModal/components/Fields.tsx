@@ -61,8 +61,15 @@ interface SelectProps {
   label: string
   value: string
   onChange: (val: string) => void
-  options: string[]
+  options: (string | { value: string; label: string })[]
   required?: boolean
+}
+
+function optValue(o: string | { value: string; label: string }): string {
+  return typeof o === 'string' ? o : o.value
+}
+function optLabel(o: string | { value: string; label: string }): string {
+  return typeof o === 'string' ? o : o.label
 }
 
 export function Select({ label, value, onChange, options, required }: SelectProps) {
@@ -107,7 +114,7 @@ export function Select({ label, value, onChange, options, required }: SelectProp
           required={required}
         >
           {options.map(o => (
-            <option key={o} value={o}>{o}</option>
+            <option key={optValue(o)} value={optValue(o)}>{optLabel(o)}</option>
           ))}
         </select>
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 group-hover:opacity-60" style={{ color: 'rgba(0,0,0,0.2)' }}>

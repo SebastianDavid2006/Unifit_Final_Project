@@ -3,6 +3,7 @@ import {
   registrarSensorHandler,
   listarAsistenciasHandler,
   historialUsuarioHandler,
+  historialPropioHandler,
   resumenSemanaHandler,
   evolucionHandler,
   actualizarAsistenciaHandler,
@@ -59,6 +60,14 @@ router.post(
   verificarApiKey,
   rateLimit(60, 60000),
   registrarSensorHandler,
+)
+
+router.get(
+  '/asistencia/usuario/me',
+  verificarToken,
+  verificarEstado(),
+  rateLimit(60, 60000),
+  historialPropioHandler,
 )
 
 router.get(

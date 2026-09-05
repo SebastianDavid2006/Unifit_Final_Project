@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { INITIAL_FORM, BLUE_GRAD } from '@/data/config/registration'
 import type { TipoUsuario } from '@/data/config/registration'
-import { getNiveles, agruparProgramas } from '@/types/catalogo'
-import { listarProgramas } from '@/services/catalogo.service'
+import { useProgramasAgrupados } from '@/hooks/useCatalogo'
+import type { Universidad, NivelPrograma } from '@/types/catalogo'
 import { api, mensajeError } from '@/lib/api'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { RegisterFormSections } from '@/auth/components/RegisterFormSections'
@@ -79,34 +79,13 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     setPhase('form')
   }
 
-  const [programasAgrupados, setProgramasAgrupados] = useState<Record<string, Record<string, { id_programa: string; nombre: string }[]>>>({})
-  const [programasLoading, setProgramasLoading] = useState(true)
-
-  useEffect(() => {
-    setProgramasLoading(true)
-    listarProgramas()
-      .then(res => {
-        const agrupados: Record<string, Record<string, { id_programa: string; nombre: string }[]>> = {}
-        res.forEach(p => {
-          if (!agrupados[p.universidad]) agrupados[p.universidad] = {}
-          if (!agrupados[p.universidad][p.tipo_programa]) agrupados[p.universidad][p.tipo_programa] = []
-          agrupados[p.universidad][p.tipo_programa].push({ id_programa: p.id_programa, nombre: p.nombre })
-        })
-        setProgramasAgrupados(agrupados)
-      })
-      .catch(() => {})
-      .finally(() => setProgramasLoading(false))
-  }, [])
-
-  const getPrograms = (institucion: string, nivel: string) => {
-    return programasAgrupados[institucion]?.[nivel]?.map(p => p.nombre) ?? []
-  }
+  const catalogo = useProgramasAgrupados()
 
   const toggleTipoUsuario = (tipo: TipoUsuario) => {
     setTipoUsuario(prev => (prev === tipo ? null : tipo))
-    const inst = 'Universitaria de Colombia'
-    const level = getNiveles(inst)[0]
-    const prog = getPrograms(inst, level)[0] ?? ''
+    const inst: Universidad = 'uni_colombia'
+    const level: NivelPrograma = 'tecnico'
+    const prog = catalogo.nombres(inst, level)[0] ?? ''
     setForm(prev => ({
       ...prev,
       numCarnet: '', estado: 'No egresado',
@@ -153,7 +132,6 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     const MAP_MODALIDAD: Record<string, string> = { Presencial: 'presencial', Virtual: 'virtual' }
     const MAP_JORNADA: Record<string, string> = { 'Mañana': 'diurna', Noche: 'nocturna', 'Fin de semana': 'finde' }
     const MAP_ROL: Record<string, string> = { estudiante: 'estudiante', profesor: 'profesor', administrador: 'administrativo' }
-    const MAP_INST: Record<string, string> = { 'Universitaria de Colombia': 'uni_colombia', 'Universitaria de Bogotá': 'uni_bogota' }
 
     const payload: Record<string, unknown> = {
       primer_nombre: form.primerNombre?.trim(),
@@ -177,7 +155,11 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     }
 
     if (tipoUsuario === 'estudiante') {
-      payload.id_programa = form.programa || undefined
+      payload.id_programa = catalogo.resolverId(
+        (form.institucion as Universidad) || 'uni_colombia',
+        (form.nivelFormacion as NivelPrograma) || 'tecnico',
+        form.programa,
+      )
       payload.numero_carnet = form.numCarnet?.trim() || undefined
       payload.semestre = form.semestre ? Number(form.semestre) : undefined
       payload.modalidad = MAP_MODALIDAD[form.modalidad]

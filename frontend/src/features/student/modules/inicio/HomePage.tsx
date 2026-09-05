@@ -13,7 +13,7 @@ export function HomePage() {
   const { student, todayWorkout, weeklyProgress } = useStudentApp()
   const doneCount = todayWorkout.exercises_list.filter(e => e.done).length
   const pct = Math.round((doneCount / todayWorkout.exercises_list.length) * 100)
-  const photo = student.gender === 'M' ? studentBoy : studentGirl
+  const photo = student?.gender === 'M' ? studentBoy : studentGirl
 
   return (
     <div className="space-y-6">
@@ -30,7 +30,7 @@ export function HomePage() {
                 </p>
               </div>
               <h1 className="uppercase italic font-black text-white leading-[0.95]" style={{ fontSize: 'clamp(28px, 5vw, 44px)', letterSpacing: '-0.01em' }}>
-                Hola, <span style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{student.firstName}</span>
+                Hola, <span style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{student?.firstName}</span>
               </h1>
               <p className="uppercase italic font-black mt-2" style={{ fontSize: 'clamp(11px, 1.6vw, 14px)', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.38)' }}>
                 "{QUOTE}"
@@ -38,7 +38,7 @@ export function HomePage() {
             </div>
             <motion.img
               src={photo}
-              alt={student.firstName}
+              alt={student?.firstName}
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
@@ -106,10 +106,10 @@ export function HomePage() {
           </div>
           <div className="flex-1">
             <p className="font-black text-white leading-none" style={{ fontSize: 30 }}>
-              {student.streak}<span style={{ fontSize: 14, fontWeight: 700, color: AMBER }}> días</span>
+              —<span style={{ fontSize: 14, fontWeight: 700, color: AMBER }}> días</span>
             </p>
             <p className="uppercase tracking-widest" style={{ fontSize: 9.5, fontWeight: 700, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>
-              Racha activa · Mejor: {student.bestStreak} días
+              Racha activa
             </p>
           </div>
         </div>

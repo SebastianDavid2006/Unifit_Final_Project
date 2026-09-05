@@ -157,6 +157,36 @@ describe.sequential('Asistencia - Historial Usuario', () => {
   })
 })
 
+describe.sequential('Asistencia - Historial Propio', () => {
+  it('GET /asistencia/usuario/me - usuario ve su propio historial', async () => {
+    const res = await request(app)
+      .get('/api/asistencia/usuario/me')
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body).toHaveProperty('asistencias')
+    expect(Array.isArray(res.body.asistencias)).toBe(true)
+  })
+
+  it('GET /asistencia/usuario/me - sin token (401)', async () => {
+    const res = await request(app)
+      .get('/api/asistencia/usuario/me')
+
+    expect(res.status).toBe(401)
+  })
+
+  it('GET /asistencia/usuario/me - paginación funciona', async () => {
+    const res = await request(app)
+      .get('/api/asistencia/usuario/me')
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+      .query({ page: 1, pageSize: 5 })
+
+    expect(res.status).toBe(200)
+    expect(res.body.page).toBe(1)
+    expect(res.body.pageSize).toBe(5)
+  })
+})
+
 describe.sequential('Asistencia - Listado (admin/entrenador)', () => {
   it('GET /asistencia - admin lista con filtros', async () => {
     const res = await request(app)

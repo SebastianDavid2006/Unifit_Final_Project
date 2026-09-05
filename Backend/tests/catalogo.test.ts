@@ -103,3 +103,63 @@ describe.sequential('Catálogo - Áreas (CRUD)', () => {
     expect(Array.isArray(res.body)).toBe(true)
   })
 })
+
+describe.sequential('Catálogo - Programas (CRUD con enums)', () => {
+  let programaId: string
+
+  it('POST /api/programas - admin crea (201)', async () => {
+    const res = await request(app)
+      .post('/api/programas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ nombre: 'Programa Test ' + Date.now(), universidad: 'uni_colombia', tipo_programa: 'profesional' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.id_programa).toBeDefined()
+    expect(res.body.tipo_programa).toBe('profesional')
+    programaId = res.body.id_programa
+  })
+
+  it('POST /api/programas - enum inválido (400)', async () => {
+    const res = await request(app)
+      .post('/api/programas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ nombre: 'X', universidad: 'uni_colombia', tipo_programa: 'pregrado' })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('POST /api/programas - entrenador NO puede (403)', async () => {
+    const res = await request(app)
+      .post('/api/programas')
+      .set('Authorization', `Bearer ${token('entrenadorToken')}`)
+      .send({ nombre: 'X', universidad: 'uni_colombia', tipo_programa: 'tecnico' })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('POST /api/programas - sin auth (401)', async () => {
+    const res = await request(app)
+      .post('/api/programas')
+      .send({ nombre: 'X', universidad: 'uni_colombia', tipo_programa: 'tecnico' })
+
+    expect(res.status).toBe(401)
+  })
+
+  it('PUT /api/programas/:id - admin edita (200)', async () => {
+    const res = await request(app)
+      .put(`/api/programas/${programaId}`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ tipo_programa: 'especializacion' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.tipo_programa).toBe('especializacion')
+  })
+
+  it('DELETE /api/programas/:id - admin elimina (200)', async () => {
+    const res = await request(app)
+      .delete(`/api/programas/${programaId}`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+
+    expect(res.status).toBe(200)
+  })
+})

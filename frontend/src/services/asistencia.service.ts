@@ -48,6 +48,16 @@ export async function getHistorialUsuario(
   return res.data
 }
 
+export async function getMiHistorial(
+  page = 1,
+  pageSize = 20
+): Promise<PaginatedAsistencia> {
+  const res = await api.get<PaginatedAsistencia>('/asistencia/usuario/me', {
+    params: { page, pageSize },
+  })
+  return res.data
+}
+
 export async function getResumenSemana(
   fechaInicio: Date,
   fechaFin: Date

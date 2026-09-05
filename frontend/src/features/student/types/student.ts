@@ -3,7 +3,7 @@ import { AiRoutine, RoutineRow } from '@/modules/students/aiRoutineTypes'
 import type { Student as ProfileStudent, AssessmentItem, ValuationForm } from '@/modules/students/StudentProfileData'
 
 export interface Student {
-  id: number
+  id: string
   name: string
   firstName: string
   lastName: string
@@ -13,22 +13,6 @@ export interface Student {
   goal: string
   risk: 'low' | 'medium' | 'high'
   adherence: number
-  weight: number
-  height: number
-  bodyFat: number
-  muscleMass: number
-  imc: number
-  streak: number
-  bestStreak: number
-  sessionsThisWeek: number
-  totalSessions: number
-  level: number
-  xp: number
-  nextLevelXp: number
-  bodyFatChange: string
-  muscleChange: string
-  weightChange: string
-  imcStatus: string
 }
 
 export interface RoutineWithAssessment {

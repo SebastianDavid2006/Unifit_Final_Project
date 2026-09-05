@@ -1,4 +1,3 @@
-import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/config/academicPrograms'
 import { CAREER_STATS } from '@/data/stats/careerStats'
 
 export const BLUE = '#1270B7'
@@ -16,18 +15,11 @@ export const NIVEL_OPTIONS = ['Técnico', 'Profesional', 'Especialización']
 export const normalizeNivel = (cat: string) =>
   cat === 'técnico' ? 'Técnico' : cat === 'profesional' ? 'Profesional' : cat === 'especialización' ? 'Especialización' : cat
 
-const programsByInstitution: Record<string, Set<string>> = {}
-INSTITUCIONES.forEach(inst => {
-  const s = new Set<string>()
-  getNiveles(inst).forEach(lv => getPrograms(inst, lv).forEach(p => s.add(p)))
-  programsByInstitution[inst] = s
-})
-export const institutionOf = (faculty: string) =>
-  INSTITUCIONES.find(inst => programsByInstitution[inst]?.has(faculty)) ?? INSTITUCIONES[0]
+const INSTITUCIONES_STATS = ['Universitaria de Colombia', 'Universitaria de Bogotá']
 
-export const PROGRAM_OPTIONS = [...new Set(
-  INSTITUCIONES.flatMap(inst => getNiveles(inst).flatMap(lv => getPrograms(inst, lv))),
-)]
+export const institutionOf = (_faculty: string) => 'Universitaria de Colombia'
+
+export const PROGRAM_OPTIONS = [...new Set(CAREER_STATS.map(c => c.faculty))]
 
 export type EvolutionPoint = { mes: string; date: string; usuarios: number; asistencia: number }
 
@@ -55,7 +47,7 @@ export const FILTER_LABELS: Record<string, string> = {
 }
 
 export const FILTER_OPTIONS: Record<string, string[]> = {
-  institucion: [...INSTITUCIONES],
+  institucion: [...INSTITUCIONES_STATS],
   nivel: NIVEL_OPTIONS,
   programa: PROGRAM_OPTIONS,
 }

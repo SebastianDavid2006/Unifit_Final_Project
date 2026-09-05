@@ -6,6 +6,27 @@ export async function listarProgramas(): Promise<Programa[]> {
   return res.data
 }
 
+export async function crearPrograma(data: {
+  nombre: string
+  universidad: string
+  tipo_programa: string
+}): Promise<Programa> {
+  const res = await api.post('/programas', data)
+  return res.data
+}
+
+export async function actualizarPrograma(
+  id: string,
+  data: { nombre?: string; universidad?: string; tipo_programa?: string },
+): Promise<Programa> {
+  const res = await api.put(`/programas/${id}`, data)
+  return res.data
+}
+
+export async function eliminarPrograma(id: string): Promise<void> {
+  await api.delete(`/programas/${id}`)
+}
+
 export async function listarCargos(): Promise<Cargo[]> {
   const res = await api.get('/cargos')
   return res.data

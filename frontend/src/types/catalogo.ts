@@ -1,8 +1,11 @@
+export type Universidad = 'uni_colombia' | 'uni_bogota'
+export type NivelPrograma = 'tecnico' | 'profesional' | 'especializacion'
+
 export interface Programa {
   id_programa: string
   nombre: string
-  universidad: string
-  tipo_programa: string
+  universidad: Universidad
+  tipo_programa: NivelPrograma
   activo: boolean
   fecha_creacion: string
   fecha_modificacion: string
@@ -24,30 +27,17 @@ export interface Area {
   fecha_creacion: string
 }
 
-export interface ProgramasAgrupados {
-  [institucion: string]: {
-    [nivel: string]: Programa[]
-  }
+export const NIVEL_LABELS: Record<NivelPrograma, string> = {
+  tecnico: 'Técnico',
+  profesional: 'Profesional',
+  especializacion: 'Especialización',
 }
 
-export function agruparProgramas(programas: Programa[]): ProgramasAgrupados {
-  return programas.reduce((acc, p) => {
-    const inst = p.universidad
-    const nivel = p.tipo_programa
-    if (!acc[inst]) acc[inst] = {}
-    if (!acc[inst][nivel]) acc[inst][nivel] = []
-    acc[inst][nivel].push(p)
-    return acc
-  }, {} as ProgramasAgrupados)
+export const UNIVERSIDAD_LABELS: Record<Universidad, string> = {
+  uni_colombia: 'Universitaria de Colombia',
+  uni_bogota: 'Universitaria de Bogotá',
 }
 
-export const INSTITUCIONES = ['Universitaria de Colombia', 'Universitaria de Bogotá'] as const
+export const UNIVERSIDADES: Universidad[] = ['uni_colombia', 'uni_bogota']
 
-export type Institucion = typeof INSTITUCIONES[number]
-
-export function getNiveles(institucion: string): string[] {
-  if (institucion === 'Universitaria de Bogotá') {
-    return ['Pregrado']
-  }
-  return ['Técnicos', 'Profesionales', 'Especializaciones']
-}
+export const NIVELES: NivelPrograma[] = ['tecnico', 'profesional', 'especializacion']

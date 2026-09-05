@@ -5,7 +5,8 @@ import {
   TIPOS_USUARIO,
 } from '@/modules/students/NewStudentData'
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
-import { INSTITUCIONES, getNiveles, getPrograms } from '@/data/config/academicPrograms'
+import { UNIVERSIDADES, NIVELES, UNIVERSIDAD_LABELS, NIVEL_LABELS, type Universidad, type NivelPrograma } from '@/types/catalogo'
+import type { useProgramasAgrupados } from '@/hooks/useCatalogo'
 
 interface Step1InfoProps {
   form: any
@@ -14,9 +15,10 @@ interface Step1InfoProps {
   toggleTipoUsuario: (tipo: TipoUsuario) => void
   setForm: React.Dispatch<React.SetStateAction<any>>
   isMinor: boolean
+  catalogo: ReturnType<typeof useProgramasAgrupados>
 }
 
-export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, isMinor }: Step1InfoProps) {
+export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, isMinor, catalogo }: Step1InfoProps) {
   const sectionTitle = (title: string) => (
     <div className="flex items-center gap-2 pt-2 pb-1">
       <div className="w-0.5 h-5 rounded-full" style={{ background: BLUE_GRAD }} />
@@ -132,12 +134,13 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               label="Institución"
               value={form.institucion}
               onChange={inst => {
-                const levels = getNiveles(inst)
-                const level = levels[0]
-                const prog = getPrograms(inst, level)[0] ?? ''
-                setForm(prev => ({ ...prev, institucion: inst, nivelFormacion: level, programa: prog }))
+                const u = inst as Universidad
+                const nivel = NIVELES[0] ?? 'tecnico'
+                const nombres = catalogo.nombres(u, nivel)
+                const prog = nombres[0] ?? ''
+                setForm(prev => ({ ...prev, institucion: u, nivelFormacion: nivel, programa: prog }))
               }}
-              options={INSTITUCIONES}
+              options={UNIVERSIDADES.map(u => ({ value: u, label: UNIVERSIDAD_LABELS[u] }))}
             />
             <Select label="Modalidad" value={form.modalidad} onChange={v => set('modalidad', v)} options={MODALIDADES} />
           </div>
@@ -146,12 +149,21 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               label="Nivel de formación"
               value={form.nivelFormacion}
               onChange={level => {
-                const prog = getPrograms(form.institucion, level)[0] ?? ''
-                setForm(prev => ({ ...prev, nivelFormacion: level, programa: prog }))
+                const n = level as NivelPrograma
+                const u = (form.institucion as Universidad) || 'uni_colombia'
+                const nombres = catalogo.nombres(u, n)
+                const prog = nombres[0] ?? ''
+                setForm(prev => ({ ...prev, nivelFormacion: n, programa: prog }))
               }}
-              options={getNiveles(form.institucion)}
+              options={NIVELES.map(n => ({ value: n, label: NIVEL_LABELS[n] }))}
             />
-            <Select label="Carrera" value={form.programa} onChange={v => set('programa', v)} options={getPrograms(form.institucion, form.nivelFormacion)} required />
+            <Select
+              label="Carrera"
+              value={form.programa}
+              onChange={v => set('programa', v)}
+              options={catalogo.nombres((form.institucion as Universidad) || 'uni_colombia', (form.nivelFormacion as NivelPrograma) || 'tecnico')}
+              required
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Select label="Semestre" value={form.semestre} onChange={v => set('semestre', v)} options={['1', '2', '3', '4', '5', '6', '7', '8', '9']} />
