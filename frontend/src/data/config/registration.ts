@@ -1,19 +1,20 @@
 import studentRoleImg from '@/assets/icons/users/student.webp'
 import teacherRoleImg from '@/assets/icons/users/teacher.webp'
 import adminRoleImg from '@/assets/icons/users/administrator.webp'
+import {
+  TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
+  MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO, MAP_JORNADA, MAP_MODALIDAD, MAP_ROL,
+} from '@/data/config/catalogosRegistro'
+
+export {
+  TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, ESTADOS, PARENTESCOS,
+  MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO, MAP_JORNADA, MAP_MODALIDAD, MAP_ROL,
+}
 
 export const BLUE = '#1270B7'
 export const GREEN = '#22C55E'
 export const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 export const GREEN_GRAD = 'linear-gradient(135deg, #00fb64, #009b95)'
-
-export const TIPO_DOC = ['CC', 'CE', 'Pasaporte', 'NIT']
-export const GENEROS = ['Masculino', 'Femenino', 'Otro']
-export const GRUPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-export const MODALIDADES = ['Presencial', 'Virtual']
-export const JORNADAS = ['Mañana', 'Noche', 'Fin de semana']
-export const ESTADOS = ['Egresado', 'No egresado']
-export const PARENTESCOS = ['Padre', 'Madre', 'Hermano(a)', 'Abuelo(a)', 'Tío(a)', 'Primo(a)', 'Otro']
 
 export type TipoUsuario = 'estudiante' | 'profesor' | 'administrador'
 
@@ -34,5 +35,5 @@ export const INITIAL_FORM = {
   semestre: '1', modalidad: 'Presencial',
   jornada: 'Mañana', estado: 'Activo', cargo: '', area: '',
   acudientePrimerNombre: '', acudientePrimerApellido: '', acudienteDocumento: '',
-  acudienteTipoDoc: 'CC', acudienteTelefono: '',
+  acudienteTipoDocumento: 'CC', acudienteTelefonoContacto: '',
 }

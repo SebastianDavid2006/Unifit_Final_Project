@@ -60,7 +60,17 @@ export async function cambiarContrasena(req: Request, res: Response): Promise<vo
 }
 
 export async function registroWeb(req: Request, res: Response): Promise<void> {
-  const parsed = registrarSchema.safeParse(req.body)
+  // Guardrail: endpoint público solo puede crear estudiantes
+  const tipoUsuario = req.body?.tipo_usuario
+  if (tipoUsuario === 'profesor' || tipoUsuario === 'administrativo') {
+    res.status(400).json({
+      mensaje: 'tipo_usuario no permitido en este endpoint',
+      errores: { formErrors: ['El registro público solo permite estudiantes'] },
+    })
+    return
+  }
+
+  const parsed = await registrarSchema.safeParseAsync(req.body)
 
   if (!parsed.success) {
     res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })

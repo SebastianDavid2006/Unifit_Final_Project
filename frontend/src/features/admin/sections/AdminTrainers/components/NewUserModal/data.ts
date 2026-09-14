@@ -1,4 +1,9 @@
 import { User, FileText, Shield } from 'lucide-react'
+import { TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, PARENTESCOS } from '@/data/config/catalogosRegistro'
+
+export {
+  TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, PARENTESCOS,
+}
 
 export const BLUE = '#1270B7'
 export const RED = '#F43843'
@@ -6,13 +11,6 @@ export const GREEN = '#22C55E'
 export const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 export const GREEN_GRAD = 'linear-gradient(135deg, #00fb64, #009b95)'
 export const BRAND_GRADIENT = 'linear-gradient(135deg, #F5A623, #1270B7, #F43843)'
-
-export const TIPO_DOC = ['CC', 'CE', 'Pasaporte', 'NIT']
-export const GENEROS = ['Masculino', 'Femenino', 'Otro']
-export const GRUPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-export const MODALIDADES = ['Presencial', 'Virtual']
-export const JORNADAS = ['Mañana', 'Tarde', 'Noche', 'Completa']
-export const PARENTESCOS = ['Padre', 'Madre', 'Hermano(a)', 'Abuelo(a)', 'Tío(a)', 'Primo(a)', 'Otro']
 
 export const STEPS = [
   { num: 1, label: 'Información personal', icon: User },

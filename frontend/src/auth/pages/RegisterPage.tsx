@@ -3,9 +3,12 @@ import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { INITIAL_FORM, BLUE_GRAD } from '@/data/config/registration'
 import type { TipoUsuario } from '@/data/config/registration'
+import {
+  MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO, MAP_JORNADA, MAP_MODALIDAD, MAP_ROL,
+} from '@/data/config/catalogosRegistro'
 import { useProgramasAgrupados } from '@/hooks/useCatalogo'
 import type { Universidad, NivelPrograma } from '@/types/catalogo'
-import { api, mensajeError } from '@/lib/api'
+import { api, mensajeError, mapearErroresBackend } from '@/lib/api'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { RegisterFormSections } from '@/auth/components/RegisterFormSections'
 import { RegisterSuccess } from '@/auth/components/RegisterSuccess'
@@ -31,6 +34,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
   const [shake, setShake] = useState(false)
   const [error, setError] = useState('')
+  const [erroresCampo, setErroresCampo] = useState<Record<string, string[]>>({})
   const introVideoRef = useRef<HTMLVideoElement>(null)
   const introContainerRef = useRef<HTMLDivElement>(null)
   const bgVideoRef = useRef<HTMLVideoElement>(null)
@@ -92,6 +96,9 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       institucion: inst, nivelFormacion: level, programa: prog,
       semestre: '1', modalidad: 'Presencial', jornada: 'Mañana',
       cargo: '', area: '',
+      acudientePrimerNombre: '', acudientePrimerApellido: '', acudienteDocumento: '',
+      acudienteTipoDocumento: 'CC', acudienteTelefonoContacto: '',
+      parentescoAcudiente: '', otroParentescoAcudiente: '',
     }))
   }
 
@@ -107,32 +114,22 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   }, [form.fechaNac])
 
   const canGoNext = () => {
-    const base = !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc)
+    const base = !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc && form.fechaNac)
     if (!base) return false
+    if (tipoUsuario === 'estudiante' && !form.numCarnet) return false
     if (isMinor) {
-      return !!form.nombreAcudiente &&
+      return !!form.acudientePrimerNombre &&
+        !!form.acudientePrimerApellido &&
+        !!form.acudienteDocumento &&
+        !!form.acudienteTipoDocumento &&
+        !!form.acudienteTelefonoContacto &&
         !!form.parentescoAcudiente &&
-        !!form.telefonoAcudiente &&
         (form.parentescoAcudiente !== 'Otro' || !!form.otroParentescoAcudiente)
     }
     return true
   }
 
   const buildPayload = () => {
-    const MAP_TIPO_DOC: Record<string, string> = { CC: 'CC', TI: 'TI', CE: 'CE', Pasaporte: 'PA', RC: 'RC' }
-    const MAP_GENERO: Record<string, string> = { Masculino: 'masculino', Femenino: 'femenino', Otro: 'otro' }
-    const MAP_GRUPO: Record<string, string> = {
-      'A+': 'a_positivo', 'A-': 'a_negativo', 'B+': 'b_positivo', 'B-': 'b_negativo',
-      'AB+': 'ab_positivo', 'AB-': 'ab_negativo', 'O+': 'o_positivo', 'O-': 'o_negativo',
-    }
-    const MAP_PARENTESCO: Record<string, string> = {
-      Padre: 'padre', Madre: 'madre', 'Hermano(a)': 'hermano_a', 'Abuelo(a)': 'abuelo_a',
-      'Tío(a)': 'tio_a', 'Primo(a)': 'primo_a', Otro: 'otro',
-    }
-    const MAP_MODALIDAD: Record<string, string> = { Presencial: 'presencial', Virtual: 'virtual' }
-    const MAP_JORNADA: Record<string, string> = { 'Mañana': 'diurna', Noche: 'nocturna', 'Fin de semana': 'finde' }
-    const MAP_ROL: Record<string, string> = { estudiante: 'estudiante', profesor: 'profesor', administrador: 'administrativo' }
-
     const payload: Record<string, unknown> = {
       primer_nombre: form.primerNombre?.trim(),
       segundo_nombre: form.segundoNombre?.trim() || undefined,
@@ -141,17 +138,23 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       email_contacto: form.email?.trim(),
       telefono_contacto: form.telefono?.trim() || undefined,
       documento: form.numDoc?.trim(),
-      tipo_documento: MAP_TIPO_DOC[form.tipoDoc] ?? 'CC',
+      tipo_documento: form.tipoDoc || 'CC',
       fecha_nacimiento: form.fechaNac || undefined,
       genero: MAP_GENERO[form.genero] ?? 'otro',
-      genero_otro: form.genero === 'Otro' ? form.generoOtro?.trim() : undefined,
       eps: form.eps?.trim() || undefined,
       grupo_sanguineo: MAP_GRUPO[form.grupoSanguineo] ?? undefined,
       nombre_emergencia: form.nombreContacto?.trim() || undefined,
       telefono_emergencia: form.telefonoContacto?.trim() || undefined,
       parentesco_emergencia: form.parentesco ? MAP_PARENTESCO[form.parentesco] : undefined,
-      parentesco_otro: form.parentesco === 'Otro' ? form.otroParentesco?.trim() : undefined,
       tipo_usuario: MAP_ROL[tipoUsuario!] ?? 'estudiante',
+    }
+
+    if (isMinor) {
+      payload.acudiente_primer_nombre = form.acudientePrimerNombre?.trim()
+      payload.acudiente_primer_apellido = form.acudientePrimerApellido?.trim()
+      payload.acudiente_documento = form.acudienteDocumento?.trim()
+      payload.acudiente_tipo_documento = form.acudienteTipoDocumento || 'CC'
+      payload.acudiente_telefono_contacto = form.acudienteTelefonoContacto?.trim()
     }
 
     if (tipoUsuario === 'estudiante') {
@@ -180,11 +183,13 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       return
     }
     setError('')
+    setErroresCampo({})
     try {
       await api.post('/auth/registro', buildPayload())
       setPhase('success')
     } catch (err) {
       setError(mensajeError(err))
+      setErroresCampo(mapearErroresBackend(err))
       setShake(true)
       setTimeout(() => setShake(false), 500)
     }
@@ -219,7 +224,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="h-full py-1"
         >
-          <RegisterFormSections form={form} setForm={setForm} tipoUsuario={tipoUsuario} toggleTipoUsuario={toggleTipoUsuario} isMinor={isMinor} />
+          <RegisterFormSections form={form} setForm={setForm} tipoUsuario={tipoUsuario} toggleTipoUsuario={toggleTipoUsuario} isMinor={isMinor} erroresCampo={erroresCampo} />
           {error && (
             <div className="mx-5 mb-3 px-4 py-2.5 rounded-xl text-[11px] font-semibold" style={{ background: 'rgba(244,56,67,0.12)', border: '1px solid rgba(244,56,67,0.35)', color: '#FF8A90' }}>
               {error}

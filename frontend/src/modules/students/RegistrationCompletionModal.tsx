@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import {
   X, ChevronLeft, ChevronRight,
@@ -6,7 +6,6 @@ import {
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
 import { StepDocAgreement } from '@/modules/students/NewStudentModal/sections/StepDocAgreement'
-import { StepAcudiente } from '@/modules/students/NewStudentModal/sections/StepAcudiente'
 import { loadDocs, type StoredDocs } from '@/data/documents'
 import { api, mensajeError } from '@/lib/api'
 
@@ -14,12 +13,6 @@ const BLUE = '#1270B7'
 const GREEN = '#22C55E'
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
-
-const INITIAL_ACUENTE = {
-  acudientePrimerNombre: '', acudienteSegundoNombre: '',
-  acudientePrimerApellido: '', acudienteSegundoApellido: '',
-  acudienteDocumento: '', acudienteTipoDoc: 'CC', acudienteTelefono: '',
-}
 
 interface Props {
   open: boolean
@@ -39,40 +32,11 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
   const [shake, setShake] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [isMinor, setIsMinor] = useState(false)
-  const [acudienteForm, setAcudienteForm] = useState({ ...INITIAL_ACUENTE })
 
-  const steps = useMemo(() => {
-    if (isMinor) {
-      return [
-        { num: 1, label: 'Datos del acudiente' },
-        { num: 2, label: 'Términos y condiciones' },
-        { num: 3, label: 'PAR-Q' },
-      ]
-    }
-    return [
-      { num: 1, label: 'Términos y condiciones' },
-      { num: 2, label: 'PAR-Q' },
-    ]
-  }, [isMinor])
-
-  const totalSteps = steps.length
-
-  useEffect(() => {
-    if (open && userId) {
-      api.get(`/usuarios/${userId}`).then(res => {
-        const user = res.data
-        if (user.fecha_nacimiento) {
-          const birth = new Date(user.fecha_nacimiento)
-          const now = new Date()
-          let age = now.getFullYear() - birth.getFullYear()
-          const m = now.getMonth() - birth.getMonth()
-          if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
-          setIsMinor(age < 18)
-        }
-      }).catch(() => {})
-    }
-  }, [open, userId])
+  const steps = [
+    { num: 1, label: 'Términos y condiciones' },
+    { num: 2, label: 'PAR-Q' },
+  ]
 
   useEffect(() => {
     if (open) {
@@ -84,7 +48,6 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
       setSuccess(false)
       setLoading(false)
       setError('')
-      setAcudienteForm({ ...INITIAL_ACUENTE })
     }
   }, [open])
 
@@ -98,16 +61,9 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
     setTimeout(() => setShake(false), 400)
   }
 
-  const setAcudiente = (key: string, val: string) => setAcudienteForm(prev => ({ ...prev, [key]: val }))
-
   const canGoNext = () => {
-    if (isMinor && step === 1) {
-      return !!(acudienteForm.acudientePrimerNombre && acudienteForm.acudientePrimerApellido && acudienteForm.acudienteDocumento)
-    }
-    const termsStep = isMinor ? 2 : 1
-    if (step === termsStep) return aceptaDatos && aceptaContrato
-    const parqStep = isMinor ? 3 : 2
-    if (step === parqStep) return aceptaParq
+    if (step === 1) return aceptaDatos && aceptaContrato
+    if (step === 2) return aceptaParq
     return false
   }
 
@@ -120,26 +76,13 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
     setError('')
 
     try {
-      const termsStep = isMinor ? 2 : 1
-      const parqStep = isMinor ? 3 : 2
-
-      if (isMinor && step === 1) {
-        const MAP_TIPO_DOC: Record<string, string> = { CC: 'CC', TI: 'TI', CE: 'CE', Pasaporte: 'PA', RC: 'RC' }
-        await api.put(`/usuarios/${userId}`, {
-          acudiente_primer_nombre: acudienteForm.acudientePrimerNombre?.trim(),
-          acudiente_primer_apellido: acudienteForm.acudientePrimerApellido?.trim(),
-          acudiente_documento: acudienteForm.acudienteDocumento?.trim(),
-          acudiente_tipo_documento: MAP_TIPO_DOC[acudienteForm.acudienteTipoDoc] ?? 'CC',
-          acudiente_telefono_contacto: acudienteForm.acudienteTelefono?.trim() || undefined,
-        })
-        setStep(2)
-      } else if (step === termsStep) {
+      if (step === 1) {
         await Promise.all([
           api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'tratamiento_datos' }),
           api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'contrato_gym' }),
         ])
-        setStep(parqStep)
-      } else if (step === parqStep) {
+        setStep(2)
+      } else if (step === 2) {
         await api.put(`/usuarios/${userId}/parq`)
         setSuccess(true)
       }
@@ -169,9 +112,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
 
   if (!open) return null
 
-  const termsStep = isMinor ? 2 : 1
-  const parqStep = isMinor ? 3 : 2
-  const stepDoc = step === termsStep ? docs.tratamiento : step === parqStep ? docs.parq : null
+  const stepDoc = step === 1 ? docs.tratamiento : step === 2 ? docs.parq : null
 
   return (
     <AnimatePresence>
@@ -197,10 +138,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
               {/* Body */}
               <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
                 <motion.div animate={shake ? { x: [0, -4, 4, -4, 4, 0] } : {}} transition={{ duration: 0.4 }}>
-                  {isMinor && step === 1 && (
-                    <StepAcudiente form={acudienteForm} set={setAcudiente} />
-                  )}
-                  {step === termsStep && (
+                  {step === 1 && (
                     <StepDocAgreement
                       step={2}
                       docs={docs}
@@ -212,7 +150,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
                       setAceptaParq={setAceptaParq}
                     />
                   )}
-                  {step === parqStep && (
+                  {step === 2 && (
                     <StepDocAgreement
                       step={4}
                       docs={docs}
@@ -248,13 +186,13 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
                       disabled={!canGoNext() || loading}
                       className="flex items-center gap-1.5 px-5 py-2 rounded-3xl text-sm font-bold text-white"
                       style={{
-                        background: (!canGoNext() || loading) ? 'rgba(0,0,0,0.1)' : (step === parqStep ? GREEN_BLUE_GRAD : BLUE_GRAD),
+                        background: (!canGoNext() || loading) ? 'rgba(0,0,0,0.1)' : (step === 2 ? GREEN_BLUE_GRAD : BLUE_GRAD),
                         cursor: (!canGoNext() || loading) ? 'not-allowed' : 'pointer',
                         boxShadow: canGoNext() ? '0 4px 16px rgba(18,112,183,0.35)' : 'none',
                       }}
                     >
-                      <span>{loading ? 'Guardando...' : (step === parqStep ? 'Finalizar' : 'Siguiente')}</span>
-                      {!loading && step < parqStep && <ChevronRight size={14} />}
+                      <span>{loading ? 'Guardando...' : (step === 2 ? 'Finalizar' : 'Siguiente')}</span>
+                      {!loading && step < 2 && <ChevronRight size={14} />}
                     </motion.button>
                   </div>
                 </div>

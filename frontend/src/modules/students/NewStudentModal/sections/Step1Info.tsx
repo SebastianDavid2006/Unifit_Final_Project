@@ -19,9 +19,10 @@ interface Step1InfoProps {
   catalogo: ReturnType<typeof useProgramasAgrupados>
   cargos: Cargo[]
   areas: Area[]
+  erroresCampo?: Record<string, string[]>
 }
 
-export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, isMinor, catalogo, cargos, areas }: Step1InfoProps) {
+export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, isMinor, catalogo, cargos, areas, erroresCampo = {} }: Step1InfoProps) {
   const sectionTitle = (title: string) => (
     <div className="flex items-center gap-2 pt-2 pb-1">
       <div className="w-0.5 h-5 rounded-full" style={{ background: BLUE_GRAD }} />
@@ -33,45 +34,40 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
     <div className="space-y-5">
       {sectionTitle('Información personal')}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Primer nombre" value={form.primerNombre} onChange={v => set('primerNombre', v)} required />
-        <Field label="Segundo nombre" value={form.segundoNombre} onChange={v => set('segundoNombre', v)} />
+        <Field label="Primer nombre" value={form.primerNombre} onChange={v => set('primerNombre', v)} required errors={erroresCampo.primerNombre} />
+        <Field label="Segundo nombre" value={form.segundoNombre} onChange={v => set('segundoNombre', v)} errors={erroresCampo.segundoNombre} />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Primer apellido" value={form.primerApellido} onChange={v => set('primerApellido', v)} required />
-        <Field label="Segundo apellido" value={form.segundoApellido} onChange={v => set('segundoApellido', v)} />
+        <Field label="Primer apellido" value={form.primerApellido} onChange={v => set('primerApellido', v)} required errors={erroresCampo.primerApellido} />
+        <Field label="Segundo apellido" value={form.segundoApellido} onChange={v => set('segundoApellido', v)} errors={erroresCampo.segundoApellido} />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Select label="Tipo de documento" value={form.tipoDoc} onChange={v => set('tipoDoc', v)} options={TIPO_DOC} required />
-        <Field label="Número de documento" value={form.numDoc} onChange={v => set('numDoc', v)} required />
+        <Select label="Tipo de documento" value={form.tipoDoc} onChange={v => set('tipoDoc', v)} options={TIPO_DOC} required errors={erroresCampo.tipoDoc} />
+        <Field label="Número de documento" value={form.numDoc} onChange={v => set('numDoc', v)} required errors={erroresCampo.numDoc} />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Fecha de nacimiento" value={form.fechaNac} onChange={v => set('fechaNac', v)} type="date" />
-        <Select label="Género" value={form.genero} onChange={v => set('genero', v)} options={GENEROS} />
+        <Field label="Fecha de nacimiento" value={form.fechaNac} onChange={v => set('fechaNac', v)} type="date" errors={erroresCampo.fechaNac} />
+        <Select label="Género" value={form.genero} onChange={v => set('genero', v)} options={GENEROS} errors={erroresCampo.genero} />
       </div>
 
       {sectionTitle('Información de contacto')}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Email" value={form.email} onChange={v => set('email', v)} type="email" />
-        <Field label="Teléfono" value={form.telefono} onChange={v => set('telefono', v)} />
+        <Field label="Email" value={form.email} onChange={v => set('email', v)} type="email" errors={erroresCampo.email} />
+        <Field label="Teléfono" value={form.telefono} onChange={v => set('telefono', v)} errors={erroresCampo.telefono} />
       </div>
 
       {sectionTitle('Información médica')}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="EPS" value={form.eps} onChange={v => set('eps', v)} />
-        <Select label="Grupo sanguíneo" value={form.grupoSanguineo} onChange={v => set('grupoSanguineo', v)} options={GRUPOS_SANGRE} />
+        <Field label="EPS" value={form.eps} onChange={v => set('eps', v)} errors={erroresCampo.eps} />
+        <Select label="Grupo sanguíneo" value={form.grupoSanguineo} onChange={v => set('grupoSanguineo', v)} options={GRUPOS_SANGRE} errors={erroresCampo.grupoSanguineo} />
       </div>
 
       {sectionTitle('Contacto de emergencia')}
       <div className="grid grid-cols-3 gap-4">
-        <Field label="Nombre contacto" value={form.nombreContacto} onChange={v => set('nombreContacto', v)} />
-        <Field label="Teléfono contacto" value={form.telefonoContacto} onChange={v => set('telefonoContacto', v)} />
-        <Select label="Parentesco" value={form.parentesco} onChange={v => set('parentesco', v)} options={PARENTESCOS} />
+        <Field label="Nombre contacto" value={form.nombreContacto} onChange={v => set('nombreContacto', v)} errors={erroresCampo.nombreContacto} />
+        <Field label="Teléfono contacto" value={form.telefonoContacto} onChange={v => set('telefonoContacto', v)} errors={erroresCampo.telefonoContacto} />
+        <Select label="Parentesco" value={form.parentesco} onChange={v => set('parentesco', v)} options={PARENTESCOS} errors={erroresCampo.parentesco} />
       </div>
-      {form.parentesco === 'Otro' && (
-        <div className="mt-4">
-          <Field label="Especifique el parentesco" value={form.otroParentesco} onChange={v => set('otroParentesco', v)} required />
-        </div>
-      )}
 
       {sectionTitle('Rol en la universidad')}
       <div className="grid grid-cols-3 gap-2">
@@ -129,8 +125,8 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
         <>
           {sectionTitle('Información académica')}
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Número carnet" value={form.numCarnet} onChange={v => set('numCarnet', v)} />
-            <Select label="Estado" value={form.estado} onChange={v => set('estado', v)} options={ESTADOS} />
+            <Field label="Número carnet" value={form.numCarnet} onChange={v => set('numCarnet', v)} errors={erroresCampo.numCarnet} />
+            <Select label="Estado" value={form.estado} onChange={v => set('estado', v)} options={ESTADOS} errors={erroresCampo.estado} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -144,8 +140,9 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
                 setForm(prev => ({ ...prev, institucion: u, nivelFormacion: nivel, programa: prog }))
               }}
               options={UNIVERSIDADES.map(u => ({ value: u, label: UNIVERSIDAD_LABELS[u] }))}
+              errors={erroresCampo.institucion}
             />
-            <Select label="Modalidad" value={form.modalidad} onChange={v => set('modalidad', v)} options={MODALIDADES} />
+            <Select label="Modalidad" value={form.modalidad} onChange={v => set('modalidad', v)} options={MODALIDADES} errors={erroresCampo.modalidad} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -159,6 +156,7 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
                 setForm(prev => ({ ...prev, nivelFormacion: n, programa: prog }))
               }}
               options={NIVELES.map(n => ({ value: n, label: NIVEL_LABELS[n] }))}
+              errors={erroresCampo.nivelFormacion}
             />
             <Select
               label="Carrera"
@@ -166,11 +164,12 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               onChange={v => set('programa', v)}
               options={catalogo.nombres((form.institucion as Universidad) || 'uni_colombia', (form.nivelFormacion as NivelPrograma) || 'tecnico')}
               required
+              errors={erroresCampo.programa}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Semestre" value={form.semestre} onChange={v => set('semestre', v)} options={['1', '2', '3', '4', '5', '6', '7', '8', '9']} />
-            <Select label="Jornada" value={form.jornada} onChange={v => set('jornada', v)} options={JORNADAS} />
+            <Select label="Semestre" value={form.semestre} onChange={v => set('semestre', v)} options={['1', '2', '3', '4', '5', '6', '7', '8', '9']} errors={erroresCampo.semestre} />
+            <Select label="Jornada" value={form.jornada} onChange={v => set('jornada', v)} options={JORNADAS} errors={erroresCampo.jornada} />
           </div>
         </>
       )}
@@ -185,6 +184,7 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               onChange={v => set('cargo', v)}
               options={cargos.map(c => ({ value: c.id_cargo ?? c.id, label: c.nombre }))}
               required
+              errors={erroresCampo.cargo}
             />
             <Select
               label="Área"
@@ -192,6 +192,7 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               onChange={v => set('area', v)}
               options={areas.map(a => ({ value: a.id_area ?? a.id, label: a.nombre }))}
               required
+              errors={erroresCampo.area}
             />
           </div>
         </>

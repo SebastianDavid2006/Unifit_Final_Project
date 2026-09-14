@@ -25,15 +25,13 @@ export interface RegistrarUsuarioData {
   tipo_documento: TipoDocumento
   fecha_nacimiento?: Date
   genero: Genero
-  genero_otro?: string
   eps?: string
   grupo_sanguineo?: GrupoSanguineo
   nombre_emergencia?: string
   telefono_emergencia?: string
   parentesco_emergencia?: Parentesco
-  parentesco_otro?: string
   tipo_usuario: TipoUsuario
-  rol?: 'admin' | 'entrenador' | 'usuario'
+  rol?: 'admin' | 'entrenador'
   // Estudiante
   id_programa?: string
   numero_carnet?: string
@@ -81,13 +79,11 @@ export async function registrarUsuario(data: RegistrarUsuarioData) {
         tipo_documento: data.tipo_documento,
         fecha_nacimiento: data.fecha_nacimiento,
         genero: data.genero,
-        genero_otro: data.genero_otro,
         eps: data.eps,
         grupo_sanguineo: data.grupo_sanguineo,
         nombre_emergencia: data.nombre_emergencia,
         telefono_emergencia: data.telefono_emergencia,
         parentesco_emergencia: data.parentesco_emergencia,
-        parentesco_otro: data.parentesco_otro,
         tipo_usuario: data.tipo_usuario,
         rol: data.rol ?? 'usuario',
         estado: 'pendiente',

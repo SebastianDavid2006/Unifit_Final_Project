@@ -2,6 +2,20 @@ import { BLUE, RED } from '@/modules/students/NewStudentData'
 
 const meshInputBg = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'
 const meshInputHover = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'
+const ERROR_BG = 'radial-gradient(ellipse at 30% 20%, rgba(244,56,67,0.1) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(244,56,67,0.08) 0%, transparent 50%), rgba(244,56,67,0.04)'
+
+function renderErrors(errors?: string[]) {
+  if (!errors || errors.length === 0) return null
+  return (
+    <div className="flex flex-col gap-0.5">
+      {errors.map((m, i) => (
+        <span key={i} className="text-[10px] font-semibold" style={{ color: '#FF8A90' }}>
+          {m}
+        </span>
+      ))}
+    </div>
+  )
+}
 
 interface FieldProps {
   label: string
@@ -10,9 +24,10 @@ interface FieldProps {
   type?: string
   required?: boolean
   placeholder?: string
+  errors?: string[]
 }
 
-export function Field({ label, value, onChange, type = 'text', required, placeholder }: FieldProps) {
+export function Field({ label, value, onChange, type = 'text', required, placeholder, errors }: FieldProps) {
   return (
     <div className="flex flex-col gap-1 group">
       <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.6)' }}>
@@ -25,20 +40,20 @@ export function Field({ label, value, onChange, type = 'text', required, placeho
         placeholder={placeholder}
         className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full transition-all duration-200"
         style={{
-          background: meshInputBg,
+          background: errors && errors.length > 0 ? ERROR_BG : meshInputBg,
           color: '#1A1A1E',
-          border: '1px solid transparent',
+          border: errors && errors.length > 0 ? '1px solid rgba(244,56,67,0.5)' : '1px solid transparent',
         }}
         onMouseEnter={e => {
           if (e.currentTarget !== document.activeElement) {
             e.currentTarget.style.background = meshInputHover
-            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)'
+            e.currentTarget.style.borderColor = errors && errors.length > 0 ? 'rgba(244,56,67,0.5)' : 'rgba(0,0,0,0.06)'
           }
         }}
         onMouseLeave={e => {
           if (e.currentTarget !== document.activeElement) {
-            e.currentTarget.style.background = meshInputBg
-            e.currentTarget.style.borderColor = 'transparent'
+            e.currentTarget.style.background = errors && errors.length > 0 ? ERROR_BG : meshInputBg
+            e.currentTarget.style.borderColor = errors && errors.length > 0 ? 'rgba(244,56,67,0.5)' : 'transparent'
           }
         }}
         onFocus={e => {
@@ -47,12 +62,13 @@ export function Field({ label, value, onChange, type = 'text', required, placeho
           e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)'
         }}
         onBlur={e => {
-          e.currentTarget.style.borderColor = 'transparent'
-          e.currentTarget.style.background = meshInputBg
+          e.currentTarget.style.borderColor = errors && errors.length > 0 ? 'rgba(244,56,67,0.5)' : 'transparent'
+          e.currentTarget.style.background = errors && errors.length > 0 ? ERROR_BG : meshInputBg
           e.currentTarget.style.boxShadow = 'none'
         }}
         required={required}
       />
+      {renderErrors(errors)}
     </div>
   )
 }
@@ -63,6 +79,7 @@ interface SelectProps {
   onChange: (val: string) => void
   options: (string | { value: string; label: string })[]
   required?: boolean
+  errors?: string[]
 }
 
 function optValue(o: string | { value: string; label: string }): string {
@@ -72,7 +89,7 @@ function optLabel(o: string | { value: string; label: string }): string {
   return typeof o === 'string' ? o : o.label
 }
 
-export function Select({ label, value, onChange, options, required }: SelectProps) {
+export function Select({ label, value, onChange, options, required, errors }: SelectProps) {
   return (
     <div className="flex flex-col gap-1 relative group">
       <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.6)' }}>
@@ -84,21 +101,21 @@ export function Select({ label, value, onChange, options, required }: SelectProp
           onChange={e => onChange(e.target.value)}
           className="px-3 py-2 rounded-xl text-xs font-medium outline-none w-full appearance-none transition-all duration-200 cursor-pointer"
           style={{
-            background: meshInputBg,
+            background: errors && errors.length > 0 ? ERROR_BG : meshInputBg,
             color: '#1A1A1E',
-            border: '1px solid transparent',
+            border: errors && errors.length > 0 ? '1px solid rgba(244,56,67,0.5)' : '1px solid transparent',
             paddingRight: 32,
           }}
           onMouseEnter={e => {
             if (e.currentTarget !== document.activeElement) {
               e.currentTarget.style.background = meshInputHover
-              e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)'
+              e.currentTarget.style.borderColor = errors && errors.length > 0 ? 'rgba(244,56,67,0.5)' : 'rgba(0,0,0,0.06)'
             }
           }}
           onMouseLeave={e => {
             if (e.currentTarget !== document.activeElement) {
-              e.currentTarget.style.background = meshInputBg
-              e.currentTarget.style.borderColor = 'transparent'
+              e.currentTarget.style.background = errors && errors.length > 0 ? ERROR_BG : meshInputBg
+              e.currentTarget.style.borderColor = errors && errors.length > 0 ? 'rgba(244,56,67,0.5)' : 'transparent'
             }
           }}
           onFocus={e => {
@@ -107,8 +124,8 @@ export function Select({ label, value, onChange, options, required }: SelectProp
             e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)'
           }}
           onBlur={e => {
-            e.currentTarget.style.borderColor = 'transparent'
-            e.currentTarget.style.background = meshInputBg
+            e.currentTarget.style.borderColor = errors && errors.length > 0 ? 'rgba(244,56,67,0.5)' : 'transparent'
+            e.currentTarget.style.background = errors && errors.length > 0 ? ERROR_BG : meshInputBg
             e.currentTarget.style.boxShadow = 'none'
           }}
           required={required}
@@ -123,6 +140,7 @@ export function Select({ label, value, onChange, options, required }: SelectProp
           </svg>
         </div>
       </div>
+      {renderErrors(errors)}
     </div>
   )
 }

@@ -4,9 +4,11 @@ export default function FormSelect({ label, value, onChange, options, required }
   label: string
   value: string
   onChange: (v: string) => void
-  options: string[]
+  options: (string | { value: string; label: string })[]
   required?: boolean
 }) {
+  const optValue = (o: string | { value: string; label: string }) => typeof o === 'string' ? o : o.value
+  const optLabel = (o: string | { value: string; label: string }) => typeof o === 'string' ? o : o.label
   return (
     <div className="flex flex-col gap-1 relative group">
       <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.6)' }}>
@@ -29,7 +31,7 @@ export default function FormSelect({ label, value, onChange, options, required }
           onBlur={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = meshInputBg; e.currentTarget.style.boxShadow = 'none' }}
           required={required}
         >
-          {options.map(o => <option key={o} value={o}>{o}</option>)}
+          {options.map(o => <option key={optValue(o)} value={optValue(o)}>{optLabel(o)}</option>)}
         </select>
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 group-hover:opacity-60" style={{ color: 'rgba(0,0,0,0.2)' }}>
           <svg width="10" height="6" viewBox="0 0 10 6" fill="none">

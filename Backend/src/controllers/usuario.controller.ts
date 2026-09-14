@@ -26,28 +26,82 @@ import {
 } from '../services/usuario.service'
 import { responderErrorPrisma } from '../utils/prisma-errors'
 import { HttpError } from '../utils/HttpError'
+import { prisma } from '../utils/prisma'
+
+const DISPOSABLE_DOMAINS = new Set([
+  'mailinator.com', 'guerrillamail.com', '10minutemail.com', 'tempmail.com',
+  'temp-mail.org', 'throwawaymail.com', 'fakeinbox.com', 'trashmail.com',
+  'maildrop.cc', 'getnada.com', 'yopmail.com', 'dispostable.com',
+  'mailnesia.com', 'mytemp.email', 'emailondeck.com', 'spamgourmet.com',
+  'sharklasers.com', 'grr.la', 'guerrillamailblock.com', 'pokemail.net',
+  'discard.email', 'mailcatch.com', 'spambox.us', 'tempinbox.com',
+  'incognitomail.org', 'mohmal.com', 'tmpmail.org',
+])
+
+const DOC_REGEX: Record<TipoDocumento, RegExp> = {
+  CC: /^\d{7,10}$/,
+  TI: /^\d{10,11}$/,
+  CE: /^\d{6,10}$/,
+  PA: /^[A-Za-z0-9]{6,9}$/,
+  RC: /^\d{10,12}$/,
+}
+
+const nombreSchema = z
+  .string()
+  .trim()
+  .min(2, 'Muy corto')
+  .max(50, 'Muy largo')
+  .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s-]+$/, 'Solo letras, espacios y guiones')
+  .refine((val) => !/(.)\1{3,}/.test(val), 'Valor no válido')
+
+const telefonoSchema = z
+  .string()
+  .regex(/^\d{10}$/, 'Teléfono debe tener 10 dígitos')
+  .refine((v) => v.startsWith('3'), 'Teléfono debe iniciar con 3')
+  .refine((v) => !/^(\d)\1{9}$/.test(v), 'Teléfono no válido')
+  .refine((v) => !/^(0123456789|1234567890|9876543210)$/.test(v), 'Teléfono no válido')
 
 export const registrarSchema = z
   .object({
-    primer_nombre: z.string().min(1),
-    segundo_nombre: z.string().optional(),
-    primer_apellido: z.string().min(1),
-    segundo_apellido: z.string().optional(),
-    email_contacto: z.string().email(),
-    telefono_contacto: z.string().optional(),
+    primer_nombre: nombreSchema,
+    segundo_nombre: nombreSchema.optional(),
+    primer_apellido: nombreSchema,
+    segundo_apellido: nombreSchema.optional(),
+    email_contacto: z
+      .string()
+      .email()
+      .max(254)
+      .transform((v) => v.toLowerCase())
+      .refine((email) => !DISPOSABLE_DOMAINS.has(email.split('@')[1] ?? ''), 'Dominio de correo no permitido'),
+    telefono_contacto: telefonoSchema.optional(),
     documento: z.string().min(1),
     tipo_documento: z.enum(TipoDocumento).default(TipoDocumento.CC),
-    fecha_nacimiento: z.coerce.date().optional(),
+    fecha_nacimiento: z
+      .string({ error: 'Fecha de nacimiento es requerida' })
+      .min(1, 'Fecha de nacimiento es requerida')
+      .pipe(z.coerce.date())
+      .refine((d) => d <= new Date(), 'Fecha no puede ser futura')
+      .refine((d) => {
+        const hoy = new Date()
+        let edad = hoy.getFullYear() - d.getFullYear()
+        const mes = hoy.getMonth() - d.getMonth()
+        if (mes < 0 || (mes === 0 && hoy.getDate() < d.getDate())) edad--
+        return edad >= 10 && edad <= 100
+      }, 'Edad debe estar entre 10 y 100 años'),
     genero: z.enum(Genero),
-    genero_otro: z.string().optional(),
-    eps: z.string().optional(),
+    eps: z
+      .string()
+      .trim()
+      .min(2, 'Muy corto')
+      .max(60, 'Muy largo')
+      .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.\-]+$/, 'Formato de EPS inválido')
+      .optional(),
     grupo_sanguineo: z.enum(GrupoSanguineo).optional(),
-    nombre_emergencia: z.string().optional(),
-    telefono_emergencia: z.string().optional(),
+    nombre_emergencia: nombreSchema.optional(),
+    telefono_emergencia: telefonoSchema.optional(),
     parentesco_emergencia: z.enum(Parentesco).optional(),
-    parentesco_otro: z.string().optional(),
     tipo_usuario: z.enum(TipoUsuario),
-    rol: z.enum(['admin', 'entrenador', 'usuario']).optional().default('usuario'),
+    rol: z.enum(['admin', 'entrenador']).optional(),
     // Estudiante
     id_programa: z.string().uuid().optional(),
     numero_carnet: z.string().optional(),
@@ -59,29 +113,74 @@ export const registrarSchema = z
     id_cargo: z.string().uuid().optional(),
     id_area: z.string().uuid().optional(),
     // Acudiente (requerido si menor de 18)
-    acudiente_primer_nombre: z.string().min(1).optional(),
-    acudiente_primer_apellido: z.string().min(1).optional(),
+    acudiente_primer_nombre: nombreSchema.optional(),
+    acudiente_primer_apellido: nombreSchema.optional(),
     acudiente_documento: z.string().min(1).optional(),
     acudiente_tipo_documento: z.enum(TipoDocumento).optional(),
-    acudiente_telefono_contacto: z.string().optional(),
+    acudiente_telefono_contacto: telefonoSchema.optional(),
   })
-  .superRefine((val, ctx) => {
-    if (val.tipo_usuario === TipoUsuario.estudiante && !val.id_programa) {
-      ctx.addIssue({ code: 'custom', path: ['id_programa'], message: 'id_programa es requerido para estudiantes' })
+  .strict()
+  .superRefine(async (val, ctx) => {
+    const esEstudiante = val.tipo_usuario === TipoUsuario.estudiante
+    const esStaff = val.tipo_usuario === TipoUsuario.profesor || val.tipo_usuario === TipoUsuario.administrativo
+
+    // --- Rama Estudiante (usuario del gym) ---
+    if (esEstudiante) {
+      if (!val.id_programa) {
+        ctx.addIssue({ code: 'custom', path: ['id_programa'], message: 'id_programa es requerido para estudiantes' })
+      }
+      if (val.rol) {
+        ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Un estudiante no puede tener rol de admin o entrenador' })
+      }
+      if (!val.numero_carnet?.trim()) {
+        ctx.addIssue({ code: 'custom', path: ['numero_carnet'], message: 'Número de carnet es requerido' })
+      }
     }
-    if (val.tipo_usuario !== TipoUsuario.estudiante && (!val.id_cargo || !val.id_area)) {
-      ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'id_cargo e id_area son requeridos' })
+
+    // --- Rama Staff (admin/entrenador) ---
+    if (esStaff) {
+      if (val.rol !== 'admin' && val.rol !== 'entrenador') {
+        ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Rol (admin o entrenador) es requerido para el personal' })
+      }
+      if (!val.id_cargo) {
+        ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'id_cargo es requerido para el personal' })
+      }
+      if (!val.id_area) {
+        ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'id_area es requerido para el personal' })
+      }
+      // Validar cargo existe y está activo
+      if (val.id_cargo) {
+        const cargo = await prisma.cargo.findUnique({ where: { id_cargo: val.id_cargo } })
+        if (!cargo || !cargo.activo) {
+          ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'Cargo no existe o está inactivo' })
+        }
+      }
+      // Validar área existe y está activa
+      if (val.id_area) {
+        const area = await prisma.area.findUnique({ where: { id_area: val.id_area } })
+        if (!area || !area.activo) {
+          ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'Área no existe o está inactiva' })
+        }
+      }
     }
-    if ((val.rol === 'admin' || val.rol === 'entrenador') && val.tipo_usuario === TipoUsuario.estudiante) {
-      ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Un estudiante no puede tener rol de admin o entrenador' })
+
+    // --- Común: formato de documento según tipo_documento ---
+    if (val.documento && val.tipo_documento) {
+      const regex = DOC_REGEX[val.tipo_documento]
+      if (regex && !regex.test(val.documento)) {
+        ctx.addIssue({ code: 'custom', path: ['documento'], message: `Formato de documento inválido para ${val.tipo_documento}` })
+      }
     }
-    if (val.genero === Genero.otro && !val.genero_otro?.trim()) {
-      ctx.addIssue({ code: 'custom', path: ['genero_otro'], message: 'genero_otro es requerido cuando genero es otro' })
+
+    // --- Común (solo estudiante): formato de número de carnet ---
+    if (esEstudiante && val.numero_carnet && val.tipo_documento) {
+      const regex = DOC_REGEX[val.tipo_documento]
+      if (regex && !regex.test(val.numero_carnet)) {
+        ctx.addIssue({ code: 'custom', path: ['numero_carnet'], message: 'Formato de carnet inválido' })
+      }
     }
-    if (val.parentesco_emergencia === Parentesco.otro && !val.parentesco_otro?.trim()) {
-      ctx.addIssue({ code: 'custom', path: ['parentesco_otro'], message: 'parentesco_otro es requerido cuando parentesco_emergencia es otro' })
-    }
-    // Validación acudiente para menores de edad
+
+    // --- Común: validación acudiente para menores de edad ---
     if (val.fecha_nacimiento) {
       const hoy = new Date()
       let edad = hoy.getFullYear() - val.fecha_nacimiento.getFullYear()
@@ -104,7 +203,7 @@ export const registrarSchema = z
   })
 
 export async function registrar(req: Request, res: Response): Promise<void> {
-  const parsed = registrarSchema.safeParse(req.body)
+  const parsed = await registrarSchema.safeParseAsync(req.body)
 
   if (!parsed.success) {
     res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })

@@ -7,6 +7,7 @@ import TrainerDetail from './sections/TrainerDetail/TrainerDetail'
 import PermissionsSection from './sections/PermissionsSection'
 import { PAGE_SIZE } from './data'
 import { mensajeError } from '@/lib/api'
+import { MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO } from '@/data/config/catalogosRegistro'
 
 interface NewUserPayload {
   name: string
@@ -26,17 +27,6 @@ interface NewUserPayload {
   id_area?: string
 }
 
-const MAP_GENERO: Record<string, string> = { Masculino: 'masculino', Femenino: 'femenino', Otro: 'otro' }
-const MAP_GRUPO: Record<string, string> = {
-  'A+': 'a_positivo', 'A-': 'a_negativo', 'B+': 'b_positivo', 'B-': 'b_negativo',
-  'AB+': 'ab_positivo', 'AB-': 'ab_negativo', 'O+': 'o_positivo', 'O-': 'o_negativo',
-}
-const MAP_PARENTESCO: Record<string, string> = {
-  Padre: 'padre', Madre: 'madre', 'Hermano(a)': 'hermano_a', 'Abuelo(a)': 'abuelo_a',
-  'Tío(a)': 'tio_a', 'Primo(a)': 'primo_a', Otro: 'otro',
-}
-const MAP_TIPO_DOC: Record<string, string> = { CC: 'CC', TI: 'TI', CE: 'CE', Pasaporte: 'PA', NIT: 'CC' }
-
 function buildStaffPayload(user: NewUserPayload): Record<string, unknown> {
   const np = user.name.trim().split(/\s+/)
   const docMatch = user.document.match(/^([A-Za-z]+)\.\s*(.+)$/)
@@ -55,7 +45,7 @@ function buildStaffPayload(user: NewUserPayload): Record<string, unknown> {
     email_contacto: user.email?.trim() || '',
     telefono_contacto: user.phone?.trim() || undefined,
     documento: numeroDoc,
-    tipo_documento: MAP_TIPO_DOC[tipoDoc] ?? 'CC',
+    tipo_documento: tipoDoc,
     fecha_nacimiento: user.birthDate || undefined,
     genero,
     eps: user.eps?.trim() || undefined,
@@ -63,7 +53,6 @@ function buildStaffPayload(user: NewUserPayload): Record<string, unknown> {
     nombre_emergencia: user.contactName?.trim() || undefined,
     telefono_emergencia: user.contactPhone?.trim() || undefined,
     parentesco_emergencia: parentesco,
-    parentesco_otro: user.contactRelation === 'Otro' ? user.contactName?.trim() || undefined : undefined,
     tipo_usuario: user.tipo_usuario === 'profesor' ? 'profesor' : 'administrativo',
     rol: user.role === 'admin' ? 'admin' : 'entrenador',
     id_cargo: user.id_cargo || undefined,

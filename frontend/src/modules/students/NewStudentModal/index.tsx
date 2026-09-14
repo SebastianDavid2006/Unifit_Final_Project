@@ -3,13 +3,16 @@ import { motion, AnimatePresence } from 'motion/react'
 import { X, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import DemoInbox from '@/modules/students/components/DemoInbox'
-import { api, mensajeError } from '@/lib/api'
+import { api, mensajeError, mapearErroresBackend } from '@/lib/api'
 import { useProgramasAgrupados } from '@/hooks/useCatalogo'
 import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
 import type { Universidad, NivelPrograma } from '@/types/catalogo'
 import { loadDocs, type StoredDocs } from '@/data/documents'
 import { BLUE_GRAD, RED, STEPS_ADULT, STEPS_MINOR, INITIAL_FORM } from '@/modules/students/NewStudentData'
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
+import {
+  MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO, MAP_JORNADA, MAP_MODALIDAD, MAP_ROL,
+} from '@/data/config/catalogosRegistro'
 
 import { Step1Info } from './sections/Step1Info'
 import { StepAcudiente } from './sections/StepAcudiente'
@@ -35,6 +38,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const [showInbox, setShowInbox] = useState(false)
   const [createdEmail, setCreatedEmail] = useState('')
   const [error, setError] = useState('')
+  const [erroresCampo, setErroresCampo] = useState<Record<string, string[]>>({})
 
   const isMinor = useMemo(() => {
     if (!form.fechaNac) return false
@@ -66,6 +70,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       setSuccess(false)
       setShake(false)
       setConfirmClose(false)
+      setError('')
+      setErroresCampo({})
     }
   }, [open])
 
@@ -137,19 +143,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const stepDoc = step === termsStep ? docs.tratamiento : step === totalSteps ? docs.parq : null
 
   const submitForm = async () => {
-    const MAP_TIPO_DOC: Record<string, string> = { CC: 'CC', TI: 'TI', CE: 'CE', Pasaporte: 'PA', RC: 'RC' }
-    const MAP_GENERO: Record<string, string> = { Masculino: 'masculino', Femenino: 'femenino', Otro: 'otro' }
-    const MAP_GRUPO: Record<string, string> = {
-      'A+': 'a_positivo', 'A-': 'a_negativo', 'B+': 'b_positivo', 'B-': 'b_negativo',
-      'AB+': 'ab_positivo', 'AB-': 'ab_negativo', 'O+': 'o_positivo', 'O-': 'o_negativo',
-    }
-    const MAP_PARENTESCO: Record<string, string> = {
-      Padre: 'padre', Madre: 'madre', 'Hermano(a)': 'hermano_a', 'Abuelo(a)': 'abuelo_a',
-      'Tío(a)': 'tio_a', 'Primo(a)': 'primo_a', Otro: 'otro',
-    }
-    const MAP_MODALIDAD: Record<string, string> = { Presencial: 'presencial', Virtual: 'virtual' }
-    const MAP_JORNADA: Record<string, string> = { 'Mañana': 'diurna', Noche: 'nocturna', 'Fin de semana': 'finde' }
-    const MAP_ROL: Record<string, string> = { estudiante: 'estudiante', profesor: 'profesor', administrador: 'administrativo' }
+    setError('')
+    setErroresCampo({})
 
     const payload: Record<string, unknown> = {
       primer_nombre: form.primerNombre?.trim(),
@@ -159,7 +154,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       email_contacto: form.email?.trim(),
       telefono_contacto: form.telefono?.trim() || undefined,
       documento: form.numDoc?.trim(),
-      tipo_documento: MAP_TIPO_DOC[form.tipoDoc] ?? 'CC',
+      tipo_documento: form.tipoDoc || 'CC',
       fecha_nacimiento: form.fechaNac || undefined,
       genero: MAP_GENERO[form.genero] ?? 'otro',
       eps: form.eps?.trim() || undefined,
@@ -174,8 +169,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       payload.acudiente_primer_nombre = form.acudientePrimerNombre?.trim()
       payload.acudiente_primer_apellido = form.acudientePrimerApellido?.trim()
       payload.acudiente_documento = form.acudienteDocumento?.trim()
-      payload.acudiente_tipo_documento = MAP_TIPO_DOC[form.acudienteTipoDoc] ?? 'CC'
-      payload.acudiente_telefono_contacto = form.acudienteTelefono?.trim() || undefined
+      payload.acudiente_tipo_documento = form.acudienteTipoDocumento || 'CC'
+      payload.acudiente_telefono_contacto = form.acudienteTelefonoContacto?.trim() || undefined
     }
 
     if (tipoUsuario === 'estudiante') {
@@ -215,6 +210,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       })
     } catch (err) {
       setError(mensajeError(err))
+      setErroresCampo(mapearErroresBackend(err))
       triggerShake()
     }
   }
@@ -322,10 +318,11 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                             catalogo={catalogo}
                             cargos={cargos}
                             areas={areas}
+                            erroresCampo={erroresCampo}
                           />
                         )}
                         {isMinor && step === 2 && (
-                          <StepAcudiente form={form} set={set} />
+                          <StepAcudiente form={form} set={set} erroresCampo={erroresCampo} />
                         )}
                         {step === termsStep && (
                           <StepDocAgreement

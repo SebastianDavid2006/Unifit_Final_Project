@@ -7,6 +7,13 @@ import type { TipoUsuario } from '@/data/config/registration'
 import { useProgramasAgrupados } from '@/hooks/useCatalogo'
 import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
 import { UNIVERSIDADES, NIVELES, UNIVERSIDAD_LABELS, NIVEL_LABELS, type Universidad, type NivelPrograma } from '@/types/catalogo'
+import {
+  Select as UiSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 
 interface RegisterFormSectionsProps {
   form: Record<string, string>
@@ -14,9 +21,10 @@ interface RegisterFormSectionsProps {
   tipoUsuario: TipoUsuario | null
   toggleTipoUsuario: (tipo: TipoUsuario) => void
   isMinor: boolean
+  erroresCampo?: Record<string, string[]>
 }
 
-export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsuario, isMinor }: RegisterFormSectionsProps) {
+export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsuario, isMinor, erroresCampo = {} }: RegisterFormSectionsProps) {
   const set = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }))
 
   const catalogo = useProgramasAgrupados()
@@ -25,13 +33,28 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
   const inputStyle = {
     background: 'rgba(255,255,255,0.06)',
     border: '1px solid rgba(255,255,255,0.09)',
-    color: '#FFFFFF',
+    color: '#dbdbdb',
     borderRadius: 12,
     padding: '10px 12px',
     fontSize: 12,
     outline: 'none',
     width: '100%',
+    colorScheme: 'dark',
   } as const
+
+  const campoErrores = (key: string) => {
+    const mensajes = erroresCampo[key]
+    if (!mensajes || mensajes.length === 0) return null
+    return (
+      <div className="flex flex-col gap-0.5">
+        {mensajes.map((m, i) => (
+          <span key={i} className="text-[10px] font-semibold" style={{ color: '#FF8A90' }}>
+            {m}
+          </span>
+        ))}
+      </div>
+    )
+  }
 
   const field = (label: string, key: string, opts?: { type?: string; required?: boolean; placeholder?: string }) => (
     <div className="flex flex-col gap-1">
@@ -43,8 +66,12 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
         value={form[key] ?? ''}
         onChange={e => set(key, e.target.value)}
         placeholder={opts?.placeholder}
-        style={inputStyle}
+        style={{
+          ...inputStyle,
+          border: erroresCampo[key] ? '1px solid rgba(244,56,67,0.5)' : inputStyle.border,
+        }}
       />
+      {campoErrores(key)}
     </div>
   )
 
@@ -56,18 +83,45 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
         <label className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.45)' }}>
           {label}{opts?.required && <span style={{ color: '#F43843' }}> *</span>}
         </label>
-        <select
+        <UiSelect
           value={form[key] ?? ''}
-          onChange={e => {
-            const v = e.target.value
+          onValueChange={v => {
             set(key, v)
             opts?.onChange?.(v)
           }}
-          className="appearance-none cursor-pointer"
-          style={inputStyle}
         >
-          {options.map(o => <option key={optValue(o)} value={optValue(o)}>{optLabel(o)}</option>)}
-        </select>
+          <SelectTrigger
+            className="h-auto cursor-pointer data-[placeholder]:text-[rgba(255,255,255,0.35)]"
+            style={{
+              ...inputStyle,
+              color: form[key] ? inputStyle.color : 'rgba(255,255,255,0.35)',
+              border: erroresCampo[key] ? '1px solid rgba(244,56,67,0.5)' : inputStyle.border,
+            }}
+          >
+            <SelectValue placeholder="Seleccionar…" />
+          </SelectTrigger>
+          <SelectContent
+            position="popper"
+            style={{
+              background: '#1B1D23',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: '#dbdbdb',
+              borderRadius: 12,
+              zIndex: 999,
+            }}
+          >
+            {options.map(o => (
+              <SelectItem
+                key={optValue(o)}
+                value={optValue(o)}
+                className="cursor-pointer text-[12px] focus:bg-[rgba(255,255,255,0.08)] focus:text-white"
+              >
+                <span className="truncate">{optLabel(o)}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </UiSelect>
+        {campoErrores(key)}
       </div>
     )
   }
@@ -95,7 +149,7 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
         {field('Número de documento', 'numDoc', { required: true })}
       </div>
       <div className="grid grid-cols-2 gap-3">
-        {field('Fecha de nacimiento', 'fechaNac', { type: 'date' })}
+        {field('Fecha de nacimiento', 'fechaNac', { type: 'date', required: true })}
         {select('Género', 'genero', GENEROS)}
       </div>
 
@@ -103,15 +157,20 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
         <>
           {sectionTitle('Información del acudiente')}
           <div className="grid grid-cols-2 gap-3">
-            {field('Nombre completo del acudiente', 'nombreAcudiente', { required: true })}
-            {field('Teléfono del acudiente', 'telefonoAcudiente', { required: true })}
+            {field('Primer nombre del acudiente', 'acudientePrimerNombre', { required: true })}
+            {field('Primer apellido del acudiente', 'acudientePrimerApellido', { required: true })}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {select('Parentesco', 'parentescoAcudiente', PARENTESCOS, { required: true })}
-            {form.parentescoAcudiente === 'Otro'
-              ? field('Especifique el parentesco', 'otroParentescoAcudiente', { required: true })
-              : null}
+            {field('Documento del acudiente', 'acudienteDocumento', { required: true })}
+            {select('Tipo de documento', 'acudienteTipoDocumento', TIPO_DOC, { required: true })}
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            {field('Teléfono del acudiente', 'acudienteTelefonoContacto', { required: true })}
+            {select('Parentesco', 'parentescoAcudiente', PARENTESCOS, { required: true })}
+          </div>
+          {form.parentescoAcudiente === 'Otro'
+            ? field('Especifique el parentesco', 'otroParentescoAcudiente', { required: true })
+            : null}
         </>
       )}
 
@@ -135,11 +194,6 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
       <div>
         {select('Parentesco', 'parentesco', PARENTESCOS)}
       </div>
-      {form.parentesco === 'Otro' && (
-        <div className="mt-0">
-          {field('Especifique el parentesco', 'otroParentesco', { required: true })}
-        </div>
-      )}
 
       {sectionTitle('Rol en la universidad')}
       <div className="grid grid-cols-3 gap-2">
@@ -191,7 +245,7 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
         <>
           {sectionTitle('Información académica')}
           <div className="grid grid-cols-2 gap-3">
-            {field('Número carnet', 'numCarnet')}
+            {field('Número carnet', 'numCarnet', { required: true })}
             {select('Estado', 'estado', ESTADOS)}
           </div>
           <div className="grid grid-cols-2 gap-3">
