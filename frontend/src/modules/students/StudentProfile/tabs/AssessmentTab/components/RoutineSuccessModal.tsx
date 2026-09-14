@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
-import coachMagicImg from '@/assets/illustrations/characters/coach/coach_magic.png'
+import coachMagicImg from '@/assets/illustrations/characters/coach/coach_magic.webp'
 
 interface RoutineSuccessModalProps {
   isOpen: boolean

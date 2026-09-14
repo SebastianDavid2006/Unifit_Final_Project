@@ -17,6 +17,8 @@ import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
 import logotipo from '@/assets/logo/logo.webp'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
+import welcomeDesktopPoster from '@/assets/scenes/videos/posters/welcome_desktop_poster.webp'
+import welcomeMobilePoster from '@/assets/scenes/videos/posters/welcome_mobile_poster.webp'
 
 const PHONE_GRADIENT_FORM = 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)'
 const PHONE_GRADIENT_INTRO = 'linear-gradient(180deg, rgba(8,12,28,0.65) 0%, rgba(8,12,28,0.45) 50%, rgba(8,12,28,0.6) 100%)'
@@ -40,6 +42,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   const bgVideoRef = useRef<HTMLVideoElement>(null)
 
   const introSrc = isPhonePreview ? welcomeMobile : welcomeDesktop
+  const introPoster = isPhonePreview ? welcomeMobilePoster : welcomeDesktopPoster
 
   useEffect(() => {
     if (phase !== 'intro') return
@@ -306,7 +309,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
         <>
           {!ctx.isPhonePreview && phase === 'intro' && (
             <AnimatePresence>
-              <RegisterIntroOverlay src={introSrc} videoRef={introVideoRef} containerRef={introContainerRef} onSkip={skipIntro} />
+              <RegisterIntroOverlay src={introSrc} poster={introPoster} videoRef={introVideoRef} containerRef={introContainerRef} onSkip={skipIntro} />
             </AnimatePresence>
           )}
         </>
@@ -315,7 +318,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       {(ctx) => (
         <>
           {ctx.isPhonePreview && phase === 'intro' && (
-            <RegisterIntroOverlay src={introSrc} videoRef={introVideoRef} onSkip={skipIntro} />
+            <RegisterIntroOverlay src={introSrc} poster={introPoster} videoRef={introVideoRef} onSkip={skipIntro} />
           )}
           {phaseContent}
         </>

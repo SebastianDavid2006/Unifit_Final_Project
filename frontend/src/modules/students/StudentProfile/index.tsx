@@ -15,7 +15,7 @@ import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/Stethosc
 import { KitView } from '@/assets/models/ui/objects/kit/KitModel'
 import { TrashView } from '@/assets/models/ui/actions/trash/TrashModel'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
-import coachMagicImg from '@/assets/illustrations/characters/coach/coach_magic.png'
+import coachMagicImg from '@/assets/illustrations/characters/coach/coach_magic.webp'
 import assessmentSceneImg from '@/assets/scenes/physical_assessment.webp'
 import routineSceneImg from '@/assets/scenes/physical_routine.webp'
 import { AiRoutine, RoutineRow } from '../aiRoutineTypes'

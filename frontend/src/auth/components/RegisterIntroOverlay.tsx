@@ -2,12 +2,13 @@ import { motion } from 'motion/react'
 
 interface RegisterIntroOverlayProps {
   src: string
+  poster?: string
   videoRef: React.Ref<HTMLVideoElement>
   containerRef?: React.Ref<HTMLDivElement>
   onSkip: () => void
 }
 
-export function RegisterIntroOverlay({ src, videoRef, containerRef, onSkip }: RegisterIntroOverlayProps) {
+export function RegisterIntroOverlay({ src, poster, videoRef, containerRef, onSkip }: RegisterIntroOverlayProps) {
   return (
     <motion.div
       ref={containerRef}
@@ -22,6 +23,7 @@ export function RegisterIntroOverlay({ src, videoRef, containerRef, onSkip }: Re
       <video
         ref={videoRef}
         src={src}
+        poster={poster}
         autoPlay
         muted
         playsInline

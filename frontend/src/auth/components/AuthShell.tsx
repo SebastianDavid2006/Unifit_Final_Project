@@ -4,6 +4,8 @@ import { ArrowLeft } from 'lucide-react'
 import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
+import welcomeDesktopPoster from '@/assets/scenes/videos/posters/welcome_desktop_poster.webp'
+import welcomeMobilePoster from '@/assets/scenes/videos/posters/welcome_mobile_poster.webp'
 
 const DARK_BG = '#0A0A14'
 const PHONE_GRADIENT = 'linear-gradient(180deg, rgba(8,12,28,0.9) 0%, rgba(8,12,28,0.84) 50%, rgba(8,12,28,0.88) 100%)'
@@ -55,6 +57,7 @@ export function AuthShell({
             <video
               ref={bgVideoRef}
               src={welcomeDesktop}
+              poster={welcomeDesktopPoster}
               autoPlay
               muted
               loop
@@ -116,6 +119,7 @@ export function AuthShell({
             <div className="absolute inset-0 overflow-hidden" style={{ background: '#000' }}>
               <video
                 src={welcomeMobile}
+                poster={welcomeMobilePoster}
                 autoPlay
                 muted
                 loop

@@ -86,8 +86,8 @@ export const registrarSchema = z
         let edad = hoy.getFullYear() - d.getFullYear()
         const mes = hoy.getMonth() - d.getMonth()
         if (mes < 0 || (mes === 0 && hoy.getDate() < d.getDate())) edad--
-        return edad >= 10 && edad <= 100
-      }, 'Edad debe estar entre 10 y 100 años'),
+        return edad >= 15 && edad <= 70
+      }, 'Edad debe estar entre 15 y 70 años'),
     genero: z.enum(Genero),
     eps: z
       .string()
