@@ -11,11 +11,13 @@ import DataConsentSection from './sections/DataConsentSection'
 import { INITIAL_FORM } from './data'
 import type { NewUserForm, UserRole, TipoUsuarioStaff } from './data'
 import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
+import { mensajeError, mapearErroresBackend } from '@/lib/api'
+import { validarPasoInfo, validarPasoRol } from '@/lib/validacionRegistro'
 
 interface NewUserModalProps {
   open: boolean
   onClose: () => void
-  onSuccess?: (user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string; tipo_usuario: string; id_cargo?: string; id_area?: string }) => void
+  onSuccess?: (user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string; tipo_usuario: string; id_cargo?: string; id_area?: string }) => void | Promise<void>
 }
 
 export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalProps) {
@@ -29,6 +31,9 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
+  const [error, setError] = useState('')
+  const [erroresCampo, setErroresCampo] = useState<Record<string, string[]>>({})
+  const [loading, setLoading] = useState(false)
   const { cargos, areas } = useCatalogoStaff()
 
   useEffect(() => {
@@ -43,6 +48,9 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       setSuccess(false)
       setShake(false)
       setConfirmClose(false)
+      setError('')
+      setErroresCampo({})
+      setLoading(false)
     }
   }, [open])
 
@@ -70,13 +78,33 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
     return true
   }
 
-  const handleNext = () => {
-    if (!canGoNext()) {
-      triggerShake()
+  const handleNext = async () => {
+    setError('')
+    if (step === 1) {
+      const nuevosErrores = validarPasoInfo(form)
+      setErroresCampo(nuevosErrores)
+      if (Object.keys(nuevosErrores).length > 0) {
+        triggerShake()
+        return
+      }
+    } else if (step === 2) {
+      if (!aceptaDatos) {
+        setError('Debes aceptar el tratamiento de datos para continuar')
+        triggerShake()
+        return
+      }
+    } else if (step === 3) {
+      const nuevosErrores = validarPasoRol(role, tipoUsuario, idCargo, idArea)
+      setErroresCampo(nuevosErrores)
+      if (Object.keys(nuevosErrores).length > 0) {
+        triggerShake()
+        return
+      }
+      await submitForm()
       return
     }
-    if (step === 3) {
-      submitForm()
+    if (!canGoNext()) {
+      triggerShake()
       return
     }
     setStep(p => p + 1)
@@ -86,32 +114,43 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
     if (step > 1) setStep(p => p - 1)
   }
 
-  const submitForm = () => {
-    const nombreCompleto = `${form.primerNombre} ${form.segundoNombre} ${form.primerApellido} ${form.segundoApellido}`.replace(/\s+/g, ' ').trim()
-    onSuccess?.({
-      name: nombreCompleto,
-      email: form.email,
-      phone: form.telefono,
-      role: role ?? 'trainer',
-      contactName: form.nombreContacto,
-      contactPhone: form.telefonoContacto,
-      contactRelation: form.parentesco === 'Otro' ? form.otroParentesco : form.parentesco,
-      document: `${form.tipoDoc}. ${form.numDoc}`,
-      birthDate: form.fechaNac,
-      gender: form.genero,
-      eps: form.eps,
-      bloodType: form.grupoSanguineo,
-      tipo_usuario: tipoUsuario ?? 'profesor',
-      id_cargo: idCargo,
-      id_area: idArea,
-    })
-    setSuccess(true)
-    confetti({
-      particleCount: 120,
-      spread: 80,
-      origin: { y: 0.55 },
-      colors: ['#1270B7', '#F43843', '#22C55E', '#F5A623'],
-    })
+  const submitForm = async () => {
+    setError('')
+    setErroresCampo({})
+    setLoading(true)
+    try {
+      const nombreCompleto = `${form.primerNombre} ${form.segundoNombre} ${form.primerApellido} ${form.segundoApellido}`.replace(/\s+/g, ' ').trim()
+      await onSuccess?.({
+        name: nombreCompleto,
+        email: form.email,
+        phone: form.telefono,
+        role: role ?? 'trainer',
+        contactName: form.nombreContacto,
+        contactPhone: form.telefonoContacto,
+        contactRelation: form.parentesco === 'Otro' ? form.otroParentesco : form.parentesco,
+        document: `${form.tipoDoc}. ${form.numDoc}`,
+        birthDate: form.fechaNac,
+        gender: form.genero,
+        eps: form.eps,
+        bloodType: form.grupoSanguineo,
+        tipo_usuario: tipoUsuario ?? 'profesor',
+        id_cargo: idCargo,
+        id_area: idArea,
+      })
+      setSuccess(true)
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.55 },
+        colors: ['#1270B7', '#F43843', '#22C55E', '#F5A623'],
+      })
+    } catch (err) {
+      setError(mensajeError(err))
+      setErroresCampo(mapearErroresBackend(err))
+      triggerShake()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -160,7 +199,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                       animate={shake ? { x: [0, -4, 4, -4, 4, 0] } : {}}
                       transition={{ duration: 0.4 }}
                     >
-                      {step === 1 && <PersonalInfoSection form={form} onChange={set} />}
+                      {step === 1 && <PersonalInfoSection form={form} onChange={set} erroresCampo={erroresCampo} />}
                       {step === 2 && <DataConsentSection accepted={aceptaDatos} onChange={setAceptaDatos} />}
                       {step === 3 && (
                         <RoleSelector
@@ -177,12 +216,18 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                         />
                       )}
                     </motion.div>
+                    {error && (
+                      <div className="mt-3 px-4 py-2.5 rounded-xl text-[11px] font-semibold" style={{ background: 'rgba(244,56,67,0.08)', border: '1px solid rgba(244,56,67,0.25)', color: '#D32F2F' }}>
+                        {error}
+                      </div>
+                    )}
                   </div>
 
                   <ModalFooter
                     step={step}
                     onPrev={handlePrev}
                     onNext={handleNext}
+                    loading={loading}
                   />
                 </motion.div>
               </AnimatePresence>

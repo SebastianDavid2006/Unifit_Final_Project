@@ -59,30 +59,13 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       })
     }, 350)
 
-    const el = introContainerRef.current
-    if (el && !isPhonePreview) {
-      if (!document.fullscreenElement) {
-        const req = el.requestFullscreen?.()
-        if (req?.catch) req.catch(() => {})
-      }
-    }
-
-    return () => {
-      clearTimeout(t)
-      if (document.fullscreenElement) {
-        const exit = document.exitFullscreen?.()
-        if (exit?.catch) exit.catch(() => {})
-      }
-    }
-  }, [phase, introSrc, isPhonePreview])
+    return () => clearTimeout(t)
+  }, [phase, introSrc])
 
   const skipIntro = () => {
     introVideoRef.current?.pause()
     const bg = bgVideoRef.current
-    if (bg) {
-      bg.currentTime = 0
-      bg.play().catch(() => {})
-    }
+    if (bg) bg.currentTime = 0
     setPhase('form')
   }
 
@@ -304,6 +287,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       onBack={phase === 'form' ? onBack : undefined}
       bgVideoRef={bgVideoRef}
       showBackDesktopVideo={false}
+      videosPaused={phase !== 'intro'}
       phoneGradient={phase === 'form' ? PHONE_GRADIENT_FORM : PHONE_GRADIENT_INTRO}
       overlays={(ctx) => (
         <>

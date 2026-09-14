@@ -113,17 +113,10 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
   const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   async function handleNewUserSuccess(user: NewUserPayload) {
-    try {
-      const payload = buildStaffPayload(user)
-      await registrarUsuario(payload)
-      const data = await getPersonal()
-      setTrainers(data.map(mapBackendToTrainer))
-      setShowNewUser(false)
-      setError('')
-    } catch (err) {
-      console.error('Error creando staff:', err)
-      setError(mensajeError(err))
-    }
+    const payload = buildStaffPayload(user)
+    await registrarUsuario(payload)
+    const data = await getPersonal()
+    setTrainers(data.map(mapBackendToTrainer))
   }
 
   if (loading) {

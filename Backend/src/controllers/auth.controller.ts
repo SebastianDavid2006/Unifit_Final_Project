@@ -7,8 +7,8 @@ import { responderErrorPrisma } from '../utils/prisma-errors'
 import { HttpError } from '../utils/HttpError'
 
 const loginSchema = z.object({
-  email_contacto: z.string().email(),
-  password: z.string().min(1),
+  email_contacto: z.string().email('El correo electrónico no es válido'),
+  password: z.string().min(1, 'La contraseña es requerida'),
 })
 
 const cambiarPasswordSchema = z
@@ -31,7 +31,7 @@ export async function iniciarSesion(req: Request, res: Response): Promise<void> 
   const parsed = loginSchema.safeParse(req.body)
 
   if (!parsed.success) {
-    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+    res.status(400).json({ mensaje: 'Credenciales inválidas', errores: parsed.error.flatten() })
     return
   }
 

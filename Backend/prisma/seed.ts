@@ -26,6 +26,11 @@ const AREAS = [
   'Administración',
 ]
 
+const DOCUMENTOS = [
+  { nombre: 'Contrato de prestación de servicios estudiantiles', tipo: 'contrato_gym' as const },
+  { nombre: 'Autorización para el tratamiento de datos personales', tipo: 'tratamiento_datos' as const },
+]
+
 interface SeedUsuario {
   documento: string
   primer_nombre: string
@@ -142,6 +147,20 @@ async function seedCatalogos(): Promise<void> {
   console.log(`Áreas: ${AREAS.length} aseguradas.`)
 }
 
+async function seedDocumentos(): Promise<void> {
+  for (const doc of DOCUMENTOS) {
+    const existe = await prisma.documentoLegal.findFirst({
+      where: { tipo: doc.tipo },
+    })
+    if (!existe) {
+      await prisma.documentoLegal.create({
+        data: { ...doc, estado: 'vigente' },
+      })
+    }
+  }
+  console.log(`Documentos legales: ${DOCUMENTOS.length} asegurados.`)
+}
+
 async function seedUsuarios(): Promise<void> {
   const cargoAdmin = await prisma.cargo.findUnique({ where: { nombre: 'Director Deportivo' } })
   const areaAdmin = await prisma.area.findUnique({ where: { nombre: 'Administración' } })
@@ -209,6 +228,7 @@ async function seedUsuarios(): Promise<void> {
 
 async function main(): Promise<void> {
   await seedCatalogos()
+  await seedDocumentos()
   await seedUsuarios()
 }
 

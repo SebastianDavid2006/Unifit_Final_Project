@@ -1,4 +1,5 @@
 import type { ReactNode, Ref } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
 import { ArrowLeft } from 'lucide-react'
 import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
@@ -24,6 +25,7 @@ interface AuthShellProps {
   phoneGradient?: string
   showBackDesktopVideo?: boolean
   autoDesktopVideo?: boolean
+  videosPaused?: boolean
 }
 
 export function AuthShell({
@@ -34,10 +36,29 @@ export function AuthShell({
   phoneGradient = PHONE_GRADIENT,
   showBackDesktopVideo = true,
   autoDesktopVideo = false,
+  videosPaused = false,
 }: AuthShellProps) {
   const { isPhonePreview, isDesktopVideo, isMobile } = useAuthLayout({ autoDesktopVideo })
 
   const ctx: AuthShellContext = { isDesktopVideo, isPhonePreview, isMobile }
+
+  const desktopVideoRef = useRef<HTMLVideoElement>(null)
+  const phoneVideoRef = useRef<HTMLVideoElement>(null)
+
+  const setDesktopRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      desktopVideoRef.current = el
+      if (typeof bgVideoRef === 'function') bgVideoRef(el)
+      else if (bgVideoRef) bgVideoRef.current = el
+    },
+    [bgVideoRef],
+  )
+
+  useEffect(() => {
+    if (!videosPaused) return
+    desktopVideoRef.current?.pause()
+    phoneVideoRef.current?.pause()
+  }, [videosPaused])
 
   const backButton = (top: number) => (
     <button
@@ -55,7 +76,7 @@ export function AuthShell({
         {isDesktopVideo ? (
           <div className="absolute inset-0 overflow-hidden" style={{ background: DARK_BG }}>
             <video
-              ref={bgVideoRef}
+              ref={setDesktopRef}
               src={welcomeDesktop}
               poster={welcomeDesktopPoster}
               autoPlay
@@ -118,6 +139,7 @@ export function AuthShell({
             )}
             <div className="absolute inset-0 overflow-hidden" style={{ background: '#000' }}>
               <video
+                ref={phoneVideoRef}
                 src={welcomeMobile}
                 poster={welcomeMobilePoster}
                 autoPlay

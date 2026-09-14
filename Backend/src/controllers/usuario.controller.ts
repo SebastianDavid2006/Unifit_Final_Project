@@ -56,10 +56,23 @@ const nombreSchema = z
 
 const telefonoSchema = z
   .string()
-  .regex(/^\d{10}$/, 'Teléfono debe tener 10 dígitos')
-  .refine((v) => v.startsWith('3'), 'Teléfono debe iniciar con 3')
-  .refine((v) => !/^(\d)\1{9}$/.test(v), 'Teléfono no válido')
-  .refine((v) => !/^(0123456789|1234567890|9876543210)$/.test(v), 'Teléfono no válido')
+  .superRefine((v, ctx) => {
+    if (v.length > 10) {
+      ctx.addIssue({ code: 'custom', message: 'El teléfono no debe superar los 10 dígitos' })
+      return
+    }
+    if (!/^\d{10}$/.test(v)) {
+      ctx.addIssue({ code: 'custom', message: 'Teléfono debe tener 10 dígitos' })
+      return
+    }
+    if (!v.startsWith('3')) {
+      ctx.addIssue({ code: 'custom', message: 'Teléfono debe iniciar con 3' })
+      return
+    }
+    if (/^(\d)\1{9}$/.test(v) || /^(0123456789|1234567890|9876543210)$/.test(v)) {
+      ctx.addIssue({ code: 'custom', message: 'Teléfono no válido' })
+    }
+  })
 
 export const registrarSchema = z
   .object({
@@ -69,12 +82,12 @@ export const registrarSchema = z
     segundo_apellido: nombreSchema.optional(),
     email_contacto: z
       .string()
-      .email()
-      .max(254)
+      .email('El correo electrónico no es válido')
+      .max(254, 'El correo electrónico es demasiado largo')
       .transform((v) => v.toLowerCase())
       .refine((email) => !DISPOSABLE_DOMAINS.has(email.split('@')[1] ?? ''), 'Dominio de correo no permitido'),
     telefono_contacto: telefonoSchema.optional(),
-    documento: z.string().min(1),
+    documento: z.string().min(1, 'El documento es requerido'),
     tipo_documento: z.enum(TipoDocumento).default(TipoDocumento.CC),
     fecha_nacimiento: z
       .string({ error: 'Fecha de nacimiento es requerida' })
@@ -87,7 +100,7 @@ export const registrarSchema = z
         const mes = hoy.getMonth() - d.getMonth()
         if (mes < 0 || (mes === 0 && hoy.getDate() < d.getDate())) edad--
         return edad >= 15 && edad <= 70
-      }, 'Edad debe estar entre 15 y 70 años'),
+      }, 'Edad válida solo entre 15 y 70 años'),
     genero: z.enum(Genero),
     eps: z
       .string()
@@ -115,7 +128,7 @@ export const registrarSchema = z
     // Acudiente (requerido si menor de 18)
     acudiente_primer_nombre: nombreSchema.optional(),
     acudiente_primer_apellido: nombreSchema.optional(),
-    acudiente_documento: z.string().min(1).optional(),
+    acudiente_documento: z.string().min(1, 'El documento del acudiente es requerido').optional(),
     acudiente_tipo_documento: z.enum(TipoDocumento).optional(),
     acudiente_telefono_contacto: telefonoSchema.optional(),
   })
@@ -374,7 +387,7 @@ export async function cambiarRolHandler(req: Request, res: Response): Promise<vo
 
 const actualizarPerfilSchema = z.object({
   nombre_completo: z.string().optional(),
-  email_contacto: z.string().email().optional(),
+  email_contacto: z.string().email('El correo electrónico no es válido').optional(),
   telefono_contacto: z.string().optional(),
   id_cargo: z.string().uuid().optional(),
   id_area: z.string().uuid().optional(),

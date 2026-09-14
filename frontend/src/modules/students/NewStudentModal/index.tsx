@@ -8,6 +8,7 @@ import { useProgramasAgrupados } from '@/hooks/useCatalogo'
 import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
 import type { Universidad, NivelPrograma } from '@/types/catalogo'
 import { loadDocs, type StoredDocs } from '@/data/documents'
+import { validarPasoInfo, validarAcudiente } from '@/lib/validacionRegistro'
 import { BLUE_GRAD, RED, STEPS_ADULT, STEPS_MINOR, INITIAL_FORM } from '@/modules/students/NewStudentData'
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
 import {
@@ -124,7 +125,14 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   }
 
   const handleNext = () => {
-    if (!canGoNext()) {
+    let nuevosErrores: Record<string, string[]> = {}
+    if (step === 1) {
+      nuevosErrores = validarPasoInfo(form, { tipoUsuario: tipoUsuario ?? undefined, incluyeRama: true })
+    } else if (isMinor && step === 2) {
+      nuevosErrores = validarAcudiente(form)
+    }
+    setErroresCampo(nuevosErrores)
+    if (Object.keys(nuevosErrores).length > 0 || !canGoNext()) {
       triggerShake()
       return
     }

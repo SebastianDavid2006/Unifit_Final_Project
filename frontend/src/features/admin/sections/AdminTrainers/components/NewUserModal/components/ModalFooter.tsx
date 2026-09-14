@@ -2,10 +2,11 @@ import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { BLUE_GRAD, GREEN_GRAD } from '../data'
 
-export default function ModalFooter({ step, onPrev, onNext }: {
+export default function ModalFooter({ step, onPrev, onNext, loading }: {
   step: number
   onPrev: () => void
   onNext: () => void
+  loading?: boolean
 }) {
   const isLast = step === 3
   return (
@@ -51,8 +52,9 @@ export default function ModalFooter({ step, onPrev, onNext }: {
             whileHover="hover"
             whileTap="tap"
             onClick={onNext}
+            disabled={loading}
             className="relative flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white overflow-hidden cursor-pointer"
-            style={{ background: isLast ? GREEN_GRAD : BLUE_GRAD }}
+            style={{ background: isLast ? GREEN_GRAD : BLUE_GRAD, opacity: loading ? 0.6 : 1 }}
           >
             <motion.span
               variants={{
@@ -69,7 +71,7 @@ export default function ModalFooter({ step, onPrev, onNext }: {
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className="relative z-10"
             >
-              {isLast ? 'Finalizar' : 'Siguiente'}
+              {loading ? 'Guardando...' : (isLast ? 'Finalizar' : 'Siguiente')}
             </motion.span>
             {!isLast && (
               <motion.span

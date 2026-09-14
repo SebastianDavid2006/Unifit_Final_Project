@@ -11,7 +11,11 @@ export async function login(datos: { email_contacto: string; password: string })
     where: { email_contacto: datos.email_contacto },
   })
 
-  if (!usuario?.password_hash) {
+  if (!usuario) {
+    throw new HttpError(401, 'No existe usuario con estas credenciales')
+  }
+
+  if (!usuario.password_hash) {
     throw new HttpError(401, 'Credenciales inválidas')
   }
 
