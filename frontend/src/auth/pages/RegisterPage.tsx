@@ -32,7 +32,7 @@ type Phase = 'intro' | 'form' | 'success'
 export function RegisterPage({ onBack }: RegisterPageProps) {
   const { isPhonePreview, isDesktopVideo } = useAuthLayout()
   const [phase, setPhase] = useState<Phase>('intro')
-  const [form, setForm] = useState<Record<string, string>>({ ...INITIAL_FORM, parentesco: 'Padre', estado: 'No egresado' })
+  const [form, setForm] = useState<Record<string, string>>({ ...INITIAL_FORM, parentesco: 'Padre' })
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
   const [shake, setShake] = useState(false)
   const [error, setError] = useState('')
@@ -78,7 +78,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     const prog = catalogo.nombres(inst, level)[0] ?? ''
     setForm(prev => ({
       ...prev,
-      numCarnet: '', estado: 'No egresado',
+      numCarnet: '',
       institucion: inst, nivelFormacion: level, programa: prog,
       semestre: '1', modalidad: 'Presencial', jornada: 'Mañana',
       cargo: '', area: '',
@@ -108,7 +108,6 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
         !!form.acudientePrimerApellido &&
         !!form.acudienteDocumento &&
         !!form.acudienteTipoDocumento &&
-        !!form.acudienteTelefonoContacto &&
         !!form.parentescoAcudiente &&
         (form.parentescoAcudiente !== 'Otro' || !!form.otroParentescoAcudiente)
     }

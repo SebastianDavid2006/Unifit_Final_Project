@@ -148,6 +148,10 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     tipo_usuario: u.tipo_usuario,
     cargo,
     area,
+    createdAt: u.fecha_creacion,
+    aceptaContrato: u.acepta_contrato,
+    aceptaTratamiento: u.acepta_tratamiento,
+    parqRealizado: u.parq_realizado,
   }
 }
 

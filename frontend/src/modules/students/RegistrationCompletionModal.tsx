@@ -20,13 +20,16 @@ interface Props {
   onComplete: () => void
   studentName: string
   userId: string
+  aceptaContrato?: boolean
+  aceptaTratamiento?: boolean
+  parqRealizado?: boolean
 }
 
-export default function RegistrationCompletionModal({ open, onClose, onComplete, studentName, userId }: Props) {
+export default function RegistrationCompletionModal({ open, onClose, onComplete, studentName, userId, aceptaContrato, aceptaTratamiento, parqRealizado }: Props) {
   const [step, setStep] = useState(1)
   const [aceptaDatos, setAceptaDatos] = useState(false)
-  const [aceptaContrato, setAceptaContrato] = useState(false)
-  const [aceptaParq, setAceptaParq] = useState(false)
+  const [aceptaContratoState, setAceptaContratoState] = useState(false)
+  const [aceptaParqState, setAceptaParqState] = useState(false)
   const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
@@ -38,18 +41,30 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
     { num: 2, label: 'PAR-Q' },
   ]
 
+  const allAccepted = (aceptaContrato ?? false) && (aceptaTratamiento ?? false) && (parqRealizado ?? false)
+
   useEffect(() => {
     if (open) {
-      setStep(1)
-      setAceptaDatos(false)
-      setAceptaContrato(false)
-      setAceptaParq(false)
+      const datosAccepted = aceptaTratamiento ?? false
+      const contratoAccepted = aceptaContrato ?? false
+      const parqAccepted = parqRealizado ?? false
+
+      setAceptaDatos(datosAccepted)
+      setAceptaContratoState(contratoAccepted)
+      setAceptaParqState(parqAccepted)
       setDocs(loadDocs())
       setSuccess(false)
       setLoading(false)
       setError('')
+
+      if (allAccepted) {
+        setSuccess(true)
+        setStep(2)
+      } else {
+        setStep(1)
+      }
     }
-  }, [open])
+  }, [open, aceptaContrato, aceptaTratamiento, parqRealizado])
 
   const handleCloseClick = () => {
     if (success) onComplete()
@@ -62,8 +77,8 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
   }
 
   const canGoNext = () => {
-    if (step === 1) return aceptaDatos && aceptaContrato
-    if (step === 2) return aceptaParq
+    if (step === 1) return aceptaDatos && aceptaContratoState
+    if (step === 2) return aceptaParqState
     return false
   }
 
@@ -77,38 +92,57 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
 
     try {
       if (step === 1) {
-        await Promise.all([
+        const resultado = await Promise.allSettled([
           api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'tratamiento_datos' }),
           api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'contrato_gym' }),
         ])
+        const fallidas: string[] = []
+        if (resultado[0].status === 'rejected') fallidas.push('Tratamiento de datos')
+        if (resultado[1].status === 'rejected') fallidas.push('Contrato del gimnasio')
+        if (fallidas.length > 0) {
+          setError(`No se pudieron registrar los documentos: ${fallidas.join(', ')}.`)
+          triggerShake()
+          return
+        }
         setStep(2)
       } else if (step === 2) {
-        await api.put(`/usuarios/${userId}/parq`)
+        const parq = await api.put(`/usuarios/${userId}/parq`)
         setSuccess(true)
       }
     } catch (err) {
-      setError(mensajeError(err))
+      setError(step === 2 ? 'No se pudo marcar el PAR-Q.' : mensajeError(err))
       triggerShake()
     } finally {
       setLoading(false)
     }
   }
 
-  const renderSuccess = () => (
-    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center space-y-4 pt-8 px-6">
-      <div className="relative flex items-center justify-center -mt-28 mb-6">
-        {[...Array(24)].map((_, i) => { const angle = (i / 24) * 360, rad = (angle * Math.PI) / 180; return <motion.span key={i} className="absolute pointer-events-none text-lg select-none" style={{ color: '#4ADE80' }} animate={{ x: [0, Math.cos(rad) * (110 + (i % 6) * 20)], y: [0, Math.sin(rad) * (110 + (i % 6) * 20)], opacity: [0, 1, 0], scale: [0, 1.4, 0] }} transition={{ duration: 2.5 + (i % 4) * 0.3, repeat: Infinity, delay: i * 0.07, ease: 'easeOut' }}>✦</motion.span> })}
-        <div className="relative flex items-center justify-center">
-          <motion.img src={coachCongratsImg} alt="felicitaciones" className="w-72 h-auto object-contain relative z-10" style={{ filter: 'drop-shadow(0 0 30px rgba(34,197,94,0.15))' }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }} />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-24 pointer-events-none z-20" style={{ background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, transparent 60%)' }} />
+  const renderSuccess = () => {
+    const isAllAccepted = allAccepted
+    return (
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col items-center space-y-4 pt-8 px-6">
+        <div className="relative flex items-center justify-center -mt-28 mb-6">
+          {[...Array(24)].map((_, i) => { const angle = (i / 24) * 360, rad = (angle * Math.PI) / 180; return <motion.span key={i} className="absolute pointer-events-none text-lg select-none" style={{ color: '#4ADE80' }} animate={{ x: [0, Math.cos(rad) * (110 + (i % 6) * 20)], y: [0, Math.sin(rad) * (110 + (i % 6) * 20)], opacity: [0, 1, 0], scale: [0, 1.4, 0] }} transition={{ duration: 2.5 + (i % 4) * 0.3, repeat: Infinity, delay: i * 0.07, ease: 'easeOut' }}>✦</motion.span> })}
+          <div className="relative flex items-center justify-center">
+            <motion.img src={coachCongratsImg} alt="felicitaciones" className="w-72 h-auto object-contain relative z-10" style={{ filter: 'drop-shadow(0 0 30px rgba(34,197,94,0.15))' }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.15 }} />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-80 h-24 pointer-events-none z-20" style={{ background: 'linear-gradient(to top, rgba(255,255,255,1) 0%, transparent 60%)' }} />
+          </div>
         </div>
-      </div>
-      <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }} className="text-base font-bold text-center" style={{ color: '#1A1A1E' }}>¡Estudiante registrado exitosamente!</motion.p>
-      <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="text-sm font-medium text-center max-w-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.45)' }}>Tu cuenta queda habilitada. Tu usuario es tu correo electrónico y tu contraseña es tu número de documento; deberás cambiarla la primera vez que ingreses al sistema.</motion.p>
-      <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }} className="text-sm font-bold text-center" style={{ color: BLUE }}>¡Para que empieces tu experiencia en UniFit y conquistes tu mejor versión!</motion.p>
-      <motion.button whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }} whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }} onClick={handleCloseClick} className="mt-8 mb-10 px-8 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer" style={{ background: GREEN_BLUE_GRAD }}>Cerrar</motion.button>
-    </motion.div>
-  )
+        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }} className="text-base font-bold text-center" style={{ color: '#1A1A1E' }}>
+          {isAllAccepted ? '¡Documentos ya completados!' : '¡Estudiante registrado exitosamente!'}
+        </motion.p>
+        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="text-sm font-medium text-center max-w-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.45)' }}>
+          {isAllAccepted
+            ? 'Los documentos legales y el PAR-Q ya están aceptados. Solo falta registrar la huella digital para activar la cuenta.'
+            : 'Tu cuenta queda habilitada. Tu usuario es tu correo electrónico y tu contraseña es tu número de documento; deberás cambiarla la primera vez que ingreses al sistema.'}
+        </motion.p>
+        <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.4 }} className="text-sm font-bold text-center" style={{ color: BLUE }}>
+          {isAllAccepted ? '¡Solo falta la huella para activar la cuenta!' : '¡Para que empieces tu experiencia en UniFit y conquistes tu mejor versión!'}
+        </motion.p>
+        <motion.button whileHover={{ scale: 1.04, boxShadow: '0 8px 25px rgba(0,155,149,0.35)', transition: { duration: 0.15 } }} whileTap={{ scale: 0.92, boxShadow: '0 2px 8px rgba(0,155,149,0.2)', transition: { duration: 0.1 } }} onClick={handleCloseClick} className="mt-8 mb-10 px-8 py-3 rounded-2xl text-xs font-bold text-white cursor-pointer" style={{ background: GREEN_BLUE_GRAD }}>Cerrar</motion.button>
+      </motion.div>
+    )
+  }
 
   if (!open) return null
 
@@ -144,10 +178,10 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
                       docs={docs}
                       aceptaDatos={aceptaDatos}
                       setAceptaDatos={setAceptaDatos}
-                      aceptaContrato={aceptaContrato}
-                      setAceptaContrato={setAceptaContrato}
-                      aceptaParq={aceptaParq}
-                      setAceptaParq={setAceptaParq}
+                      aceptaContrato={aceptaContratoState}
+                      setAceptaContrato={setAceptaContratoState}
+                      aceptaParq={aceptaParqState}
+                      setAceptaParq={setAceptaParqState}
                     />
                   )}
                   {step === 2 && (
@@ -156,10 +190,10 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
                       docs={docs}
                       aceptaDatos={aceptaDatos}
                       setAceptaDatos={setAceptaDatos}
-                      aceptaContrato={aceptaContrato}
-                      setAceptaContrato={setAceptaContrato}
-                      aceptaParq={aceptaParq}
-                      setAceptaParq={setAceptaParq}
+                      aceptaContrato={aceptaContratoState}
+                      setAceptaContrato={setAceptaContratoState}
+                      aceptaParq={aceptaParqState}
+                      setAceptaParq={setAceptaParqState}
                     />
                   )}
                 </motion.div>

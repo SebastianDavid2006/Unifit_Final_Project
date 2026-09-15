@@ -230,7 +230,7 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                         ]
                       : [
                           { key: 'carnetId', label: 'Número carnet', value: editable.carnetId, readOnly: true },
-                          { key: 'graduationStatus', label: 'Estado', value: editable.graduationStatus },
+                          { key: 'graduationStatus', label: 'Condición académica', value: editable.graduationStatus },
                           { key: 'institution', label: 'Institución', value: editable.institution },
                           { key: 'modality', label: 'Modalidad', value: editable.modality },
                           { key: 'nivelFormacion', label: 'Nivel de formación', value: editable.nivelFormacion || 'Técnicos' },

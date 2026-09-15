@@ -13,11 +13,17 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
+  const reload = () => {
+    setLoading(true)
+    setError('')
     getUsuarios()
       .then(data => setStudents(data.map(mapBackendToStudent)))
       .catch(err => setError(mensajeError(err)))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    reload()
   }, [])
 
   if (loading) {
@@ -43,6 +49,7 @@ export default function UsuariosPage() {
       onSelectStudent={(s) => navigate(`/admin/gestion/usuarios/${s.id}`)}
       showFilters={showFilters}
       onToggleFilters={() => setShowFilters(!showFilters)}
+      onStudentCreated={reload}
     />
   )
 }

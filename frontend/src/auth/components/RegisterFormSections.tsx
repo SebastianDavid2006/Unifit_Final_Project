@@ -145,12 +145,12 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
         {field('Segundo apellido', 'segundoApellido')}
       </div>
       <div className="grid grid-cols-2 gap-3">
-        {select('Tipo de documento', 'tipoDoc', TIPO_DOC)}
+        {select('Tipo de documento', 'tipoDoc', TIPO_DOC, { required: true })}
         {field('Número de documento', 'numDoc', { required: true })}
       </div>
       <div className="grid grid-cols-2 gap-3">
         {field('Fecha de nacimiento', 'fechaNac', { type: 'date', required: true })}
-        {select('Género', 'genero', GENEROS)}
+        {select('Género', 'genero', GENEROS, { required: true })}
       </div>
 
       {isMinor && (
@@ -165,7 +165,7 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
             {select('Tipo de documento', 'acudienteTipoDocumento', TIPO_DOC, { required: true })}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {field('Teléfono del acudiente', 'acudienteTelefonoContacto', { required: true })}
+            {field('Teléfono del acudiente', 'acudienteTelefonoContacto')}
             {select('Parentesco', 'parentescoAcudiente', PARENTESCOS, { required: true })}
           </div>
           {form.parentescoAcudiente === 'Otro'
@@ -176,7 +176,7 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
 
       {sectionTitle('Información de contacto')}
       <div className="grid grid-cols-2 gap-3">
-        {field('Email', 'email', { type: 'email' })}
+        {field('Email', 'email', { type: 'email', required: true })}
         {field('Teléfono', 'telefono')}
       </div>
 
@@ -244,12 +244,16 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
       {tipoUsuario === 'estudiante' && (
         <>
           {sectionTitle('Información académica')}
+          <p className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            La cuenta se activará al completar los 3 documentos y la huella.
+          </p>
           <div className="grid grid-cols-2 gap-3">
             {field('Número carnet', 'numCarnet', { required: true })}
-            {select('Estado', 'estado', ESTADOS)}
+            {select('Condición académica', 'estado', ESTADOS, { required: true })}
           </div>
           <div className="grid grid-cols-2 gap-3">
             {select('Institución', 'institucion', UNIVERSIDADES.map(u => ({ value: u, label: UNIVERSIDAD_LABELS[u] })), {
+              required: true,
               onChange: (inst) => {
                 const u = inst as Universidad
                 const level = (NIVELES[0] ?? 'tecnico') as NivelPrograma
@@ -257,10 +261,11 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
                 setForm(prev => ({ ...prev, institucion: u, nivelFormacion: level, programa: prog }))
               }
             })}
-            {select('Modalidad', 'modalidad', MODALIDADES)}
+            {select('Modalidad', 'modalidad', MODALIDADES, { required: true })}
           </div>
           <div className="grid grid-cols-2 gap-3">
             {select('Nivel de formación', 'nivelFormacion', NIVELES.map(n => ({ value: n, label: NIVEL_LABELS[n] })), {
+              required: true,
               onChange: (level) => {
                 const n = level as NivelPrograma
                 const u = (form.institucion as Universidad) || 'uni_colombia'
@@ -271,8 +276,8 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
             {select('Carrera', 'programa', catalogo.nombres((form.institucion as Universidad) || 'uni_colombia', (form.nivelFormacion as NivelPrograma) || 'tecnico'), { required: true })}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {select('Semestre', 'semestre', ['1', '2', '3', '4', '5', '6', '7', '8', '9'])}
-            {select('Jornada', 'jornada', JORNADAS)}
+            {select('Semestre', 'semestre', ['1', '2', '3', '4', '5', '6', '7', '8', '9'], { required: true })}
+            {select('Jornada', 'jornada', JORNADAS, { required: true })}
           </div>
         </>
       )}

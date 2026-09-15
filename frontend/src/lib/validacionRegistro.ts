@@ -151,6 +151,7 @@ export function validarPasoInfo(form: PasoInfo, opts?: RamaOpciones): Record<str
 export interface AcudienteInfo {
   acudientePrimerNombre?: string
   acudientePrimerApellido?: string
+  acudienteTipoDocumento?: string
   acudienteDocumento?: string
   acudienteTelefonoContacto?: string
 }
@@ -165,11 +166,19 @@ export function validarAcudiente(form: AcudienteInfo): Record<string, string[]> 
     const format = nombreErrores(val)
     if (format.length > 0) errores[campo] = format
   }
+  const setDoc = (campo: string, requerido: string, tipo?: string, val?: string) => {
+    if (!val?.trim()) {
+      errores[campo] = [requerido]
+      return
+    }
+    const regex = tipo ? DOC_REGEX[tipo] : undefined
+    if (regex && !regex.test(val.trim())) errores[campo] = [`Formato de documento inválido para ${tipo}`]
+  }
   setNombre('acudientePrimerNombre', 'Nombre del acudiente es requerido para menores de edad', form.acudientePrimerNombre)
   setNombre('acudientePrimerApellido', 'Apellido del acudiente es requerido para menores de edad', form.acudientePrimerApellido)
-  if (!form.acudienteDocumento?.trim()) errores.acudienteDocumento = ['Documento del acudiente es requerido para menores de edad']
+  setDoc('acudienteDocumento', 'Documento del acudiente es requerido para menores de edad', form.acudienteTipoDocumento, form.acudienteDocumento)
   const tel = telefonoErrores(form.acudienteTelefonoContacto)
-  if (tel) errores.acudienteTelefonoContacto = tel
+  if (tel && tel.length > 0) errores.acudienteTelefonoContacto = tel
   return errores
 }
 

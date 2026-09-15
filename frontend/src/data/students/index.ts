@@ -37,6 +37,10 @@ export interface Student {
   tipo_usuario?: 'estudiante' | 'profesor' | 'administrativo'
   cargo?: string
   area?: string
+  createdAt?: string
+  aceptaContrato?: boolean
+  aceptaTratamiento?: boolean
+  parqRealizado?: boolean
 }
 
 export const students: Student[] = [

@@ -341,7 +341,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                         { label: 'Semestre', value: `${student.semestre}°` },
                         { label: 'Modalidad', value: student.modality },
                         { label: 'Jornada', value: student.jornada },
-                        { label: 'Estado', value: student.graduationStatus },
+                        { label: 'Condición académica', value: student.graduationStatus },
                       ],
                     },
                     {

@@ -33,7 +33,7 @@ export const INITIAL_FORM = {
   nivelFormacion: 'tecnico',
   programa: '',
   semestre: '1', modalidad: 'Presencial',
-  jornada: 'Mañana', estado: 'Activo', cargo: '', area: '',
+  jornada: 'Mañana', estado: 'No egresado', cargo: '', area: '',
   acudientePrimerNombre: '', acudientePrimerApellido: '', acudienteDocumento: '',
   acudienteTipoDocumento: 'CC', acudienteTelefonoContacto: '',
 }

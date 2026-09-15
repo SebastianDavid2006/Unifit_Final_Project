@@ -6,6 +6,7 @@ import {
   JornadaEstudiante,
   ModalidadEstudiante,
   Parentesco,
+  Prisma,
   TipoDocumento,
   TipoUsuario,
 } from '@prisma/client'
@@ -23,6 +24,7 @@ import {
   activarUsuario,
   cambiarRol,
   actualizarPerfil,
+  buscarExistentePorCredenciales,
 } from '../services/usuario.service'
 import { responderErrorPrisma } from '../utils/prisma-errors'
 import { HttpError } from '../utils/HttpError'
@@ -213,6 +215,14 @@ export const registrarSchema = z
         }
       }
     }
+
+    // --- Común: formato de documento del acudiente (si se envía) ---
+    if (val.acudiente_documento && val.acudiente_tipo_documento) {
+      const regex = DOC_REGEX[val.acudiente_tipo_documento]
+      if (regex && !regex.test(val.acudiente_documento.trim())) {
+        ctx.addIssue({ code: 'custom', path: ['acudiente_documento'], message: `Formato de documento inválido para ${val.acudiente_tipo_documento}` })
+      }
+    }
   })
 
 export async function registrar(req: Request, res: Response): Promise<void> {
@@ -230,6 +240,16 @@ export async function registrar(req: Request, res: Response): Promise<void> {
       usuario: usuarioPublico(usuario),
     })
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const existente = await buscarExistentePorCredenciales(parsed.data.documento, parsed.data.email_contacto)
+      if (existente) {
+        res.status(409).json({
+          mensaje: 'El documento o correo electrónico ya está registrado',
+          usuario_existente: existente,
+        })
+        return
+      }
+    }
     if (!responderErrorPrisma(error, res)) throw error
   }
 }
@@ -272,6 +292,7 @@ const aceptarDocumentoSchema = z.object({
 })
 
 export async function aceptarDocumentoHandler(req: Request, res: Response): Promise<void> {
+  console.log('aceptarDocumentoHandler - params:', req.params, 'body:', req.body, 'user:', req.usuario)
   const id = req.params.id as string
   const parsed = aceptarDocumentoSchema.safeParse(req.body)
 

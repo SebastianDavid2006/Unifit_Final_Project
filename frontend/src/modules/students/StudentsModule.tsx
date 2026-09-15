@@ -19,9 +19,10 @@ interface Props {
   onSelectStudent: (s: Student) => void
   showFilters: boolean
   onToggleFilters: () => void
+  onStudentCreated?: () => void
 }
 
-export default function StudentsModule({ students, search, onSearchChange, onSelectStudent, showFilters, onToggleFilters }: Props) {
+export default function StudentsModule({ students, search, onSearchChange, onSelectStudent, showFilters, onToggleFilters, onStudentCreated }: Props) {
   const isMobile = useIsMobile()
   const [filterCategory, setFilterCategory] = useState<'status' | 'institution' | 'program' | 'gender' | 'modality' | 'jornada' | 'semester'>('institution')
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
@@ -34,8 +35,15 @@ export default function StudentsModule({ students, search, onSearchChange, onSel
 
   const handleStudentClick = (s: Student) => {
     if (s.status === 'process') {
-      setSelectedProcessStudent(s)
-      setShowRegModal(true)
+      const todosAceptados = s.aceptaContrato && s.aceptaTratamiento && s.parqRealizado
+      if (todosAceptados) {
+        // Documentos ya aceptados → solo falta huella → ir directo al perfil
+        onSelectStudent(s)
+      } else {
+        // Faltan documentos → abrir modal de completar
+        setSelectedProcessStudent(s)
+        setShowRegModal(true)
+      }
     } else {
       onSelectStudent(s)
     }
@@ -64,11 +72,15 @@ export default function StudentsModule({ students, search, onSearchChange, onSel
       return matchSearch && matchCategory
     })
 
-    // Sort: "process" status first, then by name
+    // Sort: process first, then active, then inactive; within each group newest first by createdAt
+    const statusRank = { process: 0, active: 1, inactive: 2 } as const
     return filteredStudents.sort((a, b) => {
-      if (a.status === 'process' && b.status !== 'process') return -1
-      if (a.status !== 'process' && b.status === 'process') return 1
-      return a.name.localeCompare(b.name)
+      const rankA = statusRank[a.status]
+      const rankB = statusRank[b.status]
+      if (rankA !== rankB) return rankA - rankB
+      const ta = new Date(a.createdAt ?? 0).getTime()
+      const tb = new Date(b.createdAt ?? 0).getTime()
+      return tb - ta
     })
   }, [students, search, filterSelections])
 
@@ -512,13 +524,16 @@ export default function StudentsModule({ students, search, onSearchChange, onSel
           )}
         </motion.div>
       </div>
-      <NewStudentModal open={showNewStudent} onClose={() => setShowNewStudent(false)} />
+      <NewStudentModal open={showNewStudent} onClose={() => setShowNewStudent(false)} onRegistered={onStudentCreated} />
       <RegistrationCompletionModal
         open={showRegModal}
         onClose={() => { setShowRegModal(false); setSelectedProcessStudent(null) }}
         onComplete={() => { onSelectStudent(selectedProcessStudent!); }}
         studentName={selectedProcessStudent?.name || ''}
         userId={selectedProcessStudent?.id || ''}
+        aceptaContrato={selectedProcessStudent?.aceptaContrato}
+        aceptaTratamiento={selectedProcessStudent?.aceptaTratamiento}
+        parqRealizado={selectedProcessStudent?.parqRealizado}
       />
     </>
   )

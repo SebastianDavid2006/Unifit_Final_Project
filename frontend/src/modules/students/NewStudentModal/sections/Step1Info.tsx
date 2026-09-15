@@ -46,13 +46,13 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
         <Field label="Número de documento" value={form.numDoc} onChange={v => set('numDoc', v)} required errors={erroresCampo.numDoc} />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Fecha de nacimiento" value={form.fechaNac} onChange={v => set('fechaNac', v)} type="date" errors={erroresCampo.fechaNac} />
-        <Select label="Género" value={form.genero} onChange={v => set('genero', v)} options={GENEROS} errors={erroresCampo.genero} />
+        <Field label="Fecha de nacimiento" value={form.fechaNac} onChange={v => set('fechaNac', v)} type="date" required errors={erroresCampo.fechaNac} />
+        <Select label="Género" value={form.genero} onChange={v => set('genero', v)} options={GENEROS} required errors={erroresCampo.genero} />
       </div>
 
       {sectionTitle('Información de contacto')}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Email" value={form.email} onChange={v => set('email', v)} type="email" errors={erroresCampo.email} />
+        <Field label="Email" value={form.email} onChange={v => set('email', v)} type="email" required errors={erroresCampo.email} />
         <Field label="Teléfono" value={form.telefono} onChange={v => set('telefono', v)} errors={erroresCampo.telefono} />
       </div>
 
@@ -124,9 +124,12 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
       {tipoUsuario === 'estudiante' && (
         <>
           {sectionTitle('Información académica')}
+          <p className="text-[11px] font-medium" style={{ color: 'rgba(0,0,0,0.45)' }}>
+            La cuenta se activará al completar los 3 documentos y la huella.
+          </p>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Número carnet" value={form.numCarnet} onChange={v => set('numCarnet', v)} errors={erroresCampo.numCarnet} />
-            <Select label="Estado" value={form.estado} onChange={v => set('estado', v)} options={ESTADOS} errors={erroresCampo.estado} />
+            <Field label="Número carnet" value={form.numCarnet} onChange={v => set('numCarnet', v)} required errors={erroresCampo.numCarnet} />
+            <Select label="Condición académica" value={form.estado} onChange={v => set('estado', v)} options={ESTADOS} required errors={erroresCampo.estado} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -140,9 +143,10 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
                 setForm(prev => ({ ...prev, institucion: u, nivelFormacion: nivel, programa: prog }))
               }}
               options={UNIVERSIDADES.map(u => ({ value: u, label: UNIVERSIDAD_LABELS[u] }))}
+              required
               errors={erroresCampo.institucion}
             />
-            <Select label="Modalidad" value={form.modalidad} onChange={v => set('modalidad', v)} options={MODALIDADES} errors={erroresCampo.modalidad} />
+            <Select label="Modalidad" value={form.modalidad} onChange={v => set('modalidad', v)} options={MODALIDADES} required errors={erroresCampo.modalidad} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -156,6 +160,7 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
                 setForm(prev => ({ ...prev, nivelFormacion: n, programa: prog }))
               }}
               options={NIVELES.map(n => ({ value: n, label: NIVEL_LABELS[n] }))}
+              required
               errors={erroresCampo.nivelFormacion}
             />
             <Select
@@ -168,8 +173,8 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Semestre" value={form.semestre} onChange={v => set('semestre', v)} options={['1', '2', '3', '4', '5', '6', '7', '8', '9']} errors={erroresCampo.semestre} />
-            <Select label="Jornada" value={form.jornada} onChange={v => set('jornada', v)} options={JORNADAS} errors={erroresCampo.jornada} />
+            <Select label="Semestre" value={form.semestre} onChange={v => set('semestre', v)} options={['1', '2', '3', '4', '5', '6', '7', '8', '9']} required errors={erroresCampo.semestre} />
+            <Select label="Jornada" value={form.jornada} onChange={v => set('jornada', v)} options={JORNADAS} required errors={erroresCampo.jornada} />
           </div>
         </>
       )}

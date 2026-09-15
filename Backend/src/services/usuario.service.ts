@@ -111,6 +111,38 @@ export async function registrarUsuario(data: RegistrarUsuarioData) {
   })
 }
 
+export interface UsuarioExistenteResumen {
+  id_usuario: string
+  estado: 'pendiente' | 'activo' | 'inactivo'
+  acepta_contrato: boolean
+  acepta_tratamiento: boolean
+  parq_realizado: boolean
+}
+
+export async function buscarExistentePorCredenciales(documento: string, emailContacto: string): Promise<UsuarioExistenteResumen | null> {
+  const usuario = await prisma.usuario.findFirst({
+    where: {
+      OR: [{ documento }, { email_contacto: emailContacto }],
+    },
+    select: {
+      id_usuario: true,
+      estado: true,
+      parq_realizado: true,
+      aceptaciones: { select: { documento: { select: { tipo: true } } } },
+    },
+  })
+  if (!usuario) return null
+
+  const tipos = new Set(usuario.aceptaciones.map((a) => a.documento.tipo))
+  return {
+    id_usuario: usuario.id_usuario,
+    estado: usuario.estado,
+    acepta_contrato: tipos.has('contrato_gym'),
+    acepta_tratamiento: tipos.has('tratamiento_datos'),
+    parq_realizado: usuario.parq_realizado,
+  }
+}
+
 async function crearFilaHija(tx: Tx, idUsuario: string, data: RegistrarUsuarioData): Promise<void> {
   if (data.tipo_usuario === 'estudiante') {
     await tx.estudiante.create({
@@ -282,6 +314,7 @@ export async function obtenerUsuarioPorId(idUsuario: string) {
 }
 
 export async function aceptarDocumento(idUsuario: string, idActivador: string, tipoDocumento: 'contrato_gym' | 'tratamiento_datos') {
+  console.log('aceptarDocumento service:', { idUsuario, idActivador, tipoDocumento })
   const docLegal = await prisma.documentoLegal.findFirst({
     where: { tipo: tipoDocumento, estado: 'vigente' },
   })

@@ -20,12 +20,35 @@ import { StepAcudiente } from './sections/StepAcudiente'
 import { StepDocAgreement } from './sections/StepDocAgreement'
 import { SuccessView } from './sections/SuccessView'
 
+type DocRequisito = 'tratamiento' | 'contrato' | 'parq'
+
+interface UsuarioExistente {
+  id_usuario: string
+  estado: string
+  acepta_contrato: boolean
+  acepta_tratamiento: boolean
+  parq_realizado: boolean
+}
+
+const REQUISITOS: { id: DocRequisito; label: string; ejecutar: (userId: string) => Promise<unknown> }[] = [
+  { id: 'tratamiento', label: 'Tratamiento de datos', ejecutar: userId => api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'tratamiento_datos' }) },
+  { id: 'contrato', label: 'Contrato del gimnasio', ejecutar: userId => api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'contrato_gym' }) },
+  { id: 'parq', label: 'PAR-Q', ejecutar: userId => api.put(`/usuarios/${userId}/parq`) },
+]
+
+async function completarRequisitos(userId: string, solo?: DocRequisito[]): Promise<string[]> {
+  const aEjecutar = solo ? REQUISITOS.filter(r => solo.includes(r.id)) : REQUISITOS
+  const resultados = await Promise.allSettled(aEjecutar.map(r => r.ejecutar(userId)))
+  return aEjecutar.filter((_, i) => resultados[i].status === 'rejected').map(r => r.label)
+}
+
 interface NewStudentModalProps {
   open: boolean
   onClose: () => void
+  onRegistered?: () => void
 }
 
-export default function NewStudentModal({ open, onClose }: NewStudentModalProps) {
+export default function NewStudentModal({ open, onClose, onRegistered }: NewStudentModalProps) {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({ ...INITIAL_FORM })
   const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
@@ -40,6 +63,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const [createdEmail, setCreatedEmail] = useState('')
   const [error, setError] = useState('')
   const [erroresCampo, setErroresCampo] = useState<Record<string, string[]>>({})
+  const [resume, setResume] = useState<{ userId: string; faltan: DocRequisito[] } | null>(null)
+  const [resumeLoading, setResumeLoading] = useState(false)
 
   const isMinor = useMemo(() => {
     if (!form.fechaNac) return false
@@ -73,6 +98,8 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       setConfirmClose(false)
       setError('')
       setErroresCampo({})
+      setResume(null)
+      setResumeLoading(false)
     }
   }, [open])
 
@@ -153,6 +180,7 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
   const submitForm = async () => {
     setError('')
     setErroresCampo({})
+    setResume(null)
 
     const payload: Record<string, unknown> = {
       primer_nombre: form.primerNombre?.trim(),
@@ -201,11 +229,12 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
       const res = await api.post('/usuarios', payload)
       const userId = res.data.usuario?.id_usuario
       if (userId) {
-        await Promise.all([
-          api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'tratamiento_datos' }),
-          api.put(`/usuarios/${userId}/aceptar-documento`, { tipo_documento_legal: 'contrato_gym' }),
-          api.put(`/usuarios/${userId}/parq`),
-        ])
+        const fallidas = await completarRequisitos(userId)
+        if (fallidas.length > 0) {
+          setError(`Se registraron los datos, pero no se pudieron completar: ${fallidas.join(', ')}. La cuenta se activa al completar los 3 documentos y la huella.`)
+          triggerShake()
+          return
+        }
       }
       const email = (form.email || '').trim()
       setCreatedEmail(email)
@@ -216,10 +245,58 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
         origin: { y: 0.55 },
         colors: ['#1270B7', '#F43843', '#22C55E', '#F5A623'],
       })
+      onRegistered?.()
     } catch (err) {
+      const ctx = (err as { response?: { data?: Record<string, unknown> } }).response?.data
+      const existente = ctx?.usuario_existente as UsuarioExistente | undefined
+      if (existente) {
+        const faltan: DocRequisito[] = []
+        if (!existente.acepta_tratamiento) faltan.push('tratamiento')
+        if (!existente.acepta_contrato) faltan.push('contrato')
+        if (!existente.parq_realizado) faltan.push('parq')
+        if (faltan.length === 0) {
+          setError(
+            existente.estado === 'activo'
+              ? 'Este usuario ya está activo: los 3 documentos y la huella ya están completos.'
+              : 'Este usuario ya completó los 3 documentos; la cuenta queda pendiente solo por la huella.',
+          )
+          triggerShake()
+          return
+        }
+        setResume({ userId: existente.id_usuario, faltan })
+        return
+      }
       setError(mensajeError(err))
       setErroresCampo(mapearErroresBackend(err))
       triggerShake()
+    }
+  }
+
+  const confirmarResume = async () => {
+    if (!resume) return
+    setResumeLoading(true)
+    try {
+      const fallidas = await completarRequisitos(resume.userId, resume.faltan)
+      if (fallidas.length > 0) {
+        setError(`No se pudieron completar: ${fallidas.join(', ')}.`)
+        triggerShake()
+        setResume(null)
+        return
+      }
+      setCreatedEmail((form.email || '').trim())
+      setSuccess(true)
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.55 },
+        colors: ['#1270B7', '#F43843', '#22C55E', '#F5A623'],
+      })
+      onRegistered?.()
+    } catch {
+      setError('No se pudo completar el retomar. Inténtalo de nuevo.')
+      triggerShake()
+    } finally {
+      setResumeLoading(false)
     }
   }
 
@@ -360,6 +437,39 @@ export default function NewStudentModal({ open, onClose }: NewStudentModalProps)
                       {error && (
                         <div className="mt-3 px-4 py-2.5 rounded-xl text-[11px] font-semibold" style={{ background: 'rgba(244,56,67,0.08)', border: '1px solid rgba(244,56,67,0.25)', color: '#D32F2F' }}>
                           {error}
+                        </div>
+                      )}
+                      {resume && (
+                        <div className="mt-3 px-4 py-3 rounded-xl text-[11px] font-semibold" style={{ background: 'rgba(18,112,183,0.07)', border: '1px solid rgba(18,112,183,0.25)', color: '#0B5E9B' }}>
+                          <p className="mb-1">
+                            Este estudiante ya está registrado pero quedó pendiente de:{' '}
+                            <span className="font-bold">{resume.faltan.map(f => REQUISITOS.find(r => r.id === f)!.label).join(', ')}</span>.
+                          </p>
+                          <p className="mb-3" style={{ color: 'rgba(11,94,155,0.8)', fontWeight: 500 }}>
+                            Se reintentarán solo los pendientes. La cuenta se activa al completar los 3 documentos y la huella.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={confirmarResume}
+                              disabled={resumeLoading}
+                              className="px-4 py-2 rounded-lg text-xs font-bold text-white cursor-pointer"
+                              style={{ background: BLUE_GRAD, opacity: resumeLoading ? 0.6 : 1 }}
+                            >
+                              {resumeLoading ? 'Completando...' : 'Continuar'}
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={() => setResume(null)}
+                              disabled={resumeLoading}
+                              className="px-4 py-2 rounded-lg text-xs font-bold cursor-pointer"
+                              style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(0,0,0,0.5)' }}
+                            >
+                              Cancelar
+                            </motion.button>
+                          </div>
                         </div>
                       )}
                     </div>
