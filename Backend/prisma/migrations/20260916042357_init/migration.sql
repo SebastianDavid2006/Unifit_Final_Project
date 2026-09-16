@@ -59,9 +59,6 @@ CREATE TYPE "RutinaDuracion" AS ENUM ('cuatro_semanas', 'ocho_semanas', 'doce_se
 CREATE TYPE "DiaSemana" AS ENUM ('lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado');
 
 -- CreateEnum
-CREATE TYPE "TipoDocPersonal" AS ENUM ('legal', 'informe_medico', 'lesion_seguimiento');
-
--- CreateEnum
 CREATE TYPE "TipoDocLegal" AS ENUM ('contrato_gym', 'tratamiento_datos');
 
 -- CreateEnum
@@ -95,9 +92,6 @@ CREATE TABLE "Usuario" (
     "estado" "EstadoUsuario" NOT NULL DEFAULT 'pendiente',
     "password_hash" TEXT,
     "debe_cambiar_password" BOOLEAN NOT NULL DEFAULT true,
-    "token_activacion" TEXT,
-    "token_expira" TIMESTAMP(3),
-    "avatar" TEXT,
     "eps" TEXT,
     "eps_certificado" TEXT,
     "grupo_sanguineo" "GrupoSanguineo",
@@ -173,6 +167,7 @@ CREATE TABLE "Programa" (
     "nombre" TEXT NOT NULL,
     "universidad" "Universidad" NOT NULL,
     "tipo_programa" "NivelPrograma" NOT NULL,
+    "activo" BOOLEAN NOT NULL DEFAULT true,
     "fecha_creacion" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "fecha_modificacion" TIMESTAMP(3) NOT NULL,
 
@@ -183,6 +178,7 @@ CREATE TABLE "Programa" (
 CREATE TABLE "Cargo" (
     "id_cargo" TEXT NOT NULL,
     "nombre" TEXT NOT NULL,
+    "activo" BOOLEAN NOT NULL DEFAULT true,
     "fecha_creacion" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Cargo_pkey" PRIMARY KEY ("id_cargo")
@@ -192,6 +188,7 @@ CREATE TABLE "Cargo" (
 CREATE TABLE "Area" (
     "id_area" TEXT NOT NULL,
     "nombre" TEXT NOT NULL,
+    "activo" BOOLEAN NOT NULL DEFAULT true,
     "fecha_creacion" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Area_pkey" PRIMARY KEY ("id_area")
@@ -201,8 +198,9 @@ CREATE TABLE "Area" (
 CREATE TABLE "Huella" (
     "id_huella" TEXT NOT NULL,
     "id_usuario" TEXT NOT NULL,
-    "id_sensor" INTEGER NOT NULL,
+    "indice_sensor" INTEGER NOT NULL,
     "activo" BOOLEAN NOT NULL DEFAULT true,
+    "paso_enrolamiento" INTEGER,
     "fecha_creacion" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Huella_pkey" PRIMARY KEY ("id_huella")
@@ -216,7 +214,6 @@ CREATE TABLE "Asistencia" (
     "hora_ingreso" TIMESTAMP(3) NOT NULL,
     "hora_salida" TIMESTAMP(3),
     "duracion_minutos" INTEGER,
-    "activo" BOOLEAN NOT NULL DEFAULT true,
     "observaciones" TEXT,
 
     CONSTRAINT "Asistencia_pkey" PRIMARY KEY ("id_asistencia")
@@ -236,6 +233,7 @@ CREATE TABLE "Valoracion" (
     "observaciones_antecedentes" TEXT,
     "observaciones_finales" TEXT,
     "dias_disponibles" "DiaSemana"[],
+    "activo" BOOLEAN NOT NULL DEFAULT true,
     "fecha_creacion" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Valoracion_pkey" PRIMARY KEY ("id_valoracion")
@@ -271,7 +269,7 @@ CREATE TABLE "MedidasCorporales" (
 -- CreateTable
 CREATE TABLE "Ejercicio" (
     "id_ejercicio" TEXT NOT NULL,
-    "id_usuario" TEXT NOT NULL,
+    "id_creador" TEXT NOT NULL,
     "nombre" TEXT NOT NULL,
     "descripcion" TEXT,
     "grupos_musculares" "GrupoMuscular"[],
@@ -287,7 +285,7 @@ CREATE TABLE "Ejercicio" (
 -- CreateTable
 CREATE TABLE "Maquina" (
     "id_maquina" TEXT NOT NULL,
-    "id_usuario" TEXT NOT NULL,
+    "id_creador" TEXT NOT NULL,
     "nombre" TEXT NOT NULL,
     "descripcion" TEXT,
     "grupos_musculares" "GrupoMuscular"[],
@@ -313,7 +311,7 @@ CREATE TABLE "Rutina" (
     "id_rutina" TEXT NOT NULL,
     "id_usuario" TEXT NOT NULL,
     "id_creador" TEXT NOT NULL,
-    "id_valoracion" TEXT,
+    "id_valoracion" TEXT NOT NULL,
     "nombre" TEXT NOT NULL,
     "duracion" "RutinaDuracion",
     "nivel" "NivelExperiencia" NOT NULL DEFAULT 'principiante',
@@ -335,7 +333,7 @@ CREATE TABLE "RutinaEjercicio" (
     "repeticiones_min" INTEGER,
     "repeticiones_max" INTEGER,
     "descanso" INTEGER,
-    "orden" INTEGER,
+    "orden" INTEGER NOT NULL,
     "observaciones" TEXT,
 
     CONSTRAINT "RutinaEjercicio_pkey" PRIMARY KEY ("id_rutina_ejercicio")
@@ -345,10 +343,9 @@ CREATE TABLE "RutinaEjercicio" (
 CREATE TABLE "SesionRutina" (
     "id_sesion" TEXT NOT NULL,
     "id_rutina" TEXT NOT NULL,
-    "id_usuario" TEXT NOT NULL,
     "fecha" TIMESTAMP(3) NOT NULL,
     "hora_inicio" TIMESTAMP(3) NOT NULL,
-    "hora_fin" TIMESTAMP(3) NOT NULL,
+    "hora_fin" TIMESTAMP(3),
     "estado" "EstadoSesionRutina" NOT NULL DEFAULT 'en_progreso',
     "fecha_creacion" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -363,7 +360,7 @@ CREATE TABLE "Agenda" (
     "id_cupo" TEXT,
     "fecha" DATE NOT NULL,
     "hora_inicio" TIME NOT NULL,
-    "hora_fin" TIME NOT NULL,
+    "hora_fin" TIME,
     "tipo" "TipoAgenda" NOT NULL,
     "tipo_otro" TEXT,
     "estado" "EstadoAgenda" NOT NULL DEFAULT 'pendiente',
@@ -401,24 +398,11 @@ CREATE TABLE "DocumentoLegal" (
 );
 
 -- CreateTable
-CREATE TABLE "DocumentoPersonal" (
-    "id_doc_personal" TEXT NOT NULL,
-    "id_usuario" TEXT NOT NULL,
-    "nombre" TEXT NOT NULL,
-    "tipo" "TipoDocPersonal" NOT NULL,
-    "url_archivo" TEXT,
-    "activo" BOOLEAN NOT NULL DEFAULT true,
-    "fecha_creacion" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "DocumentoPersonal_pkey" PRIMARY KEY ("id_doc_personal")
-);
-
--- CreateTable
 CREATE TABLE "AceptacionDocumento" (
     "id_aceptacion" TEXT NOT NULL,
     "id_doc_legal" TEXT NOT NULL,
     "id_usuario" TEXT NOT NULL,
-    "firma_imagen" TEXT,
+    "id_activador" TEXT,
     "fecha_aceptacion" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "AceptacionDocumento_pkey" PRIMARY KEY ("id_aceptacion")
@@ -461,7 +445,7 @@ CREATE UNIQUE INDEX "Area_nombre_key" ON "Area"("nombre");
 CREATE UNIQUE INDEX "Huella_id_usuario_key" ON "Huella"("id_usuario");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Huella_id_sensor_key" ON "Huella"("id_sensor");
+CREATE UNIQUE INDEX "Huella_indice_sensor_key" ON "Huella"("indice_sensor");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "DatosMedicos_id_valoracion_key" ON "DatosMedicos"("id_valoracion");
@@ -471,6 +455,9 @@ CREATE UNIQUE INDEX "MedidasCorporales_id_valoracion_key" ON "MedidasCorporales"
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Rutina_id_valoracion_key" ON "Rutina"("id_valoracion");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RutinaEjercicio_id_rutina_dia_semana_orden_key" ON "RutinaEjercicio"("id_rutina", "dia_semana", "orden");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Agenda_id_cupo_key" ON "Agenda"("id_cupo");
@@ -524,10 +511,10 @@ ALTER TABLE "DatosMedicos" ADD CONSTRAINT "DatosMedicos_id_valoracion_fkey" FORE
 ALTER TABLE "MedidasCorporales" ADD CONSTRAINT "MedidasCorporales_id_valoracion_fkey" FOREIGN KEY ("id_valoracion") REFERENCES "Valoracion"("id_valoracion") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Ejercicio" ADD CONSTRAINT "Ejercicio_id_usuario_fkey" FOREIGN KEY ("id_usuario") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Ejercicio" ADD CONSTRAINT "Ejercicio_id_creador_fkey" FOREIGN KEY ("id_creador") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Maquina" ADD CONSTRAINT "Maquina_id_usuario_fkey" FOREIGN KEY ("id_usuario") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Maquina" ADD CONSTRAINT "Maquina_id_creador_fkey" FOREIGN KEY ("id_creador") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "MaquinaEjercicio" ADD CONSTRAINT "MaquinaEjercicio_id_maquina_fkey" FOREIGN KEY ("id_maquina") REFERENCES "Maquina"("id_maquina") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -542,7 +529,7 @@ ALTER TABLE "Rutina" ADD CONSTRAINT "Rutina_id_usuario_fkey" FOREIGN KEY ("id_us
 ALTER TABLE "Rutina" ADD CONSTRAINT "Rutina_id_creador_fkey" FOREIGN KEY ("id_creador") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Rutina" ADD CONSTRAINT "Rutina_id_valoracion_fkey" FOREIGN KEY ("id_valoracion") REFERENCES "Valoracion"("id_valoracion") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Rutina" ADD CONSTRAINT "Rutina_id_valoracion_fkey" FOREIGN KEY ("id_valoracion") REFERENCES "Valoracion"("id_valoracion") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "RutinaEjercicio" ADD CONSTRAINT "RutinaEjercicio_id_rutina_fkey" FOREIGN KEY ("id_rutina") REFERENCES "Rutina"("id_rutina") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -552,9 +539,6 @@ ALTER TABLE "RutinaEjercicio" ADD CONSTRAINT "RutinaEjercicio_id_ejercicio_fkey"
 
 -- AddForeignKey
 ALTER TABLE "SesionRutina" ADD CONSTRAINT "SesionRutina_id_rutina_fkey" FOREIGN KEY ("id_rutina") REFERENCES "Rutina"("id_rutina") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "SesionRutina" ADD CONSTRAINT "SesionRutina_id_usuario_fkey" FOREIGN KEY ("id_usuario") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Agenda" ADD CONSTRAINT "Agenda_id_usuario_fkey" FOREIGN KEY ("id_usuario") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -569,10 +553,10 @@ ALTER TABLE "Agenda" ADD CONSTRAINT "Agenda_id_cupo_fkey" FOREIGN KEY ("id_cupo"
 ALTER TABLE "Cupo" ADD CONSTRAINT "Cupo_id_creador_fkey" FOREIGN KEY ("id_creador") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DocumentoPersonal" ADD CONSTRAINT "DocumentoPersonal_id_usuario_fkey" FOREIGN KEY ("id_usuario") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "AceptacionDocumento" ADD CONSTRAINT "AceptacionDocumento_id_doc_legal_fkey" FOREIGN KEY ("id_doc_legal") REFERENCES "DocumentoLegal"("id_doc_legal") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "AceptacionDocumento" ADD CONSTRAINT "AceptacionDocumento_id_usuario_fkey" FOREIGN KEY ("id_usuario") REFERENCES "Usuario"("id_usuario") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AceptacionDocumento" ADD CONSTRAINT "AceptacionDocumento_id_activador_fkey" FOREIGN KEY ("id_activador") REFERENCES "Usuario"("id_usuario") ON DELETE SET NULL ON UPDATE CASCADE;
