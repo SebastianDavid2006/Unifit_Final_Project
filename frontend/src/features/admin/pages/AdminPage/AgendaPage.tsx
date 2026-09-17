@@ -22,8 +22,8 @@ export default function AgendaPage() {
   useEffect(() => {
     getUsuarios()
       .then(lista => {
-        const estudiantes = lista
-          .filter(u => u.tipo_usuario === 'estudiante' || u.rol === 'usuario')
+        const usuarios = lista
+          .filter(u => u.rol === 'usuario')
           .map(u => {
             const name = `${u.primer_nombre} ${u.primer_apellido}`.trim()
             return {
@@ -33,7 +33,7 @@ export default function AgendaPage() {
               avatar: initials(name),
             }
           })
-        setStudents(estudiantes)
+        setStudents(usuarios)
       })
       .catch(() => setStudents([]))
   }, [])

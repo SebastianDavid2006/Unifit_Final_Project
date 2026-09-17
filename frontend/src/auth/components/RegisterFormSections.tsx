@@ -282,7 +282,7 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
         </>
       )}
 
-      {(tipoUsuario === 'profesor' || tipoUsuario === 'administrador') && (
+      {(tipoUsuario === 'profesor' || tipoUsuario === 'administrativo') && (
         <>
           {sectionTitle('Información laboral')}
           <div className="grid grid-cols-2 gap-3">

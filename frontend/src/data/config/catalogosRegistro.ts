@@ -29,4 +29,3 @@ export const MAP_PARENTESCO: Record<string, string> = {
 }
 export const MAP_JORNADA: Record<string, string> = { Mañana: 'diurna', Noche: 'nocturna', 'Fin de semana': 'finde' }
 export const MAP_MODALIDAD: Record<string, string> = { Presencial: 'presencial', Virtual: 'virtual' }
-export const MAP_ROL: Record<string, string> = { estudiante: 'estudiante', profesor: 'profesor', administrador: 'administrativo' }

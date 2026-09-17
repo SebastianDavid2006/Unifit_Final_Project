@@ -47,17 +47,17 @@ export function TrainerGrid({ trainer, onShowInfo, onShowFingerprint }: TrainerG
               background: 'rgba(255,255,255,0.5)',
               borderRadius: 28,
               padding: 20,
-            }}
-          >
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.3)' }} />
-              <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad y acceso</p>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              {/* Box Huella */}
-              <TrainerFingerprintBox trainer={trainer} onClick={onShowFingerprint} />
-            </div>
-          </motion.div>
+}}
+            >
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(18,112,183,0.3)' }} />
+                <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Identidad y acceso</p>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                {/* Box Huella - solo para usuarios con rol 'usuario' (miembros del gym) */}
+                {trainer.rol === 'usuario' && <TrainerFingerprintBox trainer={trainer} onClick={onShowFingerprint} />}
+              </div>
+            </motion.div>
 
           <DetailCard gridColumn="1" gridRow="2" accent={RED} title="Contacto" model={<TelephoneView />}>
             <FieldList fields={[

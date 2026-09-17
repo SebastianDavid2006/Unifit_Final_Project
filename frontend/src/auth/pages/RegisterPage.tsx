@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { INITIAL_FORM, BLUE_GRAD } from '@/data/config/registration'
 import type { TipoUsuario } from '@/data/config/registration'
 import {
-  MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO, MAP_JORNADA, MAP_MODALIDAD, MAP_ROL,
+  MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO, MAP_JORNADA, MAP_MODALIDAD,
 } from '@/data/config/catalogosRegistro'
 import { useProgramasAgrupados } from '@/hooks/useCatalogo'
 import type { Universidad, NivelPrograma } from '@/types/catalogo'
@@ -123,7 +123,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       nombre_emergencia: form.nombreContacto?.trim() || undefined,
       telefono_emergencia: form.telefonoContacto?.trim() || undefined,
       parentesco_emergencia: form.parentesco ? MAP_PARENTESCO[form.parentesco] : undefined,
-      tipo_usuario: MAP_ROL[tipoUsuario!] ?? 'estudiante',
+      tipo_usuario: tipoUsuario!,
     }
 
     if (isMinor) {

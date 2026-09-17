@@ -182,7 +182,7 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
         </>
       )}
 
-      {(tipoUsuario === 'profesor' || tipoUsuario === 'administrador') && (
+      {(tipoUsuario === 'profesor' || tipoUsuario === 'administrativo') && (
         <>
           {sectionTitle('Información laboral')}
           <div className="grid grid-cols-2 gap-4">

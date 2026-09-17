@@ -52,7 +52,7 @@ export interface Student {
   semester?: string
   nextAssessment?: string
   status?: 'active' | 'inactive' | 'process'
-  role?: 'estudiante' | 'profesor' | 'administrador'
+  role?: 'estudiante' | 'profesor' | 'administrativo'
   nivelFormacion?: string
   area?: string
   cargo?: string

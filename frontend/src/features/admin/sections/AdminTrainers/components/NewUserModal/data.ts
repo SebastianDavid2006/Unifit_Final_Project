@@ -20,7 +20,7 @@ export const STEPS = [
 
 export const INITIAL_FORM = {
   primerNombre: '', segundoNombre: '', primerApellido: '', segundoApellido: '',
-  tipoDoc: 'CC', numDoc: '', fechaNac: '', genero: 'Masculino',
+  tipoDoc: 'CC', numDoc: '', fechaNac: undefined, genero: 'Masculino',
   eps: '', grupoSanguineo: 'O+', email: '', telefono: '',
   nombreContacto: '', telefonoContacto: '', parentesco: '', otroParentesco: '',
 }

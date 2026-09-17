@@ -71,7 +71,16 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
 
   const canGoNext = (): boolean => {
     if (step === 1) {
-      return !!(form.primerNombre && form.primerApellido && form.numDoc)
+      const required = [
+        form.primerNombre,
+        form.primerApellido,
+        form.tipoDoc,
+        form.numDoc,
+        form.fechaNac,
+        form.genero,
+        form.email,
+      ]
+      return required.every(v => v !== undefined && v !== '')
     }
     if (step === 2) return aceptaDatos
     if (step === 3) return role !== null && tipoUsuario !== null && idCargo !== '' && idArea !== ''

@@ -386,12 +386,6 @@ export async function cambiarRol(id: string, nuevoRol: 'admin' | 'entrenador' | 
   const usuario = await prisma.usuario.findUnique({ where: { id_usuario: id } })
   if (!usuario) throw new HttpError(404, 'Usuario no encontrado')
 
-  if (nuevoRol === 'admin' || nuevoRol === 'entrenador') {
-    if (usuario.tipo_usuario === 'estudiante') {
-      throw new HttpError(400, 'Un estudiante no puede tener rol de admin o entrenador. Cambia tipo_usuario a profesor o administrativo primero.')
-    }
-  }
-
   return prisma.usuario.update({
     where: { id_usuario: id },
     data: { rol: nuevoRol },

@@ -221,10 +221,10 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                   ],
                 },
                 {
-                  title: student.role === 'profesor' || student.role === 'administrador' ? 'Información laboral' : 'Información académica',
+                  title: student.role === 'profesor' || student.role === 'administrativo' ? 'Información laboral' : 'Información académica',
                   model: <CapView />,
                   fields:
-                    student.role === 'profesor' || student.role === 'administrador'
+                    student.role === 'profesor' || student.role === 'administrativo'
                       ? [
                           { key: 'area', label: 'Área', value: editable.area || '—' },
                           { key: 'cargo', label: 'Cargo', value: editable.cargo || '—' },

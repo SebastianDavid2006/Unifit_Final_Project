@@ -13,7 +13,7 @@ import { BLUE_GRAD, RED, STEPS_ADULT, STEPS_MINOR, INITIAL_FORM } from '@/module
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
 import { isMinor as isMinorUtil } from '@/lib/dateUtils'
 import {
-  MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO, MAP_JORNADA, MAP_MODALIDAD, MAP_ROL,
+  MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO, MAP_JORNADA, MAP_MODALIDAD,
 } from '@/data/config/catalogosRegistro'
 
 import { Step1Info } from './sections/Step1Info'
@@ -128,7 +128,7 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
     if (step === 1) {
       const base = !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc)
       if (!base) return false
-      if (tipoUsuario === 'profesor' || tipoUsuario === 'administrador') {
+      if (tipoUsuario === 'profesor' || tipoUsuario === 'administrativo') {
         return !!(form.cargo && form.area)
       }
       return true
@@ -190,7 +190,7 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
       nombre_emergencia: form.nombreContacto?.trim() || undefined,
       telefono_emergencia: form.telefonoContacto?.trim() || undefined,
       parentesco_emergencia: form.parentesco ? MAP_PARENTESCO[form.parentesco] : undefined,
-      tipo_usuario: MAP_ROL[tipoUsuario!] ?? 'estudiante',
+      tipo_usuario: tipoUsuario!,
     }
 
     if (isMinor) {

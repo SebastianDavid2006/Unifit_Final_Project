@@ -153,26 +153,18 @@ export const registrarSchema = z
       }
     }
 
-    // --- Rama Staff (admin/entrenador) ---
+    // --- Rama Profesor/Administrativo (siempre son personal universitario) ---
     if (esStaff) {
-      if (val.rol !== 'admin' && val.rol !== 'entrenador') {
-        ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Rol (admin o entrenador) es requerido para el personal' })
+      // rol puede ser 'usuario' (miembro del gym) o 'entrenador'/'admin' (staff del sistema)
+      if (val.rol && !['admin', 'entrenador', 'usuario'].includes(val.rol)) {
+        ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Rol inválido para profesor/administrativo' })
       }
+      // Cargo y área son SIEMPRE requeridos (son datos institucionales fijos)
       if (!val.id_cargo) {
-        ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'id_cargo es requerido para el personal' })
+        ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'id_cargo es requerido para profesor/administrativo' })
       }
       if (!val.id_area) {
-        ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'id_area es requerido para el personal' })
-      }
-      // Staff debe ser mayor de 18 años
-      if (val.fecha_nacimiento) {
-        const hoy = new Date()
-        let edad = hoy.getFullYear() - val.fecha_nacimiento.getFullYear()
-        const mes = hoy.getMonth() - val.fecha_nacimiento.getMonth()
-        if (mes < 0 || (mes === 0 && hoy.getDate() < val.fecha_nacimiento.getDate())) edad--
-        if (edad < 18) {
-          ctx.addIssue({ code: 'custom', path: ['fecha_nacimiento'], message: 'El personal debe ser mayor de 18 años' })
-        }
+        ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'id_area es requerido para profesor/administrativo' })
       }
       // Validar cargo existe y está activo
       if (val.id_cargo) {
@@ -186,6 +178,16 @@ export const registrarSchema = z
         const area = await prisma.area.findUnique({ where: { id_area: val.id_area } })
         if (!area || !area.activo) {
           ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'Área no existe o está inactiva' })
+        }
+      }
+      // Profesor/administrativo debe ser mayor de 18 años (son empleados universitarios)
+      if (val.fecha_nacimiento) {
+        const hoy = new Date()
+        let edad = hoy.getFullYear() - val.fecha_nacimiento.getFullYear()
+        const mes = hoy.getMonth() - val.fecha_nacimiento.getMonth()
+        if (mes < 0 || (mes === 0 && hoy.getDate() < val.fecha_nacimiento.getDate())) edad--
+        if (edad < 18) {
+          ctx.addIssue({ code: 'custom', path: ['fecha_nacimiento'], message: 'Profesor/administrativo debe ser mayor de 18 años' })
         }
       }
     }
