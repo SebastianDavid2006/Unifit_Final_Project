@@ -14,6 +14,7 @@ import { RegisterFormSections } from '@/auth/components/RegisterFormSections'
 import { RegisterSuccess } from '@/auth/components/RegisterSuccess'
 import { RegisterIntroOverlay } from '@/auth/components/RegisterIntroOverlay'
 import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
+import { isMinor as isMinorUtil } from '@/lib/dateUtils'
 import logotipo from '@/assets/logo/logo.webp'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
@@ -88,16 +89,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     }))
   }
 
-  const isMinor = useMemo(() => {
-    if (!form.fechaNac) return false
-    const birth = new Date(form.fechaNac)
-    if (isNaN(birth.getTime())) return false
-    const now = new Date()
-    let age = now.getFullYear() - birth.getFullYear()
-    const m = now.getMonth() - birth.getMonth()
-    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
-    return age < 18
-  }, [form.fechaNac])
+  const isMinor = useMemo(() => isMinorUtil(form.fechaNac), [form.fechaNac])
 
   const canGoNext = () => {
     const base = !!(tipoUsuario && form.primerNombre && form.primerApellido && form.numDoc && form.fechaNac)
@@ -139,6 +131,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       payload.acudiente_primer_apellido = form.acudientePrimerApellido?.trim()
       payload.acudiente_documento = form.acudienteDocumento?.trim()
       payload.acudiente_tipo_documento = form.acudienteTipoDocumento || 'CC'
+      payload.acudiente_parentesco = form.parentescoAcudiente ? MAP_PARENTESCO[form.parentescoAcudiente] ?? form.parentescoAcudiente.toLowerCase().replace(/\s+/g, '_') : undefined
       payload.acudiente_telefono_contacto = form.acudienteTelefonoContacto?.trim()
     }
 

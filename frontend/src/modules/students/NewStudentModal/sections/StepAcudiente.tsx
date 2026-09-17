@@ -1,5 +1,5 @@
 import { Field, Select } from '../components/Fields'
-import { TIPO_DOC, BLUE_GRAD } from '@/modules/students/NewStudentData'
+import { TIPO_DOC, BLUE_GRAD, PARENTESCOS } from '@/modules/students/NewStudentData'
 
 interface StepAcudienteProps {
   form: any
@@ -26,11 +26,12 @@ export function StepAcudiente({ form, set, erroresCampo = {} }: StepAcudientePro
         <Field label="Primer apellido del acudiente" value={form.acudientePrimerApellido} onChange={v => set('acudientePrimerApellido', v)} required errors={erroresCampo.acudientePrimerApellido} />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Select label="Tipo de documento" value={form.acudienteTipoDocumento} onChange={v => set('acudienteTipoDocumento', v)} options={TIPO_DOC} required errors={erroresCampo.acudienteTipoDocumento} />
+        <Select label="Tipo de documento" value={form.acudienteTipoDocumento} onChange={v => set('acudienteTipoDocumento', v)} options={TIPO_DOC} required errors={erroresCampo.acudienteTipoDocumento} placeholder="Seleccionar tipo" />
         <Field label="Número de documento" value={form.acudienteDocumento} onChange={v => set('acudienteDocumento', v)} required errors={erroresCampo.acudienteDocumento} />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Teléfono de contacto" value={form.acudienteTelefonoContacto} onChange={v => set('acudienteTelefonoContacto', v)} errors={erroresCampo.acudienteTelefonoContacto} />
+        <Select label="Parentesco" value={form.acudienteParentesco ?? ''} onChange={v => set('acudienteParentesco', v)} options={PARENTESCOS} required errors={erroresCampo.acudienteParentesco} placeholder="Seleccionar parentesco" />
       </div>
     </div>
   )

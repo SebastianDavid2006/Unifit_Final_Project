@@ -58,6 +58,16 @@ export interface Student {
   cargo?: string
   firma?: string
   huella?: string
+  acudiente?: {
+    primerNombre: string
+    segundoNombre?: string
+    primerApellido: string
+    segundoApellido?: string
+    tipoDocumento: string
+    documento: string
+    parentesco?: string
+    telefonoContacto?: string
+  }
 }
 
 export const RED = '#E63946'

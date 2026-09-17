@@ -3,20 +3,18 @@ import { motion } from 'motion/react'
 import { CalendarClock, Clock, LogIn, LogOut, AlertCircle } from 'lucide-react'
 import { getMiHistorial, type AsistenciaRecord } from '@/services/asistencia.service'
 import { cardStyle, GREEN, FIRE, BLUE, AMBER } from '@/features/student/components/ui/fitness'
+import { isValidDate, formatDateES } from '@/lib/dateUtils'
 
 const PAGE_SIZE = 10
 
 function fmtHora(iso: string | null): string {
-  if (!iso) return '—'
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return '—'
-  return d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+  if (!isValidDate(iso)) return '—'
+  return new Date(iso!).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
 }
 
 function fmtFecha(iso: string): string {
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+  if (!isValidDate(iso)) return '—'
+  return formatDateES(iso, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function fmtDuracion(min: number | null): string {

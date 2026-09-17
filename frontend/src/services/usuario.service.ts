@@ -19,14 +19,20 @@ export interface BackendUsuario {
   fecha_creacion?: string
   genero?: 'masculino' | 'femenino' | 'otro'
   genero_otro?: string
+  eps?: string
+  grupo_sanguineo?: string
+  nombre_emergencia?: string
+  telefono_emergencia?: string
+  parentesco_emergencia?: string
   parq_realizado?: boolean
   tiene_huella?: boolean
   acepta_contrato?: boolean
   acepta_tratamiento?: boolean
   huella?: { id_huella: string; indice_sensor: number; activo: boolean; paso_enrolamiento: number | null } | null
-  estudiante?: { id_programa: string; semestre: number; modalidad: string; jornada: string; programa?: { nombre_programa: string; universidad?: string } } | null
+  estudiante?: { id_programa: string; semestre: number; modalidad: string; jornada: string; es_egresado?: boolean; numero_carnet?: string; programa?: { nombre_programa: string; universidad?: string } } | null
   profesor?: { id_cargo: string; id_area: string; cargo?: { nombre_cargo: string }; area?: { nombre_area: string } } | null
   administrativo?: { id_cargo: string; id_area: string; cargo?: { nombre_cargo: string }; area?: { nombre_area: string } } | null
+  acudiente_de?: { primer_nombre: string; segundo_nombre?: string; primer_apellido: string; segundo_apellido?: string; tipo_documento: string; documento: string; parentesco?: string; telefono_contacto?: string } | null
 }
 
 export interface Trainer {
@@ -71,11 +77,10 @@ function buildAvatar(u: BackendUsuario) {
   return `${(u.primer_nombre ?? '')[0] ?? ''}${(u.primer_apellido ?? '')[0] ?? ''}`.toUpperCase()
 }
 
+import { formatDateES } from '@/lib/dateUtils'
+
 function formatDate(dateStr?: string): string {
-  if (!dateStr) return ''
-  const d = new Date(dateStr)
-  if (isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatDateES(dateStr, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 const GENERO_LABEL: Record<string, string> = {
@@ -109,6 +114,17 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
   const cargo = profesor?.cargo?.nombre_cargo ?? administrativo?.cargo?.nombre_cargo ?? undefined
   const area = profesor?.area?.nombre_area ?? administrativo?.area?.nombre_area ?? undefined
 
+  const acudiente = u.acudiente_de ? {
+    primerNombre: u.acudiente_de.primer_nombre,
+    segundoNombre: u.acudiente_de.segundo_nombre ?? undefined,
+    primerApellido: u.acudiente_de.primer_apellido,
+    segundoApellido: u.acudiente_de.segundo_apellido ?? undefined,
+    tipoDocumento: u.acudiente_de.tipo_documento ?? 'CC',
+    documento: u.acudiente_de.documento ?? '',
+    parentesco: u.acudiente_de.parentesco ?? undefined,
+    telefonoContacto: u.acudiente_de.telefono_contacto ?? undefined,
+  } : undefined
+
   return {
     id: u.id_usuario,
     name: buildName(u),
@@ -120,14 +136,14 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     documentNumber: u.documento,
     birthDate: u.fecha_nacimiento ?? '',
     gender: mapGenero(u),
-    eps: '',
-    bloodType: '',
+    eps: u.eps ?? '',
+    bloodType: u.grupo_sanguineo ?? '',
     email: u.email_contacto,
     phone: u.telefono_contacto ?? '',
-    contactName: '',
-    contactPhone: '',
-    contactRelation: '',
-    carnetId: '',
+    contactName: u.nombre_emergencia ?? '',
+    contactPhone: u.telefono_emergencia ?? '',
+    contactRelation: u.parentesco_emergencia ?? '',
+    carnetId: estudiante?.numero_carnet ?? '',
     program,
     institution: mapInstitucion(u),
     faculty: '',
@@ -135,7 +151,7 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     semester: String(estudiante?.semestre ?? ''),
     modality: estudiante?.modalidad ?? '',
     jornada: estudiante?.jornada ?? '',
-    graduationStatus: 'No egresado',
+    graduationStatus: estudiante?.es_egresado ? 'Egresado' : 'No egresado',
     adherence: 0,
     status: STATUS_MAP[u.estado] ?? 'process',
     lastVisit: '',
@@ -152,6 +168,7 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     aceptaContrato: u.acepta_contrato,
     aceptaTratamiento: u.acepta_tratamiento,
     parqRealizado: u.parq_realizado,
+    acudiente,
   }
 }
 

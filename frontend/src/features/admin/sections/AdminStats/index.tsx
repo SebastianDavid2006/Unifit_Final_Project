@@ -7,13 +7,13 @@ import CareersSection from './sections/CareersSection'
 import StudentsSection from './sections/StudentsSection'
 import { evolutionData, institutionOf, normalizeNivel, type FilterCategory, type EvolutionPoint } from './data'
 import { useAsistenciaEvolucion } from '@/hooks/useAsistencia'
+import { isValidDate } from '@/lib/dateUtils'
 
 const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
 function toDate(value: string): Date | null {
-  if (!value) return null
-  const d = new Date(value)
-  return Number.isNaN(d.getTime()) ? null : d
+  if (!isValidDate(value)) return null
+  return new Date(value!)
 }
 
 export default function AdminStats({ tab, showCareerFilter, statsRange }: {

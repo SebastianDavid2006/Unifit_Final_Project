@@ -42,12 +42,12 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
         <Field label="Segundo apellido" value={form.segundoApellido} onChange={v => set('segundoApellido', v)} errors={erroresCampo.segundoApellido} />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Select label="Tipo de documento" value={form.tipoDoc} onChange={v => set('tipoDoc', v)} options={TIPO_DOC} required errors={erroresCampo.tipoDoc} />
+        <Select label="Tipo de documento" value={form.tipoDoc} onChange={v => set('tipoDoc', v)} options={TIPO_DOC} required errors={erroresCampo.tipoDoc} placeholder="Seleccionar tipo" />
         <Field label="Número de documento" value={form.numDoc} onChange={v => set('numDoc', v)} required errors={erroresCampo.numDoc} />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Fecha de nacimiento" value={form.fechaNac} onChange={v => set('fechaNac', v)} type="date" required errors={erroresCampo.fechaNac} />
-        <Select label="Género" value={form.genero} onChange={v => set('genero', v)} options={GENEROS} required errors={erroresCampo.genero} />
+        <Select label="Género" value={form.genero} onChange={v => set('genero', v)} options={GENEROS} required errors={erroresCampo.genero} placeholder="Seleccionar género" />
       </div>
 
       {sectionTitle('Información de contacto')}
@@ -59,14 +59,14 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
       {sectionTitle('Información médica')}
       <div className="grid grid-cols-2 gap-4">
         <Field label="EPS" value={form.eps} onChange={v => set('eps', v)} errors={erroresCampo.eps} />
-        <Select label="Grupo sanguíneo" value={form.grupoSanguineo} onChange={v => set('grupoSanguineo', v)} options={GRUPOS_SANGRE} errors={erroresCampo.grupoSanguineo} />
+        <Select label="Grupo sanguíneo" value={form.grupoSanguineo} onChange={v => set('grupoSanguineo', v)} options={GRUPOS_SANGRE} errors={erroresCampo.grupoSanguineo} placeholder="Seleccionar grupo" />
       </div>
 
       {sectionTitle('Contacto de emergencia')}
       <div className="grid grid-cols-3 gap-4">
         <Field label="Nombre contacto" value={form.nombreContacto} onChange={v => set('nombreContacto', v)} errors={erroresCampo.nombreContacto} />
         <Field label="Teléfono contacto" value={form.telefonoContacto} onChange={v => set('telefonoContacto', v)} errors={erroresCampo.telefonoContacto} />
-        <Select label="Parentesco" value={form.parentesco} onChange={v => set('parentesco', v)} options={PARENTESCOS} errors={erroresCampo.parentesco} />
+        <Select label="Parentesco" value={form.parentesco} onChange={v => set('parentesco', v)} options={PARENTESCOS} errors={erroresCampo.parentesco} placeholder="Seleccionar parentesco" />
       </div>
 
       {sectionTitle('Rol en la universidad')}
@@ -129,7 +129,7 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
           </p>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Número carnet" value={form.numCarnet} onChange={v => set('numCarnet', v)} required errors={erroresCampo.numCarnet} />
-            <Select label="Condición académica" value={form.estado} onChange={v => set('estado', v)} options={ESTADOS} required errors={erroresCampo.estado} />
+            <Select label="Condición académica" value={form.estado} onChange={v => set('estado', v)} options={ESTADOS} required errors={erroresCampo.estado} placeholder="Seleccionar condición" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -145,8 +145,9 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               options={UNIVERSIDADES.map(u => ({ value: u, label: UNIVERSIDAD_LABELS[u] }))}
               required
               errors={erroresCampo.institucion}
+              placeholder="Seleccionar institución"
             />
-            <Select label="Modalidad" value={form.modalidad} onChange={v => set('modalidad', v)} options={MODALIDADES} required errors={erroresCampo.modalidad} />
+            <Select label="Modalidad" value={form.modalidad} onChange={v => set('modalidad', v)} options={MODALIDADES} required errors={erroresCampo.modalidad} placeholder="Seleccionar modalidad" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -162,6 +163,7 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               options={NIVELES.map(n => ({ value: n, label: NIVEL_LABELS[n] }))}
               required
               errors={erroresCampo.nivelFormacion}
+              placeholder="Seleccionar nivel"
             />
             <Select
               label="Carrera"
@@ -170,11 +172,12 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               options={catalogo.nombres((form.institucion as Universidad) || 'uni_colombia', (form.nivelFormacion as NivelPrograma) || 'tecnico')}
               required
               errors={erroresCampo.programa}
+              placeholder="Seleccionar carrera"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Semestre" value={form.semestre} onChange={v => set('semestre', v)} options={['1', '2', '3', '4', '5', '6', '7', '8', '9']} required errors={erroresCampo.semestre} />
-            <Select label="Jornada" value={form.jornada} onChange={v => set('jornada', v)} options={JORNADAS} required errors={erroresCampo.jornada} />
+            <Select label="Semestre" value={form.semestre} onChange={v => set('semestre', v)} options={['1', '2', '3', '4', '5', '6', '7', '8', '9']} required errors={erroresCampo.semestre} placeholder="Seleccionar semestre" />
+            <Select label="Jornada" value={form.jornada} onChange={v => set('jornada', v)} options={JORNADAS} required errors={erroresCampo.jornada} placeholder="Seleccionar jornada" />
           </div>
         </>
       )}
@@ -190,6 +193,7 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               options={cargos.map(c => ({ value: c.id_cargo ?? c.id, label: c.nombre }))}
               required
               errors={erroresCampo.cargo}
+              placeholder="Seleccionar cargo"
             />
             <Select
               label="Área"
@@ -198,6 +202,7 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               options={areas.map(a => ({ value: a.id_area ?? a.id, label: a.nombre }))}
               required
               errors={erroresCampo.area}
+              placeholder="Seleccionar área"
             />
           </div>
         </>

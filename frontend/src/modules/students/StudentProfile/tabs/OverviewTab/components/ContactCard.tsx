@@ -8,10 +8,11 @@ interface ContactCardProps {
 
 export function ContactCard({ student, className = '' }: ContactCardProps) {
   const fields = [
-    { label: 'Email', value: student.email },
-    { label: 'Teléfono', value: student.phone },
-    { label: 'Contacto de emergencia', value: student.contactName },
-    { label: 'Tel. contacto', value: student.contactPhone },
+    { label: 'Email', value: student.email || 'No registrado' },
+    { label: 'Teléfono', value: student.phone || 'No registrado' },
+    { label: 'Contacto de emergencia', value: student.contactName || 'No registrado' },
+    { label: 'Tel. contacto', value: student.contactPhone || 'No registrado' },
+    { label: 'Parentesco', value: student.contactRelation || 'No registrado' },
   ]
 
   return (

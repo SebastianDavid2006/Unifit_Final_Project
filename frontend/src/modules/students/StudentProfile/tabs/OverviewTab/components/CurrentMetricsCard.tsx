@@ -7,14 +7,14 @@ interface CurrentMetricsCardProps {
 }
 
 export function CurrentMetricsCard({ student, imc, className = '' }: CurrentMetricsCardProps) {
-  const metrics = [
-    { label: 'Peso', value: `${student.weight} kg` },
-    { label: 'Estatura', value: `${student.height} cm` },
-    { label: 'IMC', value: imc },
-    { label: 'Grasa corporal', value: '17%' },
-    { label: 'Masa muscular', value: '52 kg' },
-    { label: 'Agua corporal', value: '58%' },
-  ]
+  const hasMetrics = student.weight > 0 && student.height > 0
+  const metrics = hasMetrics
+    ? [
+        { label: 'Peso', value: `${student.weight} kg` },
+        { label: 'Estatura', value: `${student.height} cm` },
+        { label: 'IMC', value: imc },
+      ]
+    : null
 
   return (
     <div className={`rounded-[28px] p-4 cursor-default ${className}`} style={{ background: 'rgba(255,255,255,0.5)', height: '100%' }}>
@@ -22,14 +22,22 @@ export function CurrentMetricsCard({ student, imc, className = '' }: CurrentMetr
         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
         <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Métricas actuales</p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        {metrics.map(m => (
-          <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(0,0,0,0.02)' }}>
-            <p className="text-base font-extrabold" style={{ color: '#0D1B2A' }}>{m.value}</p>
-            <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
-          </div>
-        ))}
-      </div>
+      {metrics ? (
+        <div className="grid grid-cols-2 gap-2">
+          {metrics.map(m => (
+            <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(0,0,0,0.02)' }}>
+              <p className="text-base font-extrabold" style={{ color: '#0D1B2A' }}>{m.value}</p>
+              <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>{m.label}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center justify-center rounded-xl p-6" style={{ background: 'rgba(0,0,0,0.02)' }}>
+          <p className="text-xs font-medium text-center" style={{ color: 'rgba(0,0,0,0.45)' }}>
+            Esta persona aún no tiene una valoración registrada. Indícale que debe acercarse para realizar su primera valoración.
+          </p>
+        </div>
+      )}
     </div>
   )
 }

@@ -291,6 +291,7 @@ model Acudiente {
   segundo_apellido   String?
   documento          String        @unique
   tipo_documento     TipoDocumento @default(CC)
+  parentesco         Parentesco?
   telefono_contacto  String?
   fecha_creacion     DateTime      @default(now())
   fecha_modificacion DateTime      @updatedAt

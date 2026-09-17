@@ -66,16 +66,15 @@ function epsErrores(val: string | undefined): string[] | null {
   return []
 }
 
-function fechaErrores(fecha: string | undefined): string[] {
-  if (!fecha) return ['Fecha de nacimiento es requerida']
-  const d = new Date(fecha)
-  if (Number.isNaN(d.getTime())) return ['Fecha de nacimiento es requerida']
+import { isValidDate, calcAge } from './dateUtils'
+
+export function fechaErrores(fecha: string | undefined, edadMin: number = EDAD_MIN): string[] {
+  if (!isValidDate(fecha)) return ['Fecha de nacimiento es requerida']
+  const d = new Date(fecha!)
   const hoy = new Date()
   if (d > hoy) return ['Fecha no puede ser futura']
-  let edad = hoy.getFullYear() - d.getFullYear()
-  const mes = hoy.getMonth() - d.getMonth()
-  if (mes < 0 || (mes === 0 && hoy.getDate() < d.getDate())) edad--
-  if (edad < EDAD_MIN || edad > EDAD_MAX) return ['Edad válida solo entre 15 y 70 años']
+  const edad = calcAge(fecha, hoy)
+  if (edad < edadMin || edad > EDAD_MAX) return [`Edad válida solo entre ${edadMin} y ${EDAD_MAX} años`]
   return []
 }
 
@@ -107,6 +106,7 @@ export interface RamaOpciones {
   tipoUsuario?: string
   // true para el modal de estudiantes (valida tambien rama, carnet o cargo/area)
   incluyeRama?: boolean
+  edadMin?: number
 }
 
 export function validarPasoInfo(form: PasoInfo, opts?: RamaOpciones): Record<string, string[]> {
@@ -121,7 +121,7 @@ export function validarPasoInfo(form: PasoInfo, opts?: RamaOpciones): Record<str
   if (form.segundoApellido) set('segundoApellido', nombreErrores(form.segundoApellido))
   set('numDoc', documentoErrores(form.tipoDoc, form.numDoc))
   set('email', emailErrores(form.email))
-  set('fechaNac', fechaErrores(form.fechaNac))
+  set('fechaNac', fechaErrores(form.fechaNac, opts?.edadMin))
   set('genero', generoErrores(form.genero))
   const tel = telefonoErrores(form.telefono)
   if (tel) set('telefono', tel)
@@ -139,7 +139,7 @@ export function validarPasoInfo(form: PasoInfo, opts?: RamaOpciones): Record<str
         const regex = form.tipoDoc ? DOC_REGEX[form.tipoDoc] : undefined
         if (regex && !regex.test(form.numCarnet.trim())) set('numCarnet', ['Formato de carnet inválido'])
       }
-    } else if (opts.tipoUsuario === 'profesor' || opts.tipoUsuario === 'administrador') {
+    } else if (opts.tipoUsuario === 'profesor' || opts.tipoUsuario === 'administrativo') {
       if (!form.cargo) set('cargo', ['Selecciona un cargo'])
       if (!form.area) set('area', ['Selecciona un área'])
     }

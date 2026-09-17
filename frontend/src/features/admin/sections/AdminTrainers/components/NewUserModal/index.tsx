@@ -81,7 +81,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   const handleNext = async () => {
     setError('')
     if (step === 1) {
-      const nuevosErrores = validarPasoInfo(form)
+      const nuevosErrores = validarPasoInfo(form, { edadMin: 18 })
       setErroresCampo(nuevosErrores)
       if (Object.keys(nuevosErrores).length > 0) {
         triggerShake()
@@ -199,7 +199,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                       animate={shake ? { x: [0, -4, 4, -4, 4, 0] } : {}}
                       transition={{ duration: 0.4 }}
                     >
-                      {step === 1 && <PersonalInfoSection form={form} onChange={set} erroresCampo={erroresCampo} />}
+                      {step === 1 && <PersonalInfoSection form={form} onChange={set} erroresCampo={erroresCampo} isStaff />}
                       {step === 2 && <DataConsentSection accepted={aceptaDatos} onChange={setAceptaDatos} />}
                       {step === 3 && (
                         <RoleSelector

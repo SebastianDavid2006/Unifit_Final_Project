@@ -35,5 +35,5 @@ export const INITIAL_FORM = {
   semestre: '1', modalidad: 'Presencial',
   jornada: 'Mañana', estado: 'No egresado', cargo: '', area: '',
   acudientePrimerNombre: '', acudientePrimerApellido: '', acudienteDocumento: '',
-  acudienteTipoDocumento: 'CC', acudienteTelefonoContacto: '',
+  acudienteTipoDocumento: 'CC', acudienteParentesco: '', acudienteTelefonoContacto: '',
 }

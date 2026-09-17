@@ -7,6 +7,7 @@ import { LockView } from '@/assets/models/ui/objects/lock/LockModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { CalendarView } from '@/assets/models/ui/objects/calendar/CalendarModel'
 import { BLUE_GRAD, GREEN_BLUE_GRAD, RED } from '../../../data'
+import { calcAge } from '@/lib/dateUtils'
 
 interface TrainerInfoModalProps {
   isOpen: boolean
@@ -60,19 +61,8 @@ export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, on
   if (!isOpen) return null
 
   const calculateAge = () => {
-    if (!trainer.birthDate) return 'â€”'
-    try {
-      const parts = trainer.birthDate.split('/')
-      if (parts.length !== 3) return 'â€”'
-      const birth = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]))
-      const now = new Date()
-      let age = now.getFullYear() - birth.getFullYear()
-      const monthDiff = now.getMonth() - birth.getMonth()
-      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--
-      return `${age} años`
-    } catch {
-      return 'â€”'
-    }
+    const age = calcAge(trainer.birthDate)
+    return age >= 0 ? `${age} años` : 'â€”'
   }
 
   return (

@@ -133,6 +133,7 @@ export const registrarSchema = z
     acudiente_documento: z.string().min(1, 'El documento del acudiente es requerido').optional(),
     acudiente_tipo_documento: z.enum(TipoDocumento).optional(),
     acudiente_telefono_contacto: telefonoSchema.optional(),
+    acudiente_parentesco: z.enum(Parentesco).optional(),
   })
   .strict()
   .superRefine(async (val, ctx) => {
@@ -162,6 +163,16 @@ export const registrarSchema = z
       }
       if (!val.id_area) {
         ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'id_area es requerido para el personal' })
+      }
+      // Staff debe ser mayor de 18 años
+      if (val.fecha_nacimiento) {
+        const hoy = new Date()
+        let edad = hoy.getFullYear() - val.fecha_nacimiento.getFullYear()
+        const mes = hoy.getMonth() - val.fecha_nacimiento.getMonth()
+        if (mes < 0 || (mes === 0 && hoy.getDate() < val.fecha_nacimiento.getDate())) edad--
+        if (edad < 18) {
+          ctx.addIssue({ code: 'custom', path: ['fecha_nacimiento'], message: 'El personal debe ser mayor de 18 años' })
+        }
       }
       // Validar cargo existe y está activo
       if (val.id_cargo) {

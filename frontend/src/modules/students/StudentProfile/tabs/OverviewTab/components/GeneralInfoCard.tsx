@@ -7,10 +7,14 @@ interface GeneralInfoCardProps {
 }
 
 export function GeneralInfoCard({ student, className = '' }: GeneralInfoCardProps) {
+  const fechaNacimiento = student.birthDate
+    ? new Date(student.birthDate).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : 'No registrado'
+
   const fields = [
     { label: 'Documento', value: `${student.documentType}. ${student.documentNumber}` },
-    { label: 'Fecha de nacimiento', value: student.birthDate },
-    { label: 'Género', value: student.gender },
+    { label: 'Fecha de nacimiento', value: fechaNacimiento },
+    { label: 'Género', value: student.gender || 'No registrado' },
   ]
 
   return (

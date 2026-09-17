@@ -15,13 +15,14 @@ function renderErrors(errors?: string[]) {
   )
 }
 
-export default function FormSelect({ label, value, onChange, options, required, errors }: {
+export default function FormSelect({ label, value, onChange, options, required, errors, placeholder }: {
   label: string
   value: string
   onChange: (v: string) => void
   options: (string | { value: string; label: string })[]
   required?: boolean
   errors?: string[]
+  placeholder?: string
 }) {
   const conError = !!(errors && errors.length > 0)
   const optValue = (o: string | { value: string; label: string }) => typeof o === 'string' ? o : o.value
@@ -66,6 +67,7 @@ export default function FormSelect({ label, value, onChange, options, required, 
           }}
           required={required}
         >
+          {placeholder && <option value="">{placeholder}</option>}
           {options.map(o => <option key={optValue(o)} value={optValue(o)}>{optLabel(o)}</option>)}
         </select>
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 group-hover:opacity-60" style={{ color: 'rgba(0,0,0,0.2)' }}>

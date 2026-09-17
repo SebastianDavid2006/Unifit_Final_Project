@@ -317,7 +317,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       fields: [
                         { label: 'Tipo de documento', value: student.documentType },
                         { label: 'Número de documento', value: student.documentNumber },
-                        { label: 'Fecha de nacimiento', value: student.birthDate },
+                        { label: 'Fecha de nacimiento', value: student.birthDate ? new Date(student.birthDate).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'No registrado' },
                         { label: 'Género', value: student.gender },
                         { label: 'Número carnet', value: student.carnetId },
                       ],

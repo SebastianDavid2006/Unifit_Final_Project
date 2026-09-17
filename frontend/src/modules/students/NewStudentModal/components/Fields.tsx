@@ -80,6 +80,7 @@ interface SelectProps {
   options: (string | { value: string; label: string })[]
   required?: boolean
   errors?: string[]
+  placeholder?: string
 }
 
 function optValue(o: string | { value: string; label: string }): string {
@@ -89,7 +90,7 @@ function optLabel(o: string | { value: string; label: string }): string {
   return typeof o === 'string' ? o : o.label
 }
 
-export function Select({ label, value, onChange, options, required, errors }: SelectProps) {
+export function Select({ label, value, onChange, options, required, errors, placeholder }: SelectProps) {
   return (
     <div className="flex flex-col gap-1 relative group">
       <label className="text-[11px] font-bold transition-colors duration-200" style={{ color: 'rgba(0,0,0,0.6)' }}>
@@ -130,6 +131,7 @@ export function Select({ label, value, onChange, options, required, errors }: Se
           }}
           required={required}
         >
+          {placeholder && <option value="">{placeholder}</option>}
           {options.map(o => (
             <option key={optValue(o)} value={optValue(o)}>{optLabel(o)}</option>
           ))}

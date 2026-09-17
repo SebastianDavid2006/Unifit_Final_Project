@@ -8,9 +8,12 @@ interface AcademicInfoCardProps {
 
 export function AcademicInfoCard({ student, className = '' }: AcademicInfoCardProps) {
   const fields = [
-    { label: 'Programa', value: student.program },
-    { label: 'Semestre', value: `${student.semestre}°` },
-    { label: 'Jornada', value: student.jornada },
+    { label: 'Programa', value: student.program || 'No registrado' },
+    { label: 'Semestre', value: student.semestre ? `${student.semestre}°` : 'No registrado' },
+    { label: 'Jornada', value: student.jornada || 'No registrado' },
+    { label: 'Modalidad', value: student.modality || 'No registrado' },
+    { label: 'EPS', value: student.eps || 'No registrado' },
+    { label: 'Grupo sanguíneo', value: student.bloodType || 'No registrado' },
   ]
 
   return (

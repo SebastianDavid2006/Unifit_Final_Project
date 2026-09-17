@@ -47,6 +47,7 @@ export interface RegistrarUsuarioData {
   acudiente_primer_apellido?: string
   acudiente_documento?: string
   acudiente_tipo_documento?: TipoDocumento
+  acudiente_parentesco?: Parentesco
   acudiente_telefono_contacto?: string
 }
 
@@ -102,6 +103,7 @@ export async function registrarUsuario(data: RegistrarUsuarioData) {
           primer_apellido: data.acudiente_primer_apellido!,
           documento: data.acudiente_documento!,
           tipo_documento: data.acudiente_tipo_documento ?? 'CC',
+          parentesco: data.acudiente_parentesco,
           telefono_contacto: data.acudiente_telefono_contacto,
         },
       })
@@ -179,13 +181,14 @@ async function crearFilaHija(tx: Tx, idUsuario: string, data: RegistrarUsuarioDa
   })
 }
 
-export function usuarioPublico(usuario: { id_usuario: string; primer_nombre: string; primer_apellido: string; email_contacto: string; documento: string; rol: string; tipo_usuario: string; estado: string; debe_cambiar_password: boolean }) {
+export function usuarioPublico(usuario: { id_usuario: string; primer_nombre: string; primer_apellido: string; email_contacto: string; documento: string; tipo_documento: string; rol: string; tipo_usuario: string; estado: string; debe_cambiar_password: boolean }) {
   return {
     id_usuario: usuario.id_usuario,
     primer_nombre: usuario.primer_nombre,
     primer_apellido: usuario.primer_apellido,
     email_contacto: usuario.email_contacto,
     documento: usuario.documento,
+    tipo_documento: usuario.tipo_documento,
     rol: usuario.rol,
     tipo_usuario: usuario.tipo_usuario,
     estado: usuario.estado,

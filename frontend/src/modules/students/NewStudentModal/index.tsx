@@ -11,6 +11,7 @@ import { loadDocs, type StoredDocs } from '@/data/documents'
 import { validarPasoInfo, validarAcudiente } from '@/lib/validacionRegistro'
 import { BLUE_GRAD, RED, STEPS_ADULT, STEPS_MINOR, INITIAL_FORM } from '@/modules/students/NewStudentData'
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
+import { isMinor as isMinorUtil } from '@/lib/dateUtils'
 import {
   MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO, MAP_JORNADA, MAP_MODALIDAD, MAP_ROL,
 } from '@/data/config/catalogosRegistro'
@@ -66,16 +67,7 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
   const [resume, setResume] = useState<{ userId: string; faltan: DocRequisito[] } | null>(null)
   const [resumeLoading, setResumeLoading] = useState(false)
 
-  const isMinor = useMemo(() => {
-    if (!form.fechaNac) return false
-    const birth = new Date(form.fechaNac)
-    if (isNaN(birth.getTime())) return false
-    const now = new Date()
-    let age = now.getFullYear() - birth.getFullYear()
-    const m = now.getMonth() - birth.getMonth()
-    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
-    return age < 18
-  }, [form.fechaNac])
+  const isMinor = useMemo(() => isMinorUtil(form.fechaNac), [form.fechaNac])
 
   const steps = isMinor ? STEPS_MINOR : STEPS_ADULT
   const totalSteps = steps.length
@@ -142,7 +134,7 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
       return true
     }
     if (isMinor && step === 2) {
-      return !!(form.acudientePrimerNombre && form.acudientePrimerApellido && form.acudienteDocumento)
+      return !!(form.acudientePrimerNombre && form.acudientePrimerApellido && form.acudienteDocumento && form.acudienteParentesco)
     }
     const termsStep = isMinor ? 3 : 2
     if (step === termsStep) return aceptaDatos && aceptaContrato
@@ -206,6 +198,7 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
       payload.acudiente_primer_apellido = form.acudientePrimerApellido?.trim()
       payload.acudiente_documento = form.acudienteDocumento?.trim()
       payload.acudiente_tipo_documento = form.acudienteTipoDocumento || 'CC'
+      payload.acudiente_parentesco = form.acudienteParentesco ? MAP_PARENTESCO[form.acudienteParentesco] ?? form.acudienteParentesco.toLowerCase().replace(/\s+/g, '_') : undefined
       payload.acudiente_telefono_contacto = form.acudienteTelefonoContacto?.trim() || undefined
     }
 

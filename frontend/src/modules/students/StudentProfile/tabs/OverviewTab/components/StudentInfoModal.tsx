@@ -7,6 +7,7 @@ import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/Stethosc
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
 import { ModalShell } from '@/modules/students/shared/components/ModalShell'
 import type { Student } from '../../StudentProfileData'
+import { calcAge } from '@/lib/dateUtils'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN = '#22C55E'
@@ -214,9 +215,9 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                     { key: 'lastName', label: 'Primer apellido', value: editable.lastName },
                     { key: 'secondLastName', label: 'Segundo apellido', value: editable.secondLastName || '—' },
                     { key: 'document', label: 'Documento', value: `${editable.documentType}. ${editable.documentNumber}`, readOnly: true },
-                    { key: 'birthDate', label: 'Fecha de nacimiento', value: editable.birthDate },
+                    { key: 'birthDate', label: 'Fecha de nacimiento', value: editable.birthDate ? new Date(editable.birthDate).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'No registrado' },
                     { key: 'gender', label: 'Género', value: editable.gender },
-                    { key: 'age', label: 'Edad', value: `${Math.abs(new Date(editable.birthDate.split('/').reverse().join('-')).getFullYear() - new Date().getFullYear())} años`, readOnly: true },
+                    { key: 'age', label: 'Edad', value: editable.birthDate ? `${calcAge(editable.birthDate)} años` : 'No registrado', readOnly: true },
                   ],
                 },
                 {
