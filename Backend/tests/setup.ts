@@ -9,7 +9,7 @@ const SEED_USERS = [
   { email: 'directo@unifit.edu.co', password: 'directo123', key: 'usuarioToken' },
   { email: 'pendiente@unifit.edu.co', password: 'pendiente123', key: 'pendienteToken' },
   { email: 'inactivo@unifit.edu.co', password: 'inactivo123', key: 'inactivoToken' },
-  { email: 'cambiar@unifit.edu.co', password: 'cambiar123', key: 'cambiarPassToken' },
+  { email: 'cambiar@unifit.edu.co', password: '12345678', key: 'cambiarPassToken' },
 ]
 
 async function generarToken(email: string, password: string): Promise<string> {

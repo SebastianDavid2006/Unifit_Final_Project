@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ClipboardList, UserCog, X, ChevronRight, CalendarClock, FileText } from 'lucide-react'
 import { useStudentApp } from '@/features/student/hooks/useStudentApp'
-import { assessmentItems } from '@/modules/students/StudentProfileData'
+import { getValoracionesPorUsuario, type AssessmentItem } from '@/services/valoracion.service'
 import { SectionTitle, cardStyle, BLUE, GREEN, AMBER } from '@/features/student/components/ui/fitness'
 import { ProfileHeader } from './components/ProfileHeader'
 import { MetricsRow } from './components/MetricsRow'
@@ -17,9 +17,20 @@ export function ProfilePage() {
   const { student } = useStudentApp()
   const [modal, setModal] = useState<ModalId>(null)
   const [historySel, setHistorySel] = useState<number | null>(null)
+  const [assessments, setAssessments] = useState<AssessmentItem[]>([])
+  const [loadingAssessments, setLoadingAssessments] = useState(true)
+
+  useEffect(() => {
+    if (!student?.id) return
+    setLoadingAssessments(true)
+    getValoracionesPorUsuario(student.id)
+      .then(setAssessments)
+      .catch(() => setAssessments([]))
+      .finally(() => setLoadingAssessments(false))
+  }, [student?.id])
 
   const menuItems = [
-    { id: 'history' as const, label: 'Historial de valoraciones', desc: `${assessmentItems.length} valoraciones registradas`, icon: ClipboardList, color: BLUE },
+    { id: 'history' as const, label: 'Historial de valoraciones', desc: `${assessments.length} valoraciones registradas`, icon: ClipboardList, color: BLUE },
     { id: 'asistencia' as const, label: 'Historial de asistencias', desc: 'Tus días de entrenamiento', icon: CalendarClock, color: AMBER },
     { id: 'personal' as const, label: 'Datos personales', desc: 'Información de tu perfil', icon: UserCog, color: GREEN },
   ]
@@ -28,7 +39,7 @@ export function ProfilePage() {
     <div className="space-y-6">
       {student && <ProfileHeader student={student} />}
 
-      <MetricsRow />
+      <MetricsRow assessments={assessments} />
 
       {/* Menú */}
       <section>
@@ -126,6 +137,7 @@ export function ProfilePage() {
                     selectedNum={historySel}
                     onSelect={setHistorySel}
                     onBack={() => setHistorySel(null)}
+                    assessments={assessments}
                   />
                 )}
                 {modal === 'asistencia' && <HistorialAsistenciasPanel />}

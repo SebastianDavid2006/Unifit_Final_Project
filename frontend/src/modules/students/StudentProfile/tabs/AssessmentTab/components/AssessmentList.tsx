@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import listImg from '@/assets/icons/objects/list.webp'
 import type { Dispatch, SetStateAction } from 'react'
 import type { AssessmentItem } from '@/services/valoracion.service'
@@ -98,8 +98,8 @@ export function AssessmentList({
                   {v.next ? (
                     <p className="text-xs font-bold text-center" style={{ color: isFirst ? '#FFFFFF' : '#1270B7' }}>{v.next}</p>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit justify-self-center" style={{ background: 'rgba(34,197,94,0.13)', color: '#1E8E3E' }}>
-                      <Check size={11} strokeWidth={3} /> Concluida
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium w-fit justify-self-center" style={{ background: 'rgba(0,0,0,0.06)', color: 'rgba(0,0,0,0.4)' }}>
+                      <Calendar size={11} strokeWidth={2} /> No programada
                     </span>
                   )}
                 </>

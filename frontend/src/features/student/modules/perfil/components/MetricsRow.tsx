@@ -1,10 +1,14 @@
 import { motion } from 'motion/react'
 import { Flame } from 'lucide-react'
-import { assessmentItems, type AssessmentItem } from '@/modules/students/StudentProfileData'
+import type { AssessmentItem } from '@/services/valoracion.service'
 import { SectionTitle, cardStyle, AMBER } from '@/features/student/components/ui/fitness'
 
-export function MetricsRow() {
-  const latest: AssessmentItem | undefined = assessmentItems[0]
+interface MetricsRowProps {
+  assessments: AssessmentItem[]
+}
+
+export function MetricsRow({ assessments }: MetricsRowProps) {
+  const latest: AssessmentItem | undefined = assessments[0]
 
   if (!latest || !latest.metrics?.length) return null
 
@@ -29,7 +33,7 @@ export function MetricsRow() {
       <div className="rounded-2xl p-4 mt-3 flex items-start gap-3" style={{ background: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.14)' }}>
         <Flame size={16} style={{ color: AMBER, marginTop: 2, flexShrink: 0 }} />
         <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12.5, lineHeight: 1.6 }}>
-          Última valoración: <strong style={{ color: '#fff' }}>{latest.date}</strong> por {latest.evaluator} — Score {latest.score}/100
+          Última valoración: <strong style={{ color: '#fff' }}>{latest.date}</strong> por {latest.evaluador} — Score {latest.score}/100
         </p>
       </div>
     </section>

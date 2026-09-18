@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { Activity, ChevronRight, ChevronLeft } from 'lucide-react'
-import { assessmentItems } from '@/modules/students/StudentProfileData'
+import type { AssessmentItem } from '@/services/valoracion.service'
 import { cardStyle, GREEN } from '@/features/student/components/ui/fitness'
 import { AssessmentDetail } from '@/features/student/components/ui/AssessmentDetail'
 
@@ -8,14 +8,15 @@ interface HistoryPanelProps {
   selectedNum: number | null
   onSelect: (num: number) => void
   onBack: () => void
+  assessments: AssessmentItem[]
 }
 
-export function HistoryPanel({ selectedNum, onSelect, onBack }: HistoryPanelProps) {
+export function HistoryPanel({ selectedNum, onSelect, onBack, assessments }: HistoryPanelProps) {
   /* Lista de valoraciones (actual de primeras) */
   if (selectedNum === null) {
     return (
       <>
-        {assessmentItems.map((a, i) => (
+        {assessments.map((a, i) => (
           <motion.button
             key={a.num}
             initial={{ opacity: 0, y: 14 }}
@@ -61,7 +62,7 @@ export function HistoryPanel({ selectedNum, onSelect, onBack }: HistoryPanelProp
   }
 
   /* Detalle de la valoración seleccionada */
-  const sel = assessmentItems.find(a => a.num === selectedNum)
+  const sel = assessments.find(a => a.num === selectedNum)
   if (!sel) return null
 
   return (

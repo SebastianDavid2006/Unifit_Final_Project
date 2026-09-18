@@ -23,6 +23,7 @@ import { cardStyle, emptyValuationForm, monthNames, numOnly } from '../StudentPr
 import type { Student, ValuationForm } from '../StudentProfileData'
 import type { AssessmentItem } from '@/services/valoracion.service'
 import { getValoracionesPorUsuario, crearValoracion } from '@/services/valoracion.service'
+import { mensajeError } from '@/lib/api'
 import { OverviewTab } from '@/modules/students/StudentProfile/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/StudentProfile/tabs/ProgressTab'
 import { AssessmentTab } from '@/modules/students/StudentProfile/tabs/AssessmentTab'
@@ -90,6 +91,7 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
   const [lastValuationObjectives, setLastValuationObjectives] = useState(0)
   const [assessments, setAssessments] = useState<AssessmentItem[]>([])
   const [loadingAssessments, setLoadingAssessments] = useState(true)
+  const [savingValuation, setSavingValuation] = useState(false)
   const [valuationForm, setValuationForm] = useState({
     nivelActividad: '', objetivoTarjetas: [] as string[], objetivoDetalle: '',
     peso: '', estatura: '', imc: '', grasaCorporal: '',
@@ -421,6 +423,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
             setShowNewRoutineModal(true)
           }}
           onSave={async () => {
+            setSavingValuation(true)
             try {
               await crearValoracion({
                 ...valuationForm,
@@ -428,11 +431,14 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
               })
               const updated = await getValoracionesPorUsuario(student.id)
               setAssessments(updated)
+              setLastValuationObjectives(valuationForm.objetivoTarjetas.length)
+              setValuationSuccess(true)
             } catch (err) {
               console.error('Error saving valuation:', err)
+              alert(mensajeError(err))
+            } finally {
+              setSavingValuation(false)
             }
-            setLastValuationObjectives(valuationForm.objetivoTarjetas.length)
-            setValuationSuccess(true)
           }}
         />
 

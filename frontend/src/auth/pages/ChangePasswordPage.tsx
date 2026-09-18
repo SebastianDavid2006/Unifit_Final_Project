@@ -107,7 +107,7 @@ export function ChangePasswordPage({ email, onSuccess, onBack }: ChangePasswordP
   )
 
   return (
-    <AuthShell onBack={onBack} autoDesktopVideo>
+    <AuthShell onBack={onBack} autoDesktopVideo videosPaused={true}>
       {(ctx) => (
         <div className={`flex-1 min-h-0 overflow-y-auto py-6 flex flex-col justify-center ${ctx.isPhonePreview ? 'px-5' : 'px-6 sm:px-10'}`}>
           {formContent}

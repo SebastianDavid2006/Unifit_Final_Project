@@ -31,7 +31,7 @@ export interface RegistrarUsuarioData {
   telefono_emergencia?: string
   parentesco_emergencia?: Parentesco
   tipo_usuario: TipoUsuario
-  rol?: 'admin' | 'entrenador'
+  rol?: 'admin' | 'entrenador' | 'usuario'
   // Estudiante
   id_programa?: string
   numero_carnet?: string

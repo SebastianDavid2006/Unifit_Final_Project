@@ -3,6 +3,7 @@ import StudentsModule from '@/modules/students/StudentsModule'
 import AgendaModule from '@/modules/agenda/AgendaModule'
 import EquipmentPage from '@/modules/equipment/EquipmentPage'
 import type { Student } from '@/data/students'
+import { getUsuario } from '@/lib/auth'
 
 interface Props {
   tab: string
@@ -23,12 +24,14 @@ interface Props {
 }
 
 export default function AdminGym(props: Props) {
+  const canCreateValuation = getUsuario()?.rol === 'admin'
   if (props.selectedStudent) {
     return (
       <StudentProfile
         student={props.selectedStudent}
         tab={props.studentTab}
         onTabChange={props.onStudentTabChange}
+        canCreateValuation={canCreateValuation}
       />
     )
   }

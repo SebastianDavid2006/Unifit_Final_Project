@@ -174,7 +174,7 @@ export async function crearValoracion(form: {
     }
   }
 
-  if (form.presionArterial) {
+  if (form.presionArterial && form.edadMetabolica && form.aguaCorporal && form.resistenciaMuscular) {
     payload.datos_medicos = {
       presion_arterial: form.presionArterial,
       edad_metabolica: parseFloat(form.edadMetabolica),

@@ -194,6 +194,8 @@ async function seedUsuarios(): Promise<void> {
         estado: u.estado,
         password_hash: passwordHash,
         debe_cambiar_password: u.debe_cambiar_password,
+        parq_realizado: u.estado === 'activo',
+        fecha_parq: u.estado === 'activo' ? new Date() : null,
       },
     })
 

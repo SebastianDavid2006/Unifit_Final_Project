@@ -122,6 +122,7 @@ export default function UsuarioDetalle() {
         student={student}
         tab={activeTab}
         onTabChange={handleTabChange}
+        canCreateValuation={isAdmin}
       />
 
       {confirmDeactivate && (

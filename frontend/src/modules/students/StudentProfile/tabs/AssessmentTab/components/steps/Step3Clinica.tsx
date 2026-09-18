@@ -10,7 +10,7 @@ const CAMPOS = [
   { key: 'presionArterial', label: 'Presión arterial', type: 'text' },
   { key: 'edadMetabolica', label: 'Edad metabólica', type: 'number' },
   { key: 'aguaCorporal', label: 'Agua corporal (%)', type: 'number' },
-  { key: 'resistenciaMuscular', label: 'Resistencia muscular', type: 'text' },
+  { key: 'resistenciaMuscular', label: 'Resistencia muscular', type: 'number' },
 ] as const
 
 const INPUT_STYLE = {

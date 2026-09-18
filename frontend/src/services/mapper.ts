@@ -130,7 +130,10 @@ export function mapObjetivoBackToFront(value: string): string {
 }
 
 export function mapObjetivoFrontToBack(value: string): string {
-  return OBJETIVO_FRONT_TO_BACK[value] ?? value.toLowerCase().replace(/\s+/g, '_')
+  if (OBJETIVO_FRONT_TO_BACK[value]) return OBJETIVO_FRONT_TO_BACK[value]
+  const validEnums = ['perdida_peso', 'ganancia_muscular', 'acondicionamiento_fisico', 'salud', 'rendimiento_deportivo', 'otro']
+  if (validEnums.includes(value.toLowerCase())) return value.toLowerCase()
+  return value.toLowerCase().replace(/\s+/g, '_').replace('de_peso', 'peso')
 }
 
 export function mapAntecedenteBackToFront(value: string): string {
@@ -146,6 +149,8 @@ export function mapNivelActividadBackToFront(value: string): string {
 }
 
 export function mapNivelActividadFrontToBack(value: string): string {
+  const validEnums = ['sedentario', 'ligero', 'moderado', 'activo', 'muy_activo']
+  if (validEnums.includes(value.toLowerCase())) return value.toLowerCase()
   return NIVEL_ACTIVIDAD_FRONT_TO_BACK[value] ?? value.toLowerCase().replace(/\s+/g, '_')
 }
 

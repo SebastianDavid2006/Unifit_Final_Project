@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Dumbbell, Clock, Flame, CheckCircle2, Circle, ChevronRight, Trophy } from 'lucide-react'
 import { studentRoutines } from '@/features/student/utils/mockData'
-import { assessmentItems } from '@/modules/students/StudentProfileData'
 import type { StudentRoutine, ExerciseRow } from '@/features/student/types/student'
 import { cardStyle, FIRE, AMBER, BLUE, GREEN } from '@/features/student/components/ui/fitness'
 import { AssessmentDetail } from '@/features/student/components/ui/AssessmentDetail'
@@ -23,7 +22,9 @@ export function RoutinesPage() {
   const [selectedExercise, setSelectedExercise] = useState<{ ex: ExerciseRow; index: number } | null>(null)
   const [celebrateOpen, setCelebrateOpen] = useState(false)
 
-  const assessment = routine ? assessmentItems.find(a => a.num === routine.assessmentNum) : null
+  // TODO Phase 3: Replace with real assessment data from API
+  const assessmentItemsLocal: { num: number }[] = []
+  const assessment = routine ? assessmentItemsLocal.find(a => a.num === routine.assessmentNum) : null
 
   const openRoutine = (r: StudentRoutine) => {
     setRoutine(r)

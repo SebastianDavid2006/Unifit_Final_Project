@@ -6,7 +6,7 @@ import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
 import { ModalShell } from '@/modules/students/shared/components/ModalShell'
-import type { Student } from '../../StudentProfileData'
+import type { Student } from '../../../../StudentProfileData'
 import { calcAge } from '@/lib/dateUtils'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'

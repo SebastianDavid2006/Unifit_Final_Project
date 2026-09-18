@@ -116,7 +116,7 @@ export const registrarSchema = z
     telefono_emergencia: telefonoSchema.optional(),
     parentesco_emergencia: z.enum(Parentesco).optional(),
     tipo_usuario: z.enum(TipoUsuario),
-    rol: z.enum(['admin', 'entrenador']).optional(),
+    rol: z.enum(['admin', 'entrenador', 'usuario']).optional(),
     // Estudiante
     id_programa: z.string().uuid().optional(),
     numero_carnet: z.string().optional(),
@@ -145,8 +145,8 @@ export const registrarSchema = z
       if (!val.id_programa) {
         ctx.addIssue({ code: 'custom', path: ['id_programa'], message: 'id_programa es requerido para estudiantes' })
       }
-      if (val.rol) {
-        ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Un estudiante no puede tener rol de admin o entrenador' })
+      if (val.rol && val.rol !== 'usuario') {
+        ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Un estudiante solo puede tener rol de usuario' })
       }
       if (!val.numero_carnet?.trim()) {
         ctx.addIssue({ code: 'custom', path: ['numero_carnet'], message: 'Número de carnet es requerido' })
