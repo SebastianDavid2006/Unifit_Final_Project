@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router'
-import { guardarSesion, getUsuario, getToken, cerrarSesion, mapRolToPlatform } from '@/lib/auth'
+import { guardarSesion, getUsuario, getToken, cerrarSesion, mapRolToPlatform, type Rol } from '@/lib/auth'
+import { api } from '@/lib/api'
 import { toast, Toaster } from 'sonner'
 import { LoginPage, type LoginSession } from '@/auth/pages/LoginPage'
 import { RegisterPage } from '@/auth/pages/RegisterPage'
@@ -54,7 +55,7 @@ function LoginPageWrapper() {
   const token = getToken()
   const usuario = getUsuario()
   if (token && usuario) {
-    if (usuario.estado === 'pendiente') return <Navigate to="/usuario/activacion" replace />
+    if (usuario.estado === 'pendiente') return <Navigate to="/incorporacion" replace />
     if (usuario.debe_cambiar_password) return <Navigate to="/cambiar-clave" replace />
     const platform = mapRolToPlatform(usuario.rol)
     if (platform === 'student') return <Navigate to="/usuario/inicio" replace />
@@ -62,21 +63,44 @@ function LoginPageWrapper() {
     return <Navigate to="/admin/dashboard" replace />
   }
 
+  const handleLoginSuccess = async (session: { user: { debeCambiarContrasena: boolean; estado: string; rol: string } }) => {
+    if (session.user.debeCambiarContrasena) {
+      navigate('/cambiar-clave')
+      return
+    }
+    if (session.user.estado === 'pendiente') {
+      try {
+        console.log('🔍 [Login] Checking for existing cita...')
+        const res = await api.get('/usuarios/me/cita')
+        console.log('✅ [Login] Cita found:', res.data)
+        navigate('/incorporacion/asistencia-presencial')
+      } catch (err) {
+        console.error('❌ [Login] Error checking cita:', {
+          status: err.response?.status,
+          message: err.response?.data?.mensaje,
+          isAxiosError: err.isAxiosError
+        })
+        if (err.isAxiosError && err.response?.status === 404) {
+          console.log('ℹ️ [Login] No cita found (404) → /incorporacion')
+          navigate('/incorporacion')
+        } else {
+          console.log('⚠️ [Login] Other error, fallback → /incorporacion')
+          navigate('/incorporacion')
+        }
+      }
+      return
+    }
+    const platform = mapRolToPlatform(session.user.rol as Rol)
+    if (platform === 'student') navigate('/usuario/inicio')
+    else if (platform === 'trainer') navigate('/entrenador/dashboard')
+    else navigate('/admin/dashboard')
+  }
+
   return (
     <LoginPage
       onSelect={(platform, session) => {
         if (session) {
-          if (session.user.debeCambiarContrasena) {
-            navigate('/cambiar-clave')
-          } else if (session.user.estado === 'pendiente') {
-            navigate('/usuario/activacion')
-          } else if (platform === 'student') {
-            navigate('/usuario/inicio')
-          } else if (platform === 'trainer') {
-            navigate('/entrenador/dashboard')
-          } else {
-            navigate('/admin/dashboard')
-          }
+          handleLoginSuccess(session)
         }
       }}
       onRegister={() => navigate('/registro')}
@@ -93,6 +117,11 @@ function ChangePasswordWrapper() {
   const navigate = useNavigate()
   const usuario = getUsuario()
   if (!usuario) return <Navigate to="/login" replace />
+
+  // SOLO permitir si estado === 'activo' Y debe_cambiar_password
+  if (usuario.estado !== 'activo' || !usuario.debe_cambiar_password) {
+    return <Navigate to="/incorporacion" replace />
+  }
 
   return (
     <ChangePasswordPage
@@ -114,6 +143,23 @@ function OnboardingWrapper() {
   const usuario = getUsuario()
   if (!usuario) return <Navigate to="/login" replace />
 
+  // Si ya está activo, ir directo a la app
+  if (usuario.estado === 'activo') {
+    const platform = mapRolToPlatform(usuario.rol)
+    if (platform === 'student') return <Navigate to="/usuario/inicio" replace />
+    if (platform === 'trainer') return <Navigate to="/entrenador/dashboard" replace />
+    return <Navigate to="/admin/dashboard" replace />
+  }
+
+  // Solo usuarios con rol='usuario' pasan por onboarding
+  if (usuario.rol !== 'usuario') {
+    // Admin/Entrenador: ir directo a su app
+    const platform = mapRolToPlatform(usuario.rol)
+    if (platform === 'student') return <Navigate to="/usuario/inicio" replace />
+    if (platform === 'trainer') return <Navigate to="/entrenador/dashboard" replace />
+    return <Navigate to="/admin/dashboard" replace />
+  }
+
   return (
     <OnboardingPage
       session={{
@@ -128,7 +174,7 @@ function OnboardingWrapper() {
         },
         token: getToken()!,
       }}
-      onComplete={() => { cerrarSesion(); navigate('/login') }}
+      onComplete={() => { /* NO logout, OnboardingPage navega internamente */ }}
       onBack={() => { cerrarSesion(); navigate('/login') }}
     />
   )
@@ -139,7 +185,7 @@ function LogoutWrapper() {
   return <Navigate to="/login" replace />
 }
 
-const AUTH_ROUTES = ['/login', '/registro', '/cambiar-clave', '/usuario/activacion']
+const AUTH_ROUTES = ['/login', '/registro', '/cambiar-clave', '/incorporacion', '/incorporacion/asistencia-presencial']
 
 function AppShell() {
   const location = useLocation()
@@ -169,7 +215,8 @@ function AppShell() {
           <Route path="/login" element={<LoginPageWrapper />} />
           <Route path="/registro" element={<RegisterWrapper />} />
           <Route path="/cambiar-clave" element={<ChangePasswordWrapper />} />
-          <Route path="/usuario/activacion" element={<OnboardingWrapper />} />
+          <Route path="/incorporacion" element={<OnboardingWrapper />} />
+      <Route path="/incorporacion/asistencia-presencial" element={<OnboardingWrapper />} />
           <Route path="/usuario/*" element={<ProtectedRoute rolesPermitidos={['usuario']}><StudentApp /></ProtectedRoute>} />
           <Route path="/admin/*" element={<ProtectedRoute rolesPermitidos={['admin']}><AdminPage /></ProtectedRoute>}>
             <Route path="gestion" element={<GestionLayout />}>

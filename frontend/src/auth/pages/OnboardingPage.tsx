@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Calendar, CheckCircle2, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { AuthShell } from '@/auth/components/AuthShell'
-import { updateUser } from '@/auth/services/authService'
+import { api } from '@/lib/api'
+import { cerrarSesion, mapRolToPlatform } from '@/lib/auth'
+import { useNavigate, useLocation } from 'react-router'
 import logotipo from '@/assets/logo/logo.webp'
 import missingIllustration from '@/assets/illustrations/characters/coach/coach_missing_fingerprint_and_signature.webp'
 import successVideoDesktop from '@/assets/scenes/videos/desktop/registration_pending_dekstop.mp4'
@@ -12,7 +14,7 @@ const FIRE = '#E63946'
 const AMBER = '#F5A623'
 const GREEN = '#30D158'
 
-type OnboardingPhase = 'intro' | 'schedule' | 'success'
+type OnboardingPhase = 'schedule' | 'waiting' | 'success'
 
 const COLOMBIAN_HOLIDAYS_2026 = new Map([
   ['2026-01-01', 'Año Nuevo'],
@@ -70,27 +72,68 @@ function formatDateKey(date: Date): string {
   return date.toISOString().split('T')[0]
 }
 
-export function OnboardingPage({ session, onComplete, onBack }: OnboardingPageProps) {
-  const [phase, setPhase] = useState<OnboardingPhase>('intro')
+interface SessionUser {
+  id_usuario: string
+  email: string
+  nombre: string
+  rol: 'admin' | 'entrenador' | 'usuario'
+  tipo_usuario: 'estudiante' | 'profesor' | 'administrativo'
+  estado: 'pendiente' | 'activo' | 'inactivo'
+  debeCambiarContrasena: boolean
+}
+
+interface OnboardingPageProps {
+  session: {
+    user: SessionUser
+    token: string
+  }
+  initialPhase?: 'schedule' | 'waiting'
+  onComplete: () => void
+  onBack: () => void
+}
+
+interface CitaResponse {
+  id_agenda: string
+  id_usuario: string
+  id_creador: string
+  id_cupo: string | null
+  fecha: string
+  hora_inicio: string
+  tipo: string
+  estado: string
+  observaciones: string | null
+  fecha_creacion: string
+  fecha_modificacion: string
+}
+
+export function OnboardingPage({ session, initialPhase = 'schedule', onComplete, onBack }: OnboardingPageProps) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [phase, setPhase] = useState<OnboardingPhase>(() => {
+    if (typeof window !== 'undefined' && window.location.pathname.includes('/asistencia-presencial')) {
+      return 'waiting'
+    }
+    return 'schedule'
+  })
+
+  // Sync phase with URL pathname (handles all navigation: modal, browser back, direct links)
+  useEffect(() => {
+    const isWaitingRoute = location.pathname.includes('/asistencia-presencial')
+    if (isWaitingRoute && phase !== 'waiting') {
+      setPhase('waiting')
+    } else if (!isWaitingRoute && phase === 'waiting') {
+      setPhase('schedule')
+    }
+  }, [location.pathname, phase])
+
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<DayInfo | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showDuplicateCitaModal, setShowDuplicateCitaModal] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const today = useMemo(() => new Date(), [])
-
-  useEffect(() => {
-    if (phase === 'success' && videoRef.current) {
-      videoRef.current.muted = true
-      videoRef.current.play().catch(() => {})
-      const t = setTimeout(() => {
-        videoRef.current!.muted = false
-        videoRef.current!.play().catch(() => {})
-      }, 300)
-      return () => clearTimeout(t)
-    }
-  }, [phase])
 
   const daysInMonth = useMemo(() => {
     const year = currentMonth.getFullYear()
@@ -106,6 +149,30 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
     }
     return days
   }, [currentMonth, today])
+
+  // Check for existing cita on mount and when phase changes to schedule
+  useEffect(() => {
+    if (phase === 'schedule') {
+      console.log('🔍 [Onboarding] useEffect: Checking cita (phase=schedule)')
+      api.get('/usuarios/me/cita')
+        .then(res => {
+          console.log('✅ [Onboarding] Cita found:', res.data)
+          const cita = res.data as CitaResponse
+          if (cita && cita.fecha && cita.hora_inicio) {
+            console.log('🔄 [Onboarding] Setting phase=waiting + navigate')
+            const hora = new Date(cita.hora_inicio).toTimeString().slice(0, 5)
+            setSelectedDay(generateDayInfo(new Date(cita.fecha), today))
+            setSelectedTime(hora)
+            setPhase('waiting')
+            navigate('/incorporacion/asistencia-presencial', { replace: true })
+          }
+        })
+        .catch(err => {
+          console.log('ℹ️ [Onboarding] No cita (404) or error:', err.response?.status)
+          if (err.response?.status !== 404) console.error(err)
+        })
+    }
+  }, [phase, today, navigate])
 
   const handleDayClick = (day: DayInfo | null) => {
     if (!day || day.isPast || day.isHoliday || day.slots.every(s => !s.available)) return
@@ -125,28 +192,80 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
     setShowConfirmModal(false)
     setShowSuccessModal(true)
 
-    await updateUser(session.user.email, {
-      onboarding: { cita: true, firma: true, huella: true },
-      estado: 'activo',
-      cita: { fecha: formatDateKey(selectedDay.date), hora: selectedTime }
-    })
+    try {
+      await api.post('/usuarios/me/cita', {
+        fecha: formatDateKey(selectedDay.date),
+        hora: selectedTime,
+      })
 
-    setTimeout(() => {
-      setShowSuccessModal(false)
-      setPhase('success')
-    }, 1500)
+      setTimeout(() => {
+        setShowSuccessModal(false)
+        setPhase('waiting')
+        navigate('/incorporacion/asistencia-presencial', { replace: true })
+      }, 1500)
+    } catch (error) {
+      console.log('❌ [Booking] Error:', error.response?.status, error.response?.data?.mensaje)
+      if (error.response?.status === 400) {
+        const msg = error.response?.data?.mensaje || ''
+        if (msg.includes('pendiente')) {
+          console.log('⚠️ [Booking] Duplicate cita detected → show modal')
+          setShowSuccessModal(false)
+          setShowDuplicateCitaModal(true)
+          return
+        }
+        setShowSuccessModal(false)
+        setPhase('waiting')
+        navigate('/incorporacion/asistencia-presencial', { replace: true })
+      }
+    }
   }
 
   const handleSuccessContinue = () => {
-    onComplete()
+    const platform = mapRolToPlatform(session.user.rol)
+    if (platform === 'student') navigate('/usuario/inicio')
+    else if (platform === 'trainer') navigate('/entrenador/dashboard')
+    else navigate('/admin/dashboard')
   }
 
   const prevMonth = () => setCurrentMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
   const nextMonth = () => setCurrentMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
   const monthLabel = currentMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
 
+  const renderWaiting = () => (
+    <div className="flex flex-col items-center justify-center flex-1 px-6 text-center">
+      <Calendar size={64} className="mb-6 text-gray-400" />
+      <h2 className="text-xl font-bold text-white mb-4">Cita agendada</h2>
+      <p className="text-lg text-gray-300 mb-2">
+        Tu cita ha sido programada para el <strong>{selectedDay?.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</strong> a las <strong>{selectedTime}</strong>.
+      </p>
+      <div className="mt-8 max-w-md mx-auto p-6 rounded-xl border" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)' }}>
+        <p className="font-semibold text-white mb-3">Próximos pasos:</p>
+        <ul className="text-left space-y-2 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          <li>• Acude al gimnasio en la fecha y hora indicadas</li>
+          <li>• Firma los documentos solicitados en el gimnasio</li>
+          <li>• Completa el cuestionario PAR-Q</li>
+          <li>• Registra tu huella digital</li>
+        </ul>
+        <p className="mt-6 text-sm font-medium" style={{ color: '#7ec8e3' }}>
+          Tu cuenta se activará automáticamente una vez el personal del gimnasio complete tu proceso presencial.
+        </p>
+      </div>
+      <div className="mt-6 flex justify-center">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => { cerrarSesion(); navigate('/login') }}
+          className="px-6 py-2.5 rounded-xl text-sm font-medium"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.5)' }}
+        >
+          Volver al login
+        </motion.button>
+      </div>
+    </div>
+  )
+
   return (
-    <AuthShell onBack={onBack} autoDesktopVideo>
+    <AuthShell onBack={onBack} autoDesktopVideo videosPaused={true}>
       {(ctx) => (
         <div className={`flex-1 min-h-0 overflow-y-auto flex flex-col ${ctx.isPhonePreview ? 'px-5' : 'px-6 sm:px-10'}`}>
           <AnimatePresence mode="wait">
@@ -158,67 +277,6 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="flex flex-col flex-1 max-w-xl mx-auto w-full"
             >
-              {phase === 'intro' && (
-                <div className="flex flex-col flex-1 items-center justify-center text-center">
-                  <div className="flex items-center justify-center mb-8">
-                    <img src={logotipo} alt="UNIFIT" style={{ height: 56, objectFit: 'contain' }} />
-                  </div>
-
-                  <motion.img
-                    src={missingIllustration}
-                    alt="Onboarding"
-                    className="w-full max-w-[400px] mb-8 object-contain"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                  />
-
-                  <motion.h1
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="uppercase italic font-black text-white mb-4"
-                    style={{ fontSize: 'clamp(24px, 4vw, 32px)', letterSpacing: '0.04em' }}
-                  >
-                    Te faltan unos pasos más
-                  </motion.h1>
-
-                  <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    className="text-lg max-w-sm font-semibold"
-                    style={{ color: '#7ec8e3', lineHeight: 1.4 }}
-                  >
-                    para experimentar la app UNIFIT
-                  </motion.p>
-
-                  <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
-                    className="text-sm max-w-sm mt-3"
-                    style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}
-                  >
-                    Agenda tu cita de valoración inicial y desbloquea tu acceso al gimnasio
-                  </motion.p>
-
-                  <motion.button
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setPhase('schedule')}
-                    className="mt-10 w-full max-w-[280px] h-14 rounded-2xl text-base font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
-                    style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, boxShadow: `0 10px 30px ${FIRE}40` }}
-                  >
-                    Agendar mi cita
-                    <ArrowRight size={18} />
-                  </motion.button>
-                </div>
-              )}
-
               {phase === 'schedule' && (
                 <div className="flex flex-col flex-1">
                   <div className="flex items-center justify-between mb-6">
@@ -369,7 +427,7 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => setPhase('intro')}
+                      onClick={() => setPhase('schedule')}
                       className="w-full h-14 rounded-2xl text-base font-bold flex items-center justify-center gap-2 cursor-pointer"
                       style={{ background: 'rgba(255,255,255,0.06)', border: '2px solid rgba(255,255,255,0.15)', color: '#fff' }}
                     >
@@ -380,8 +438,10 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
                 </div>
               )}
 
+              {phase === 'waiting' && renderWaiting()}
+
               {phase === 'success' && (
-                <div className="flex flex-col flex-1 items-center justify-center text-center relative">
+                <div className="flex flex-col items-center justify-center text-center relative">
                   <video
                     ref={videoRef}
                     autoPlay
@@ -422,7 +482,7 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
                       className="text-lg max-w-sm"
                       style={{ color: '#7ec8e3', fontWeight: 600 }}
                     >
-                      Tu cita fue agendada
+                      ¡Tu cuenta está activa!
                     </motion.p>
 
                     {selectedDay && selectedTime && (
@@ -444,7 +504,7 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
                       className="text-sm max-w-sm mt-4"
                       style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}
                     >
-                      Te esperamos para tu valoración inicial. Recibirás un recordatorio.
+                      Tu cuenta ya está activa. Puedes acceder a la app con tu nueva contraseña.
                     </motion.p>
 
                     <motion.button
@@ -457,7 +517,7 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
                       className="mt-10 w-full max-w-[280px] h-14 rounded-2xl text-base font-bold text-white flex items-center justify-center gap-2 cursor-pointer"
                       style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, boxShadow: `0 10px 30px ${GREEN}40` }}
                     >
-                      Continuar a UNIFIT
+                      Entrar a la app
                       <ArrowRight size={18} />
                     </motion.button>
                   </div>
@@ -552,27 +612,50 @@ export function OnboardingPage({ session, onComplete, onBack }: OnboardingPagePr
               </motion.div>
             )}
           </AnimatePresence>
+
+          <AnimatePresence>
+            {showDuplicateCitaModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+                onClick={() => setShowDuplicateCitaModal(false)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                  onClick={e => e.stopPropagation()}
+                  className="w-full max-w-sm rounded-3xl p-6 text-center"
+                  style={{ background: '#12121C', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 30px 80px rgba(0,0,0,0.6)' }}
+                >
+                  <div className="mx-auto mb-4 w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${AMBER}, ${FIRE})` }}>
+                    <Calendar size={28} style={{ color: '#fff' }} />
+                  </div>
+                  <h3 className="uppercase italic font-black text-white mb-2" style={{ fontSize: 20, letterSpacing: '0.02em' }}>
+                    Cita ya agendada
+                  </h3>
+                  <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    Ya tienes una cita de valoración pendiente programada.
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { setShowDuplicateCitaModal(false); navigate('/incorporacion/asistencia-presencial', { replace: true }) }}
+                    className="w-full py-3 rounded-xl font-black text-white"
+                    style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, boxShadow: `0 8px 24px ${FIRE}40` }}
+                  >
+                    Ver mi cita
+                  </motion.button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </AuthShell>
   )
-}
-
-interface SessionUser {
-  id_usuario: string
-  email: string
-  nombre: string
-  rol: 'admin' | 'entrenador' | 'usuario'
-  tipo_usuario: 'estudiante' | 'profesor' | 'administrativo'
-  estado: 'pendiente' | 'activo' | 'inactivo'
-  debeCambiarContrasena: boolean
-}
-
-interface OnboardingPageProps {
-  session: {
-    user: SessionUser
-    token: string
-  }
-  onComplete: () => void
-  onBack: () => void
 }

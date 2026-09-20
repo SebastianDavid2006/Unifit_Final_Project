@@ -1,4 +1,6 @@
 ﻿import { useState, useEffect, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router'
+import { guardarSesion } from '@/lib/auth'
 import { motion, AnimatePresence } from 'motion/react'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { INITIAL_FORM, BLUE_GRAD } from '@/data/config/registration'
@@ -11,7 +13,7 @@ import type { Universidad, NivelPrograma } from '@/types/catalogo'
 import { api, mensajeError, mapearErroresBackend } from '@/lib/api'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { RegisterFormSections } from '@/auth/components/RegisterFormSections'
-import { RegisterSuccess } from '@/auth/components/RegisterSuccess'
+
 import { RegisterIntroOverlay } from '@/auth/components/RegisterIntroOverlay'
 import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
 import { isMinor as isMinorUtil } from '@/lib/dateUtils'
@@ -28,9 +30,10 @@ interface RegisterPageProps {
   onBack: () => void
 }
 
-type Phase = 'intro' | 'form' | 'success'
+type Phase = 'intro' | 'form'
 
 export function RegisterPage({ onBack }: RegisterPageProps) {
+  const navigate = useNavigate()
   const { isPhonePreview, isDesktopVideo } = useAuthLayout()
   const [phase, setPhase] = useState<Phase>('intro')
   const [form, setForm] = useState<Record<string, string>>({ ...INITIAL_FORM, parentesco: 'Padre' })
@@ -164,7 +167,13 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
     setErroresCampo({})
     try {
       await api.post('/auth/registro', buildPayload())
-      setPhase('success')
+      // Auto-login with temporary password (document number)
+      const loginRes = await api.post('/auth/login', {
+        email_contacto: form.email,
+        password: form.numDoc,
+      })
+      guardarSesion(loginRes.data.token, loginRes.data.usuario)
+      navigate('/incorporacion')
     } catch (err) {
       setError(mensajeError(err))
       setErroresCampo(mapearErroresBackend(err))
@@ -257,18 +266,6 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
           >
             {renderForm()}
           </motion.div>
-        </motion.div>
-      )}
-      {phase === 'success' && (
-        <motion.div
-          key="success"
-          initial={{ opacity: 0, scale: 0.94 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.94 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col flex-1 min-h-0 pt-6"
-        >
-          <RegisterSuccess onBack={onBack} />
         </motion.div>
       )}
     </AnimatePresence>

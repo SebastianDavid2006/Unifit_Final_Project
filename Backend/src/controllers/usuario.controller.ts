@@ -26,8 +26,11 @@ import {
   actualizarPerfil,
   buscarExistentePorCredenciales,
 } from '../services/usuario.service'
+import { crearCita, obtenerMiCita } from './cita.controller'
 import { responderErrorPrisma } from '../utils/prisma-errors'
 import { HttpError } from '../utils/HttpError'
+
+export { crearCita, obtenerMiCita }
 import { prisma } from '../utils/prisma'
 
 const DISPOSABLE_DOMAINS = new Set([
@@ -138,7 +141,7 @@ export const registrarSchema = z
   .strict()
   .superRefine(async (val, ctx) => {
     const esEstudiante = val.tipo_usuario === TipoUsuario.estudiante
-    const esStaff = val.tipo_usuario === TipoUsuario.profesor || val.tipo_usuario === TipoUsuario.administrativo
+    const esStaffReal = val.rol === 'admin' || val.rol === 'entrenador'
 
     // --- Rama Estudiante (usuario del gym) ---
     if (esEstudiante) {
@@ -153,18 +156,18 @@ export const registrarSchema = z
       }
     }
 
-    // --- Rama Profesor/Administrativo (siempre son personal universitario) ---
-    if (esStaff) {
+    // --- Rama Staff REAL (rol === admin || rol === entrenador) ---
+    if (esStaffReal) {
       // rol puede ser 'usuario' (miembro del gym) o 'entrenador'/'admin' (staff del sistema)
       if (val.rol && !['admin', 'entrenador', 'usuario'].includes(val.rol)) {
-        ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Rol inválido para profesor/administrativo' })
+        ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Rol inválido para staff' })
       }
-      // Cargo y área son SIEMPRE requeridos (son datos institucionales fijos)
+      // Cargo y área son SIEMPRE requeridos para staff real
       if (!val.id_cargo) {
-        ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'id_cargo es requerido para profesor/administrativo' })
+        ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'id_cargo es requerido para staff' })
       }
       if (!val.id_area) {
-        ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'id_area es requerido para profesor/administrativo' })
+        ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'id_area es requerido para staff' })
       }
       // Validar cargo existe y está activo
       if (val.id_cargo) {
@@ -180,14 +183,14 @@ export const registrarSchema = z
           ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'Área no existe o está inactiva' })
         }
       }
-      // Profesor/administrativo debe ser mayor de 18 años (son empleados universitarios)
+      // Staff real debe ser mayor de 18 años
       if (val.fecha_nacimiento) {
         const hoy = new Date()
         let edad = hoy.getFullYear() - val.fecha_nacimiento.getFullYear()
         const mes = hoy.getMonth() - val.fecha_nacimiento.getMonth()
         if (mes < 0 || (mes === 0 && hoy.getDate() < val.fecha_nacimiento.getDate())) edad--
         if (edad < 18) {
-          ctx.addIssue({ code: 'custom', path: ['fecha_nacimiento'], message: 'Profesor/administrativo debe ser mayor de 18 años' })
+          ctx.addIssue({ code: 'custom', path: ['fecha_nacimiento'], message: 'Staff debe ser mayor de 18 años' })
         }
       }
     }

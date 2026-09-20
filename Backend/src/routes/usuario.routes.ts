@@ -12,6 +12,8 @@ import {
   activarUsuarioHandler,
   cambiarRolHandler,
   actualizarPerfilHandler,
+  crearCita,
+  obtenerMiCita,
 } from '../controllers/usuario.controller'
 import { verificarToken } from '../middlewares/verificarToken'
 import { verificarEstado } from '../middlewares/verificarEstado'
@@ -125,6 +127,21 @@ router.put(
   verificarEstado(),
   requierePropiedad(async (req) => req.params.id as string, ['admin']),
   actualizarPerfilHandler,
+)
+
+// Cita de valoración (onboarding)
+router.post(
+  '/usuarios/me/cita',
+  verificarToken,
+  verificarEstado(['/api/usuarios/me/cita']),
+  crearCita,
+)
+
+router.get(
+  '/usuarios/me/cita',
+  verificarToken,
+  verificarEstado(['/api/usuarios/me/cita']),
+  obtenerMiCita,
 )
 
 export default router
