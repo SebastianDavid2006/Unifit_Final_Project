@@ -14,9 +14,12 @@ import { uploadMultimedia } from '../middlewares/uploadMultimedia'
 import { deleteFile, saveFile } from '../services/storage'
 
 const crearMaquinaSchema = z.object({
-  nombre: z.string().min(1),
+  nombre: z.string({ message: 'El nombre es obligatorio' }).min(1, 'El nombre es obligatorio'),
   descripcion: z.string().optional(),
-  grupos_musculares: z.array(z.string()).min(1),
+  grupos_musculares: z.array(
+    z.string(),
+    { message: 'Debes seleccionar al menos un grupo muscular' },
+  ).min(1, 'Debes seleccionar al menos un grupo muscular'),
   nivel: z.string().optional(),
   url_multimedia: z.string().min(1, 'La imagen es obligatoria'),
   ejercicioIds: z.array(z.string()).optional(),
@@ -81,7 +84,7 @@ export async function postMaquina(req: Request, res: Response): Promise<void> {
     })
 
     if (!parsed.success) {
-      res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+      res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
       return
     }
 
@@ -117,7 +120,7 @@ export async function putMaquina(req: Request, res: Response): Promise<void> {
 
     const parsed = editarMaquinaSchema.safeParse(body)
     if (!parsed.success) {
-      res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+      res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
       return
     }
 

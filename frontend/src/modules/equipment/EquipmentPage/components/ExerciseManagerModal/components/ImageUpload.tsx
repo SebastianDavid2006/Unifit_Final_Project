@@ -12,6 +12,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewUrl = value instanceof File ? URL.createObjectURL(value) : (typeof value === 'string' ? value : null)
   const hasImage = !!previewUrl
+  const isVideo = value instanceof File && value.type.startsWith('video/')
 
   const handleFileSelect = (file: File | null) => {
     const preview = file ? URL.createObjectURL(file) : null
@@ -22,7 +23,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
 
   return (
     <div>
-      <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Imagen o GIF</label>
+      <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.6)' }}>Imagen o video</label>
       <motion.div
         whileHover={{ scale: 1.02 }}
         transition={{ duration: 0.2 }}
@@ -36,31 +37,36 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
         onMouseLeave={e => { if (!hasImage) { e.currentTarget.style.background = meshInputBg; e.currentTarget.style.borderColor = 'transparent' } }}
       >
         {hasImage ? (
-          <>
-            <img src={previewUrl} alt="" className="w-full h-full object-cover" />
-            <div
-              onClick={e => { e.stopPropagation(); openFileDialog() }}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 cursor-pointer"
-              style={{ background: 'rgba(0,0,0,0.45)' }}
-            >
-              <Camera size={24} className="text-white" />
-              <span className="text-xs font-semibold text-white">Cambiar imagen</span>
-            </div>
-          </>
+          isVideo ? (
+            <video src={previewUrl} muted autoPlay loop playsInline className="w-full h-full object-cover" />
+          ) : (
+            <>
+              <img src={previewUrl} alt="" className="w-full h-full object-cover" />
+              <div
+                onClick={e => { e.stopPropagation(); openFileDialog() }}
+                className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200 cursor-pointer"
+                style={{ background: 'rgba(0,0,0,0.45)' }}
+              >
+                <Camera size={24} className="text-white" />
+                <span className="text-xs font-semibold text-white">Cambiar imagen</span>
+              </div>
+            </>
+          )
         ) : (
           <div className="flex flex-col items-center justify-center gap-1.5 py-10">
             <Upload size={20} style={{ color: 'rgba(0,0,0,0.2)' }} />
-            <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir imagen o GIF</span>
+            <span className="text-xs font-medium" style={{ color: 'rgba(0,0,0,0.2)' }}>Subir imagen o video</span>
           </div>
         )}
       </motion.div>
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         className="hidden"
         onChange={e => handleFileSelect(e.target.files?.[0] || null)}
       />
+      <p className="text-[11px] mt-1.5 block" style={{ color: 'rgba(0,0,0,0.4)' }}>Formatos admitidos: JPG, PNG, GIF, WEBP, MP4 y WEBM · Video de hasta 10 segundos</p>
     </div>
   )
 }

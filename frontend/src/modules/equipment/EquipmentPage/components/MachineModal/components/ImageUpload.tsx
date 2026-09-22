@@ -31,7 +31,7 @@ export function ImageUpload({ value, onChange, inputId }: ImageUploadProps) {
           <>
             <img src={previewUrl} alt="" className="w-full h-full object-cover" />
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-all duration-200" style={{ background: 'rgba(0,0,0,0.45)' }}>
-              <Camera size={24} className="text-white" />
+<Camera size={24} className="text-white" />
               <span className="text-xs font-semibold text-white">Cambiar imagen</span>
             </div>
           </>
@@ -53,6 +53,7 @@ export function ImageUpload({ value, onChange, inputId }: ImageUploadProps) {
           onChange(file, preview)
         }}
       />
+      <p className="text-[11px] mt-1.5 block" style={{ color: 'rgba(0,0,0,0.4)' }}>Formatos admitidos: JPG, PNG, GIF y WEBP</p>
     </div>
   )
 }

@@ -15,10 +15,15 @@ import { uploadMultimedia } from '../middlewares/uploadMultimedia'
 import { getVideoDuration } from '../utils/ffprobe'
 import { saveFile, deleteFile } from '../services/storage'
 
+const VIDEO_MAX_SEGUNDOS = 10
+
 const crearEjercicioSchema = z.object({
-  nombre: z.string().min(1),
+  nombre: z.string({ message: 'El nombre es obligatorio' }).min(1, 'El nombre es obligatorio'),
   descripcion: z.string().optional(),
-  grupos_musculares: z.array(z.string()).min(1),
+  grupos_musculares: z.array(
+    z.string(),
+    { message: 'Debes seleccionar al menos un grupo muscular' },
+  ).min(1, 'Debes seleccionar al menos un grupo muscular'),
   nivel: z.string().optional(),
   url_multimedia: z.string().min(1, 'La imagen o video es obligatoria'),
 })
@@ -59,9 +64,9 @@ export async function postEjercicio(req: Request, res: Response): Promise<void> 
   if (req.file!.mimetype.startsWith('video/')) {
     try {
       const duration = await getVideoDuration(req.file!.path)
-      if (duration > 5) {
+      if (duration > VIDEO_MAX_SEGUNDOS) {
         fs.unlinkSync(req.file!.path)
-        res.status(400).json({ mensaje: 'El video supera la duración máxima de 5 segundos' })
+        res.status(400).json({ mensaje: `El video supera la duración máxima de ${VIDEO_MAX_SEGUNDOS} segundos` })
         return
       }
     } catch (err) {
@@ -88,7 +93,7 @@ export async function postEjercicio(req: Request, res: Response): Promise<void> 
     })
 
     if (!parsed.success) {
-      res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+      res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
       return
     }
 
@@ -121,7 +126,7 @@ export async function putEjercicio(req: Request, res: Response): Promise<void> {
 
     const parsed = editarEjercicioSchema.safeParse(body)
     if (!parsed.success) {
-      res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+      res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
       return
     }
 
@@ -133,9 +138,9 @@ export async function putEjercicio(req: Request, res: Response): Promise<void> {
       if (file.mimetype.startsWith('video/')) {
         try {
           const duration = await getVideoDuration(file.path)
-          if (duration > 5) {
+          if (duration > VIDEO_MAX_SEGUNDOS) {
             fs.unlinkSync(file.path)
-            res.status(400).json({ mensaje: 'El video supera la duración máxima de 5 segundos' })
+            res.status(400).json({ mensaje: `El video supera la duración máxima de ${VIDEO_MAX_SEGUNDOS} segundos` })
             return
           }
         } catch (err) {

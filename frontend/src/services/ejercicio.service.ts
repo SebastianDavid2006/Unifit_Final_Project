@@ -32,7 +32,13 @@ export interface CrearEjercicioData extends Omit<FrontendExercise, 'id' | 'fecha
   imageFile?: File | null
 }
 
+export function esVideoUrl(url: string): boolean {
+  return /\.(mp4|webm|mov|m4v)$/i.test(url.split('?')[0])
+}
+
 function mapBackendToFrontend(ej: BackendEjercicio): FrontendExercise {
+  const media = getImageUrl(ej.url_multimedia)
+  const esVideo = esVideoUrl(media)
   return {
     id: ej.id_ejercicio,
     name: ej.nombre,
@@ -41,8 +47,8 @@ function mapBackendToFrontend(ej: BackendEjercicio): FrontendExercise {
     status: ej.activo ? 'active' : 'inactive',
     muscleGroups: ej.grupos_musculares.map(mapGrupoMuscularBackToFront),
     recommendedLevel: mapNivelBackToFront(ej.nivel).toLowerCase() as 'principiante' | 'intermedio' | 'avanzado',
-    imageUrl: getImageUrl(ej.url_multimedia),
-    videoUrl: '',
+    imageUrl: esVideo ? '' : media,
+    videoUrl: esVideo ? media : '',
     fecha_creacion: ej.fecha_creacion,
   }
 }

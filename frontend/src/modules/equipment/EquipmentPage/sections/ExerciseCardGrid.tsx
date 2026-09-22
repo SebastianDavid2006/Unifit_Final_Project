@@ -1,5 +1,5 @@
 ﻿import { motion } from 'motion/react'
-import { Dumbbell } from 'lucide-react'
+import { Dumbbell, Film, Image as ImageIcon } from 'lucide-react'
 import type { Exercise } from '@/data/shared/types'
 import { muscleIcons } from '@/data/shared/constants'
 import { StatusBadge } from '@/shared/components/ui/StatusBadge'
@@ -44,11 +44,37 @@ export function ExerciseCardGrid({ exercises, onPreview }: ExerciseCardGridProps
           }}
         >
           <div className="w-full overflow-hidden relative" style={{ height: 96, background: 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(10,132,255,0.05) 0%, transparent 50%)' }}>
-            {e.imageUrl ? (
+            {e.videoUrl ? (
+              <video
+                src={e.videoUrl}
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                onMouseEnter={ev => ev.currentTarget.play().catch(() => {})}
+                onMouseLeave={ev => ev.currentTarget.pause()}
+                className="w-full h-full object-cover"
+              />
+            ) : e.imageUrl ? (
               <img src={e.imageUrl} alt={e.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <Dumbbell size={24} style={{ color: 'rgba(48,209,88,0.3)' }} />
+              </div>
+            )}
+            {(e.videoUrl || e.imageUrl) && (
+              <div
+                className="absolute top-2 right-2 w-7 h-7 rounded-lg flex items-center justify-center pointer-events-none"
+                style={{
+                  background: 'rgba(255,255,255,0.9)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                }}
+              >
+                {e.videoUrl
+                  ? <Film size={15} style={{ color: '#0A84FF' }} />
+                  : <ImageIcon size={15} style={{ color: '#30D155' }} />}
               </div>
             )}
             <div className="absolute inset-0" style={{

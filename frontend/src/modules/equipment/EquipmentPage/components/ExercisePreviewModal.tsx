@@ -37,7 +37,16 @@ export function ExercisePreviewModal(props: ExercisePreviewModalProps) {
           >
             {/* Image */}
             <div className="relative" style={{ height: 160, background: 'radial-gradient(ellipse at 30% 20%, rgba(48,209,88,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(10,132,255,0.05) 0%, transparent 50%)' }}>
-              {props.exercise.imageUrl ? (
+              {props.exercise.videoUrl ? (
+                <video
+                  src={props.exercise.videoUrl}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : props.exercise.imageUrl ? (
                 <img src={props.exercise.imageUrl} alt={props.exercise.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -89,18 +98,6 @@ export function ExercisePreviewModal(props: ExercisePreviewModalProps) {
 
               {props.exercise.description && (
                 <p className="text-xs mb-4" style={{ color: 'rgba(0,0,0,0.5)' }}>{props.exercise.description}</p>
-              )}
-
-              {/* Video */}
-              {props.exercise.videoUrl && (
-                <div className="mb-4 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
-                  <video
-                    src={props.exercise.videoUrl}
-                    controls
-                    className="w-full"
-                    style={{ maxHeight: 200 }}
-                  />
-                </div>
               )}
 
               <div className="flex items-center gap-3">
