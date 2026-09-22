@@ -215,7 +215,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
               ))}
             </div>
             <span className="text-lg font-bold tracking-wide text-center block mb-4" style={{ color: '#1A1A1E' }}>
-              {routineEdited ? 'Editar Rutina' : routineFromAssessment ? 'Visualizar Rutina' : 'Nueva Rutina'}
+              {routineEdited ? 'Editar Rutina' : routineViewMode ? 'Visualizar Rutina' : 'Nueva Rutina'}
             </span>
 
             <motion.div
@@ -274,7 +274,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                   Atrás
                 </button>
               ) : <div />}
-              {routineFromAssessment && !routineEdited && routineStep === 2 ? (
+              {routineViewMode && routineStep === 2 ? (
                 <button
                   onClick={onCloseFromAssessment}
                   className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"

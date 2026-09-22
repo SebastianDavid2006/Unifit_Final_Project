@@ -27,6 +27,7 @@ interface ExerciseManagerModalProps {
     muscleGroups: string[]
     recommendedLevel: string
     imageUrl: string
+    imageFile: File | null
     videoUrl: string
   }
   onClose: () => void
@@ -119,10 +120,10 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                             color: '#1A1A1E',
                             border: '1px solid transparent',
                           }}
-                          onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                          onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
-                          onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-                          onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
+                          onMouseEnter={e => { const t = e.target as HTMLElement; if (t !== document.activeElement) { t.style.background = meshInputHover; t.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                          onMouseLeave={e => { const t = e.target as HTMLElement; if (t !== document.activeElement) { t.style.background = meshInputBg; t.style.borderColor = 'transparent' } }}
+                          onFocus={e => { const t = e.target as HTMLElement; t.style.borderColor = BLUE; t.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; t.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                          onBlur={e => { const t = e.target as HTMLElement; t.style.borderColor = 'transparent'; t.style.background = meshInputBg; t.style.boxShadow = 'none' }}
                         />
                       </div>
                       <div>
@@ -134,10 +135,10 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                           rows={2}
                           className="w-full px-3 py-2 rounded-xl text-xs font-medium outline-none resize-none transition-all duration-200"
                           style={{ background: meshInputBg, color: '#1A1A1E', border: '1px solid transparent' }}
-                          onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                          onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
-                          onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-                          onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
+                          onMouseEnter={e => { const t = e.target as HTMLElement; if (t !== document.activeElement) { t.style.background = meshInputHover; t.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                          onMouseLeave={e => { const t = e.target as HTMLElement; if (t !== document.activeElement) { t.style.background = meshInputBg; t.style.borderColor = 'transparent' } }}
+                          onFocus={e => { const t = e.target as HTMLElement; t.style.borderColor = BLUE; t.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; t.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                          onBlur={e => { const t = e.target as HTMLElement; t.style.borderColor = 'transparent'; t.style.background = meshInputBg; t.style.boxShadow = 'none' }}
                         />
                       </div>
                     </div>
@@ -164,11 +165,11 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                     </div>
                   )}
 
-                  {/* Step 2 â€” Visual Content */}
+                  {/* Step 2 — Visual Content */}
                   {props.step === 2 && (
                     <ImageUpload
-                      value={props.form.imageUrl}
-                      onChange={imageUrl => props.onFormChange({ ...props.form, imageUrl })}
+                      value={props.form.imageFile ?? props.form.imageUrl}
+                      onChange={(file, previewUrl) => props.onFormChange({ ...props.form, imageFile: file, imageUrl: previewUrl ?? '' })}
                     />
                   )}
                     </motion.div>

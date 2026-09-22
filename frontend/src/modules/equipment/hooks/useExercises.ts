@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
-import type { Exercise } from '@/data/shared/types'
 import { muscleToZones } from '@/data/shared/constants'
 import * as ejercicioService from '@/services/ejercicio.service'
+import { mensajeError } from '@/lib/api'
+
+type FrontendExercise = ejercicioService.FrontendExercise
 
 interface ExForm {
   name: string
@@ -11,20 +13,21 @@ interface ExForm {
   muscleGroups: string[]
   recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
   imageUrl: string
+  imageFile: File | null
   videoUrl: string
 }
 
 const defaultForm: ExForm = {
   name: '', zone: '', description: '', status: 'active',
   muscleGroups: [], recommendedLevel: 'principiante',
-  imageUrl: '', videoUrl: '',
+  imageUrl: '', imageFile: null, videoUrl: '',
 }
 
 export function useExercises() {
-  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [exercises, setExercises] = useState<FrontendExercise[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [editing, setEditing] = useState<Exercise | null>(null)
+  const [editing, setEditing] = useState<FrontendExercise | null>(null)
   const [step, setStep] = useState(0)
   const [showSuccess, setShowSuccess] = useState(false)
   const [askCreateAnother, setAskCreateAnother] = useState(false)
@@ -32,12 +35,15 @@ export function useExercises() {
   const [confirmClose, setConfirmClose] = useState(false)
   const [form, setForm] = useState<ExForm>(defaultForm)
   const [filterZone, setFilterZone] = useState('')
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const loadExercises = useCallback(async () => {
     try {
       setLoading(true)
       const data = await ejercicioService.getEjercicios()
-      setExercises(data)
+      // Sort by fecha_creacion descending (most recent first)
+      const sorted = [...data].sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime())
+      setExercises(sorted)
     } catch (err) {
       console.error('Error loading exercises:', err)
     } finally {
@@ -59,18 +65,20 @@ export function useExercises() {
     setEditing(null)
     setStep(0)
     setShowSuccess(false)
+    setSaveError(null)
     setForm(defaultForm)
   }
 
-  function openEdit(e: Exercise) {
+  function openEdit(e: FrontendExercise) {
     setEditing(e)
     setStep(0)
     setShowSuccess(false)
+    setSaveError(null)
     setShowModal(true)
     setForm({
       name: e.name, zone: e.zone, description: e.description, status: e.status,
       muscleGroups: [...e.muscleGroups], recommendedLevel: e.recommendedLevel,
-      imageUrl: e.imageUrl, videoUrl: e.videoUrl,
+      imageUrl: e.imageUrl, imageFile: null, videoUrl: e.videoUrl,
     })
   }
 
@@ -84,12 +92,13 @@ export function useExercises() {
       name: form.name.trim(), zone,
       description: form.description, status: form.status,
       muscleGroups: form.muscleGroups, recommendedLevel: form.recommendedLevel,
-      imageUrl: form.imageUrl, videoUrl: form.videoUrl,
+      imageUrl: form.imageUrl, imageFile: form.imageFile, videoUrl: form.videoUrl,
     }
     try {
       if (!editing) {
         const created = await ejercicioService.crearEjercicio(data)
-        setExercises(prev => [...prev, created])
+        // Prepend new items (most recent first)
+        setExercises(prev => [created, ...prev])
         setCreatedCount(c => c + 1)
         setAskCreateAnother(true)
         return { edited: false, name: data.name, wasNew: true }
@@ -100,6 +109,7 @@ export function useExercises() {
       }
     } catch (err) {
       console.error('Error saving exercise:', err)
+      setSaveError(mensajeError(err))
       return null
     }
   }
@@ -119,6 +129,7 @@ export function useExercises() {
     setEditing(null)
     setConfirmClose(false)
     setAskCreateAnother(false)
+    setSaveError(null)
   }
 
   return {
@@ -137,12 +148,15 @@ export function useExercises() {
     askCreateAnother,
     setAskCreateAnother,
     createdCount,
+    setCreatedCount,
     confirmClose,
     setConfirmClose,
     form,
     setForm,
     filterZone,
     setFilterZone,
+    saveError,
+    clearSaveError: () => setSaveError(null),
     openAdd,
     openEdit,
     save,

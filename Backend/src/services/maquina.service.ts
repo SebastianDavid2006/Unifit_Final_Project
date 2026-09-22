@@ -6,7 +6,7 @@ export interface CrearMaquinaData {
   descripcion?: string
   grupos_musculares: string[]
   nivel?: string
-  url_multimedia?: string
+  url_multimedia: string
   ejercicioIds?: string[]
   id_creador: string
 }

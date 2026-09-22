@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import type { Request, Response } from 'express'
+import * as fs from 'fs'
+import * as path from 'path'
 import { GrupoMuscular, NivelExperiencia } from '@prisma/client'
 import {
   crearEjercicio,
@@ -9,21 +11,24 @@ import {
   obtenerEjercicioPorId,
 } from '../services/ejercicio.service'
 import { responderErrorPrisma } from '../utils/prisma-errors'
+import { uploadMultimedia } from '../middlewares/uploadMultimedia'
+import { getVideoDuration } from '../utils/ffprobe'
+import { saveFile, deleteFile } from '../services/storage'
 
 const crearEjercicioSchema = z.object({
   nombre: z.string().min(1),
   descripcion: z.string().optional(),
-  grupos_musculares: z.array(z.enum(GrupoMuscular)).min(1),
-  nivel: z.enum(NivelExperiencia).optional(),
-  url_multimedia: z.string().url().optional(),
+  grupos_musculares: z.array(z.string()).min(1),
+  nivel: z.string().optional(),
+  url_multimedia: z.string().min(1, 'La imagen o video es obligatoria'),
 })
 
 const editarEjercicioSchema = z.object({
   nombre: z.string().min(1).optional(),
   descripcion: z.string().optional(),
-  grupos_musculares: z.array(z.enum(GrupoMuscular)).min(1).optional(),
-  nivel: z.enum(NivelExperiencia).optional(),
-  url_multimedia: z.string().url().optional(),
+  grupos_musculares: z.array(z.string()).optional(),
+  nivel: z.string().optional(),
+  url_multimedia: z.string().optional(),
 })
 
 export async function getEjercicios(_req: Request, res: Response): Promise<void> {
@@ -41,34 +46,121 @@ export async function getEjercicioPorId(req: Request, res: Response): Promise<vo
 }
 
 export async function postEjercicio(req: Request, res: Response): Promise<void> {
-  const parsed = crearEjercicioSchema.safeParse(req.body)
-  if (!parsed.success) {
-    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+  const file = req.file
+
+  if (!file) {
+    res.status(400).json({ mensaje: 'La imagen o video es obligatoria' })
     return
   }
 
+  let fileMoved = false
+
+  // Validar duración si es video
+  if (req.file!.mimetype.startsWith('video/')) {
+    try {
+      const duration = await getVideoDuration(req.file!.path)
+      if (duration > 5) {
+        fs.unlinkSync(req.file!.path)
+        res.status(400).json({ mensaje: 'El video supera la duración máxima de 5 segundos' })
+        return
+      }
+    } catch (err) {
+      if (fs.existsSync(req.file!.path)) fs.unlinkSync(req.file!.path)
+      res.status(400).json({ mensaje: 'Error validando video' })
+      return
+    }
+  }
+
+  // Mover archivo a almacenamiento permanente
   try {
+    const mediaUrl = await saveFile(req.file!.path, req.file!.originalname)
+    fileMoved = true
+    // Validar el resto del body
+    // Parse JSON fields from multipart form data
+    const body = { ...req.body }
+    if (body.grupos_musculares && typeof body.grupos_musculares === 'string') {
+      try { body.grupos_musculares = JSON.parse(body.grupos_musculares) } catch { body.grupos_musculares = [] }
+    }
+
+    const parsed = crearEjercicioSchema.safeParse({
+      ...body,
+      url_multimedia: mediaUrl,
+    })
+
+    if (!parsed.success) {
+      res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+      return
+    }
+
     const ejercicio = await crearEjercicio({
       ...parsed.data,
       id_creador: req.usuario!.id_usuario,
     })
     res.status(201).json(ejercicio)
   } catch (error) {
+    if (!fileMoved && fs.existsSync(req.file!.path)) fs.unlinkSync(req.file!.path)
     if (!responderErrorPrisma(error, res)) throw error
   }
 }
 
 export async function putEjercicio(req: Request, res: Response): Promise<void> {
-  const parsed = editarEjercicioSchema.safeParse(req.body)
-  if (!parsed.success) {
-    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
-    return
-  }
+  const file = req.file
 
   try {
-    const ejercicio = await editarEjercicio(req.params.id as string, parsed.data)
+    const ejercicioExistente = await obtenerEjercicioPorId(req.params.id as string)
+    if (!ejercicioExistente) {
+      res.status(404).json({ mensaje: 'Ejercicio no encontrado' })
+      return
+    }
+
+    // Parse JSON fields from multipart form data
+    const body = { ...req.body }
+    if (body.grupos_musculares && typeof body.grupos_musculares === 'string') {
+      try { body.grupos_musculares = JSON.parse(body.grupos_musculares) } catch { body.grupos_musculares = [] }
+    }
+
+    const parsed = editarEjercicioSchema.safeParse(body)
+    if (!parsed.success) {
+      res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+      return
+    }
+
+    let urlMultimedia = ejercicioExistente.url_multimedia ?? undefined
+
+    // Si se sube nuevo archivo (imagen o video), borrar el anterior y guardar el nuevo
+    if (file) {
+      // Validar duración si es video
+      if (file.mimetype.startsWith('video/')) {
+        try {
+          const duration = await getVideoDuration(file.path)
+          if (duration > 5) {
+            fs.unlinkSync(file.path)
+            res.status(400).json({ mensaje: 'El video supera la duración máxima de 5 segundos' })
+            return
+          }
+        } catch (err) {
+          if (fs.existsSync(file.path)) fs.unlinkSync(file.path)
+          res.status(400).json({ mensaje: 'Error validando video' })
+          return
+        }
+      }
+
+      // Borrar archivo anterior si existe
+      if (ejercicioExistente.url_multimedia) {
+        await deleteFile(ejercicioExistente.url_multimedia)
+      }
+
+      // Guardar nuevo archivo
+      urlMultimedia = await saveFile(file.path, file.originalname)
+    }
+
+    const ejercicio = await editarEjercicio(req.params.id as string, {
+      ...parsed.data,
+      url_multimedia: urlMultimedia,
+    })
     res.json(ejercicio)
   } catch (error) {
+    if (file && fs.existsSync(file.path)) fs.unlinkSync(file.path)
     if (!responderErrorPrisma(error, res)) throw error
   }
 }

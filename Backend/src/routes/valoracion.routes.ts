@@ -28,11 +28,7 @@ router.get(
   verificarToken,
   verificarEstado(),
   requierePropiedad(async (req) => {
-    const valoracion = await prisma.valoracion.findFirst({
-      where: { id_usuario: req.params.id as string, activo: true },
-      select: { id_usuario: true },
-    })
-    return valoracion?.id_usuario ?? null
+    return req.params.id as string
   }, ['admin', 'entrenador']),
   getValoracionesPorUsuario,
 )

@@ -13,6 +13,7 @@ export interface CrearRutinaEjercicioData {
 
 export interface CrearRutinaData {
   id_usuario: string
+  id_valoracion: string
   nombre: string
   duracion?: string
   nivel?: string
@@ -29,10 +30,16 @@ export interface EditarRutinaData {
 }
 
 const DURACION_MAP: Record<string, string> = {
+  // Formato legacy (para compatibilidad con clientes antiguos)
   '4 semanas': 'cuatro_semanas',
   '8 semanas': 'ocho_semanas',
   '12 semanas': 'doce_semanas',
   '16 semanas': 'dieciseis_semanas',
+  // Formato enum (lo que envía el frontend actual)
+  'cuatro_semanas': 'cuatro_semanas',
+  'ocho_semanas': 'ocho_semanas',
+  'doce_semanas': 'doce_semanas',
+  'dieciseis_semanas': 'dieciseis_semanas',
 }
 
 function parsearDuracion(duracion?: string): string | null {
@@ -175,17 +182,26 @@ export async function crearRutina(data: CrearRutinaData, id_creador: string) {
 
   const duracionEnum = parsearDuracion(data.duracion)
 
-  const valoracionReciente = await prisma.valoracion.findFirst({
-    where: {
-      id_usuario: data.id_usuario,
+  const valoracion = await prisma.valoracion.findUnique({
+    where: { id_valoracion: data.id_valoracion },
+    select: {
+      id_valoracion: true,
+      id_usuario: true,
       activo: true,
-      rutina: null,
+      rutina: { select: { id_rutina: true } },
     },
-    orderBy: { fecha_creacion: 'desc' },
-    select: { id_valoracion: true },
   })
-  if (!valoracionReciente) {
-    throw new HttpError(400, 'El usuario no tiene valoraciones disponibles para asociar a una rutina')
+  if (!valoracion) {
+    throw new HttpError(404, 'Valoración no encontrada')
+  }
+  if (valoracion.id_usuario !== data.id_usuario) {
+    throw new HttpError(400, 'La valoración no pertenece a este usuario')
+  }
+  if (!valoracion.activo) {
+    throw new HttpError(400, 'La valoración no está activa')
+  }
+  if (valoracion.rutina) {
+    throw new HttpError(400, 'Esta valoración ya tiene una rutina')
   }
 
   return prisma.$transaction(async (tx) => {
@@ -193,7 +209,7 @@ export async function crearRutina(data: CrearRutinaData, id_creador: string) {
       data: {
         id_usuario: data.id_usuario,
         id_creador,
-        id_valoracion: valoracionReciente.id_valoracion,
+        id_valoracion: data.id_valoracion,
         nombre: data.nombre,
         duracion: duracionEnum as any,
         nivel: (data.nivel?.toLowerCase() ?? 'principiante') as any,

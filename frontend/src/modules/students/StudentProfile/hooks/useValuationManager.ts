@@ -31,6 +31,7 @@ interface UseValuationManagerDeps {
   setRoutineSuccess: (s: boolean) => void
   setShowNewRoutineModal: (v: boolean) => void
   setConfirmCancel: (c: 'valuation' | 'routine' | 'ai' | null) => void
+  setShowRoutineViewModal: (v: boolean) => void
   aiIntervalRef: React.MutableRefObject<number | null>
   exerciseCatalog: FrontendExercise[]
 }
@@ -61,6 +62,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     setShowNewRoutineModal,
     setConfirmCancel,
     confirmCancel,
+    setShowRoutineViewModal,
     aiIntervalRef,
     exerciseCatalog,
   } = deps
@@ -228,80 +230,29 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
   ])
 
   const openRoutineFromAssessment = useCallback((a: any) => {
+    if (a.routine) {
+      setShowRoutineViewModal(true)
+      return
+    }
     loadAssessmentIntoForm(a)
     setRoutineFromAssessment(true)
     setRoutineFromAI(false)
     const days = (a.diasDisponibles?.length ? a.diasDisponibles : ['Lunes', 'Miércoles', 'Viernes']) as string[]
-    const catalog = exerciseCatalog.length > 0 ? exerciseCatalog : []
-    const perDay = Math.max(1, Math.ceil(catalog.length / days.length))
-    const rows: RoutineRow[] = []
-    days.forEach((dia: string, di: number) => {
-      const chunk = catalog.slice(di * perDay, (di + 1) * perDay)
-      chunk.forEach((ex, ei) => {
-        rows.push({
-          id: `rv-${di}-${ei}`,
-          dia,
-          muscle: ex.muscleGroups[0] ?? '',
-          name: ex.name,
-          sets: '3',
-          reps: '10-12',
-          rest: '60 s',
-          weight: '',
-        })
-      })
-    })
-    const routineObj: AiRoutine = {
-      name: a.routine ?? 'Rutina personalizada',
-      description: `Rutina asociada a la valoración del estudiante: ${days.length} días por semana.`,
-      duration: '8 semanas',
-      frequency: `${days.length} días/semana`,
-      level: 'Intermedio',
-      rows,
-    }
-    setAiGeneratedRoutine(routineObj)
-    setRoutineForm({
-      name: routineObj.name,
-      description: routineObj.description,
-      duration: routineObj.duration,
-      frequency: routineObj.frequency,
-      level: routineObj.level,
-    })
-    setRoutineRows(rows)
-    setSelectedRoutineDay(rows.length ? rows[0].dia : null)
-    setRoutineDayPage(1)
     setRoutineDays(days)
-    setRoutineSnapshot(
-      JSON.stringify({
-        form: {
-          name: routineObj.name,
-          description: routineObj.description,
-          duration: routineObj.duration,
-          frequency: routineObj.frequency,
-          level: routineObj.level,
-        },
-        rows,
-      })
-    )
     setRoutineStep(1)
-    setRoutineViewMode(true)
+    setRoutineViewMode(false)
     setRoutineSuccess(false)
     setShowNewRoutineModal(true)
   }, [
     loadAssessmentIntoForm,
-    exerciseCatalog,
     setRoutineFromAssessment,
     setRoutineFromAI,
-    setAiGeneratedRoutine,
-    setRoutineForm,
-    setRoutineRows,
-    setSelectedRoutineDay,
-    setRoutineDayPage,
     setRoutineDays,
-    setRoutineSnapshot,
     setRoutineStep,
     setRoutineViewMode,
     setRoutineSuccess,
     setShowNewRoutineModal,
+    setShowRoutineViewModal,
   ])
 
   return {

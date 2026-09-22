@@ -23,11 +23,12 @@ interface MachineModalProps {
     zone: string
     status: 'active' | 'maintenance' | 'inactive'
     imageDataUrl: string
+    imageFile: File | null
     description: string
     muscleGroups: string[]
     recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
     observations: string
-    selectedIds: number[]
+    selectedIds: string[]
   }
   exercises: Exercise[]
   onClose: () => void
@@ -35,7 +36,7 @@ interface MachineModalProps {
   onFormChange: (form: any) => void
   onStepChange: (step: number) => void
   onConfirmClose: (v: boolean) => void
-  onToggleExerciseSelection: (id: number) => void
+  onToggleExerciseSelection: (id: string) => void
 }
 
 export function MachineModal(props: MachineModalProps) {
@@ -114,8 +115,8 @@ export function MachineModal(props: MachineModalProps) {
                     {props.step === 0 && (
                       <div className="space-y-4">
                         <ImageUpload
-                          value={props.form.imageDataUrl}
-                          onChange={dataUrl => props.onFormChange({ ...props.form, imageDataUrl: dataUrl })}
+                          value={props.form.imageFile ?? props.form.imageDataUrl}
+                          onChange={(file, previewUrl) => props.onFormChange({ ...props.form, imageFile: file, imageDataUrl: previewUrl ?? '' })}
                         />
                         <div className="flex flex-col gap-1">
                           <label className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Nombre <span style={{ color: 'rgba(244,56,67,1)' }}>*</span></label>
@@ -129,10 +130,10 @@ export function MachineModal(props: MachineModalProps) {
                               color: '#1A1A1E',
                               border: '1px solid transparent',
                             }}
-                            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
-                            onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
+                            onMouseEnter={e => { const t = e.target as HTMLElement; if (t !== document.activeElement) { t.style.background = meshInputHover; t.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { const t = e.target as HTMLElement; if (t !== document.activeElement) { t.style.background = meshInputBg; t.style.borderColor = 'transparent' } }}
+                            onFocus={e => { const t = e.target as HTMLElement; t.style.borderColor = BLUE; t.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; t.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                            onBlur={e => { const t = e.target as HTMLElement; t.style.borderColor = 'transparent'; t.style.background = meshInputBg; t.style.boxShadow = 'none' }}
                           />
                         </div>
                         <div>
@@ -144,10 +145,10 @@ export function MachineModal(props: MachineModalProps) {
                             rows={2}
                             className="w-full px-3 py-2 rounded-xl text-xs font-medium outline-none resize-none transition-all duration-200"
                             style={{ background: meshInputBg, color: '#1A1A1E', border: '1px solid transparent' }}
-                            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputHover; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-                            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = meshInputBg; e.target.style.borderColor = 'transparent' } }}
-                            onFocus={e => { e.target.style.borderColor = BLUE; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-                            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = meshInputBg; e.target.style.boxShadow = 'none' }}
+                            onMouseEnter={e => { const t = e.target as HTMLElement; if (t !== document.activeElement) { t.style.background = meshInputHover; t.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+                            onMouseLeave={e => { const t = e.target as HTMLElement; if (t !== document.activeElement) { t.style.background = meshInputBg; t.style.borderColor = 'transparent' } }}
+                            onFocus={e => { const t = e.target as HTMLElement; t.style.borderColor = BLUE; t.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; t.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+                            onBlur={e => { const t = e.target as HTMLElement; t.style.borderColor = 'transparent'; t.style.background = meshInputBg; t.style.boxShadow = 'none' }}
                           />
                         </div>
                         <StatusSelector

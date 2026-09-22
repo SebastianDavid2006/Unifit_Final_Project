@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import express, { type NextFunction, type Request, type Response } from 'express'
-import helmet from 'helmet'
+import path from 'path'
 import cors from 'cors'
 import morgan from 'morgan'
 import apiRoutes from './routes'
@@ -8,10 +8,42 @@ import { HttpError } from './utils/HttpError'
 
 const app = express()
 
-app.use(helmet())
-app.use(cors())
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+
+// Manual security headers (replacing helmet)
+app.use((req, res, next) => {
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin')
+  res.header('Cross-Origin-Opener-Policy', 'same-origin')
+  res.header('Cross-Origin-Embedder-Policy', 'unsafe-none')
+  res.header('X-Content-Type-Options', 'nosniff')
+  res.header('X-Frame-Options', 'SAMEORIGIN')
+  res.header('X-XSS-Protection', '0')
+  res.header('X-DNS-Prefetch-Control', 'off')
+  res.header('X-Download-Options', 'noopen')
+  res.header('X-Permitted-Cross-Domain-Policies', 'none')
+  res.header('Referrer-Policy', 'no-referrer')
+  res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  next()
+})
+
+app.use(cors({
+  origin: FRONTEND_URL,
+  credentials: true
+}))
+
 app.use(morgan('dev'))
 app.use(express.json())
+
+app.use('/uploads',
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true
+  }),
+  (req, res, next) => {
+    res.header('Cross-Origin-Resource-Policy', 'cross-origin')
+    next()
+  },
+  express.static(path.join(process.cwd(), 'uploads')))
 
 app.get('/health', (_req: Request, res: Response) => {
   res.json({ estado: 'ok', hora: new Date().toISOString() })

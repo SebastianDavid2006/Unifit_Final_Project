@@ -1,3 +1,5 @@
+import { getImageUrl } from '@/lib/config'
+
 const GRUPO_MUSCULAR_BACK_TO_FRONT: Record<string, string> = {
   pecho: 'Pecho',
   espalda: 'Espalda',
@@ -58,7 +60,7 @@ const DURACION_FRONT_TO_BACK: Record<string, string> = Object.fromEntries(
 const OBJETIVO_BACK_TO_FRONT: Record<string, string> = {
   perdida_peso: 'Pérdida de peso',
   ganancia_muscular: 'Ganancia muscular',
-  acondicionamiento_fisico: 'Acondicionamiento físico',
+  acondicionamiento_fisico: 'Acondicionamiento fisico',
   salud: 'Salud',
   rendimiento_deportivo: 'Rendimiento deportivo',
   otro: 'Otro',

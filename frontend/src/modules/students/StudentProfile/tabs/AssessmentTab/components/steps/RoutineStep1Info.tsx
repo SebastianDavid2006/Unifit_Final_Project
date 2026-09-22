@@ -60,10 +60,10 @@ export function RoutineStep1Info({
             style={SELECT_STYLE}
           >
             <option value="">Seleccionar</option>
-            <option value="4 semanas">4 semanas</option>
-            <option value="8 semanas">8 semanas</option>
-            <option value="12 semanas">12 semanas</option>
-            <option value="16 semanas">16 semanas</option>
+            <option value="cuatro_semanas">4 semanas</option>
+            <option value="ocho_semanas">8 semanas</option>
+            <option value="doce_semanas">12 semanas</option>
+            <option value="dieciseis_semanas">16 semanas</option>
           </select>
         </div>
         <div>

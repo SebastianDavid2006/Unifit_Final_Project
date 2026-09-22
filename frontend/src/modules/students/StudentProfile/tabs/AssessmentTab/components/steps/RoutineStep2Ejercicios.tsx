@@ -81,7 +81,6 @@ function ExerciseRow({
 }) {
   return (
     <motion.div
-      key={row.id}
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(i * 0.04, 0.3) }}
@@ -385,6 +384,7 @@ export function RoutineStep2Ejercicios({
               </p>
             ) : dayRows.map((row, i) => (
               <ExerciseRow
+                key={row.id}
                 row={row}
                 i={i}
                 routineViewMode={routineViewMode}

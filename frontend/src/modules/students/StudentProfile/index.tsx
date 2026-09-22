@@ -82,6 +82,7 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
   const [valuationViewMode, setValuationViewMode] = useState(false)
   const [routineViewMode, setRoutineViewMode] = useState(false)
   const [routineFromAssessment, setRoutineFromAssessment] = useState(false)
+  const [routineValoracionId, setRoutineValoracionId] = useState<string | null>(null)
   const [routineSnapshot, setRoutineSnapshot] = useState('')
   const [routineFromAI, setRoutineFromAI] = useState(false)
   const [routineDays, setRoutineDays] = useState<string[]>([])
@@ -108,10 +109,17 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
   // Fetch assessments from backend
   useEffect(() => {
     if (!student.id) return
+    console.log('[StudentProfile] Fetching valoraciones for student.id:', student.id)
     setLoadingAssessments(true)
     getValoracionesPorUsuario(student.id)
-      .then(setAssessments)
-      .catch(() => setAssessments([]))
+      .then((data) => {
+        console.log('[StudentProfile] Valoraciones received:', data)
+        setAssessments(data)
+      })
+      .catch((err) => {
+        console.error('[StudentProfile] Error fetching valoraciones:', err)
+        setAssessments([])
+      })
       .finally(() => setLoadingAssessments(false))
   }, [student.id])
 
@@ -189,6 +197,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
     setValuationViewMode,
     setRoutineViewMode,
     setRoutineFromAssessment,
+    setRoutineValoracionId,
     setRoutineSnapshot,
     setRoutineFromAI,
     setAiGenerating,
@@ -203,6 +212,8 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
     setRoutineSuccess,
     setShowNewRoutineModal,
     setConfirmCancel,
+    setShowRoutineViewModal,
+    setCurrentRoutine,
     aiIntervalRef,
     exerciseCatalog,
   })
@@ -256,7 +267,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                   canCreateValuation={canCreateValuation}
                   pagedAssessments={pagedAssessments}
                   totalAssessments={assessments.length}
-                  ultimaRutina={assessments[0]?.routine ?? ''}
+                  ultimaRutina={assessments[0]?.routine?.nombre ?? ''}
                   proximaValoracion={assessments[0]?.next ?? null}
                   assessmentPage={assessmentPage}
                   setAssessmentPage={setAssessmentPage}
@@ -395,7 +406,10 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           valuationSuccess={valuationSuccess}
           setValuationSuccess={setValuationSuccess}
           aiGenerating={aiGenerating}
-          startAiRoutine={startAiRoutine}
+          startAiRoutine={() => {
+            if (valuationViewMode && selectedAssessment) setRoutineValoracionId(selectedAssessment.id)
+            startAiRoutine()
+          }}
           onClose={() => {
             setShowNewValuationModal(false)
             setValuationSuccess(false)
@@ -425,10 +439,11 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onSave={async () => {
             setSavingValuation(true)
             try {
-              await crearValoracion({
+              const created = await crearValoracion({
                 ...valuationForm,
                 id_usuario: student.id,
               })
+              setRoutineValoracionId(created?.id_valoracion ?? null)
               const updated = await getValoracionesPorUsuario(student.id)
               setAssessments(updated)
               setLastValuationObjectives(valuationForm.objetivoTarjetas.length)
@@ -486,22 +501,41 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                     </div>
                   </motion.button>
 
-                  <motion.button
-                    whileHover={{ scale: 1.04, y: -6 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => { setShowAssessmentOptions(false); openRoutineFromAssessment(selectedAssessment) }}
-                    className="relative w-80 h-96 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
-                    style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
-                  >
-                    <img src={routineSceneImg} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-110 translate-y-4" />
-                    <div className="absolute inset-0 pointer-events-none" style={{
-                      background: 'linear-gradient(to top, rgba(26,138,63,0.95) 0%, rgba(48,209,88,0.55) 35%, transparent 72%)',
-                    }} />
-                    <div className="relative z-10 flex flex-col items-center">
-                      <span className="text-xl font-extrabold text-white tracking-tight">Ver Rutina</span>
-                      <span className="text-[11px] text-white/60 mt-1">Ejercicios y series asignados</span>
-                    </div>
-                  </motion.button>
+                  {selectedAssessment.routine ? (
+                    <motion.button
+                      whileHover={{ scale: 1.04, y: -6 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => { setShowAssessmentOptions(false); openRoutineFromAssessment(selectedAssessment) }}
+                      className="relative w-80 h-96 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
+                      style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+                    >
+                      <img src={routineSceneImg} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-110 translate-y-4" />
+                      <div className="absolute inset-0 pointer-events-none" style={{
+                        background: 'linear-gradient(to top, rgba(26,138,63,0.95) 0%, rgba(48,209,88,0.55) 35%, transparent 72%)',
+                      }} />
+                      <div className="relative z-10 flex flex-col items-center">
+                        <span className="text-xl font-extrabold text-white tracking-tight">Ver Rutina</span>
+                        <span className="text-[11px] text-white/60 mt-1">Ejercicios y series asignados</span>
+                      </div>
+                    </motion.button>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.04, y: -6 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => { setShowAssessmentOptions(false); openRoutineFromAssessment(selectedAssessment) }}
+                      className="relative w-80 h-96 rounded-3xl flex flex-col items-center justify-end p-8 overflow-hidden cursor-pointer"
+                      style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+                    >
+                      <img src={routineSceneImg} alt="" className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-110 translate-y-4" />
+                      <div className="absolute inset-0 pointer-events-none" style={{
+                        background: 'linear-gradient(to top, rgba(26,138,63,0.95) 0%, rgba(48,209,88,0.55) 35%, transparent 72%)',
+                      }} />
+                      <div className="relative z-10 flex flex-col items-center">
+                        <span className="text-xl font-extrabold text-white tracking-tight">Crear Rutina</span>
+                        <span className="text-[11px] text-white/60 mt-1">Generar rutina con IA o manual</span>
+                      </div>
+                    </motion.button>
+                  )}
                 </div>
               </motion.div>
             </motion.div>
@@ -569,11 +603,16 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onClose={() => setShowNewRoutineModal(false)}
           onRequestClose={() => setConfirmCancel('routine')}
           onCreated={async () => {
+            if (!routineValoracionId) {
+              alert('No se encontró la valoración asociada. Crea primero una valoración para este estudiante.')
+              return
+            }
             try {
               const { crearRutina } = await import('@/services/rutina.service')
               const exerciseMap = new Map(exerciseCatalog.map(e => [e.name, e.id]))
               await crearRutina({
                 id_usuario: student.id,
+                id_valoracion: routineValoracionId,
                 nombre: routineForm.name || 'Rutina personalizada',
                 duracion: routineForm.duration || '8 semanas',
                 nivel: routineForm.level || 'Intermedio',
@@ -588,11 +627,15 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                     rest: parseInt(r.rest) || 60,
                   })),
               })
+              // Refrescar valoraciones para que aparezca la rutina asociada
+              const updated = await getValoracionesPorUsuario(student.id)
+              setAssessments(updated)
             } catch (err) {
               console.error('Error saving routine:', err)
             }
             setShowNewRoutineModal(false)
             setRoutineFromAssessment(false)
+            setRoutineValoracionId(null)
             setRoutineSnapshot('')
             setRoutineDays([])
             setShowAddDayMenu(false)

@@ -9,6 +9,7 @@ import {
 import { verificarEstado } from '../middlewares/verificarEstado'
 import { verificarToken } from '../middlewares/verificarToken'
 import { requiereRol } from '../middlewares/requiereRol'
+import { uploadMultimedia } from '../middlewares/uploadMultimedia'
 
 const router = Router()
 
@@ -20,6 +21,7 @@ router.post(
   verificarToken,
   verificarEstado(),
   requiereRol('admin', 'entrenador'),
+  uploadMultimedia('machine').single('media'),
   postMaquina,
 )
 
@@ -28,6 +30,7 @@ router.put(
   verificarToken,
   verificarEstado(),
   requiereRol('admin'),
+  uploadMultimedia('machine').single('media'),
   putMaquina,
 )
 

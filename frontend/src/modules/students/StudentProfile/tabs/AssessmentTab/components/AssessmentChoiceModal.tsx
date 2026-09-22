@@ -7,11 +7,13 @@ interface AssessmentChoiceModalProps {
   assessment: any
   onViewValuation: () => void
   onViewRoutine: () => void
+  onCreateRoutine: () => void
   onClose: () => void
 }
 
-export function AssessmentChoiceModal({ isOpen, assessment, onViewValuation, onViewRoutine, onClose }: AssessmentChoiceModalProps) {
+export function AssessmentChoiceModal({ isOpen, assessment, onViewValuation, onViewRoutine, onCreateRoutine, onClose }: AssessmentChoiceModalProps) {
   if (!isOpen || !assessment) return null
+  const hasRoutine = !!assessment.routine
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -35,7 +37,7 @@ export function AssessmentChoiceModal({ isOpen, assessment, onViewValuation, onV
         }}
       >
         <div className="text-center mb-6">
-          <p className="text-sm font-semibold" style={{ color: 'rgba(0,0,0,0.4)' }}>¿Qué deseas visualizar?</p>
+          <p className="text-sm font-semibold" style={{ color: 'rgba(0,0,0,0.4)' }}>¿Qué deseas hacer?</p>
           <h3 className="text-lg font-bold mt-1" style={{ color: '#0D1B2A' }}>Valoración del {assessment.date}</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -58,7 +60,7 @@ export function AssessmentChoiceModal({ isOpen, assessment, onViewValuation, onV
           <motion.button
             whileHover={{ scale: 1.03, boxShadow: '0 8px 30px rgba(26,138,63,0.2)' }}
             whileTap={{ scale: 0.97 }}
-            onClick={onViewRoutine}
+            onClick={hasRoutine ? onViewRoutine : onCreateRoutine}
             className="relative rounded-2xl overflow-hidden h-48 flex flex-col items-center justify-center cursor-pointer"
             style={{ background: 'linear-gradient(135deg, rgba(26,138,63,0.08), rgba(26,138,63,0.02))', border: '1px solid rgba(26,138,63,0.15)' }}
           >
@@ -67,8 +69,8 @@ export function AssessmentChoiceModal({ isOpen, assessment, onViewValuation, onV
               background: 'linear-gradient(to top, rgba(26,138,63,0.95) 0%, rgba(48,209,88,0.55) 35%, transparent 72%)',
             }} />
             <div className="relative z-10 flex flex-col items-center">
-              <span className="text-xl font-extrabold text-white tracking-tight">Ver Rutina</span>
-              <span className="text-[11px] text-white/60 mt-1">Ejercicios y series asignados</span>
+              <span className="text-xl font-extrabold text-white tracking-tight">{hasRoutine ? 'Ver Rutina' : 'Crear Rutina'}</span>
+              <span className="text-[11px] text-white/60 mt-1">{hasRoutine ? 'Ejercicios y series asignados' : 'Generar rutina con IA o manual'}</span>
             </div>
           </motion.button>
         </div>

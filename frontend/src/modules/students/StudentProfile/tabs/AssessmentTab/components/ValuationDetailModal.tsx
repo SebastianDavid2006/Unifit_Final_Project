@@ -107,7 +107,7 @@ export function ValuationDetailModal({ isOpen, assessment, onClose }: ValuationD
           </div>
           <div className="rounded-xl px-3 py-2.5 flex items-center gap-2" style={{ background: 'rgba(0,0,0,0.02)' }}>
             <Dumbbell size={14} style={{ color: 'rgba(0,0,0,0.4)' }} />
-            <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{assessment.routine}</span>
+            <span className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{assessment.routine?.nombre}</span>
           </div>
         </div>
         <div>

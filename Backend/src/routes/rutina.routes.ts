@@ -28,11 +28,7 @@ router.get(
   verificarToken,
   verificarEstado(),
   requierePropiedad(async (req) => {
-    const rutina = await prisma.rutina.findFirst({
-      where: { id_usuario: req.params.id as string, estado: 'activa' },
-      select: { id_usuario: true },
-    })
-    return rutina?.id_usuario ?? null
+    return req.params.id as string
   }, ['admin', 'entrenador']),
   getRutinasPorUsuario,
 )

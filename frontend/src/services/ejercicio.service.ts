@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { getImageUrl } from '@/lib/config'
 import { mapGrupoMuscularFrontToBack, mapGrupoMuscularBackToFront, mapNivelFrontToBack, mapNivelBackToFront } from './mapper'
 
 export interface BackendEjercicio {
@@ -8,7 +9,7 @@ export interface BackendEjercicio {
   descripcion: string | null
   grupos_musculares: string[]
   nivel: string
-  url_multimedia: string | null
+  url_multimedia: string
   activo: boolean
   fecha_creacion: string
   fecha_modificacion: string
@@ -24,6 +25,11 @@ export interface FrontendExercise {
   recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
   imageUrl: string
   videoUrl: string
+  fecha_creacion: string
+}
+
+export interface CrearEjercicioData extends Omit<FrontendExercise, 'id' | 'fecha_creacion'> {
+  imageFile?: File | null
 }
 
 function mapBackendToFrontend(ej: BackendEjercicio): FrontendExercise {
@@ -35,8 +41,9 @@ function mapBackendToFrontend(ej: BackendEjercicio): FrontendExercise {
     status: ej.activo ? 'active' : 'inactive',
     muscleGroups: ej.grupos_musculares.map(mapGrupoMuscularBackToFront),
     recommendedLevel: mapNivelBackToFront(ej.nivel).toLowerCase() as 'principiante' | 'intermedio' | 'avanzado',
-    imageUrl: ej.url_multimedia ?? '',
+    imageUrl: getImageUrl(ej.url_multimedia),
     videoUrl: '',
+    fecha_creacion: ej.fecha_creacion,
   }
 }
 
@@ -52,7 +59,7 @@ function mapFrontendToBackend(ex: Partial<FrontendExercise>): {
   if (ex.description !== undefined) data.descripcion = ex.description
   if (ex.muscleGroups !== undefined) data.grupos_musculares = ex.muscleGroups.map(mapGrupoMuscularFrontToBack)
   if (ex.recommendedLevel !== undefined) data.nivel = mapNivelFrontToBack(ex.recommendedLevel)
-  if (ex.imageUrl !== undefined) data.url_multimedia = ex.imageUrl || null
+  if (ex.imageUrl !== undefined) data.url_multimedia = ex.imageUrl || ''
   return data
 }
 
@@ -66,9 +73,20 @@ export async function getEjercicioPorId(id: string): Promise<FrontendExercise> {
   return mapBackendToFrontend(data)
 }
 
-export async function crearEjercicio(exercise: Omit<FrontendExercise, 'id'>): Promise<FrontendExercise> {
-  const payload = mapFrontendToBackend(exercise)
-  const { data } = await api.post<BackendEjercicio>('/ejercicios', payload)
+export async function crearEjercicio(exercise: CrearEjercicioData): Promise<FrontendExercise> {
+  const formData = new FormData()
+  formData.append('nombre', exercise.name)
+  if (exercise.description) formData.append('descripcion', exercise.description)
+  if (exercise.muscleGroups?.length) {
+    const mappedGroups = exercise.muscleGroups.map(mapGrupoMuscularFrontToBack)
+    formData.append('grupos_musculares', JSON.stringify(mappedGroups))
+  }
+  if (exercise.recommendedLevel) formData.append('nivel', exercise.recommendedLevel)
+  if (exercise.imageFile) formData.append('media', exercise.imageFile)
+
+  const { data } = await api.post<BackendEjercicio>('/ejercicios', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
   return mapBackendToFrontend(data)
 }
 

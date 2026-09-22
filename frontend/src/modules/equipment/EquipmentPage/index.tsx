@@ -1,5 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import type { Machine, Exercise } from '@/data/shared/types'
+import type { FrontendMachine } from '@/services/maquina.service'
+import type { FrontendExercise } from '@/services/ejercicio.service'
 import { BLUE, RED } from '@/data/shared/constants'
 import { WeightsView } from '@/assets/models/ui/equipment/weights/WeightsModel'
 import { TrashView } from '@/assets/models/ui/actions/trash/TrashModel'
@@ -17,6 +19,7 @@ import { ExerciseManagerModal } from './components/ExerciseManagerModal'
 import { MachinePreviewModal } from './components/MachinePreviewModal'
 import { ExercisePreviewModal } from './components/ExercisePreviewModal'
 import { Toast } from './components/Toast'
+import { SaveErrorModal } from './components/SaveErrorModal'
 import Pagination from '@/features/admin/components/Pagination'
 
 interface Props {
@@ -132,7 +135,7 @@ export default function EquipmentPage(props: Props) {
           <MachineCardGrid
             machines={pagedMachines}
             exercises={ex.exercises}
-            onPreview={m => { setPreviewMachine(m); setPreviewMuscleFilter('all') }}
+            onPreview={m => { setPreviewMachine(m as Machine); setPreviewMuscleFilter('all') }}
           />
           {machineTotalPages > 1 && <Pagination page={machinePage} totalPages={machineTotalPages} onPage={setMachinePage} />}
         </>
@@ -140,7 +143,7 @@ export default function EquipmentPage(props: Props) {
         <>
           <ExerciseCardGrid
             exercises={pagedExercises}
-            onPreview={setPreviewExercise}
+            onPreview={e => setPreviewExercise(e as Exercise)}
           />
           {exerciseTotalPages > 1 && <Pagination page={exercisePage} totalPages={exerciseTotalPages} onPage={setExercisePage} />}
         </>
@@ -185,11 +188,11 @@ export default function EquipmentPage(props: Props) {
 
       {/* â”€â”€ Machine Preview Modal â”€â”€ */}
       <MachinePreviewModal
-        machine={previewMachine}
+        machine={previewMachine as FrontendMachine}
         exercises={ex.exercises}
         previewMuscleFilter={previewMuscleFilter}
         onMuscleFilterChange={setPreviewMuscleFilter}
-        onEdit={m => { setPreviewMachine(null); machine.openEdit(m) }}
+        onEdit={m => { setPreviewMachine(null); machine.openEdit(m as FrontendMachine) }}
         onDelete={m => setDeleteConfirm({ type: 'machine', id: m.id })}
         onClose={() => setPreviewMachine(null)}
         userRole={props.userRole}
@@ -197,8 +200,8 @@ export default function EquipmentPage(props: Props) {
 
       {/* â”€â”€ Exercise Preview Modal â”€â”€ */}
       <ExercisePreviewModal
-        exercise={previewExercise}
-        onEdit={e => { setPreviewExercise(null); ex.openEdit(e) }}
+        exercise={previewExercise as FrontendExercise}
+        onEdit={e => { setPreviewExercise(null); ex.openEdit(e as FrontendExercise) }}
         onDelete={e => setDeleteConfirm({ type: 'exercise', id: e.id })}
         onClose={() => setPreviewExercise(null)}
         userRole={props.userRole}
@@ -209,6 +212,13 @@ export default function EquipmentPage(props: Props) {
         confirm={deleteConfirm}
         onCancel={() => setDeleteConfirm(null)}
         onConfirm={handleDelete}
+      />
+
+      {/* â”€â”€ Save Error Modal â”€â”€ */}
+      <SaveErrorModal
+        show={!!(machine.saveError || ex.saveError)}
+        message={machine.saveError || ex.saveError}
+        onClose={() => { machine.clearSaveError(); ex.clearSaveError() }}
       />
 
       {/* â”€â”€ Delete Toast â”€â”€ */}

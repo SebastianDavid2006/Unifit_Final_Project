@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import type { RoutineRow } from '../../aiRoutineTypes'
 import { getEjercicios, type FrontendExercise } from '@/services/ejercicio.service'
 import { ROUTINE_CATEGORIES, ROUTINE_MUSCLE_TO_CAT } from '../../StudentProfileData'
@@ -62,6 +62,8 @@ export function useRoutineManager(deps: UseRoutineManagerDeps) {
   } = deps
 
   const [exerciseCatalog, setExerciseCatalog] = useState<FrontendExercise[]>([])
+  const rowIdCounter = useRef(0)
+  const dayIdCounter = useRef(0)
 
   useEffect(() => {
     getEjercicios().then(setExerciseCatalog).catch(console.error)
@@ -99,8 +101,9 @@ export function useRoutineManager(deps: UseRoutineManagerDeps) {
   const addRoutineRow = useCallback(
     (day?: string) => {
       const d = day || defaultRoutineDay() || 'Lunes'
+      rowIdCounter.current += 1
       setRoutineRows(prev => [...prev, {
-        id: `r-${Date.now()}`,
+        id: `r-${Date.now()}-${rowIdCounter.current}`,
         dia: d,
         muscle: '',
         name: '',
@@ -117,9 +120,10 @@ export function useRoutineManager(deps: UseRoutineManagerDeps) {
     (day: string) => {
       setRoutineDays(d => [...d, day])
       if (!routineRows.some(r => r.dia === day)) {
+        dayIdCounter.current += 1
         const stamp = Date.now()
         const defaults = exerciseCatalog.slice(0, 2).map((ex, ei) => ({
-          id: `ad-${stamp}-${ei}`,
+          id: `ad-${stamp}-${dayIdCounter.current}-${ei}`,
           dia: day,
           muscle: ex.muscleGroups[0] ?? '',
           name: ex.name,

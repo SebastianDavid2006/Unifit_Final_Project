@@ -1,12 +1,13 @@
 import { prisma } from '../utils/prisma'
 import { HttpError } from '../utils/HttpError'
+import { saveFile, deleteFile } from './storage'
 
 export interface CrearEjercicioData {
   nombre: string
   descripcion?: string
   grupos_musculares: string[]
   nivel?: string
-  url_multimedia?: string
+  url_multimedia: string
   id_creador: string
 }
 

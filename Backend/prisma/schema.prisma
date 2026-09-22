@@ -421,7 +421,7 @@ model Ejercicio {
   descripcion        String?
   grupos_musculares  GrupoMuscular[]
   nivel              NivelExperiencia @default(principiante)
-  url_multimedia     String?
+  url_multimedia     String           @default("")
   activo             Boolean          @default(true)
   fecha_creacion     DateTime         @default(now())
   fecha_modificacion DateTime         @updatedAt
@@ -438,7 +438,7 @@ model Maquina {
   descripcion        String?
   grupos_musculares  GrupoMuscular[]
   nivel              NivelExperiencia @default(principiante)
-  url_multimedia     String?
+  url_multimedia     String           @default("")
   estado             EstadoMaquina    @default(disponible)
   fecha_creacion     DateTime         @default(now())
   fecha_modificacion DateTime         @updatedAt

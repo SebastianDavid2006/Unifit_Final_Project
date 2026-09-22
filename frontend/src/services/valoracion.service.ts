@@ -25,6 +25,7 @@ export interface BackendValoracion {
   creador?: { id_usuario: string; primer_nombre: string; primer_apellido: string }
   datos_medicos?: { presion_arterial: string; edad_metabolica: number; agua_corporal: number; resistencia_muscular: number } | null
   medidas_corporales?: { peso: number; estatura: number; imc: number; grasa_corporal: number; masa_muscular: number; masa_magra: number; grasa_visceral: number } | null
+  rutina?: { id_rutina: string; nombre: string; fecha_creacion: string } | null
 }
 
 export interface AssessmentItem {
@@ -36,7 +37,7 @@ export interface AssessmentItem {
   type: string
   evaluador: string
   score: number
-  routine: string
+  routine?: { id: string; nombre: string; fechaCreacion: string } | null
   nivelActividad: string
   objetivoTarjetas: string[]
   objetivoDetalle: string
@@ -88,7 +89,7 @@ function mapBackendToFrontend(b: BackendValoracion, index: number): AssessmentIt
     type: b.tipo.charAt(0).toUpperCase() + b.tipo.slice(1),
     evaluador,
     score: formatScore(b),
-    routine: '',
+    routine: b.rutina ? { id: b.rutina.id_rutina, nombre: b.rutina.nombre, fechaCreacion: b.rutina.fecha_creacion } : null,
     nivelActividad: mapNivelActividadBackToFront(b.nivel_actividad),
     objetivoTarjetas: mapObjetivosArrayBackToFront(b.objetivos),
     objetivoDetalle: b.objetivo_detalle ?? '',

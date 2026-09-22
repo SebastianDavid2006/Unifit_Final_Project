@@ -22,6 +22,7 @@ const rutinaEjercicioSchema = z.object({
 
 const crearRutinaSchema = z.object({
   id_usuario: z.string().uuid(),
+  id_valoracion: z.string().uuid(),
   nombre: z.string().min(1),
   duracion: z.string().optional(),
   nivel: z.string().optional(),

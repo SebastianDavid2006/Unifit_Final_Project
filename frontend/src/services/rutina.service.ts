@@ -81,6 +81,7 @@ export async function getRutinaPorId(id: string): Promise<FrontendRutina> {
 
 export interface CrearRutinaPayload {
   id_usuario: string
+  id_valoracion: string
   nombre: string
   duracion?: string
   nivel?: string
@@ -98,6 +99,7 @@ export interface CrearRutinaPayload {
 
 export async function crearRutina(data: {
   id_usuario: string
+  id_valoracion: string
   nombre: string
   duracion: string
   nivel: string
@@ -112,6 +114,7 @@ export async function crearRutina(data: {
 }) {
   const payload: CrearRutinaPayload = {
     id_usuario: data.id_usuario,
+    id_valoracion: data.id_valoracion,
     nombre: data.nombre,
     duracion: mapDuracionFrontToBack(data.duracion) || undefined,
     nivel: data.nivel || undefined,

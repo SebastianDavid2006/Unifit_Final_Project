@@ -116,6 +116,7 @@ export async function obtenerValoracionPorId(id: string) {
       },
       datos_medicos: true,
       medidas_corporales: true,
+      rutina: { select: { id_rutina: true, nombre: true, fecha_creacion: true } },
     },
   })
 
@@ -142,6 +143,7 @@ export async function listarValoracionesPorUsuario(id_usuario: string) {
     include: {
       datos_medicos: true,
       medidas_corporales: true,
+      rutina: { select: { id_rutina: true, nombre: true, fecha_creacion: true } },
     },
     orderBy: { fecha_creacion: 'desc' },
   })
