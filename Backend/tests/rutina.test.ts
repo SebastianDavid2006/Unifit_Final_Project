@@ -14,6 +14,8 @@ let rutinaId: string
 let directoRutinaId: string
 let originalParqDirecto: boolean
 let valoracionId: string
+let valoracionIds: string[] = []
+let otraValoracionId: string
 
 beforeAll(async () => {
   const admin = await prisma.usuario.findUnique({ where: { email_contacto: 'admin@unifit.edu.co' } })
@@ -58,9 +60,10 @@ beforeAll(async () => {
     },
   })
   valoracionId = valoracion.id_valoracion
+  valoracionIds = [valoracionId]
 
   for (let i = 0; i < 5; i++) {
-    await prisma.valoracion.create({
+    const v = await prisma.valoracion.create({
       data: {
         id_usuario: directoId,
         id_creador: adminId,
@@ -69,7 +72,19 @@ beforeAll(async () => {
         dias_disponibles: ['lunes', 'miercoles', 'viernes'],
       },
     })
+    valoracionIds.push(v.id_valoracion)
   }
+
+  const otraValoracion = await prisma.valoracion.create({
+    data: {
+      id_usuario: inactivoId,
+      id_creador: adminId,
+      nivel_actividad: 'moderado',
+      tipo_antecedentes: ['osteomuscular'],
+      dias_disponibles: ['lunes', 'martes'],
+    },
+  })
+  otraValoracionId = otraValoracion.id_valoracion
 
   await prisma.sesionRutina.deleteMany()
   await prisma.rutinaEjercicio.deleteMany()
@@ -82,6 +97,7 @@ afterAll(async () => {
   await prisma.rutinaEjercicio.deleteMany()
   await prisma.rutina.deleteMany()
   await prisma.valoracion.deleteMany({ where: { id_usuario: directoId } }).catch(() => {})
+  await prisma.valoracion.deleteMany({ where: { id_usuario: inactivoId } }).catch(() => {})
   await prisma.ejercicio.deleteMany({ where: { id_ejercicio: { in: [ejercicioId1, ejercicioId2] } } }).catch(() => {})
 })
 
@@ -96,6 +112,7 @@ describe.sequential('Rutina - CRUD', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[0],
         nombre: 'Rutina Fuerza',
         duracion: '8 semanas',
         nivel: 'intermedio',
@@ -132,6 +149,7 @@ describe.sequential('Rutina - CRUD', () => {
       .set('Authorization', `Bearer ${token('entrenadorToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[1],
         nombre: 'Rutina Cardio',
         nivel: 'principiante',
         ejercicios: [
@@ -264,6 +282,7 @@ describe.sequential('Rutina - CRUD', () => {
       .set('Authorization', `Bearer ${token('entrenadorToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[2],
         nombre: 'Para desactivar',
         ejercicios: [
           {
@@ -301,6 +320,7 @@ describe('Rutina - Validación de datos', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[5],
         nombre: 'Sin ejercicios',
         ejercicios: [],
       })
@@ -314,6 +334,7 @@ describe('Rutina - Validación de datos', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[5],
         nombre: '',
         ejercicios: [
           {
@@ -334,6 +355,7 @@ describe('Rutina - Validación de datos', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: '00000000-0000-0000-0000-000000000000',
+        id_valoracion: valoracionIds[5],
         nombre: 'Test',
         ejercicios: [
           {
@@ -354,6 +376,7 @@ describe('Rutina - Validación de datos', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[5],
         nombre: 'FK test',
         ejercicios: [
           {
@@ -376,6 +399,7 @@ describe('Rutina - Normalización de campos', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[3],
         nombre: 'Rutina Normalizada',
         duracion: '8 semanas',
         nivel: 'Intermedio',
@@ -418,6 +442,7 @@ describe('Rutina - Normalización de campos', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[4],
         nombre: 'Rutina Sin Rango',
         ejercicios: [
           {
@@ -452,6 +477,7 @@ describe('Rutina - Validaciones de ejercicios', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[5],
         nombre: 'Muchas series',
         ejercicios: [
           {
@@ -472,6 +498,7 @@ describe('Rutina - Validaciones de ejercicios', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[5],
         nombre: 'Muchas reps',
         ejercicios: [
           {
@@ -492,6 +519,7 @@ describe('Rutina - Validaciones de ejercicios', () => {
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
+        id_valoracion: valoracionIds[5],
         nombre: 'Mucho descanso',
         ejercicios: [
           {
@@ -508,49 +536,13 @@ describe('Rutina - Validaciones de ejercicios', () => {
   })
 })
 
-describe('Rutina - Auto-asignación de valoración', () => {
-  it('POST /rutinas - auto-asigna id_valoracion si hay valoración reciente sin rutina', async () => {
-    const valoracion = await prisma.valoracion.findFirst({
-      where: { id_usuario: directoId, activo: true, rutina: null },
-      orderBy: { fecha_creacion: 'desc' },
-    })
-
-    if (!valoracion) return
-
+describe('Rutina - Validación de valoración', () => {
+  it('POST /rutinas - sin id_valoracion → 400 (obligatorio)', async () => {
     const res = await request(app)
       .post('/api/rutinas')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
         id_usuario: directoId,
-        nombre: 'Rutina con Valoración',
-        ejercicios: [
-          {
-            id_ejercicio: ejercicioId1,
-            dia_semana: 'lunes',
-            series: 3,
-            repeticiones_min: 10,
-          },
-        ],
-      })
-
-    expect(res.status).toBe(201)
-
-    const rutina = await prisma.rutina.findUnique({
-      where: { id_rutina: res.body.id_rutina },
-    })
-    expect(rutina?.id_valoracion).toBe(valoracion.id_valoracion)
-
-    await request(app)
-      .put(`/api/rutinas/${res.body.id_rutina}/desactivar`)
-      .set('Authorization', `Bearer ${token('adminToken')}`)
-  })
-
-  it('POST /rutinas - sin valoración disponible → 400', async () => {
-    const res = await request(app)
-      .post('/api/rutinas')
-      .set('Authorization', `Bearer ${token('adminToken')}`)
-      .send({
-        id_usuario: inactivoId,
         nombre: 'Sin valoración',
         ejercicios: [
           {
@@ -563,6 +555,71 @@ describe('Rutina - Auto-asignación de valoración', () => {
       })
 
     expect(res.status).toBe(400)
+  })
+
+  it('POST /rutinas - id_valoracion inexistente → 404', async () => {
+    const res = await request(app)
+      .post('/api/rutinas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        id_valoracion: '00000000-0000-0000-0000-000000000000',
+        nombre: 'Valoración inexistente',
+        ejercicios: [
+          {
+            id_ejercicio: ejercicioId1,
+            dia_semana: 'lunes',
+            series: 3,
+            repeticiones_min: 10,
+          },
+        ],
+      })
+
+    expect(res.status).toBe(404)
+  })
+
+  it('POST /rutinas - id_valoracion de otro usuario → 400', async () => {
+    const res = await request(app)
+      .post('/api/rutinas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        id_valoracion: otraValoracionId,
+        nombre: 'Valoración ajena',
+        ejercicios: [
+          {
+            id_ejercicio: ejercicioId1,
+            dia_semana: 'lunes',
+            series: 3,
+            repeticiones_min: 10,
+          },
+        ],
+      })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('La valoración no pertenece a este usuario')
+  })
+
+  it('POST /rutinas - valoración ya vinculada a otra rutina → 400', async () => {
+    const res = await request(app)
+      .post('/api/rutinas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        id_valoracion: valoracionId,
+        nombre: 'Segunda rutina misma valoración',
+        ejercicios: [
+          {
+            id_ejercicio: ejercicioId1,
+            dia_semana: 'lunes',
+            series: 3,
+            repeticiones_min: 10,
+          },
+        ],
+      })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('Esta valoración ya tiene una rutina')
   })
 })
 

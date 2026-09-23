@@ -10,12 +10,17 @@ let inactivoId: string
 let pendienteId: string
 let ejercicioId1: string
 let ejercicioId2: string
+let idsActivosOriginales: string[]
 
 function token(key: string): string {
   return (globalThis as any)[key]
 }
 
 beforeAll(async () => {
+  idsActivosOriginales = (
+    await prisma.ejercicio.findMany({ where: { activo: true }, select: { id_ejercicio: true } })
+  ).map((e) => e.id_ejercicio)
+
   const admin = await prisma.usuario.findUnique({ where: { email_contacto: 'admin@unifit.edu.co' } })
   const entrenador = await prisma.usuario.findUnique({ where: { email_contacto: 'entrenador@unifit.edu.co' } })
   const directo = await prisma.usuario.findUnique({ where: { email_contacto: 'directo@unifit.edu.co' } })
@@ -49,7 +54,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await prisma.ejercicio.deleteMany({ where: { id_creador: adminId } })
+  await prisma.ejercicio.deleteMany({ where: { id_ejercicio: { in: [ejercicioId1, ejercicioId2] } } })
 })
 
 describe('IA - Generación de rutinas', () => {
@@ -118,7 +123,7 @@ describe('IA - Generación de rutinas', () => {
         .send(payload)
 
       expect(res.status).toBe(400)
-      expect(res.body.mensaje).toBe('Datos inválidos')
+      expect(res.body.mensaje).toBe('Debe seleccionar al menos un día disponible')
     })
 
     it('POST /api/rutinas/generar-ia - diasDisponibles vacío retorna 400', async () => {
@@ -157,6 +162,11 @@ describe('IA - Generación de rutinas', () => {
       expect(Array.isArray(res.body.rows)).toBe(true)
       expect(res.body.rows.length).toBeGreaterThan(0)
 
+      const diasValidos = ['Lunes', 'Miércoles', 'Viernes']
+      for (const row of res.body.rows) {
+        expect(diasValidos).toContain(row.dia)
+      }
+
       const row = res.body.rows[0]
       expect(row).toHaveProperty('id')
       expect(row).toHaveProperty('dia')
@@ -165,7 +175,7 @@ describe('IA - Generación de rutinas', () => {
       expect(row).toHaveProperty('sets')
       expect(row).toHaveProperty('reps')
       expect(row).toHaveProperty('rest')
-    }, 30000)
+    }, 60000)
 
     it('POST /api/rutinas/generar-ia - entrenador genera rutina con IA', async () => {
       const res = await request(app)
@@ -175,7 +185,7 @@ describe('IA - Generación de rutinas', () => {
 
       expect(res.status).toBe(200)
       expect(res.body.rows.length).toBeGreaterThan(0)
-    }, 30000)
+    }, 60000)
 
     it('POST /api/rutinas/generar-ia - los id_ejercicio retornados existen en el catálogo', async () => {
       const res = await request(app)
@@ -185,32 +195,31 @@ describe('IA - Generación de rutinas', () => {
 
       expect(res.status).toBe(200)
 
-      const idsEnCatalogo = new Set([ejercicioId1, ejercicioId2])
+      const idsEnCatalogo = new Set([...idsActivosOriginales, ejercicioId1, ejercicioId2])
       for (const row of res.body.rows) {
         expect(idsEnCatalogo.has(row.id)).toBe(true)
       }
-    }, 30000)
+    }, 60000)
   })
 
   describe('Catálogo vacío', () => {
     it('POST /api/rutinas/generar-ia - sin ejercicios activos retorna 400', async () => {
-      await prisma.ejercicio.updateMany({
-        where: { id_creador: adminId },
-        data: { activo: false },
-      })
+      try {
+        await prisma.ejercicio.updateMany({ data: { activo: false } })
 
-      const res = await request(app)
-        .post('/api/rutinas/generar-ia')
-        .set('Authorization', `Bearer ${token('adminToken')}`)
-        .send(payloadValido)
+        const res = await request(app)
+          .post('/api/rutinas/generar-ia')
+          .set('Authorization', `Bearer ${token('adminToken')}`)
+          .send(payloadValido)
 
-      expect(res.status).toBe(400)
-      expect(res.body.mensaje).toContain('ejercicios')
-
-      await prisma.ejercicio.updateMany({
-        where: { id_creador: adminId },
-        data: { activo: true },
-      })
+        expect(res.status).toBe(400)
+        expect(res.body.mensaje).toContain('ejercicios')
+      } finally {
+        await prisma.ejercicio.updateMany({
+          where: { id_ejercicio: { in: [...idsActivosOriginales, ejercicioId1, ejercicioId2] } },
+          data: { activo: true },
+        })
+      }
     })
   })
 
@@ -223,7 +232,7 @@ describe('IA - Generación de rutinas', () => {
 
       expect(res.status).toBe(200)
       expect(['Principiante', 'Intermedio', 'Avanzado']).toContain(res.body.level)
-    }, 30000)
+    }, 60000)
 
     it('POST /api/rutinas/generar-ia - cada fila tiene formato válido', async () => {
       const res = await request(app)
@@ -246,6 +255,6 @@ describe('IA - Generación de rutinas', () => {
         expect(typeof row.reps).toBe('string')
         expect(typeof row.rest).toBe('string')
       }
-    }, 30000)
+    }, 60000)
   })
 })

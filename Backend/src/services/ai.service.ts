@@ -46,6 +46,53 @@ const routineResponseSchema = z.object({
 
 type RoutineRow = z.infer<typeof routineRowSchema>
 
+// --- Nivel del usuario: NivelActividad (valoración) -> NivelExperiencia (catálogo) ---
+const NIVEL_ORDEN: Record<string, number> = {
+  principiante: 1,
+  intermedio: 2,
+  avanzado: 3,
+}
+
+const NIVEL_LABEL: Record<string, string> = {
+  principiante: 'Principiante',
+  intermedio: 'Intermedio',
+  avanzado: 'Avanzado',
+}
+
+const ACTIVIDAD_A_NIVEL: Record<string, keyof typeof NIVEL_ORDEN> = {
+  sedentario: 'principiante',
+  ligero: 'principiante',
+  moderado: 'intermedio',
+  activo: 'intermedio',
+  muy_activo: 'avanzado',
+}
+
+function nivelDesdeActividad(nivelActividad: string): string {
+  const normalizado = nivelActividad.toLowerCase().replace(/\s+/g, '_')
+  return ACTIVIDAD_A_NIVEL[normalizado] ?? 'principiante'
+}
+
+function nivelesPermitidos(nivelMaximo: string): string[] {
+  const tope = NIVEL_ORDEN[nivelMaximo] ?? 1
+  return Object.keys(NIVEL_ORDEN).filter((n) => NIVEL_ORDEN[n] <= tope)
+}
+
+// --- Días: normalización sin acentos (el enum Prisma usa "miercoles") ---
+const ACENTOS: Record<string, string> = {
+  á: 'a',
+  é: 'e',
+  í: 'i',
+  ó: 'o',
+  ú: 'u',
+}
+
+function normalizarDia(dia: string): string {
+  const t = dia.trim().toLowerCase()
+  return t.split('').map((c) => ACENTOS[c] ?? c).join('')
+}
+
+const DIAS_VALIDOS = new Set(['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'])
+
 function anonimizar(input: GenerarRutinaInput) {
   return {
     nivelActividad: input.nivelActividad,
@@ -67,7 +114,10 @@ function anonimizar(input: GenerarRutinaInput) {
   }
 }
 
-function construirPrompt(ejercicios: Array<{ id: string; nombre: string; grupos: string[]; nivel: string }>) {
+function construirPrompt(
+  ejercicios: Array<{ id: string; nombre: string; grupos: string[]; nivel: string }>,
+  contexto: { nivelMaximo: string; objetivos: string[]; dias: string[] },
+) {
   const catalogo = ejercicios.map((e) => ({
     id: e.id,
     nombre: e.nombre,
@@ -75,19 +125,36 @@ function construirPrompt(ejercicios: Array<{ id: string; nombre: string; grupos:
     nivel: e.nivel,
   }))
 
+  const nivelLabel = NIVEL_LABEL[contexto.nivelMaximo] ?? contexto.nivelMaximo
+
+  const content =
+    [
+      'Eres un entrenador físico profesional. Generas rutinas de entrenamiento personalizadas.',
+      'Debes responder ÚNICAMENTE con JSON válido, sin texto adicional, con esta estructura exacta: { "name": string, "description": string, "duration": string, "frequency": string, "level": "Principiante" | "Intermedio" | "Avanzado", "rows": [ { "id_ejercicio": string, "dia": string, "muscle": string, "name": string, "sets": string, "reps": string, "rest": string, "weight": string } ] }.',
+      '',
+      'REGLA DE SEGURIDAD — PRIORITARIA ANTE CUALQUIER OTRA:',
+      'El mensaje del usuario incluye sus antecedentes de salud ("antecedentes_salud"). Antes de elegir cada ejercicio debes revisarlos activamente y respetarlos:',
+      '- Si los antecedentes mencionan una zona corporal (por ejemplo, rodilla, espalda, hombro, pierna) o una condición (cardiovascular, metabólica, respiratoria, psiquiátrica), NO asignes ejercicios que carguen o comprometan esa zona ni ejercicios de alta exigencia sobre ella.',
+      '- Si un ejercicio del catálogo pudiera ser riesgoso por los antecedentes, sustitúyelo por uno que no comprometa esa zona, o reduce su exigencia (menos series, menos peso).',
+      '- Ante CUALQUIER duda sobre la seguridad de un ejercicio dados los antecedentes, EXCLUYE ese ejercicio y elige otro del catálogo. En la duda, excluir es siempre la opción correcta: nunca arriesgues la salud del usuario por llenar la rutina.',
+      '- Si existen VARIOS antecedentes a la vez, cada ejercicio debe cumplir TODAS las restricciones de forma simultánea: si un ejercicio viola al menos una de ellas, no lo uses, aunque cumpla las demás.',
+      '- La seguridad prevalece sobre la cantidad de ejercicios y sobre cualquier otro objetivo.',
+      '- Si "antecedentes_salud" llega vacío, incompleto o con etiquetas genéricas (por ejemplo, solo "Osteomuscular" sin detalle), NO asumas que el usuario no tiene limitaciones: aplica de todas formas un criterio conservador por defecto — intensidad moderada, sin esfuerzos máximos ni cargas altas en la primera semana, y progresión gradual.',
+      '',
+      `Nivel de experiencia del usuario: ${nivelLabel}. El catálogo ya fue filtrado a ejercicios permitidos para ese nivel.`,
+      '',
+      `Objetivos del usuario: ${contexto.objetivos.join(', ')}. Prioriza los ejercicios del catálogo que cubran estos objetivos, siempre que no contradigan la REGLA DE SEGURIDAD.`,
+      '',
+      `Días disponibles del usuario (usa exactamente estos días en "dia"): ${contexto.dias.join(', ')}.`,
+      '',
+      'No inventes id_ejercicio: usa solo los ids del catálogo. Cada fila pertenece a un único día de la lista anterior.',
+      '',
+      'Aquí está el catálogo de ejercicios disponibles con sus IDs reales:\n' + JSON.stringify(catalogo),
+    ].join('\n')
+
   return {
     role: 'system' as const,
-    content:
-      'Eres un entrenador físico profesional. Generas rutinas de entrenamiento personalizadas. ' +
-      'Solo puedes usar los ejercicios del catálogo proporcionado (por su id). ' +
-      'Debes responder ÚNICAMENTE con JSON válido, sin texto adicional, con esta estructura exacta: ' +
-      '{ "name": string, "description": string, "duration": string, "frequency": string, ' +
-      '"level": "Principiante" | "Intermedio" | "Avanzado", ' +
-      '"rows": [ { "id_ejercicio": string, "dia": string, "muscle": string, "name": string, ' +
-      '"sets": string, "reps": string, "rest": string, "weight": string } ] }. ' +
-      'Los días deben pertenecer a los días disponibles del usuario. No inventes id_ejercicio: usa solo ids del catálogo. ' +
-      'Aquí está el catálogo de ejercicios disponibles con sus IDs reales:\n' +
-      JSON.stringify(catalogo),
+    content,
   }
 }
 
@@ -103,14 +170,20 @@ function extraerJson(texto: string): unknown {
 async function llamarModelo(
   ejercicios: Array<{ id: string; nombre: string; grupos: string[]; nivel: string }>,
   datosAnonimos: unknown,
+  contexto: { nivelMaximo: string; objetivos: string[]; dias: string[] },
 ): Promise<{ name: string; description: string; duration: string; frequency: string; level: string; rows: RoutineRow[] }> {
   const response = await groq.chat.completions.create({
     model: MODELO_IA,
     temperature: 0.4,
     max_tokens: 4000,
     messages: [
-      construirPrompt(ejercicios),
-      { role: 'user', content: `Datos para la rutina (sin datos personales): ${JSON.stringify(datosAnonimos)}` },
+      construirPrompt(ejercicios, contexto),
+      {
+        role: 'user' as const,
+        content:
+          `Datos para la rutina (sin datos personales):\n${JSON.stringify(datosAnonimos)}\n\n` +
+          'IMPORTANTE: aplica la REGLA DE SEGURIDAD del prompt del sistema sobre los "antecedentes_salud" incluidos en estos datos; ante la duda, excluye el ejercicio.',
+      },
     ],
     response_format: { type: 'json_object' },
   })
@@ -137,11 +210,16 @@ export async function generarRutinaIA(input: GenerarRutinaInput) {
     },
   })
 
-  if (ejerciciosDb.length === 0) {
-    throw new HttpError(400, 'No hay ejercicios activos en el catálogo para generar la rutina')
+  const nivelMaximo = nivelDesdeActividad(input.nivelActividad)
+  const permitidos = new Set(nivelesPermitidos(nivelMaximo))
+  const ejerciciosFiltrados = ejerciciosDb.filter((e) => permitidos.has(e.nivel))
+
+  if (ejerciciosFiltrados.length === 0) {
+    const label = NIVEL_LABEL[nivelMaximo] ?? nivelMaximo
+    throw new HttpError(400, `No hay ejercicios activos para el nivel ${label} en el catálogo para generar la rutina`)
   }
 
-  const ejercicios = ejerciciosDb.map((e) => ({
+  const ejercicios = ejerciciosFiltrados.map((e) => ({
     id: e.id_ejercicio,
     nombre: e.nombre,
     grupos: (e.grupos_musculares as string[]) ?? [],
@@ -150,32 +228,56 @@ export async function generarRutinaIA(input: GenerarRutinaInput) {
 
   const datosAnonimos = anonimizar(input)
   const dias = input.diasDisponibles.slice(0, 6)
+  const diasNormalizados = new Set(
+    dias.map(normalizarDia).filter((d) => DIAS_VALIDOS.has(d)),
+  )
+  const contexto = { nivelMaximo, objetivos: input.objetivoTarjetas, dias }
 
   let respuesta: { name: string; description: string; duration: string; frequency: string; level: string; rows: RoutineRow[] }
   try {
-    respuesta = await llamarModelo(ejercicios, datosAnonimos)
+    respuesta = await llamarModelo(ejercicios, datosAnonimos, contexto)
   } catch (primerError) {
     if (primerError instanceof HttpError) throw primerError
     try {
-      respuesta = await llamarModelo(ejercicios, datosAnonimos)
+      respuesta = await llamarModelo(ejercicios, datosAnonimos, contexto)
     } catch {
       throw new HttpError(502, 'La IA no generó una rutina válida. Inténtalo de nuevo.')
     }
   }
 
   const catalogoPorId = new Map(ejercicios.map((e) => [e.id, e]))
-  const filasValidas = respuesta.rows.filter((r) => catalogoPorId.has(r.id_ejercicio))
+  const tope = NIVEL_ORDEN[nivelMaximo] ?? 1
+  const etiquetaPorDia = new Map(dias.map((d) => [normalizarDia(d), d]))
 
-  const rowsFinales = filasValidas.map((r) => ({
-    id: r.id_ejercicio,
-    dia: r.dia,
-    muscle: r.muscle,
-    name: r.name,
-    sets: r.sets,
-    reps: r.reps,
-    rest: r.rest,
-    weight: r.weight ?? '',
-  }))
+  const filasValidas = respuesta.rows.filter((r) => {
+    const cat = catalogoPorId.get(r.id_ejercicio)
+    if (!cat) return false
+    if (NIVEL_ORDEN[cat.nivel] > tope) return false
+    const dia = normalizarDia(r.dia)
+    if (!dia) return false
+    if (diasNormalizados.size > 0 && !diasNormalizados.has(dia)) return false
+    if (!DIAS_VALIDOS.has(dia)) return false
+    return true
+  })
+
+  const rowsFinales = filasValidas.map((r) => {
+    const cat = catalogoPorId.get(r.id_ejercicio)!
+    const grupos = (cat.grupos ?? []).filter(Boolean)
+    return {
+      id: r.id_ejercicio,
+      dia: etiquetaPorDia.get(normalizarDia(r.dia)) ?? normalizarDia(r.dia),
+      muscle: grupos.length > 0 ? grupos.join(', ') : r.muscle,
+      name: cat.nombre,
+      sets: r.sets,
+      reps: r.reps,
+      rest: r.rest,
+      weight: r.weight ?? '',
+    }
+  })
+
+  if (rowsFinales.length === 0) {
+    throw new HttpError(502, 'La IA no generó una rutina válida. Inténtalo de nuevo.')
+  }
 
   return {
     name: respuesta.name || 'Rutina IA',

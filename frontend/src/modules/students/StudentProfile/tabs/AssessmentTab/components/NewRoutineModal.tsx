@@ -264,6 +264,15 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
               />
             </motion.div>
 
+            {aiGeneratedRoutine && (
+              <p
+                className="text-[11px] leading-relaxed text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4"
+                style={{ borderColor: 'rgba(217,119,6,0.25)' }}
+              >
+                Recuerda: esta rutina fue sugerida por la IA. Revisa cada ejercicio (zona de carga, nivel, series y descanso) antes de guardarla, en especial si el estudiante reporta antecedentes médicos.
+              </p>
+            )}
+
             <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
               {routineStep > 1 ? (
                 <button

@@ -59,7 +59,7 @@ export async function getRutinasPorUsuario(req: Request, res: Response): Promise
 export async function postRutina(req: Request, res: Response): Promise<void> {
   const parsed = crearRutinaSchema.safeParse(req.body)
   if (!parsed.success) {
-    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+    res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
     return
   }
 
@@ -74,7 +74,7 @@ export async function postRutina(req: Request, res: Response): Promise<void> {
 export async function putRutina(req: Request, res: Response): Promise<void> {
   const parsed = editarRutinaSchema.safeParse(req.body)
   if (!parsed.success) {
-    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+    res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
     return
   }
 

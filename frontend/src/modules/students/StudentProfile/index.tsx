@@ -609,7 +609,6 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
             }
             try {
               const { crearRutina } = await import('@/services/rutina.service')
-              const exerciseMap = new Map(exerciseCatalog.map(e => [e.name, e.id]))
               await crearRutina({
                 id_usuario: student.id,
                 id_valoracion: routineValoracionId,
@@ -617,21 +616,20 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                 duracion: routineForm.duration || '8 semanas',
                 nivel: routineForm.level || 'Intermedio',
                 observaciones: routineForm.description || '',
-                ejercicios: routineRows
-                  .filter(r => r.name && exerciseMap.has(r.name))
-                  .map(r => ({
-                    id_ejercicio: exerciseMap.get(r.name)!,
-                    dia: r.dia,
-                    series: parseInt(r.sets) || 3,
-                    reps: r.reps || '10-12',
-                    rest: parseInt(r.rest) || 60,
-                  })),
+                ejercicios: routineRows.map(r => ({
+                  id_ejercicio: r.id,
+                  dia: r.dia,
+                  series: parseInt(r.sets) || 3,
+                  reps: r.reps || '10-12',
+                  rest: parseInt(r.rest) || 60,
+                })),
               })
               // Refrescar valoraciones para que aparezca la rutina asociada
               const updated = await getValoracionesPorUsuario(student.id)
               setAssessments(updated)
             } catch (err) {
               console.error('Error saving routine:', err)
+              alert(mensajeError(err))
             }
             setShowNewRoutineModal(false)
             setRoutineFromAssessment(false)
