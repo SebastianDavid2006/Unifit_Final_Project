@@ -204,6 +204,7 @@ describe('IA - Generación de rutinas', () => {
 
   describe('Catálogo vacío', () => {
     it('POST /api/rutinas/generar-ia - sin ejercicios activos retorna 400', async () => {
+      const estadoPrevio = await prisma.ejercicio.findMany({ select: { id_ejercicio: true, activo: true } })
       try {
         await prisma.ejercicio.updateMany({ data: { activo: false } })
 
@@ -215,10 +216,11 @@ describe('IA - Generación de rutinas', () => {
         expect(res.status).toBe(400)
         expect(res.body.mensaje).toContain('ejercicios')
       } finally {
-        await prisma.ejercicio.updateMany({
-          where: { id_ejercicio: { in: [...idsActivosOriginales, ejercicioId1, ejercicioId2] } },
-          data: { activo: true },
-        })
+        await prisma.$transaction(
+          estadoPrevio.map((e) =>
+            prisma.ejercicio.update({ where: { id_ejercicio: e.id_ejercicio }, data: { activo: e.activo } })
+          )
+        )
       }
     })
   })

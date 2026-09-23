@@ -3,6 +3,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import path from 'path'
 import cors from 'cors'
 import morgan from 'morgan'
+import multer from 'multer'
 import apiRoutes from './routes'
 import { HttpError } from './utils/HttpError'
 
@@ -58,6 +59,14 @@ app.use((_req: Request, res: Response) => {
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (error instanceof HttpError) {
     res.status(error.status).json({ mensaje: error.message })
+    return
+  }
+
+  if (error instanceof multer.MulterError) {
+    const mensaje = error.code === 'LIMIT_FILE_SIZE'
+      ? 'El archivo supera el tamaño máximo de 10 MB'
+      : 'Archivo multimedia inválido'
+    res.status(error.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({ mensaje })
     return
   }
 

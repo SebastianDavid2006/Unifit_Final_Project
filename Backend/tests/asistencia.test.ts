@@ -11,6 +11,48 @@ let directoId: string
 let huellaAdminId: string
 let huellaEntrenadorId: string
 let huellaDirectoId: string
+let indiceAdmin: number
+let indiceEntrenador: number
+let indiceDirecto: number
+
+// Limpieza acotada: solo se eliminan los registros creados durante ESTA corrida,
+// nunca los que ya existían (enrolamientos/asistencias reales del usuario).
+const TABLAS_LIMPIEZA: Array<{ model: any; id: string }> = [
+  { model: prisma.asistencia, id: 'id_asistencia' },
+  { model: prisma.huella, id: 'id_huella' },
+]
+const idsPrevios = new Map<string, Set<string>>()
+
+async function tomarIdsExistentes(): Promise<void> {
+  for (const tabla of TABLAS_LIMPIEZA) {
+    const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
+    idsPrevios.set(tabla.id, new Set(filas.map((f: any) => f[tabla.id])))
+  }
+}
+
+async function borrarSoloCreadosEnCorrida(): Promise<void> {
+  for (const tabla of TABLAS_LIMPIEZA) {
+    const previos = idsPrevios.get(tabla.id)
+    if (!previos) continue
+    const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
+    const nuevos = filas.filter((f: any) => !previos.has(f[tabla.id])).map((f: any) => f[tabla.id])
+    if (nuevos.length) await tabla.model.deleteMany({ where: { [tabla.id]: { in: nuevos } } })
+  }
+}
+
+// Elige índices de sensor libres para no chocar con enrolamientos reales existentes.
+async function indicesLibres(cantidad: number): Promise<number[]> {
+  const ocupados = new Set<number>()
+  const existentes = await prisma.huella.findMany({ select: { indice_sensor: true } })
+  for (const h of existentes) ocupados.add(h.indice_sensor)
+  const resultado: number[] = []
+  let candidato = 900
+  while (resultado.length < cantidad) {
+    if (!ocupados.has(candidato)) resultado.push(candidato)
+    candidato++
+  }
+  return resultado
+}
 
 beforeAll(async () => {
   const admin = await prisma.usuario.findUnique({ where: { email_contacto: 'admin@unifit.edu.co' } })
@@ -21,16 +63,21 @@ beforeAll(async () => {
   entrenadorId = entrenador!.id_usuario
   directoId = directo!.id_usuario
 
-  await prisma.huella.deleteMany()
+  await tomarIdsExistentes()
+
+  const [idxAdmin, idxEntrenador, idxDirecto] = await indicesLibres(3)
+  indiceAdmin = idxAdmin
+  indiceEntrenador = idxEntrenador
+  indiceDirecto = idxDirecto
 
   const hAdmin = await prisma.huella.create({
-    data: { id_usuario: adminId, indice_sensor: 1, activo: true },
+    data: { id_usuario: adminId, indice_sensor: indiceAdmin, activo: true },
   })
   const hEntrenador = await prisma.huella.create({
-    data: { id_usuario: entrenadorId, indice_sensor: 2, activo: true },
+    data: { id_usuario: entrenadorId, indice_sensor: indiceEntrenador, activo: true },
   })
   const hDirecto = await prisma.huella.create({
-    data: { id_usuario: directoId, indice_sensor: 3, activo: true },
+    data: { id_usuario: directoId, indice_sensor: indiceDirecto, activo: true },
   })
 
   huellaAdminId = hAdmin.id_huella
@@ -39,8 +86,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  await prisma.asistencia.deleteMany()
-  await prisma.huella.deleteMany()
+  await borrarSoloCreadosEnCorrida()
 })
 
 function token(key: string): string {
@@ -52,7 +98,7 @@ describe.sequential('Asistencia - Sensor', () => {
     const res = await request(app)
       .post('/api/asistencia/sensor')
       .set('x-api-key', API_KEY)
-      .send({ indice_sensor: 1 })
+      .send({ indice_sensor: indiceAdmin })
 
     expect(res.status).toBe(201)
     expect(res.body.tipo).toBe('entrada')
@@ -64,7 +110,7 @@ describe.sequential('Asistencia - Sensor', () => {
     const res = await request(app)
       .post('/api/asistencia/sensor')
       .set('x-api-key', API_KEY)
-      .send({ indice_sensor: 1 })
+      .send({ indice_sensor: indiceAdmin })
 
     expect(res.status).toBe(201)
     expect(res.body.tipo).toBe('salida')
@@ -75,7 +121,7 @@ describe.sequential('Asistencia - Sensor', () => {
   it('POST /asistencia/sensor - sin API key (401)', async () => {
     const res = await request(app)
       .post('/api/asistencia/sensor')
-      .send({ indice_sensor: 1 })
+      .send({ indice_sensor: indiceAdmin })
 
     expect(res.status).toBe(401)
   })
@@ -109,7 +155,7 @@ describe.sequential('Asistencia - Sensor', () => {
     const res = await request(app)
       .post('/api/asistencia/sensor')
       .set('x-api-key', API_KEY)
-      .send({ indice_sensor: 1 })
+      .send({ indice_sensor: indiceAdmin })
 
     expect(res.status).toBe(201)
     expect(res.body.tipo).toBe('salida')

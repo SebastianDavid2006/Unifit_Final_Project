@@ -12,6 +12,41 @@ let cupoId: string
 let citaEditableId: string
 let citaConCupoId: string
 
+// Limpieza acotada: solo se eliminan los registros creados durante ESTA corrida,
+// nunca los que ya existían (citas/cupos reales del usuario).
+// Orden respeta FK: Agenda referencia Cupo (id_cupo), así que se borra agenda primero.
+const TABLAS_LIMPIEZA: Array<{ model: any; id: string }> = [
+  { model: prisma.agenda, id: 'id_agenda' },
+  { model: prisma.cupo, id: 'id_cupo' },
+]
+const idsPrevios = new Map<string, Set<string>>()
+
+async function tomarIdsExistentes(): Promise<void> {
+  for (const tabla of TABLAS_LIMPIEZA) {
+    const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
+    idsPrevios.set(tabla.id, new Set(filas.map((f: any) => f[tabla.id])))
+  }
+}
+
+async function borrarSoloCreadosEnCorrida(): Promise<void> {
+  for (const tabla of TABLAS_LIMPIEZA) {
+    const previos = idsPrevios.get(tabla.id)
+    if (!previos) continue
+    const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
+    const nuevos = filas.filter((f: any) => !previos.has(f[tabla.id])).map((f: any) => f[tabla.id])
+    if (nuevos.length) await tabla.model.deleteMany({ where: { [tabla.id]: { in: nuevos } } })
+  }
+}
+
+// Cupos creados durante ESTA corrida (para que los tests solo operen sobre ellos,
+// nunca sobre cupos reales ya existentes).
+async function cuposCreadosEnCorrida(): Promise<string[]> {
+  const previos = idsPrevios.get('id_cupo')
+  if (!previos) return []
+  const filas = await prisma.cupo.findMany({ select: { id_cupo: true } })
+  return filas.filter((f) => !previos.has(f.id_cupo)).map((f) => f.id_cupo)
+}
+
 beforeAll(async () => {
   const admin = await prisma.usuario.findUnique({ where: { email_contacto: 'admin@unifit.edu.co' } })
   const entrenador = await prisma.usuario.findUnique({ where: { email_contacto: 'entrenador@unifit.edu.co' } })
@@ -22,11 +57,12 @@ beforeAll(async () => {
   entrenadorId = entrenador!.id_usuario
   directoId = directo!.id_usuario
   pendienteId = pendiente!.id_usuario
+
+  await tomarIdsExistentes()
 })
 
 afterAll(async () => {
-  await prisma.agenda.deleteMany().catch(() => {})
-  await prisma.cupo.deleteMany().catch(() => {})
+  await borrarSoloCreadosEnCorrida()
 })
 
 function token(key: string): string {
@@ -204,7 +240,8 @@ describe.sequential('Cupos - Publicación y reserva', () => {
     expect(res.status).toBe(201)
     expect(res.body.count).toBe(2)
 
-    const cupo = await prisma.cupo.findFirst({ where: { agenda: { is: null } } })
+    const cupos = await cuposCreadosEnCorrida()
+    const cupo = await prisma.cupo.findFirst({ where: { agenda: { is: null }, id_cupo: { in: cupos } } })
     cupoId = cupo!.id_cupo
   })
 
@@ -267,7 +304,8 @@ describe.sequential('Cupos - Publicación y reserva', () => {
   })
 
   it('POST /cupos/:id/reservar - usuario pendiente puede reservar (excepción)', async () => {
-    const cupo = await prisma.cupo.findFirst({ where: { agenda: { is: null } } })
+    const cuposLibres = await cuposCreadosEnCorrida()
+    const cupo = await prisma.cupo.findFirst({ where: { agenda: { is: null }, id_cupo: { in: cuposLibres } } })
     const res = await request(app)
       .post(`/api/cupos/${cupo!.id_cupo}/reservar`)
       .set('Authorization', `Bearer ${token('pendienteToken')}`)

@@ -9,6 +9,30 @@ let adminId: string
 let entrenadorId: string
 let directoId: string
 
+// Limpieza acotada: solo se eliminan los registros creados durante ESTA corrida,
+// nunca los que ya existían (enrolamientos reales del usuario).
+const TABLAS_LIMPIEZA: Array<{ model: any; id: string }> = [
+  { model: prisma.huella, id: 'id_huella' },
+]
+const idsPrevios = new Map<string, Set<string>>()
+
+async function tomarIdsExistentes(): Promise<void> {
+  for (const tabla of TABLAS_LIMPIEZA) {
+    const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
+    idsPrevios.set(tabla.id, new Set(filas.map((f: any) => f[tabla.id])))
+  }
+}
+
+async function borrarSoloCreadosEnCorrida(): Promise<void> {
+  for (const tabla of TABLAS_LIMPIEZA) {
+    const previos = idsPrevios.get(tabla.id)
+    if (!previos) continue
+    const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
+    const nuevos = filas.filter((f: any) => !previos.has(f[tabla.id])).map((f: any) => f[tabla.id])
+    if (nuevos.length) await tabla.model.deleteMany({ where: { [tabla.id]: { in: nuevos } } })
+  }
+}
+
 beforeAll(async () => {
   const admin = await prisma.usuario.findUnique({ where: { email_contacto: 'admin@unifit.edu.co' } })
   const entrenador = await prisma.usuario.findUnique({ where: { email_contacto: 'entrenador@unifit.edu.co' } })
@@ -17,10 +41,12 @@ beforeAll(async () => {
   adminId = admin!.id_usuario
   entrenadorId = entrenador!.id_usuario
   directoId = directo!.id_usuario
+
+  await tomarIdsExistentes()
 })
 
 afterAll(async () => {
-  await prisma.huella.deleteMany().catch(() => {})
+  await borrarSoloCreadosEnCorrida()
 })
 
 function token(key: string): string {

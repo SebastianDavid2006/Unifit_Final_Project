@@ -14,22 +14,22 @@ import { uploadMultimedia } from '../middlewares/uploadMultimedia'
 import { deleteFile, saveFile } from '../services/storage'
 
 const crearMaquinaSchema = z.object({
-  nombre: z.string({ message: 'El nombre es obligatorio' }).min(1, 'El nombre es obligatorio'),
+  nombre: z.string({ message: 'El nombre es obligatorio' }).trim().min(1, 'El nombre es obligatorio'),
   descripcion: z.string().optional(),
   grupos_musculares: z.array(
     z.string(),
     { message: 'Debes seleccionar al menos un grupo muscular' },
   ).min(1, 'Debes seleccionar al menos un grupo muscular'),
-  nivel: z.string().optional(),
+  nivel: z.enum(['principiante', 'intermedio', 'avanzado']).optional(),
   url_multimedia: z.string().min(1, 'La imagen es obligatoria'),
   ejercicioIds: z.array(z.string()).optional(),
 })
 
 const editarMaquinaSchema = z.object({
-  nombre: z.string().min(1).optional(),
+  nombre: z.string().trim().min(1).optional(),
   descripcion: z.string().optional(),
   grupos_musculares: z.array(z.string()).optional(),
-  nivel: z.string().optional(),
+  nivel: z.enum(['principiante', 'intermedio', 'avanzado']).optional(),
   url_multimedia: z.string().optional(),
   ejercicioIds: z.array(z.string()).optional(),
 })
@@ -56,45 +56,42 @@ export async function postMaquina(req: Request, res: Response): Promise<void> {
   }
 
   // Validar que sea imagen (ya validado en multer, pero doble check)
-  if (!req.file!.mimetype.startsWith('image/')) {
-    fs.unlinkSync(req.file!.path)
+  if (!file.mimetype.startsWith('image/')) {
+    fs.unlinkSync(file.path)
     res.status(400).json({ mensaje: 'Solo se permiten imágenes para máquinas' })
     return
   }
 
-  let fileMoved = false
+  // Validar el body ANTES de persistir el archivo (evita archivos huérfanos)
+  const body = { ...req.body }
+  if (body.grupos_musculares && typeof body.grupos_musculares === 'string') {
+    try { body.grupos_musculares = JSON.parse(body.grupos_musculares) } catch { body.grupos_musculares = [] }
+  }
+  if (body.ejercicioIds && typeof body.ejercicioIds === 'string') {
+    try { body.ejercicioIds = JSON.parse(body.ejercicioIds) } catch { body.ejercicioIds = [] }
+  }
+
+  const parsed = crearMaquinaSchema.omit({ url_multimedia: true }).safeParse(body)
+  if (!parsed.success) {
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path)
+    res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
+    return
+  }
 
   // Mover archivo a almacenamiento permanente
+  let urlMultimedia: string | undefined
   try {
-    const urlMultimedia = await saveFile(req.file!.path, req.file!.originalname)
-    fileMoved = true
-
-    // Parse JSON fields from multipart form data
-    const body = { ...req.body }
-    if (body.grupos_musculares && typeof body.grupos_musculares === 'string') {
-      try { body.grupos_musculares = JSON.parse(body.grupos_musculares) } catch { body.grupos_musculares = [] }
-    }
-    if (body.ejercicioIds && typeof body.ejercicioIds === 'string') {
-      try { body.ejercicioIds = JSON.parse(body.ejercicioIds) } catch { body.ejercicioIds = [] }
-    }
-
-    const parsed = crearMaquinaSchema.safeParse({
-      ...body,
-      url_multimedia: urlMultimedia,
-    })
-
-    if (!parsed.success) {
-      res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
-      return
-    }
-
+    urlMultimedia = await saveFile(file.path, file.originalname)
     const maquina = await crearMaquina({
       ...parsed.data,
+      url_multimedia: urlMultimedia,
       id_creador: req.usuario!.id_usuario,
     })
     res.status(201).json(maquina)
   } catch (error) {
-    if (!fileMoved && fs.existsSync(req.file!.path)) fs.unlinkSync(req.file!.path)
+    // Si el archivo ya se guardó pero la base falló (p.ej. FK), se limpia para no dejar huérfanos.
+    if (urlMultimedia) await deleteFile(urlMultimedia)
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path)
     if (!responderErrorPrisma(error, res)) throw error
   }
 }

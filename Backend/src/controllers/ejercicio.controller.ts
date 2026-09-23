@@ -18,21 +18,21 @@ import { saveFile, deleteFile } from '../services/storage'
 const VIDEO_MAX_SEGUNDOS = 10
 
 const crearEjercicioSchema = z.object({
-  nombre: z.string({ message: 'El nombre es obligatorio' }).min(1, 'El nombre es obligatorio'),
+  nombre: z.string({ message: 'El nombre es obligatorio' }).trim().min(1, 'El nombre es obligatorio'),
   descripcion: z.string().optional(),
   grupos_musculares: z.array(
     z.string(),
     { message: 'Debes seleccionar al menos un grupo muscular' },
   ).min(1, 'Debes seleccionar al menos un grupo muscular'),
-  nivel: z.string().optional(),
+  nivel: z.enum(['principiante', 'intermedio', 'avanzado']).optional(),
   url_multimedia: z.string().min(1, 'La imagen o video es obligatoria'),
 })
 
 const editarEjercicioSchema = z.object({
-  nombre: z.string().min(1).optional(),
+  nombre: z.string().trim().min(1).optional(),
   descripcion: z.string().optional(),
   grupos_musculares: z.array(z.string()).optional(),
-  nivel: z.string().optional(),
+  nivel: z.enum(['principiante', 'intermedio', 'avanzado']).optional(),
   url_multimedia: z.string().optional(),
 })
 
@@ -58,52 +58,49 @@ export async function postEjercicio(req: Request, res: Response): Promise<void> 
     return
   }
 
-  let fileMoved = false
-
   // Validar duración si es video
-  if (req.file!.mimetype.startsWith('video/')) {
+  if (file.mimetype.startsWith('video/')) {
     try {
-      const duration = await getVideoDuration(req.file!.path)
+      const duration = await getVideoDuration(file.path)
       if (duration > VIDEO_MAX_SEGUNDOS) {
-        fs.unlinkSync(req.file!.path)
+        fs.unlinkSync(file.path)
         res.status(400).json({ mensaje: `El video supera la duración máxima de ${VIDEO_MAX_SEGUNDOS} segundos` })
         return
       }
     } catch (err) {
-      if (fs.existsSync(req.file!.path)) fs.unlinkSync(req.file!.path)
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path)
       res.status(400).json({ mensaje: 'Error validando video' })
       return
     }
   }
 
+  // Validar el body ANTES de persistir el archivo (evita archivos huérfanos)
+  const body = { ...req.body }
+  if (body.grupos_musculares && typeof body.grupos_musculares === 'string') {
+    try { body.grupos_musculares = JSON.parse(body.grupos_musculares) } catch { body.grupos_musculares = [] }
+  }
+
+  const parsed = crearEjercicioSchema.omit({ url_multimedia: true }).safeParse(body)
+  if (!parsed.success) {
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path)
+    res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
+    return
+  }
+
   // Mover archivo a almacenamiento permanente
+  let mediaUrl: string | undefined
   try {
-    const mediaUrl = await saveFile(req.file!.path, req.file!.originalname)
-    fileMoved = true
-    // Validar el resto del body
-    // Parse JSON fields from multipart form data
-    const body = { ...req.body }
-    if (body.grupos_musculares && typeof body.grupos_musculares === 'string') {
-      try { body.grupos_musculares = JSON.parse(body.grupos_musculares) } catch { body.grupos_musculares = [] }
-    }
-
-    const parsed = crearEjercicioSchema.safeParse({
-      ...body,
-      url_multimedia: mediaUrl,
-    })
-
-    if (!parsed.success) {
-      res.status(400).json({ mensaje: Object.values(parsed.error.flatten().fieldErrors).flat()[0] ?? 'Datos inválidos', errores: parsed.error.flatten() })
-      return
-    }
-
+    mediaUrl = await saveFile(file.path, file.originalname)
     const ejercicio = await crearEjercicio({
       ...parsed.data,
+      url_multimedia: mediaUrl,
       id_creador: req.usuario!.id_usuario,
     })
     res.status(201).json(ejercicio)
   } catch (error) {
-    if (!fileMoved && fs.existsSync(req.file!.path)) fs.unlinkSync(req.file!.path)
+    // Si el archivo ya se guardó pero la base falló, se limpia para no dejar huérfanos.
+    if (mediaUrl) await deleteFile(mediaUrl)
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path)
     if (!responderErrorPrisma(error, res)) throw error
   }
 }

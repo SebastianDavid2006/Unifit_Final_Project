@@ -12,6 +12,36 @@ let valoracionId: string
 let directoValoracionId: string
 let originalParqDirecto: boolean
 
+// Limpieza acotada: solo se eliminan los registros creados durante ESTA corrida,
+// nunca los que ya existían (datos de trabajo reales del usuario).
+const TABLAS_LIMPIEZA: Array<{ model: any; id: string }> = [
+  { model: prisma.datosMedicos, id: 'id_datos' },
+  { model: prisma.medidasCorporales, id: 'id_medidas' },
+  { model: prisma.sesionRutina, id: 'id_sesion' },
+  { model: prisma.rutinaEjercicio, id: 'id_rutina_ejercicio' },
+  { model: prisma.rutina, id: 'id_rutina' },
+  { model: prisma.valoracion, id: 'id_valoracion' },
+]
+const idsPrevios = new Map<string, Set<string>>()
+
+async function tomarIdsExistentes(): Promise<void> {
+  for (const tabla of TABLAS_LIMPIEZA) {
+    const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
+    idsPrevios.set(tabla.id, new Set(filas.map((f: any) => f[tabla.id])))
+  }
+}
+
+// El orden respeta las claves foráneas (hijos antes que padres).
+async function borrarSoloCreadosEnCorrida(): Promise<void> {
+  for (const tabla of TABLAS_LIMPIEZA) {
+    const previos = idsPrevios.get(tabla.id)
+    if (!previos) continue
+    const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
+    const nuevos = filas.filter((f: any) => !previos.has(f[tabla.id])).map((f: any) => f[tabla.id])
+    if (nuevos.length) await tabla.model.deleteMany({ where: { [tabla.id]: { in: nuevos } } })
+  }
+}
+
 beforeAll(async () => {
   const admin = await prisma.usuario.findUnique({ where: { email_contacto: 'admin@unifit.edu.co' } })
   const entrenador = await prisma.usuario.findUnique({ where: { email_contacto: 'entrenador@unifit.edu.co' } })
@@ -28,22 +58,12 @@ beforeAll(async () => {
 
   await prisma.usuario.update({ where: { id_usuario: directoId }, data: { parq_realizado: true } })
 
-  await prisma.datosMedicos.deleteMany()
-  await prisma.medidasCorporales.deleteMany()
-  await prisma.sesionRutina.deleteMany()
-  await prisma.rutinaEjercicio.deleteMany()
-  await prisma.rutina.deleteMany()
-  await prisma.valoracion.deleteMany()
+  await tomarIdsExistentes()
 })
 
 afterAll(async () => {
   if (directoId) await prisma.usuario.update({ where: { id_usuario: directoId }, data: { parq_realizado: originalParqDirecto } }).catch(() => {})
-  await prisma.datosMedicos.deleteMany()
-  await prisma.medidasCorporales.deleteMany()
-  await prisma.sesionRutina.deleteMany()
-  await prisma.rutinaEjercicio.deleteMany()
-  await prisma.rutina.deleteMany()
-  await prisma.valoracion.deleteMany()
+  await borrarSoloCreadosEnCorrida()
 })
 
 function token(key: string): string {
