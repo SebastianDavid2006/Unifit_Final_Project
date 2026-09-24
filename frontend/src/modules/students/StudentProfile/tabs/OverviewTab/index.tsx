@@ -9,7 +9,7 @@ import { IdentityAccessCard } from '@/modules/students/components/IdentityAccess
 import type { Student } from '@/modules/students/StudentProfileData'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import { useMemo } from 'react'
-import { calcAge } from '@/lib/dateUtils'
+import { isMinor as isMinorHelper } from '@/lib/dateUtils'
 
 interface Props {
   student: Student
@@ -20,7 +20,7 @@ interface Props {
 
 export function OverviewTab({ student, imc, onShowInfo, onUpdate }: Props) {
   const isMobile = useIsMobile()
-  const isMinor = useMemo(() => calcAge(student.birthDate) < 18, [student.birthDate])
+  const isMinor = useMemo(() => isMinorHelper(student.birthDate), [student.birthDate])
 
   if (isMobile) {
     return (

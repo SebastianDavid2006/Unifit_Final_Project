@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Plus, Trash2, ChevronLeft, ChevronRight, Sparkles, PenLine } from 'lucide-react'
+import { X, Plus, Trash2, ChevronLeft, ChevronRight, Sparkles, PenLine, Bot } from 'lucide-react'
 import editGif from '@/assets/icons/animated/actions/edit.gif'
 import calendarImg from '@/assets/icons/objects/calendar.webp'
 import { meshInputBg } from '@/data/shared/constants'
@@ -114,6 +114,8 @@ function StepContent({
   aiGeneratedRoutine,
   routineEdited,
   routineFromAssessment,
+  hintMensaje,
+  buttonDisabled,
   ...rest
 }: {
   routineStep: number
@@ -135,6 +137,8 @@ function StepContent({
           aiGeneratedRoutine={aiGeneratedRoutine}
           routineEdited={routineEdited}
           routineFromAssessment={routineFromAssessment}
+          hintMensaje={hintMensaje}
+          buttonDisabled={buttonDisabled}
         />
       )
     case 2:
@@ -208,7 +212,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
       ? 'Debes agregar al menos un ejercicio a la rutina.'
       : incompletos.some(d => !routineRows.some(r => r.dia === d))
         ? 'Debes agregar al menos un ejercicio a cada día presente de la rutina.'
-        : 'Completa los datos incompletos de cada ejercicio.'
+        : 'Completa los datos faltantes de cada ejercicio.'
   if (!isOpen) return null
   const handleClose = () => {
     if (routineViewMode) {
@@ -316,31 +320,24 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                 exerciseCatalog={exerciseCatalog}
                 ROUTINE_MUSCLE_TO_CAT={ROUTINE_MUSCLE_TO_CAT}
                 meshInput={meshInput}
+                  hintMensaje={hintMensaje}
+                  buttonDisabled={buttonDisabled}
                   onCreated={onCreated}
                 />
               )}
             </motion.div>
 
-            {aiGeneratedRoutine && (
-              <p
-                className="text-[11px] leading-relaxed text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4"
-                style={{ borderColor: 'rgba(217,119,6,0.25)' }}
-              >
-                Recuerda: esta rutina fue sugerida por la IA. Revisa cada ejercicio (zona de carga, nivel, series y descanso) antes de guardarla, en especial si el estudiante reporta antecedentes médicos.
-              </p>
-            )}
-
-            {!routineViewMode && routineStep > 0 && buttonDisabled && (
-              <p
-                className="text-xs font-semibold rounded-xl px-3 py-2 mb-4"
-                style={{ background: 'rgba(217,119,6,0.08)', color: 'rgba(146,64,14,0.9)', border: '1px solid rgba(217,119,6,0.25)' }}
-              >
-                {hintMensaje}
-              </p>
-            )}
-
-            <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-              {routineStep !== 0 && (<>
+            <div className="flex flex-col gap-3 mt-6 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              {aiGeneratedRoutine && (
+                <div className="flex items-center gap-2 text-[11px] leading-relaxed text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2" style={{ borderColor: 'rgba(217,119,6,0.25)' }}>
+                  <Bot size={18} style={{ color: '#1270B7', flexShrink: 0 }} />
+                  <span>
+                    Recuerda: esta rutina fue sugerida por la IA. Revisa cada ejercicio (zona de carga, nivel, series y descanso) antes de guardarla, en especial si el estudiante reporta antecedentes médicos.
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                {routineStep !== 0 && (<>
               {routineStep > 1 ? (
                 <button
                   onClick={() => setRoutineStep(s => s - 1)}
@@ -372,6 +369,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                 </button>
               )}
               </>)}
+              </div>
             </div>
           </motion.div>
         </motion.div>

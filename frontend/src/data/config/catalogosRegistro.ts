@@ -27,5 +27,7 @@ export const MAP_PARENTESCO: Record<string, string> = {
   Padre: 'padre', Madre: 'madre', 'Hermano(a)': 'hermano_a', 'Abuelo(a)': 'abuelo_a',
   'Tío(a)': 'tio_a', 'Primo(a)': 'primo_a', Otro: 'otro',
 }
+export const LABEL_PARENTESCO: Record<string, string> =
+  Object.fromEntries(Object.entries(MAP_PARENTESCO).map(([label, value]) => [value, label]))
 export const MAP_JORNADA: Record<string, string> = { Mañana: 'diurna', Noche: 'nocturna', 'Fin de semana': 'finde' }
 export const MAP_MODALIDAD: Record<string, string> = { Presencial: 'presencial', Virtual: 'virtual' }

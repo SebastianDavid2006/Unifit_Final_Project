@@ -29,7 +29,7 @@ export default function AgendaPage() {
             return {
               name,
               id_usuario: u.id_usuario,
-              program: u.estudiante?.programa?.nombre_programa ?? undefined,
+              program: u.estudiante?.programa?.nombre ?? undefined,
               avatar: initials(name),
             }
           })

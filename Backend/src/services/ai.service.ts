@@ -132,6 +132,8 @@ function construirPrompt(
       'Eres un entrenador físico profesional. Generas rutinas de entrenamiento personalizadas.',
       'Debes responder ÚNICAMENTE con JSON válido, sin texto adicional, con esta estructura exacta: { "name": string, "description": string, "duration": string, "frequency": string, "level": "Principiante" | "Intermedio" | "Avanzado", "rows": [ { "id_ejercicio": string, "dia": string, "muscle": string, "name": string, "sets": string, "reps": string, "rest": string, "weight": string } ] }.',
       '',
+      'Además, "duration" debe ser exactamente UNO de estos valores: "cuatro_semanas", "ocho_semanas", "doce_semanas", "dieciseis_semanas". Elige el más acorde al perfil y objetivos del usuario (por defecto usa "ocho_semanas").',
+      '',
       'REGLA DE SEGURIDAD — PRIORITARIA ANTE CUALQUIER OTRA:',
       'El mensaje del usuario incluye sus antecedentes de salud ("antecedentes_salud"). Antes de elegir cada ejercicio debes revisarlos activamente y respetarlos:',
       '- Si los antecedentes mencionan una zona corporal (por ejemplo, rodilla, espalda, hombro, pierna) o una condición (cardiovascular, metabólica, respiratoria, psiquiátrica), NO asignes ejercicios que carguen o comprometan esa zona ni ejercicios de alta exigencia sobre ella.',
@@ -143,7 +145,11 @@ function construirPrompt(
       '',
       `Nivel de experiencia del usuario: ${nivelLabel}. El catálogo ya fue filtrado a ejercicios permitidos para ese nivel.`,
       '',
-      `Objetivos del usuario: ${contexto.objetivos.join(', ')}. Prioriza los ejercicios del catálogo que cubran estos objetivos, siempre que no contradigan la REGLA DE SEGURIDAD.`,
+      `Objetivos del usuario: ${contexto.objetivos.join(', ')}. Interpreta esos objetivos y elige ejercicios del catálogo cuya zona de trabajo ("grupos_musculares") esté relacionada con ellos. Guía de orientación: objetivos de resistencia, cardiovascular o maratón se asocian con cardio, piernas o tren_inferior/general; objetivos de fuerza con grupos de fuerza (pecho, espalda, hombros, brazos, piernas); objetivos de abdomen o core con abdomen_core; objetivos de tonificación con una mezcla equilibrada.`,
+      '',
+      `Si el catálogo filtrado no tiene ejercicios directamente afines al objetivo, elige los más cercanos disponibles (por ejemplo, piernas si no hay tren_inferior) y mantén variedad de grupos, pero NO rellenes la rutina con un único grupo ajeno al objetivo (por ejemplo, no llenes todos los días con espalda o abdomen_core) cuando existan alternativas más variadas. Todo siempre sin contradecir la REGLA DE SEGURIDAD.`,
+      '',
+      `Cantidad y parámetros: cada día de los listados debe llevar entre 3 y 6 ejercicios (usa la mayoría del catálogo si es pequeño; no repitas un ejercicio dentro del mismo día, aunque puede repetirse en días distintos). Varía "sets" entre 2 y 4, expresa "reps" como rango numérico (por ejemplo "8-12" o "10-15"; "20-30" para esfuerzo de condición física) y ajusta "rest" al tipo de esfuerzo (por ejemplo "60 seg" para fuerza y "90 seg" para movimientos compuestos exigentes).`,
       '',
       `Días disponibles del usuario (usa exactamente estos días en "dia"): ${contexto.dias.join(', ')}.`,
       '',
@@ -280,11 +286,11 @@ export async function generarRutinaIA(input: GenerarRutinaInput) {
   }
 
   return {
-    name: respuesta.name || 'Rutina IA',
-    description: respuesta.description || `Rutina generada con inteligencia artificial: ${dias.length} días por semana.`,
-    duration: respuesta.duration || '8 semanas',
-    frequency: respuesta.frequency || `${dias.length} días/semana`,
-    level: respuesta.level || (rowsFinales.length ? 'Intermedio' : 'Principiante'),
+    name: respuesta.name,
+    description: respuesta.description,
+    duration: respuesta.duration,
+    frequency: respuesta.frequency,
+    level: respuesta.level,
     rows: rowsFinales,
   }
 }

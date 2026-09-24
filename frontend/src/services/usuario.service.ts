@@ -29,10 +29,13 @@ export interface BackendUsuario {
   acepta_contrato?: boolean
   acepta_tratamiento?: boolean
   huella?: { id_huella: string; indice_sensor: number; activo: boolean; paso_enrolamiento: number | null } | null
-  estudiante?: { id_programa: string; semestre: number; modalidad: string; jornada: string; es_egresado?: boolean; numero_carnet?: string; programa?: { nombre_programa: string; universidad?: string } } | null
-  profesor?: { id_cargo: string; id_area: string; cargo?: { nombre_cargo: string }; area?: { nombre_area: string } } | null
-  administrativo?: { id_cargo: string; id_area: string; cargo?: { nombre_cargo: string }; area?: { nombre_area: string } } | null
-  acudiente_de?: { primer_nombre: string; segundo_nombre?: string; primer_apellido: string; segundo_apellido?: string; tipo_documento: string; documento: string; parentesco?: string; telefono_contacto?: string } | null
+  estudiante?: { id_programa: string; semestre: number; modalidad: string; jornada: string; es_egresado?: boolean; numero_carnet?: string; programa?: { id_programa: string; nombre: string; universidad?: string } | null } | null
+  profesor?: { id_cargo: string; id_area: string; cargo?: { nombre: string } | null; area?: { nombre: string } | null } | null
+  administrativo?: { id_cargo: string; id_area: string; cargo?: { nombre: string } | null; area?: { nombre: string } | null } | null
+  acudiente?: { primer_nombre: string; segundo_nombre?: string; primer_apellido: string; segundo_apellido?: string; tipo_documento: string; documento: string; parentesco?: string; telefono_contacto?: string } | null
+  valoraciones_count?: number
+  ultimo_ingreso?: string | null
+  proxima_valoracion?: string | null
 }
 
 export interface Trainer {
@@ -77,7 +80,7 @@ function buildAvatar(u: BackendUsuario) {
   return `${(u.primer_nombre ?? '')[0] ?? ''}${(u.primer_apellido ?? '')[0] ?? ''}`.toUpperCase()
 }
 
-import { formatDateES } from '@/lib/dateUtils'
+import { formatDateES, formatDateTimeES } from '@/lib/dateUtils'
 
 function formatDate(dateStr?: string): string {
   return formatDateES(dateStr, { day: '2-digit', month: 'short', year: 'numeric' })
@@ -110,19 +113,19 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
   const profesor = u.profesor
   const administrativo = u.administrativo
 
-  const program = estudiante?.programa?.nombre_programa ?? ''
-  const cargo = profesor?.cargo?.nombre_cargo ?? administrativo?.cargo?.nombre_cargo ?? undefined
-  const area = profesor?.area?.nombre_area ?? administrativo?.area?.nombre_area ?? undefined
+  const program = estudiante?.programa?.nombre ?? ''
+  const cargo = profesor?.cargo?.nombre ?? administrativo?.cargo?.nombre ?? undefined
+  const area = profesor?.area?.nombre ?? administrativo?.area?.nombre ?? undefined
 
-  const acudiente = u.acudiente_de ? {
-    primerNombre: u.acudiente_de.primer_nombre,
-    segundoNombre: u.acudiente_de.segundo_nombre ?? undefined,
-    primerApellido: u.acudiente_de.primer_apellido,
-    segundoApellido: u.acudiente_de.segundo_apellido ?? undefined,
-    tipoDocumento: u.acudiente_de.tipo_documento ?? 'CC',
-    documento: u.acudiente_de.documento ?? '',
-    parentesco: u.acudiente_de.parentesco ?? undefined,
-    telefonoContacto: u.acudiente_de.telefono_contacto ?? undefined,
+  const acudiente = u.acudiente ? {
+    primerNombre: u.acudiente.primer_nombre,
+    segundoNombre: u.acudiente.segundo_nombre ?? undefined,
+    primerApellido: u.acudiente.primer_apellido,
+    segundoApellido: u.acudiente.segundo_apellido ?? undefined,
+    tipoDocumento: u.acudiente.tipo_documento ?? 'CC',
+    documento: u.acudiente.documento ?? '',
+    parentesco: u.acudiente.parentesco ?? undefined,
+    telefonoContacto: u.acudiente.telefono_contacto ?? undefined,
   } : undefined
 
   return {
@@ -154,11 +157,12 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     graduationStatus: estudiante?.es_egresado ? 'Egresado' : 'No egresado',
     adherence: 0,
     status: STATUS_MAP[u.estado] ?? 'process',
-    lastVisit: '',
-    nextAssessment: 'Por agendar',
+    lastVisit: u.ultimo_ingreso ? formatDateTimeES(u.ultimo_ingreso) : '',
+    nextAssessment: u.proxima_valoracion ? formatDateTimeES(u.proxima_valoracion) : 'Por agendar',
     avatar: buildAvatar(u),
     goal: '',
     sessions: 0,
+    valoraciones: u.valoraciones_count ?? 0,
     weight: 0,
     height: 0,
     tipo_usuario: u.tipo_usuario,

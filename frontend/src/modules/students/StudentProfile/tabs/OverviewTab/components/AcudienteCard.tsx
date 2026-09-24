@@ -1,4 +1,5 @@
 import type { Student } from '@/modules/students/StudentProfileData'
+import { LABEL_PARENTESCO } from '@/data/config/catalogosRegistro'
 
 interface AcudienteCardProps {
   student: Student
@@ -15,7 +16,7 @@ export function AcudienteCard({ student, className = '' }: AcudienteCardProps) {
     ? [
         { label: 'Nombre completo', value: nombreCompleto },
         { label: 'Documento', value: `${ac!.tipoDocumento}. ${ac!.documento}` },
-        { label: 'Parentesco', value: ac!.parentesco ?? 'No registrado' },
+        { label: 'Parentesco', value: LABEL_PARENTESCO[ac!.parentesco ?? ''] ?? 'No registrado' },
         { label: 'Teléfono', value: ac!.telefonoContacto ?? 'No registrado' },
       ]
     : null

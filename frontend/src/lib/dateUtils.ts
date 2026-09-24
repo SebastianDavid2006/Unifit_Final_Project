@@ -23,6 +23,11 @@ export function formatDateES(date: string | undefined | null, options: Intl.Date
   return new Date(date!).toLocaleDateString('es-CO', options)
 }
 
+export function formatDateTimeES(date: string | undefined | null, options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }): string {
+  if (!isValidDate(date)) return 'No registrado'
+  return new Date(date!).toLocaleString('es-CO', options)
+}
+
 const MESES_ES: Record<string, number> = {
   ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5,
   jul: 6, ago: 7, sep: 8, oct: 9, nov: 10, dic: 11,

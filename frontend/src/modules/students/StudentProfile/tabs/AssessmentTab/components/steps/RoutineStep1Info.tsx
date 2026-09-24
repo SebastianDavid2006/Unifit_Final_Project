@@ -1,3 +1,4 @@
+import { AlertTriangle } from 'lucide-react'
 import type { AiRoutine } from '@/modules/students/aiRoutineTypes'
 
 interface RoutineStep1InfoProps {
@@ -7,6 +8,8 @@ interface RoutineStep1InfoProps {
   aiGeneratedRoutine: AiRoutine | null
   routineEdited: boolean
   routineFromAssessment: boolean
+  hintMensaje: string
+  buttonDisabled: boolean
 }
 
 const INPUT_STYLE = {
@@ -27,6 +30,8 @@ export function RoutineStep1Info({
   aiGeneratedRoutine,
   routineEdited,
   routineFromAssessment,
+  hintMensaje,
+  buttonDisabled,
 }: RoutineStep1InfoProps) {
   return (
     <div className="space-y-5 px-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
@@ -37,6 +42,15 @@ export function RoutineStep1Info({
             ? 'Ajusta los parámetros generales de la rutina (prellenados según la valoración).'
             : 'Configura los parámetros generales de la rutina.'}
       </p>
+      {!routineViewMode && buttonDisabled && (
+        <div className="flex items-start gap-2 rounded-xl px-3 py-2.5 mb-3" style={{ background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)' }}>
+          <AlertTriangle size={14} style={{ color: '#B45309', marginTop: 1 }} />
+          <div>
+            <p className="text-xs font-bold" style={{ color: 'rgba(146,64,14,0.9)' }}>Datos incompletos</p>
+            <p className="text-[11px] leading-snug mt-0.5" style={{ color: 'rgba(146,64,14,0.75)' }}>{hintMensaje}</p>
+          </div>
+        </div>
+      )}
       <div>
         <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre de la rutina <span className="text-red-500">*</span></label>
         <input

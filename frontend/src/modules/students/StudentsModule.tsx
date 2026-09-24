@@ -452,9 +452,9 @@ export default function StudentsModule({ students, search, onSearchChange, onSel
                       </div>
                       <p className="text-xs font-semibold truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.tipo_usuario === 'estudiante' ? s.program : `${s.cargo ?? '—'} — ${s.area ?? '—'}`}</p>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : 'rgba(18,112,183,0.1)', color: isProcess ? '#FFFFFF' : '#0E6FBF' }}>{s.tipo_usuario === 'estudiante' ? 'Estudiante' : s.tipo_usuario === 'profesor' ? 'Profesor' : 'Administrativo'}</span>
-                      <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : s.lastVisit}</p>
-                      <p className="text-xs font-bold" style={{ color: isProcess ? '#FFD6E0' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{s.nextAssessment}</p>
-                      <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'N/A' : Math.floor(s.sessions / 3)} <span className="font-normal">registros</span></p>
+                      <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'Completar proceso' : (s.lastVisit || 'Sin ingreso registrado')}</p>
+                      <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{isProcess ? 'Completar proceso' : s.nextAssessment}</p>
+                      <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'Completar proceso' : `${s.valoraciones} ${s.valoraciones === 1 ? 'registro' : 'registros'}`}</p>
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : statusMap[s.status].bg, color: isProcess ? '#FFFFFF' : statusMap[s.status].color }}>
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: isProcess ? '#FFFFFF' : statusMap[s.status].color }} />
                         {statusMap[s.status].label}

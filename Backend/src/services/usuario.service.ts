@@ -207,6 +207,9 @@ export async function listarUsuarios() {
       huella: { select: { id_huella: true, indice_sensor: true } },
       aceptaciones: { select: { id_doc_legal: true, documento: { select: { tipo: true } } } },
       acudiente_de: true,
+      _count: { select: { valoraciones: true } },
+      asistencias: { orderBy: { fecha: 'desc' }, take: 1, select: { hora_ingreso: true } },
+      valoraciones: { where: { activo: true }, orderBy: { fecha: 'desc' }, take: 1, select: { proxima_valoracion: true } },
     },
   })
 
@@ -221,6 +224,9 @@ export async function listarUsuarios() {
     acepta_contrato: u.aceptaciones.some((a) => a.documento.tipo === 'contrato_gym'),
     acepta_tratamiento: u.aceptaciones.some((a) => a.documento.tipo === 'tratamiento_datos'),
     acudiente: u.acudiente_de ?? null,
+    valoraciones_count: u._count.valoraciones,
+    ultimo_ingreso: u.asistencias[0]?.hora_ingreso ?? null,
+    proxima_valoracion: u.valoraciones[0]?.proxima_valoracion ?? null,
     estudiante: u.estudiante
       ? {
           id_programa: u.estudiante.id_programa,

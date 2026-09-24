@@ -229,6 +229,9 @@ export const registrarSchema = z
         if (!val.acudiente_documento?.trim()) {
           ctx.addIssue({ code: 'custom', path: ['acudiente_documento'], message: 'Documento del acudiente es requerido para menores de edad' })
         }
+        if (!val.acudiente_parentesco) {
+          ctx.addIssue({ code: 'custom', path: ['acudiente_parentesco'], message: 'Parentesco del acudiente es requerido para menores de edad' })
+        }
       }
     }
 

@@ -1,4 +1,5 @@
 ﻿import { Activity, BarChart2, Calendar, Target } from 'lucide-react'
+import type { Acudiente } from '@/data/students'
 
 export const ROUTINE_CATEGORIES = ['Pecho', 'Espalda', 'Hombros', 'Brazos', 'Piernas', 'Abdomen/Core', 'Cardio', 'General', 'Tren Superior', 'Tren Inferior']
 
@@ -58,16 +59,7 @@ export interface Student {
   cargo?: string
   firma?: string
   huella?: string
-  acudiente?: {
-    primerNombre: string
-    segundoNombre?: string
-    primerApellido: string
-    segundoApellido?: string
-    tipoDocumento: string
-    documento: string
-    parentesco?: string
-    telefonoContacto?: string
-  }
+  acudiente?: Acudiente
 }
 
 export const RED = '#E63946'

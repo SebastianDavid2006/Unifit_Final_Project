@@ -12,6 +12,7 @@ import { diasIncompletos } from '../routineValidation'
 
 interface RoutineStep2EjerciciosProps {
   routineViewMode: boolean
+  hintMensaje: string
   routineRows: RoutineRow[]
   setRoutineRows: (rows: RoutineRow[]) => void
   setRoutineDays: (d: string[] | ((prev: string[]) => string[])) => void
@@ -218,6 +219,7 @@ value={(row.reps.split('-')[1] ?? '').trim()}
 
 export function RoutineStep2Ejercicios({
   routineViewMode,
+  hintMensaje,
   routineRows,
   setRoutineRows,
   setRoutineDays,
@@ -257,10 +259,13 @@ export function RoutineStep2Ejercicios({
         </p>
       </div>
 
-      {!routineViewMode && diasIncompletosSet.size > 0 && (
-        <div className="flex items-center gap-2 mb-3 rounded-xl px-3 py-2" style={{ background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)' }}>
-          <AlertTriangle size={14} style={{ color: '#B45309' }} />
-          <span className="text-xs font-semibold" style={{ color: 'rgba(146,64,14,0.9)' }}>Datos Incompletos</span>
+      {!routineViewMode && !(routineRows.length > 0 && diasIncompletosSet.size === 0) && (
+        <div className="flex items-start gap-2 mb-5 rounded-xl px-3 py-2.5" style={{ background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)' }}>
+          <AlertTriangle size={14} style={{ color: '#B45309', marginTop: 1 }} />
+          <div>
+            <p className="text-xs font-bold" style={{ color: 'rgba(146,64,14,0.9)' }}>Datos incompletos</p>
+            <p className="text-[11px] leading-snug mt-0.5" style={{ color: 'rgba(146,64,14,0.75)' }}>{hintMensaje}</p>
+          </div>
         </div>
       )}
 

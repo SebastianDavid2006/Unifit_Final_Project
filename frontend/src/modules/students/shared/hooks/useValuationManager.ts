@@ -252,7 +252,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     return {
       name: backend.nombre,
       description: backend.observaciones ?? '',
-      duration: backend.duracion ?? '8 semanas',
+      duration: backend.duracion ?? 'ocho_semanas',
       frequency: rows.length ? `${new Set(rows.map(r => r.dia)).size} días/semana` : '',
       level: (backend.nivel as 'Principiante' | 'Intermedio' | 'Avanzado') ?? 'Intermedio',
       rows,
