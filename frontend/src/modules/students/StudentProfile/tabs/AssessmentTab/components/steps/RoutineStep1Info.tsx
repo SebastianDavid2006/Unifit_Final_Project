@@ -38,7 +38,7 @@ export function RoutineStep1Info({
             : 'Configura los parámetros generales de la rutina.'}
       </p>
       <div>
-        <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre de la rutina</label>
+        <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nombre de la rutina <span className="text-red-500">*</span></label>
         <input
           type="text"
           readOnly={routineViewMode}
@@ -51,7 +51,7 @@ export function RoutineStep1Info({
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración</label>
+          <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Duración <span className="text-red-500">*</span></label>
           <select
             value={routineForm.duration}
             disabled={routineViewMode}
@@ -67,7 +67,7 @@ export function RoutineStep1Info({
           </select>
         </div>
         <div>
-          <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nivel</label>
+          <label className="text-xs font-semibold mb-1.5 block" style={{ color: 'rgba(0,0,0,0.5)' }}>Nivel <span className="text-red-500">*</span></label>
           <select
             value={routineForm.level}
             disabled={routineViewMode}

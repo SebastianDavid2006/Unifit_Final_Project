@@ -10,15 +10,20 @@ import {
 } from '../services/rutina.service'
 import { responderErrorPrisma } from '../utils/prisma-errors'
 
-const rutinaEjercicioSchema = z.object({
-  id_ejercicio: z.string().uuid(),
-  dia_semana: z.string().min(1),
-  series: z.coerce.number().int().min(1).max(20).optional(),
-  repeticiones_min: z.coerce.number().int().min(1).max(100).optional(),
-  repeticiones_max: z.coerce.number().int().min(1).max(100).optional(),
-  descanso: z.coerce.number().int().min(0).max(600).optional(),
-  observaciones: z.string().optional(),
-})
+const rutinaEjercicioSchema = z
+  .object({
+    id_ejercicio: z.string().uuid(),
+    dia_semana: z.string().min(1),
+    series: z.coerce.number().int().min(1).max(20).optional(),
+    repeticiones_min: z.coerce.number().int().min(1).max(100).optional(),
+    repeticiones_max: z.coerce.number().int().min(1).max(100).optional(),
+    descanso: z.coerce.number().int().min(0).max(600).optional(),
+    observaciones: z.string().optional(),
+  })
+  .refine(
+    d => d.repeticiones_min === undefined || d.repeticiones_max === undefined || d.repeticiones_min <= d.repeticiones_max,
+    { message: 'repeticiones_min no puede ser mayor que repeticiones_max', path: ['repeticiones_min'] },
+  )
 
 const crearRutinaSchema = z.object({
   id_usuario: z.string().uuid(),

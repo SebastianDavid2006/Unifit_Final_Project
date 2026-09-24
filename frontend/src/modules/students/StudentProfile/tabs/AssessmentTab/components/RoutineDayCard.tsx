@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { X } from 'lucide-react'
+import { X, AlertTriangle } from 'lucide-react'
 import calendarImg from '@/assets/icons/objects/calendar.webp'
 
 const ROUTINE_DAY_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
@@ -8,11 +8,12 @@ interface RoutineDayCardProps {
   day: string
   selected: boolean
   done: boolean
+  invalid?: boolean
   onClick: () => void
   onRemove?: () => void
 }
 
-export function RoutineDayCard({ day, selected, done, onClick, onRemove }: RoutineDayCardProps) {
+export function RoutineDayCard({ day, selected, done, invalid, onClick, onRemove }: RoutineDayCardProps) {
   return (
     <motion.button
       type="button"
@@ -23,7 +24,7 @@ export function RoutineDayCard({ day, selected, done, onClick, onRemove }: Routi
       style={{
         background: selected ? ROUTINE_DAY_GRAD : 'rgba(0,0,0,0.03)',
         color: selected ? '#FFFFFF' : 'rgba(0,0,0,0.35)',
-        border: '1px solid transparent',
+        border: invalid ? '1px solid rgba(217,119,6,0.6)' : '1px solid transparent',
         boxShadow: selected ? '0 4px 20px rgba(18,112,183,0.25)' : 'none',
       }}
       onMouseEnter={e => { if (!selected) { e.currentTarget.style.background = 'rgba(18,112,183,0.12)'; e.currentTarget.style.color = '#1270B7' } }}
@@ -42,6 +43,16 @@ export function RoutineDayCard({ day, selected, done, onClick, onRemove }: Routi
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       />
       <span className="text-sm leading-none text-center">{day}</span>
+      {invalid && (
+        <motion.span
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full flex items-center justify-center z-10"
+          style={{ background: selected ? 'rgba(197, 125, 0, 0.9)' : '#FFFFFF', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+        >
+          <AlertTriangle size={13} style={{ color: selected ? '#FFFFFF' : '#B45309', filter: selected ? 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' : 'none' }} />
+        </motion.span>
+      )}
       {onRemove && (
         <motion.button
           type="button"
@@ -49,7 +60,7 @@ export function RoutineDayCard({ day, selected, done, onClick, onRemove }: Routi
           whileTap={{ scale: 0.9 }}
           onClick={e => { e.stopPropagation(); onRemove() }}
           className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center cursor-pointer z-10"
-          style={{ background: selected ? 'rgba(255,255,255,0.95)' : 'rgba(244,56,67,0.12)', color: '#E63946', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+          style={{ background: selected ? 'rgba(255,255,255,0.95)' : '#FFFFFF', color: '#E63946', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
         >
           <X size={11} strokeWidth={3.5} />
         </motion.button>

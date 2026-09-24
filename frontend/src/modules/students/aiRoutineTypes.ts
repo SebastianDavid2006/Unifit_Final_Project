@@ -1,5 +1,6 @@
 export interface RoutineRow {
   id: string
+  id_exercise?: string | null
   dia: string
   muscle: string
   name: string

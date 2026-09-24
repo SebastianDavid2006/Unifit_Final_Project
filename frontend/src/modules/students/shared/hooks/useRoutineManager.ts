@@ -101,12 +101,13 @@ export function useRoutineManager(deps: UseRoutineManagerDeps) {
       const d = day || defaultRoutineDay() || 'Lunes'
       setRoutineRows(prev => [...prev, {
         id: `r-${Date.now()}`,
+        id_exercise: null,
         dia: d,
         muscle: '',
         name: '',
-        sets: '3',
-        reps: '10-12',
-        rest: '60 s',
+        sets: '',
+        reps: '',
+        rest: '',
         weight: '',
       }])
     },
@@ -120,12 +121,13 @@ export function useRoutineManager(deps: UseRoutineManagerDeps) {
         const stamp = Date.now()
         const defaults = exerciseCatalog.slice(0, 2).map((ex, ei) => ({
           id: `ad-${stamp}-${ei}`,
+          id_exercise: ex.id,
           dia: day,
           muscle: ex.muscleGroups[0] ?? '',
           name: ex.name,
-          sets: '3',
-          reps: '10-12',
-          rest: '60 s',
+          sets: '',
+          reps: '',
+          rest: '',
           weight: '',
         }))
         setRoutineRows(p => [...p, ...defaults])

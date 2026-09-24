@@ -277,7 +277,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     setRoutineFromAI(false)
     const days = (a.diasDisponibles?.length ? a.diasDisponibles : ['Lunes', 'Miércoles', 'Viernes']) as string[]
     setRoutineDays(days)
-    setRoutineStep(1)
+    setRoutineStep(0)
     setRoutineViewMode(false)
     setRoutineSuccess(false)
     setShowNewRoutineModal(true)

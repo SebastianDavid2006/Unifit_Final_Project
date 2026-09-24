@@ -1,15 +1,14 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, Plus, Trash2, ChevronLeft, ChevronRight, Sparkles, PenLine } from 'lucide-react'
 import editGif from '@/assets/icons/animated/actions/edit.gif'
 import calendarImg from '@/assets/icons/objects/calendar.webp'
 import { meshInputBg } from '@/data/shared/constants'
 import type { AiRoutine, RoutineRow } from '@/modules/students/aiRoutineTypes'
 import type { FrontendExercise } from '@/services/ejercicio.service'
 import { RoutineDayCard } from './RoutineDayCard'
-import { RoutineCategorySelect } from './RoutineCategorySelect'
-import { RoutineExerciseSelect } from './RoutineExerciseSelect'
 import { RoutineStep1Info } from './steps/RoutineStep1Info'
 import { RoutineStep2Ejercicios } from './steps/RoutineStep2Ejercicios'
+import { diasIncompletos } from './routineValidation'
 
 export interface MeshInput {
   enterMesh: (el: HTMLElement) => void
@@ -34,6 +33,7 @@ interface NewRoutineModalProps {
   routineRows: RoutineRow[]
   setRoutineRows: (rows: RoutineRow[]) => void
   setRoutineDays: (d: string[] | ((prev: string[]) => string[])) => void
+  routineDays: string[]
   selectedRoutineDay: string | null
   setSelectedRoutineDay: (d: string | null) => void
   routineDayPage: number
@@ -61,6 +61,7 @@ interface NewRoutineModalProps {
   onClose: () => void
   onRequestClose: () => void
   onCreated: () => void
+  onStartAI: () => void
   onCloseFromAssessment: () => void
 }
 
@@ -68,6 +69,42 @@ const STEPS = [
   { num: 1, title: 'Información general' },
   { num: 2, title: 'Ejercicios por día' },
 ] as const
+
+function RoutineCreateChoice({ onStartAI, onManual }: { onStartAI: () => void; onManual: () => void }) {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm font-semibold text-center" style={{ color: 'rgba(0,0,0,0.55)' }}>
+        ¿Cómo deseas crear la rutina?
+      </p>
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          type="button"
+          onClick={onStartAI}
+          className="flex flex-col items-center gap-2 rounded-2xl px-5 py-8 cursor-pointer transition-all"
+          style={{ background: 'linear-gradient(135deg, rgba(191,90,242,0.12), rgba(124,58,237,0.04))', border: '1px solid rgba(124,58,237,0.22)' }}
+        >
+          <Sparkles size={22} style={{ color: '#8B5CF6' }} />
+          <span className="text-sm font-bold" style={{ color: '#7C3AED' }}>Generar con IA</span>
+          <span className="text-[11px] text-center" style={{ color: 'rgba(0,0,0,0.45)' }}>
+            Basada en la valoración y antecedentes del estudiante
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={onManual}
+          className="flex flex-col items-center gap-2 rounded-2xl px-5 py-8 cursor-pointer transition-all"
+          style={{ background: 'linear-gradient(135deg, rgba(18,112,183,0.1), rgba(18,112,183,0.03))', border: '1px solid rgba(18,112,183,0.2)' }}
+        >
+          <PenLine size={22} style={{ color: '#1270B7' }} />
+          <span className="text-sm font-bold" style={{ color: '#1270B7' }}>Crear manualmente</span>
+          <span className="text-[11px] text-center" style={{ color: 'rgba(0,0,0,0.45)' }}>
+            Tú eliges ejercicios, series y descanso día a día
+          </span>
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function StepContent({
   routineStep,
@@ -129,6 +166,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
     routineRows,
     setRoutineRows,
     setRoutineDays,
+    routineDays,
     selectedRoutineDay,
     setSelectedRoutineDay,
     routineDayPage,
@@ -156,8 +194,21 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
     onClose,
     onRequestClose,
     onCreated,
+    onStartAI,
     onCloseFromAssessment,
   } = props
+  const step1Valid = routineForm.name.trim() !== '' && routineForm.duration !== ''
+  const incompletos = diasIncompletos(routineDays, routineRows)
+  const rowsValidas = routineRows.length > 0 && incompletos.length === 0
+  const step2Valid = step1Valid && rowsValidas
+  const buttonDisabled = routineStep === 1 ? !step1Valid : !step2Valid
+  const hintMensaje = routineStep === 1
+    ? 'El nombre y la duración son obligatorios para continuar.'
+    : routineRows.length === 0
+      ? 'Debes agregar al menos un ejercicio a la rutina.'
+      : incompletos.some(d => !routineRows.some(r => r.dia === d))
+        ? 'Debes agregar al menos un ejercicio a cada día presente de la rutina.'
+        : 'Completa los datos incompletos de cada ejercicio.'
   if (!isOpen) return null
   const handleClose = () => {
     if (routineViewMode) {
@@ -185,7 +236,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
             exit={{ opacity: 0, filter: 'blur(6px)' }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             onClick={e => e.stopPropagation()}
-            className="w-full max-w-4xl rounded-3xl p-6 flex flex-col max-h-[86vh]"
+            className="w-full max-w-4xl rounded-3xl p-6 flex flex-col max-h-[calc(100vh-3rem)] overflow-hidden"
             style={{
               background: '#FFFFFF',
               border: '1px solid rgba(0,0,0,0.06)',
@@ -224,18 +275,23 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
               animate={{ opacity: 1, filter: 'blur(0px)' }}
               exit={{ opacity: 0, filter: 'blur(6px)' }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
             >
-              <StepContent
-                routineStep={routineStep}
-                routineForm={routineForm}
-                setRoutineForm={setRoutineForm}
-                routineViewMode={routineViewMode}
-                aiGeneratedRoutine={aiGeneratedRoutine}
-                routineEdited={routineEdited}
-                routineFromAssessment={routineFromAssessment}
+              {routineStep === 0 ? (
+                <RoutineCreateChoice onStartAI={onStartAI} onManual={() => setRoutineStep(1)} />
+              ) : (
+                <StepContent
+                  routineStep={routineStep}
+                  routineForm={routineForm}
+                  setRoutineForm={setRoutineForm}
+                  routineViewMode={routineViewMode}
+                  aiGeneratedRoutine={aiGeneratedRoutine}
+                  routineEdited={routineEdited}
+                  routineFromAssessment={routineFromAssessment}
                 routineRows={routineRows}
                 setRoutineRows={setRoutineRows}
                 setRoutineDays={setRoutineDays}
+                routineDays={routineDays}
                 selectedRoutineDay={selectedRoutineDay}
                 setSelectedRoutineDay={setSelectedRoutineDay}
                 routineDayPage={routineDayPage}
@@ -260,8 +316,9 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                 exerciseCatalog={exerciseCatalog}
                 ROUTINE_MUSCLE_TO_CAT={ROUTINE_MUSCLE_TO_CAT}
                 meshInput={meshInput}
-                onCreated={onCreated}
-              />
+                  onCreated={onCreated}
+                />
+              )}
             </motion.div>
 
             {aiGeneratedRoutine && (
@@ -273,7 +330,17 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
               </p>
             )}
 
+            {!routineViewMode && routineStep > 0 && buttonDisabled && (
+              <p
+                className="text-xs font-semibold rounded-xl px-3 py-2 mb-4"
+                style={{ background: 'rgba(217,119,6,0.08)', color: 'rgba(146,64,14,0.9)', border: '1px solid rgba(217,119,6,0.25)' }}
+              >
+                {hintMensaje}
+              </p>
+            )}
+
             <div className="flex items-center justify-between mt-6 pt-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              {routineStep !== 0 && (<>
               {routineStep > 1 ? (
                 <button
                   onClick={() => setRoutineStep(s => s - 1)}
@@ -296,14 +363,15 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                   onClick={routineStep === 1 ? () => setRoutineStep(2) : onCreated}
                   className="px-5 py-2.5 rounded-xl text-xs font-bold transition-all"
                   style={{
-                    background: routineStep === 2 && routineRows.length === 0 ? 'rgba(48,209,88,0.3)' : 'linear-gradient(135deg, #30D158, #1A8A3F)',
+                    background: buttonDisabled ? 'rgba(48,209,88,0.3)' : 'linear-gradient(135deg, #30D158, #1A8A3F)',
                     color: '#FFFFFF',
                   }}
-                  disabled={(routineStep === 2 && routineRows.length === 0)}
+                  disabled={buttonDisabled}
                 >
                   {routineStep === 2 ? 'Crear Rutina' : 'Siguiente'}
                 </button>
               )}
+              </>)}
             </div>
           </motion.div>
         </motion.div>

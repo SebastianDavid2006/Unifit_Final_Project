@@ -112,7 +112,7 @@ export function AssessmentList({
                   {v.next ? (
                     <p className="text-xs font-bold text-center" style={{ color: isFirst ? '#FFFFFF' : '#1270B7' }}>{v.next}</p>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium w-fit justify-self-center" style={{ background: 'rgba(0,0,0,0.06)', color: 'rgba(0,0,0,0.4)' }}>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium w-fit justify-self-center" style={{ background: isFirst ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.06)', color: isFirst ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.4)' }}>
                       <Calendar size={11} strokeWidth={2} /> No programada
                     </span>
                   )}

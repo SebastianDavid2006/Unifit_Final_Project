@@ -41,8 +41,15 @@ import { AIGenerationModal } from '@/modules/students/StudentProfile/tabs/Assess
 import { RoutineDetailModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/RoutineDetailModal'
 import { NewValuationModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/NewValuationModal'
 import { NewRoutineModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/NewRoutineModal'
+import { diasIncompletos } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/routineValidation'
 
 export { TABS } from '../StudentProfileData'
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+function esUuidValido(value: string | null | undefined): boolean {
+  return typeof value === 'string' && UUID_REGEX.test(value)
+}
+
 export function StudentProfile({ student, tab = 'general', onTabChange, canCreateValuation = true }: { student: Student; tab?: string; onTabChange?: (t: string) => void; canCreateValuation?: boolean }) {
   const [editable, setEditable] = useState<Student>(student)
   useEffect(() => setEditable(student), [student])
@@ -576,6 +583,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           routineRows={routineRows}
           setRoutineRows={setRoutineRows}
           setRoutineDays={setRoutineDays}
+          routineDays={routineDays}
           selectedRoutineDay={selectedRoutineDay}
           setSelectedRoutineDay={setSelectedRoutineDay}
           routineDayPage={routineDayPage}
@@ -602,9 +610,28 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           meshInput={meshInput}
           onClose={() => setShowNewRoutineModal(false)}
           onRequestClose={() => setConfirmCancel('routine')}
+          onStartAI={startAiRoutine}
           onCreated={async () => {
             if (!routineValoracionId) {
               alert('No se encontró la valoración asociada. Crea primero una valoración para este estudiante.')
+              return
+            }
+            const sinEjercicio = routineRows.filter(r => !esUuidValido(r.id_exercise ?? r.id))
+            if (sinEjercicio.length > 0) {
+              alert('Cada ejercicio debe seleccionarse del catálogo. Revisa las filas sin ejercicio asignado antes de guardar.')
+              return
+            }
+            if (!routineForm.name.trim()) {
+              alert('El nombre de la rutina es obligatorio.')
+              return
+            }
+            if (!routineForm.duration) {
+              alert('La duración de la rutina es obligatoria.')
+              return
+            }
+            const incompletos = diasIncompletos(routineDays, routineRows)
+            if (routineRows.length === 0 || incompletos.length > 0) {
+              alert('Todos los días de la rutina deben tener al menos un ejercicio con sus datos completos (series, repeticiones y descanso). Revisa las filas antes de guardar.')
               return
             }
             try {
@@ -617,7 +644,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                 nivel: routineForm.level || 'Intermedio',
                 observaciones: routineForm.description || '',
                 ejercicios: routineRows.map(r => ({
-                  id_ejercicio: r.id,
+                  id_ejercicio: r.id_exercise ?? r.id,
                   dia: r.dia,
                   series: parseInt(r.sets) || 3,
                   reps: r.reps || '10-12',
@@ -630,6 +657,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
             } catch (err) {
               console.error('Error saving routine:', err)
               alert(mensajeError(err))
+              return
             }
             setShowNewRoutineModal(false)
             setRoutineFromAssessment(false)

@@ -1,18 +1,21 @@
+import { useState } from 'react'
 import { motion } from 'motion/react'
-import { Plus, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, Trash2, AlertTriangle } from 'lucide-react'
 import calendarImg from '@/assets/icons/objects/calendar.webp'
 import { meshInputBg } from '@/data/shared/constants'
 import type { RoutineRow, AiRoutine } from '@/modules/students/aiRoutineTypes'
 import type { FrontendExercise } from '@/services/ejercicio.service'
 import { RoutineDayCard } from '../RoutineDayCard'
-import { RoutineCategorySelect } from '../RoutineCategorySelect'
+import { RoutineExerciseCategories } from '../RoutineCategorySelect'
 import { RoutineExerciseSelect } from '../RoutineExerciseSelect'
+import { diasIncompletos } from '../routineValidation'
 
 interface RoutineStep2EjerciciosProps {
   routineViewMode: boolean
   routineRows: RoutineRow[]
   setRoutineRows: (rows: RoutineRow[]) => void
   setRoutineDays: (d: string[] | ((prev: string[]) => string[])) => void
+  routineDays: string[]
   selectedRoutineDay: string | null
   setSelectedRoutineDay: (d: string | null) => void
   routineDayPage: number
@@ -60,7 +63,6 @@ function ExerciseRow({
   routineDropdown,
   setRoutineDropdown,
   exerciseCatalog,
-  ROUTINE_MUSCLE_TO_CAT,
   meshInput,
 }: {
   row: RoutineRow
@@ -71,7 +73,6 @@ function ExerciseRow({
   routineDropdown: { id: string; field: 'muscle' | 'exercise' } | null
   setRoutineDropdown: (d: { id: string; field: 'muscle' | 'exercise' } | null) => void
   exerciseCatalog: FrontendExercise[]
-  ROUTINE_MUSCLE_TO_CAT: Record<string, string>
   meshInput: {
     enterMesh: (el: HTMLElement) => void
     leaveMesh: (el: HTMLElement) => void
@@ -79,6 +80,14 @@ function ExerciseRow({
     blurMesh: (el: HTMLElement) => void
   }
 }) {
+  const [catFilter, setCatFilter] = useState<string[]>([])
+  const [search, setSearch] = useState('')
+  const selectedEx = exerciseCatalog.find(ex => ex.id === row.id_exercise) ?? exerciseCatalog.find(ex => ex.name === row.name)
+  const groups = selectedEx?.muscleGroups ?? []
+  const repSplit = row.reps.split('-')
+  const repsMinInt = parseInt((repSplit[0] ?? '').trim(), 10)
+  const repsMaxInt = parseInt((repSplit[1] ?? '').trim(), 10)
+  const repsMinMaxInvalid = Number.isInteger(repsMinInt) && Number.isInteger(repsMaxInt) && repsMinInt > repsMaxInt
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -87,46 +96,108 @@ function ExerciseRow({
       className="rounded-xl px-3 py-2.5"
       style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.9)' : 'transparent', border: '1px solid rgba(0,0,0,0.04)' }}
     >
-      <div className="flex items-center gap-2.5">
-        <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0" style={{ background: 'rgba(18,112,183,0.12)', color: '#1270B7' }}>{i + 1}</span>
-        <div className="flex-1 min-w-0 grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Categoría</label>
-            <RoutineCategorySelect
-              row={row}
-              routineViewMode={routineViewMode}
-              open={routineDropdown?.id === row.id && routineDropdown.field === 'muscle'}
-              onToggle={() => { if (!routineViewMode) setRoutineDropdown(routineDropdown?.id === row.id && routineDropdown.field === 'muscle' ? null : { id: row.id, field: 'muscle' }) }}
-              onSelect={(m) => {
-                const nameInNewCat = exerciseCatalog.some(x => {
-                  const muscle = x.muscleGroups[0] ?? ''
-                  return (ROUTINE_MUSCLE_TO_CAT[muscle] || muscle) === m && x.name === row.name
-                })
-                updateRoutineRow(row.id, {
-                  muscle: m,
-                  name: nameInNewCat ? row.name : '',
-                  sets: nameInNewCat ? row.sets : '3',
-                  reps: nameInNewCat ? row.reps : '10-12',
-                })
-                setRoutineDropdown(null)
-              }}
-              onClose={() => setRoutineDropdown(null)}
-            />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Ejercicio</label>
+      <div className="flex items-start gap-2.5">
+        <span className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold flex-shrink-0 mt-0.5" style={{ background: 'rgba(18,112,183,0.12)', color: '#1270B7' }}>{i + 1}</span>
+        <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+          <div className="min-w-0">
+            <label className="text-[11px] font-bold mb-1 block" style={{ color: 'rgba(0,0,0,0.45)' }}>Buscar ejercicio <span className="text-red-500">*</span></label>
             <RoutineExerciseSelect
               row={row}
               routineViewMode={routineViewMode}
               open={routineDropdown?.id === row.id && routineDropdown.field === 'exercise'}
               exerciseCatalog={exerciseCatalog}
+              filterCats={catFilter}
+              setFilterCats={setCatFilter}
+              search={search}
+              setSearch={setSearch}
               onToggle={() => { if (!routineViewMode) setRoutineDropdown(routineDropdown?.id === row.id && routineDropdown.field === 'exercise' ? null : { id: row.id, field: 'exercise' }) }}
-              onSelect={(name, muscle, sets, reps) => {
-                updateRoutineRow(row.id, { name, muscle, sets, reps })
+              onSelect={(id, name, muscle, sets, reps) => {
+                updateRoutineRow(row.id, { id_exercise: id, name, muscle, sets, reps })
                 setRoutineDropdown(null)
               }}
               onClose={() => setRoutineDropdown(null)}
             />
+            {groups.length > 0 ? (
+              <RoutineExerciseCategories groups={groups} />
+            ) : row.name ? null : (
+              <p className="text-xs mt-2" style={{ color: 'rgba(0,0,0,0.3)' }}>
+                Selecciona un ejercicio para visualizar sus categorías.
+              </p>
+            )}
+          </div>
+          <div className="flex items-start justify-end gap-4">
+              <div className="flex flex-col items-start gap-1">
+                <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.45)' }}>Series <span className="text-red-500">*</span></span>
+                <input
+                  value={row.sets}
+                  readOnly={routineViewMode}
+                  onChange={e => updateRoutineRow(row.id, { sets: e.target.value.replace(/\D/g, '') })}
+                  placeholder="0"
+                  onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+                  onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+                  onFocus={e => meshInput.focusMesh(e.currentTarget)}
+                  onBlur={e => meshInput.blurMesh(e.currentTarget)}
+                  className="w-14 px-1.5 py-2 rounded-lg text-xs font-medium text-center outline-none"
+                  style={INPUT_STYLE.base}
+                />
+              </div>
+              <div className="flex flex-col items-start gap-1">
+                <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.45)' }}>Repeticiones <span className="text-red-500">*</span></span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>min:</span>
+                  <input
+value={(row.reps.split('-')[0] ?? '').trim()}
+                  readOnly={routineViewMode}
+                  onChange={e => updateRoutineRow(row.id, { reps: `${e.target.value.replace(/\D/g, '')}-${(row.reps.split('-')[1] ?? '').trim()}` })}
+                  placeholder="0"
+                    onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+                    onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+                    onFocus={e => meshInput.focusMesh(e.currentTarget)}
+                    onBlur={e => meshInput.blurMesh(e.currentTarget)}
+                    className="w-12 px-1.5 py-2 rounded-lg text-xs font-medium text-center outline-none"
+                    style={repsMinMaxInvalid ? { ...INPUT_STYLE.base, border: '1px solid rgba(244,56,67,0.7)' } : INPUT_STYLE.base}
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>max:</span>
+                  <input
+value={(row.reps.split('-')[1] ?? '').trim()}
+                  readOnly={routineViewMode}
+                  onChange={e => updateRoutineRow(row.id, { reps: `${(row.reps.split('-')[0] ?? '').trim()}-${e.target.value.replace(/\D/g, '')}` })}
+                  placeholder="0"
+                    onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+                    onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+                    onFocus={e => meshInput.focusMesh(e.currentTarget)}
+                    onBlur={e => meshInput.blurMesh(e.currentTarget)}
+                    className="w-12 px-1.5 py-2 rounded-lg text-xs font-medium text-center outline-none"
+                    style={repsMinMaxInvalid ? { ...INPUT_STYLE.base, border: '1px solid rgba(244,56,67,0.7)' } : INPUT_STYLE.base}
+                  />
+                </div>
+                {repsMinMaxInvalid && (
+                  <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(244,56,67,0.85)' }}>min no puede ser mayor que max</p>
+                )}
+              </div>
+              <div className="flex flex-col items-start gap-1">
+                <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.45)' }}>Descanso <span className="text-red-500">*</span></span>
+                <div className="flex items-center gap-1">
+                  <input
+                    value={row.rest.replace(/[^\d]/g, '')}
+                    readOnly={routineViewMode}
+                    onChange={e => {
+                      const digits = e.target.value.replace(/\D/g, '')
+                      updateRoutineRow(row.id, { rest: digits ? `${digits} seg` : '' })
+                    }}
+                    placeholder="0"
+                    onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
+                    onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
+                    onFocus={e => meshInput.focusMesh(e.currentTarget)}
+                    onBlur={e => meshInput.blurMesh(e.currentTarget)}
+                    className="w-14 px-1.5 py-2 rounded-lg text-xs font-medium text-center outline-none"
+                    style={INPUT_STYLE.base}
+                  />
+                  <span className="text-[11px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>segs</span>
+                </div>
+              </div>
           </div>
         </div>
         {!routineViewMode && (
@@ -134,76 +205,12 @@ function ExerciseRow({
             whileHover={{ scale: 1.15, background: 'rgba(244,56,67,0.1)' }}
             whileTap={{ scale: 0.9 }}
             onClick={() => removeRoutineRow(row.id)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer flex-shrink-0 mt-4"
+            className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer flex-shrink-0"
             style={{ background: 'rgba(0,0,0,0.04)' }}
           >
-            <Trash2 size={13} style={{ color: 'rgba(244,56,67,0.8)' }} />
+            <Trash2 size={14} style={{ color: 'rgba(244,56,67,0.8)' }} />
           </motion.button>
         )}
-      </div>
-      <div className="flex items-center justify-center gap-10 mt-2" style={{ paddingLeft: 34 }}>
-        <div className="flex flex-col items-start" style={{ minWidth: 48 }}>
-          <span className="text-[9px] font-bold mb-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Series</span>
-          <input
-            value={row.sets}
-            readOnly={routineViewMode}
-            onChange={e => updateRoutineRow(row.id, { sets: e.target.value })}
-            placeholder="3"
-            onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
-            onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
-            onFocus={e => meshInput.focusMesh(e.currentTarget)}
-            onBlur={e => meshInput.blurMesh(e.currentTarget)}
-            className="w-30 px-1.5 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
-            style={INPUT_STYLE.base}
-          />
-        </div>
-        <div className="flex-none">
-          <span className="text-[9px] font-bold mb-0.5 block" style={{ color: 'rgba(0,0,0,0.35)' }}>Reps</span>
-          <div className="flex items-center gap-1">
-            <span className="text-[9px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>min:</span>
-            <input
-              value={(row.reps.split('-')[0] ?? '').trim()}
-              readOnly={routineViewMode}
-              onChange={e => updateRoutineRow(row.id, { reps: `${e.target.value}-${(row.reps.split('-')[1] ?? '').trim()}` })}
-              onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
-              onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
-              onFocus={e => meshInput.focusMesh(e.currentTarget)}
-              onBlur={e => meshInput.blurMesh(e.currentTarget)}
-              className="w-18 px-1.5 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
-              style={INPUT_STYLE.base}
-            />
-            <span className="text-[9px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>max:</span>
-            <input
-              value={(row.reps.split('-')[1] ?? '').trim()}
-              readOnly={routineViewMode}
-              onChange={e => updateRoutineRow(row.id, { reps: `${(row.reps.split('-')[0] ?? '').trim()}-${e.target.value}` })}
-              onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
-              onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
-              onFocus={e => meshInput.focusMesh(e.currentTarget)}
-              onBlur={e => meshInput.blurMesh(e.currentTarget)}
-              className="w-18 px-1.5 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
-              style={INPUT_STYLE.base}
-            />
-          </div>
-        </div>
-        <div className="flex flex-col items-start" style={{ minWidth: 104 }}>
-          <span className="text-[9px] font-bold mb-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Descanso</span>
-          <div className="flex items-center gap-1">
-            <input
-              value={row.rest.replace(/[^\d]/g, '')}
-              readOnly={routineViewMode}
-              onChange={e => updateRoutineRow(row.id, { rest: e.target.value ? `${e.target.value} seg` : '' })}
-              placeholder="0"
-              onMouseEnter={e => meshInput.enterMesh(e.currentTarget)}
-              onMouseLeave={e => meshInput.leaveMesh(e.currentTarget)}
-              onFocus={e => meshInput.focusMesh(e.currentTarget)}
-              onBlur={e => meshInput.blurMesh(e.currentTarget)}
-              className="w-30 px-1.5 py-1.5 rounded-lg text-[11px] font-medium text-center outline-none"
-              style={INPUT_STYLE.base}
-            />
-            <span className="text-[10px] font-bold flex-shrink-0" style={{ color: 'rgba(0,0,0,0.35)' }}>seg</span>
-          </div>
-        </div>
       </div>
     </motion.div>
   )
@@ -214,6 +221,7 @@ export function RoutineStep2Ejercicios({
   routineRows,
   setRoutineRows,
   setRoutineDays,
+  routineDays,
   selectedRoutineDay,
   setSelectedRoutineDay,
   routineDayPage,
@@ -240,6 +248,7 @@ export function RoutineStep2Ejercicios({
   meshInput,
   onCreated,
 }: RoutineStep2EjerciciosProps) {
+  const diasIncompletosSet = new Set(diasIncompletos(routineDays, routineRows))
   return (
     <div className="flex flex-col min-h-0 flex-1">
       <div className="flex items-center justify-between mb-3 px-1">
@@ -247,6 +256,13 @@ export function RoutineStep2Ejercicios({
           {routineViewMode ? 'Ejercicios de cada día de la semana' : 'Configura los ejercicios de cada día de la semana'}
         </p>
       </div>
+
+      {!routineViewMode && diasIncompletosSet.size > 0 && (
+        <div className="flex items-center gap-2 mb-3 rounded-xl px-3 py-2" style={{ background: 'rgba(217,119,6,0.08)', border: '1px solid rgba(217,119,6,0.25)' }}>
+          <AlertTriangle size={14} style={{ color: '#B45309' }} />
+          <span className="text-xs font-semibold" style={{ color: 'rgba(146,64,14,0.9)' }}>Datos Incompletos</span>
+        </div>
+      )}
 
       {pagedRoutineDays.length > 0 && (
         <div className="flex flex-col mb-3">
@@ -257,6 +273,7 @@ export function RoutineStep2Ejercicios({
                 day={day}
                 selected={day === (selectedRoutineDay ?? defaultRoutineDay())}
                 done={routineRows.some(r => r.dia === day)}
+                invalid={diasIncompletosSet.has(day)}
                 onClick={() => setSelectedRoutineDay(day)}
                 onRemove={routineDayList.length > 1 ? () => removeRoutineDay(day) : undefined}
               />
@@ -366,10 +383,9 @@ export function RoutineStep2Ejercicios({
         }
         const dayRows = routineRows.filter(r => r.dia === activeDay)
         return (
-          <div className="rounded-2xl p-4 space-y-2.5 overflow-y-auto flex-1 min-h-0 w-full"
-            style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)', maxHeight: 'calc(86vh - 320px)', minHeight: 200, scrollbarWidth: 'thin' }}>
-            <div className="flex items-center justify-between sticky top-0 pt-0.5 pb-1" style={{ background: 'rgba(0,0,0,0.02)' }}>
-              <span className="text-[10px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{dayRows.length} ejercicio{dayRows.length !== 1 ? 's' : ''}</span>
+          <>
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.35)' }}>{dayRows.length} ejercicio{dayRows.length !== 1 ? 's' : ''}</span>
               {!routineViewMode && (
                 <button onClick={() => addRoutineRow(activeDay)}
                   className="flex items-center gap-1 text-[11px] font-bold transition-all hover:opacity-70 cursor-pointer"
@@ -377,27 +393,28 @@ export function RoutineStep2Ejercicios({
                 ><Plus size={13} strokeWidth={3} /> Agregar ejercicio</button>
               )}
             </div>
-
-            {dayRows.length === 0 ? (
-              <p className="text-xs text-center py-6" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                {routineViewMode ? 'Sin ejercicios.' : 'Sin ejercicios. Agrega uno.'}
-              </p>
-            ) : dayRows.map((row, i) => (
-              <ExerciseRow
-                key={row.id}
-                row={row}
-                i={i}
-                routineViewMode={routineViewMode}
-                updateRoutineRow={updateRoutineRow}
-                removeRoutineRow={removeRoutineRow}
-                routineDropdown={routineDropdown}
-                setRoutineDropdown={setRoutineDropdown}
-                exerciseCatalog={exerciseCatalog}
-                ROUTINE_MUSCLE_TO_CAT={ROUTINE_MUSCLE_TO_CAT}
-                meshInput={meshInput}
-              />
-            ))}
-          </div>
+            <div className="flex-1 min-h-0 overflow-y-auto w-full space-y-2.5"
+              style={{ minHeight: 200, scrollbarWidth: 'thin' }}>
+              {dayRows.length === 0 ? (
+                <p className="text-xs text-center py-6" style={{ color: 'rgba(0,0,0,0.4)' }}>
+                  {routineViewMode ? 'Sin ejercicios.' : 'Sin ejercicios. Agrega uno.'}
+                </p>
+              ) : dayRows.map((row, i) => (
+                <ExerciseRow
+                  key={row.id}
+                  row={row}
+                  i={i}
+                  routineViewMode={routineViewMode}
+                  updateRoutineRow={updateRoutineRow}
+                  removeRoutineRow={removeRoutineRow}
+                  routineDropdown={routineDropdown}
+                  setRoutineDropdown={setRoutineDropdown}
+                  exerciseCatalog={exerciseCatalog}
+                  meshInput={meshInput}
+                />
+              ))}
+            </div>
+          </>
         )
       })()}
     </div>
