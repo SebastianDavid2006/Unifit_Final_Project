@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
+import jwt from 'jsonwebtoken'
 import app from '../src/app'
 import { prisma } from '../src/utils/prisma'
 
@@ -12,10 +13,12 @@ let ejercicioId1: string
 let ejercicioId2: string
 let rutinaId: string
 let directoRutinaId: string
+let rutinaSegundaId: string
 let originalParqDirecto: boolean
 let valoracionId: string
 let valoracionIds: string[] = []
 let otraValoracionId: string
+const EMAIL_SEGUNDO = 'segundo_test@unifit.edu.co'
 
 // Limpieza acotada: solo se eliminan los registros creados durante ESTA corrida,
 // nunca los que ya existían (datos de trabajo reales del usuario).
@@ -60,6 +63,21 @@ beforeAll(async () => {
   originalParqDirecto = directo!.parq_realizado
 
   await prisma.usuario.update({ where: { id_usuario: directoId }, data: { parq_realizado: true } })
+
+  // Idempotencia: si una corrida previa dejó al usuario transitorio a medio
+  // camino, se borra en orden (hijos antes que padres) antes de recrearlo.
+  const segundoPrevio = await prisma.usuario.findUnique({ where: { email_contacto: EMAIL_SEGUNDO } })
+  if (segundoPrevio) {
+    const rutinasPrevias = await prisma.rutina.findMany({
+      where: { id_usuario: segundoPrevio.id_usuario },
+      select: { id_rutina: true },
+    })
+    const idsRutinas = rutinasPrevias.map(r => r.id_rutina)
+    await prisma.sesionRutina.deleteMany({ where: { id_rutina: { in: idsRutinas } } }).catch(() => {})
+    await prisma.rutina.deleteMany({ where: { id_usuario: segundoPrevio.id_usuario } }).catch(() => {})
+    await prisma.valoracion.deleteMany({ where: { id_usuario: segundoPrevio.id_usuario } }).catch(() => {})
+    await prisma.usuario.deleteMany({ where: { id_usuario: segundoPrevio.id_usuario } }).catch(() => {})
+  }
 
   await tomarIdsExistentes()
 
@@ -115,11 +133,57 @@ beforeAll(async () => {
     },
   })
   otraValoracionId = otraValoracion.id_valoracion
+
+  const segundo = await prisma.usuario.create({
+    data: {
+      primer_nombre: 'Segundo',
+      primer_apellido: 'Prueba',
+      email_contacto: EMAIL_SEGUNDO,
+      documento: 'SEGUNDO_TEST_001',
+      genero: 'otro',
+      rol: 'usuario',
+      tipo_usuario: 'estudiante',
+      estado: 'activo',
+    },
+  })
+  const valoracionSegundo = await prisma.valoracion.create({
+    data: {
+      id_usuario: segundo.id_usuario,
+      id_creador: adminId,
+      nivel_actividad: 'moderado',
+      tipo_antecedentes: ['osteomuscular'],
+      dias_disponibles: ['lunes', 'miercoles', 'viernes'],
+    },
+  })
+  const rutinaSegunda = await prisma.rutina.create({
+    data: {
+      id_usuario: segundo.id_usuario,
+      id_creador: adminId,
+      id_valoracion: valoracionSegundo.id_valoracion,
+      nombre: 'Rutina Segundo',
+      nivel: 'intermedio',
+    },
+  })
+  rutinaSegundaId = rutinaSegunda.id_rutina
+  const tokenSegundo = jwt.sign(
+    {
+      id_usuario: segundo.id_usuario,
+      rol: 'usuario',
+      tipo_usuario: 'estudiante',
+      estado: 'activo',
+      debe_cambiar_password: false,
+    },
+    process.env.JWT_SECRET!,
+    { expiresIn: '1h' as jwt.SignOptions['expiresIn'] },
+  )
+  ;(globalThis as any)['segundoToken'] = tokenSegundo
 })
 
 afterAll(async () => {
   if (directoId) await prisma.usuario.update({ where: { id_usuario: directoId }, data: { parq_realizado: originalParqDirecto } }).catch(() => {})
   await borrarSoloCreadosEnCorrida()
+  // El usuario transitorio se borra explícito (la rutina/valoración ya las limpió borrarSoloCreadosEnCorrida).
+  await prisma.usuario.deleteMany({ where: { email_contacto: EMAIL_SEGUNDO } }).catch(() => {})
   await prisma.ejercicio.deleteMany({ where: { id_ejercicio: { in: [ejercicioId1, ejercicioId2] } } }).catch(() => {})
 })
 
@@ -703,5 +767,190 @@ describe('Rutina - Auth guards', () => {
       .set('Authorization', `Bearer ${token('pendienteToken')}`)
 
     expect(res.status).toBe(403)
+  })
+})
+
+describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
+  let sesionFinalizadaId = ''
+  let sesionCanceladaId = ''
+
+  it('POST /rutinas/:id/sesiones - dueño inicia sesión → 201 en_progreso', async () => {
+    const res = await request(app)
+      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(201)
+    expect(res.body.estado).toBe('en_progreso')
+    expect(res.body.hora_fin).toBeNull()
+    sesionFinalizadaId = res.body.id_sesion
+  })
+
+  it('POST /rutinas/:id/sesiones - segunda sesión del mismo día → 400', async () => {
+    const res = await request(app)
+      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('Ya hay una sesión en curso para hoy')
+  })
+
+  it('PUT /sesiones/:id/finalizar - dueño completa → 200 finalizada con hora_fin', async () => {
+    const res = await request(app)
+      .put(`/api/sesiones/${sesionFinalizadaId}/finalizar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.estado).toBe('finalizada')
+    expect(res.body.hora_fin).not.toBeNull()
+  })
+
+  it('PUT /sesiones/:id/finalizar - repetida sobre finalizada → 400', async () => {
+    const res = await request(app)
+      .put(`/api/sesiones/${sesionFinalizadaId}/finalizar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('La sesión no está en curso')
+  })
+
+  it('POST + PUT /sesiones/:id/cancelar - dueño cancela → 201/200 cancelada', async () => {
+    const creada = await request(app)
+      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(creada.status).toBe(201)
+    sesionCanceladaId = creada.body.id_sesion
+
+    const res = await request(app)
+      .put(`/api/sesiones/${sesionCanceladaId}/cancelar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.estado).toBe('cancelada')
+    expect(res.body.hora_fin).not.toBeNull()
+  })
+
+  it('GET /rutinas/:id/sesiones - dueño lista → 200 ordenado por fecha desc', async () => {
+    const res = await request(app)
+      .get(`/api/rutinas/${rutinaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+    expect(res.body.length).toBeGreaterThanOrEqual(2)
+
+    const fechas = res.body.map((s: any) => s.fecha)
+    const descendente = [...fechas].sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+    expect(fechas).toEqual(descendente)
+  })
+
+  it('GET /rutinas/:id/sesiones - admin consulta sesiones (seguimiento) → 200', async () => {
+    const res = await request(app)
+      .get(`/api/rutinas/${rutinaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+
+    expect(res.status).toBe(200)
+  })
+
+  it('POST /rutinas/:id/sesiones - admin NO puede iniciar sesión ajena → 403', async () => {
+    const res = await request(app)
+      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('PUT /sesiones/:id/finalizar y cancelar - admin NO puede accionar sesión ajena → 403', async () => {
+    const finalizar = await request(app)
+      .put(`/api/sesiones/${sesionCanceladaId}/finalizar`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+
+    expect(finalizar.status).toBe(403)
+
+    const cancelar = await request(app)
+      .put(`/api/sesiones/${sesionCanceladaId}/cancelar`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+
+    expect(cancelar.status).toBe(403)
+  })
+
+  it('POST /rutinas/:id/sesiones - otro usuario no puede iniciar → 403', async () => {
+    const res = await request(app)
+      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('segundoToken')}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('Cruzado inverso - sesión de otro usuario: ni dueño ajeno ni admin la accionan → 403', async () => {
+    const sesionSegunda = await prisma.sesionRutina.create({
+      data: { id_rutina: rutinaSegundaId, fecha: new Date(), hora_inicio: new Date() },
+    })
+
+    const comoAjeno = await request(app)
+      .put(`/api/sesiones/${sesionSegunda.id_sesion}/finalizar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(comoAjeno.status).toBe(403)
+
+    const comoAdmin = await request(app)
+      .put(`/api/sesiones/${sesionSegunda.id_sesion}/cancelar`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+
+    expect(comoAdmin.status).toBe(403)
+
+    const comoDueño = await request(app)
+      .put(`/api/sesiones/${sesionSegunda.id_sesion}/finalizar`)
+      .set('Authorization', `Bearer ${token('segundoToken')}`)
+
+    expect(comoDueño.status).toBe(200)
+    expect(comoDueño.body.estado).toBe('finalizada')
+  })
+
+  it('Recursos inexistentes → 404 (rutina y sesión)', async () => {
+    const u = '00000000-0000-0000-0000-000000000000'
+
+    const post = await request(app)
+      .post(`/api/rutinas/${u}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+    expect(post.status).toBe(404)
+
+    const get = await request(app)
+      .get(`/api/rutinas/${u}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+    expect(get.status).toBe(404)
+
+    const fin = await request(app)
+      .put(`/api/sesiones/${u}/finalizar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+    expect(fin.status).toBe(404)
+  })
+
+  it('PUT /sesiones/:id/finalizar - sin token → 401', async () => {
+    const res = await request(app).put(`/api/sesiones/${sesionFinalizadaId}/finalizar`)
+    expect(res.status).toBe(401)
+  })
+
+  it('COLGADA - sesión en_progreso de ayer se auto-cancela al iniciar hoy', async () => {
+    const ayer = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    ayer.setHours(10, 0, 0, 0)
+
+    const colgada = await prisma.sesionRutina.create({
+      data: { id_rutina: rutinaId, fecha: ayer, hora_inicio: ayer },
+    })
+
+    const res = await request(app)
+      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(201)
+
+    const colgadaTras = await prisma.sesionRutina.findUnique({ where: { id_sesion: colgada.id_sesion } })
+    const nueva = await prisma.sesionRutina.findUnique({ where: { id_sesion: res.body.id_sesion } })
+
+    expect(colgadaTras!.estado).toBe('cancelada')
+    expect(colgadaTras!.hora_fin).not.toBeNull()
+    expect(nueva!.estado).toBe('en_progreso')
+    expect(nueva!.hora_fin).toBeNull()
   })
 })

@@ -289,3 +289,77 @@ export async function desactivarRutina(id: string) {
     data: { estado: 'cancelada' },
   })
 }
+
+// Inicio del día actual en hora local (para comparar "hoy" contra fechas de sesión).
+function inicioDeHoy(): Date {
+  const ahora = new Date()
+  return new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate())
+}
+
+export async function crearSesion(idRutina: string) {
+  const rutina = await prisma.rutina.findUnique({
+    where: { id_rutina: idRutina },
+    select: { id_rutina: true },
+  })
+  if (!rutina) throw new HttpError(404, 'Rutina no encontrada')
+
+  // Regla: una sesión en_progreso de un día anterior queda huérfana ("colgada").
+  // Al crear una nueva se auto-cancela con hora_fin = ahora.
+  await prisma.sesionRutina.updateMany({
+    where: {
+      id_rutina: idRutina,
+      estado: 'en_progreso',
+      fecha: { lt: inicioDeHoy() },
+    },
+    data: { estado: 'cancelada', hora_fin: new Date() },
+  })
+
+  const activaHoy = await prisma.sesionRutina.findFirst({
+    where: {
+      id_rutina: idRutina,
+      estado: 'en_progreso',
+      fecha: { gte: inicioDeHoy() },
+    },
+  })
+  if (activaHoy) throw new HttpError(400, 'Ya hay una sesión en curso para hoy')
+
+  return prisma.sesionRutina.create({
+    data: {
+      id_rutina: idRutina,
+      fecha: new Date(),
+      hora_inicio: new Date(),
+    },
+  })
+}
+
+export async function listarSesiones(idRutina: string) {
+  const rutina = await prisma.rutina.findUnique({
+    where: { id_rutina: idRutina },
+    select: { id_rutina: true },
+  })
+  if (!rutina) throw new HttpError(404, 'Rutina no encontrada')
+
+  return prisma.sesionRutina.findMany({
+    where: { id_rutina: idRutina },
+    orderBy: { fecha: 'desc' },
+  })
+}
+
+async function transicionarSesion(idSesion: string, estadoFinal: 'finalizada' | 'cancelada') {
+  const sesion = await prisma.sesionRutina.findUnique({ where: { id_sesion: idSesion } })
+  if (!sesion) throw new HttpError(404, 'Sesión no encontrada')
+  if (sesion.estado !== 'en_progreso') throw new HttpError(400, 'La sesión no está en curso')
+
+  return prisma.sesionRutina.update({
+    where: { id_sesion: idSesion },
+    data: { estado: estadoFinal, hora_fin: new Date() },
+  })
+}
+
+export async function finalizarSesion(idSesion: string) {
+  return transicionarSesion(idSesion, 'finalizada')
+}
+
+export async function cancelarSesion(idSesion: string) {
+  return transicionarSesion(idSesion, 'cancelada')
+}

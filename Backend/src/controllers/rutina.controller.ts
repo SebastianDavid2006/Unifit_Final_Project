@@ -1,10 +1,14 @@
 import { z } from 'zod'
 import type { Request, Response } from 'express'
 import {
+  cancelarSesion,
   crearRutina,
+  crearSesion,
   desactivarRutina,
   editarRutina,
+  finalizarSesion,
   listarRutinasActivas,
+  listarSesiones,
   obtenerRutinaPorId,
   listarRutinasPorUsuario,
 } from '../services/rutina.service'
@@ -95,6 +99,38 @@ export async function desactivarRutinaHandler(req: Request, res: Response): Prom
   try {
     await desactivarRutina(req.params.id as string)
     res.json({ mensaje: 'Rutina desactivada correctamente' })
+  } catch (error) {
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function postSesion(req: Request, res: Response): Promise<void> {
+  try {
+    const sesion = await crearSesion(req.params.id as string)
+    res.status(201).json(sesion)
+  } catch (error) {
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function getSesiones(req: Request, res: Response): Promise<void> {
+  const sesiones = await listarSesiones(req.params.id as string)
+  res.json(sesiones)
+}
+
+export async function putFinalizarSesion(req: Request, res: Response): Promise<void> {
+  try {
+    const sesion = await finalizarSesion(req.params.id as string)
+    res.json(sesion)
+  } catch (error) {
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function putCancelarSesion(req: Request, res: Response): Promise<void> {
+  try {
+    const sesion = await cancelarSesion(req.params.id as string)
+    res.json(sesion)
   } catch (error) {
     if (!responderErrorPrisma(error, res)) throw error
   }
