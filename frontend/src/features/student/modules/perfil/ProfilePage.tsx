@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { ClipboardList, UserCog, X, ChevronRight, CalendarClock, FileText } from 'lucide-react'
 import { useStudentApp } from '@/features/student/hooks/useStudentApp'
 import { getValoracionesPorUsuario, type AssessmentItem } from '@/services/valoracion.service'
+import { loadDocs, DOC_ORDER } from '@/data/documents'
 import { SectionTitle, cardStyle, BLUE, GREEN, AMBER } from '@/features/student/components/ui/fitness'
 import { ProfileHeader } from './components/ProfileHeader'
 import { MetricsRow } from './components/MetricsRow'
@@ -35,9 +36,12 @@ export function ProfilePage() {
     { id: 'personal' as const, label: 'Datos personales', desc: 'Información de tu perfil', icon: UserCog, color: GREEN },
   ]
 
+  const docCount = DOC_ORDER.filter(k => loadDocs()[k].dataUrl).length
+  const docCountLabel = `${docCount} documento${docCount === 1 ? '' : 's'} registrado${docCount === 1 ? '' : 's'}`
+
   return (
     <div className="space-y-6">
-      {student && <ProfileHeader student={student} />}
+      {student && <ProfileHeader student={student} objetivos={assessments[0]?.objetivoTarjetas ?? []} />}
 
       <MetricsRow assessments={assessments} />
 
@@ -91,7 +95,7 @@ export function ProfilePage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-bold truncate" style={{ fontSize: 14 }}>Documentos del Gimnasio</p>
-              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11, marginTop: 2 }}>Contrato, tratamiento de datos y PAR-Q</p>
+              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11, marginTop: 2 }}>{docCountLabel}</p>
             </div>
             <ChevronRight size={17} style={{ color: 'rgba(255,255,255,0.25)' }} className="flex-shrink-0" />
           </div>

@@ -33,7 +33,7 @@ export function MetricsRow({ assessments }: MetricsRowProps) {
       <div className="rounded-2xl p-4 mt-3 flex items-start gap-3" style={{ background: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.14)' }}>
         <Flame size={16} style={{ color: AMBER, marginTop: 2, flexShrink: 0 }} />
         <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12.5, lineHeight: 1.6 }}>
-          Última valoración: <strong style={{ color: '#fff' }}>{latest.date}</strong> por {latest.evaluador} — Score {latest.score}/100
+          Última valoración: <strong style={{ color: '#fff' }}>{latest.date}</strong>
         </p>
       </div>
     </section>

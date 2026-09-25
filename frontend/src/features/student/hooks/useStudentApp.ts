@@ -44,6 +44,7 @@ function mapBackendToStudentRoutine(r: FrontendRutina, index: number): StudentRo
   return {
     id: r.id,
     name: r.nombre,
+    createdAt: r.fecha_creacion,
     duration: mapDuracionBackToFront(r.duracion) || '—',
     frequency: `${dias.length} ${dias.length === 1 ? 'día' : 'días'}/semana`,
     level: (mapNivelBackToFront(r.nivel) || 'Principiante') as StudentRoutine['level'],

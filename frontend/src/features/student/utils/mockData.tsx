@@ -35,6 +35,7 @@ export const motivationalQuotes = [
 export const studentRoutines: StudentRoutine[] = [
   {
     id: 'hipertrofia-superior',
+    createdAt: '2026-09-02T10:00:00Z',
     name: 'Hipertrofia Superior',
     duration: '8 semanas',
     frequency: '3 días/semana',
@@ -53,6 +54,7 @@ export const studentRoutines: StudentRoutine[] = [
   },
   {
     id: 'fuerza-tren-inferior',
+    createdAt: '2026-08-15T10:00:00Z',
     name: 'Fuerza Tren Inferior',
     duration: '6 semanas',
     frequency: '3 días/semana',
@@ -70,6 +72,7 @@ export const studentRoutines: StudentRoutine[] = [
   },
   {
     id: 'acondicionamiento-full-body',
+    createdAt: '2026-07-20T10:00:00Z',
     name: 'Acondicionamiento Full Body',
     duration: '12 semanas',
     frequency: '4 días/semana',
@@ -87,6 +90,7 @@ export const studentRoutines: StudentRoutine[] = [
   },
   {
     id: 'cardio-quemagrasas',
+    createdAt: '2026-06-10T10:00:00Z',
     name: 'Cardio Quemagrasas',
     duration: '8 semanas',
     frequency: '4 días/semana',
@@ -104,6 +108,7 @@ export const studentRoutines: StudentRoutine[] = [
   },
   {
     id: 'core-poderoso',
+    createdAt: '2026-05-05T10:00:00Z',
     name: 'Core Poderoso',
     duration: '6 semanas',
     frequency: '3 días/semana',
@@ -121,6 +126,7 @@ export const studentRoutines: StudentRoutine[] = [
   },
   {
     id: 'definicion-tren-superior',
+    createdAt: '2026-04-12T10:00:00Z',
     name: 'Definición Tren Superior',
     duration: '10 semanas',
     frequency: '4 días/semana',
@@ -138,6 +144,7 @@ export const studentRoutines: StudentRoutine[] = [
   },
   {
     id: 'movilidad-functional',
+    createdAt: '2026-03-18T10:00:00Z',
     name: 'Movilidad Funcional',
     duration: '4 semanas',
     frequency: '3 días/semana',
@@ -155,6 +162,7 @@ export const studentRoutines: StudentRoutine[] = [
   },
   {
     id: 'cross-training-unifit',
+    createdAt: '2026-02-22T10:00:00Z',
     name: 'Cross Training UNIFIT',
     duration: '8 semanas',
     frequency: '5 días/semana',
@@ -172,6 +180,7 @@ export const studentRoutines: StudentRoutine[] = [
   },
   {
     id: 'tonificacion-general',
+    createdAt: '2026-01-30T10:00:00Z',
     name: 'Tonificación General',
     duration: '6 semanas',
     frequency: '3 días/semana',

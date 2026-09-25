@@ -39,6 +39,7 @@ export interface FrontendRutina {
   duracion: string
   nivel: string
   observaciones: string
+  fecha_creacion: string
   ejercicios: FrontendRutinaEjercicio[]
 }
 
@@ -69,6 +70,7 @@ function mapBackendToFrontend(r: BackendRutina): FrontendRutina {
     duracion: r.duracion ?? '',
     nivel: r.nivel ?? '',
     observaciones: r.observaciones ?? '',
+    fecha_creacion: r.fecha_creacion,
     ejercicios: (r.ejercicios ?? []).map(e => ({
       id_ejercicio: e.id_ejercicio,
       nombre: e.ejercicio?.nombre ?? '',

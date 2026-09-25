@@ -117,6 +117,7 @@ export interface RoutineProgress {
 export interface StudentRoutine {
   id: string
   name: string
+  createdAt: string
   duration: string
   frequency: string
   level: 'Principiante' | 'Intermedio' | 'Avanzado'

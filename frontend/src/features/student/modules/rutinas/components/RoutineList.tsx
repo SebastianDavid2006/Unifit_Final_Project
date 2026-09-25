@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Dumbbell, Trophy } from 'lucide-react'
 import type { StudentRoutine } from '@/features/student/types/student'
 import { SectionTitle, GradientBorder, cardStyle, FIRE, AMBER, GREEN } from '@/features/student/components/ui/fitness'
 import { LEVEL_COLOR } from '../routineAssets'
+import { formatDateES } from '@/lib/dateUtils'
 
 interface RoutineListProps {
   routines: StudentRoutine[]
@@ -41,13 +42,17 @@ export function RoutineList({ routines, openRoutine, completedIds }: RoutineList
                   </span>
                   <GradientBorder radius={22}>
                     <div className="p-5 pt-6">
-                      <div className="flex items-center justify-between gap-3 mb-4">
+                      <div className="flex items-center justify-between gap-3 mb-2">
                         <h3 className="uppercase italic font-black text-white truncate flex items-center gap-2" style={{ fontSize: 19 }}>
                           {r.name}
                           {done && <Trophy size={15} style={{ color: GREEN }} />}
                         </h3>
                         <Dumbbell size={20} style={{ color: FIRE, opacity: 0.7 }} className="flex-shrink-0" />
                       </div>
+
+                      <p className="truncate mb-4" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11.5 }}>
+                        creada el: {formatDateES(r.createdAt, { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
 
                       <div className="grid grid-cols-3 gap-2.5 max-w-[480px]">
                         <div className="rounded-xl p-3" style={{ background: AMBER + '10', border: `1px solid ${AMBER}25` }}>
@@ -74,13 +79,17 @@ export function RoutineList({ routines, openRoutine, completedIds }: RoutineList
             <motion.div key={r.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
               <motion.button whileHover={{ y: -3 }} whileTap={{ scale: 0.985 }} onClick={() => openRoutine(r)} className="w-full text-left">
                 <div className="rounded-[22px] p-5 h-full" style={cardStyle}>
-                  <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center justify-between gap-3 mb-2">
                     <h3 className="uppercase italic font-black text-white truncate flex items-center gap-2" style={{ fontSize: 16 }}>
                       {r.name}
                       {done && <Trophy size={13} style={{ color: GREEN }} />}
                     </h3>
                     <Dumbbell size={17} style={{ color: 'rgba(255,255,255,0.25)' }} className="flex-shrink-0" />
                   </div>
+
+                  <p className="truncate mb-4" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11.5 }}>
+                    creada el: {formatDateES(r.createdAt, { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
 
                   <div className="grid grid-cols-3 gap-2.5">
                     <div className="rounded-xl p-2.5 text-center" style={{ background: AMBER + '10', border: `1px solid ${AMBER}25` }}>

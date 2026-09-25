@@ -1,14 +1,15 @@
 import type { Student } from '@/features/student/types/student'
-import { GradientBorder, AMBER, GREEN } from '@/features/student/components/ui/fitness'
+import { GradientBorder, GREEN } from '@/features/student/components/ui/fitness'
 import { personalSections } from '../profileData'
 import studentBoy from '@/assets/illustrations/characters/students/student_boy.webp'
 import studentGirl from '@/assets/illustrations/characters/students/student_girl.webp'
 
 interface ProfileHeaderProps {
   student: Student
+  objetivos: string[]
 }
 
-export function ProfileHeader({ student }: ProfileHeaderProps) {
+export function ProfileHeader({ student, objetivos }: ProfileHeaderProps) {
   const defaultPhoto = student.gender === 'M' ? studentBoy : studentGirl
 
   return (
@@ -35,10 +36,7 @@ export function ProfileHeader({ student }: ProfileHeaderProps) {
             </p>
             <div className="flex items-center justify-center sm:justify-start gap-2 mt-3">
               <span className="px-3 py-1 rounded-full font-bold" style={{ background: 'rgba(48,209,88,0.1)', border: '1px solid rgba(48,209,88,0.25)', color: GREEN, fontSize: 10.5 }}>
-                Objetivo: {student.goal}
-              </span>
-              <span className="px-3 py-1 rounded-full font-bold" style={{ background: 'rgba(245,166,35,0.08)', border: '1px solid rgba(245,166,35,0.22)', color: AMBER, fontSize: 10.5 }}>
-                Adherencia {student.adherence}%
+                Objetivo: {objetivos.length ? objetivos.join(' · ') : 'Sin definir'}
               </span>
             </div>
           </div>

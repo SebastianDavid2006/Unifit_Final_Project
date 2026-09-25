@@ -31,42 +31,50 @@ export function GymDocumentsPanel() {
     return d ? { fileName: d.fileName, dataUrl: d.dataUrl } : { fileName: null, dataUrl: null }
   }
 
+  const loaded = DOC_KEYS.map((key) => {
+    const doc = descriptedDoc(key)
+    return { key, title: DOC_TITLES[key], hint: DOC_HINTS[key], doc }
+  }).filter(x => x.doc.dataUrl)
+
+  if (loaded.length === 0) {
+    return (
+      <div className="rounded-2xl p-6 text-center" style={cardStyle}>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>No hay documentos cargados.</p>
+      </div>
+    )
+  }
+
   return (
     <>
-      {DOC_KEYS.map((key) => {
-        const doc = descriptedDoc(key)
-        return (
+      {loaded.map(({ key, hint, doc }) => (
           <div key={key} className="rounded-2xl p-4 flex items-center gap-3.5" style={cardStyle}>
             <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: GREEN + '14', border: `1px solid ${GREEN}28` }}>
               <FileText size={19} style={{ color: GREEN }} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-bold text-sm truncate">{DOC_TITLES[key]}</p>
-              <p style={{ color: doc.dataUrl ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.25)', fontSize: 11 }}>
-                {doc.dataUrl ? DOC_HINTS[key] : 'Documento no disponible'}
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>
+                {hint}
               </p>
             </div>
             <button
-              onClick={() => doc.dataUrl && setPreview(key)}
-              disabled={!doc.dataUrl}
+              onClick={() => setPreview(key)}
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(255,255,255,0.06)', color: doc.dataUrl ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)', cursor: doc.dataUrl ? 'pointer' : 'default' }}
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
               title="Ver"
             >
               <Eye size={16} />
             </button>
             <button
-              onClick={() => doc.dataUrl && download(key, doc.dataUrl!)}
-              disabled={!doc.dataUrl}
+              onClick={() => download(key, doc.dataUrl!)}
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(255,255,255,0.06)', color: doc.dataUrl ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.2)', cursor: doc.dataUrl ? 'pointer' : 'default' }}
+              style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
               title="Descargar"
             >
               <Download size={16} />
             </button>
           </div>
-        )
-      })}
+        ))}
 
       {preview && (
         <div
