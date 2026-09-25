@@ -1,5 +1,5 @@
 ﻿import { motion, AnimatePresence } from 'motion/react'
-import { X, Sparkles } from 'lucide-react'
+import { X } from 'lucide-react'
 import viewGif from '@/assets/icons/animated/actions/view.gif'
 import { ValuationSuccess } from './ValuationSuccess'
 import { Step1Contexto } from './steps/Step1Contexto'
@@ -183,22 +183,6 @@ export function NewValuationModal({
             {!valuationSuccess && (
               <div className="flex-shrink-0 px-6 py-4" style={{ borderTop: '1px solid rgba(0,0,0,0.04)', background: 'rgba(255,255,255,0.8)' }}>
                 <div className="relative flex items-center justify-between">
-                  {valuationViewMode && (
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.04, boxShadow: '0 10px 28px rgba(124,58,237,0.45)', transition: { duration: 0.15 } }}
-                      whileTap={{ scale: 0.94, boxShadow: '0 2px 8px rgba(124,58,237,0.2)', transition: { duration: 0.1 } }}
-                      onClick={startAiRoutine}
-                      className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                      style={{
-                        background: 'linear-gradient(135deg, #BF5AF2, #7C3AED)',
-                        boxShadow: '0 8px 22px rgba(124,58,237,0.3)',
-                      }}
-                    >
-                      <Sparkles size={14} />
-                      Generar rutina con IA
-                    </motion.button>
-                  )}
                   <div className="flex-1 flex justify-start">
                     {valuationStep > 1 ? (
                       <motion.button

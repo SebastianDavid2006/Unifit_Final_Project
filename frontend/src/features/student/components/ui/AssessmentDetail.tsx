@@ -1,8 +1,6 @@
 import { motion } from 'motion/react'
-import { Activity, Target, Zap, Dumbbell, ShieldAlert, User, Flag, CalendarClock } from 'lucide-react'
-import { FIRE, AMBER, BLUE, GREEN, cardStyle } from './fitness'
-
-const OBJETIVOS = ['Perdida de peso', 'Ganancia muscular', 'Acondicionamiento fisico', 'Salud', 'Rendimiento deportivo', 'Otro']
+import { Activity, Zap, Target, Ruler, Stethoscope, ShieldAlert, User, Flag, CalendarClock } from 'lucide-react'
+import { FIRE, AMBER, GREEN, BLUE, cardStyle } from './fitness'
 
 interface AssessmentItem {
   num: number
@@ -30,29 +28,62 @@ interface AssessmentItem {
   observacionesFinales: string
 }
 
-const SectionLabel = ({ icon: Icon, text, color }: { icon: any; text: string; color: string }) => (
-  <div className="flex items-center gap-2 mb-2.5">
-    <Icon size={13} style={{ color }} />
-    <p className="uppercase tracking-[0.18em]" style={{ fontSize: 9.5, fontWeight: 800, color }}>{text}</p>
+const MUTED = 'rgba(255,255,255,0.4)'
+const PLACEHOLDER = 'No registrado'
+
+const SectionLabel = ({ icon: Icon, text }: { icon: any; text: string }) => (
+  <div className="flex items-center gap-2 mb-2">
+    <Icon size={14} style={{ color: 'rgba(255,255,255,0.35)' }} />
+    <p className="uppercase tracking-wider" style={{ fontSize: 12.5, fontWeight: 800, color: MUTED }}>{text}</p>
   </div>
+)
+
+const Badge = ({ children, color, textColor }: { children: React.ReactNode; color: string; textColor?: string }) => (
+  <span className="px-3.5 py-1.5 rounded-full font-bold inline-block" style={{ background: color + '1c', border: `1px solid ${color}40`, color: textColor ?? color, fontSize: 11.5 }}>
+    {children}
+  </span>
+)
+
+const MetricCard = ({ label, value, delay = 0 }: { label: string; value?: string; delay?: number }) => {
+  const hasValue = !!value
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="rounded-xl p-2.5"
+      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+    >
+      <p className="uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 600 }}>{label}</p>
+      <p className="font-black" style={{ color: hasValue ? '#FFFFFF' : MUTED, fontSize: 19, marginTop: 3 }}>{hasValue ? value : PLACEHOLDER}</p>
+    </motion.div>
+  )
+}
+
+const EmptyText = ({ children, size = 13 }: { children: React.ReactNode; size?: number }) => (
+  <p style={{ color: MUTED, fontSize: size }}>{children}</p>
 )
 
 export function AssessmentDetail({ item }: { item: AssessmentItem }) {
   const medidas = [
-    { label: 'Peso (kg)', value: item.metrics[0]?.value },
-    { label: 'Estatura (cm)', value: item.estatura },
+    { label: 'Peso', value: item.metrics[0]?.value },
+    { label: 'Estatura', value: item.estatura },
     { label: 'IMC', value: item.metrics[1]?.value },
-    { label: 'Grasa corporal (%)', value: item.metrics[2]?.value },
-    { label: 'Masa muscular (kg)', value: item.metrics[3]?.value },
-    { label: 'Masa magra (kg)', value: item.masaMagra },
-    { label: 'Grasa visceral (nivel)', value: item.grasaVisceral },
+    { label: 'Grasa corporal', value: item.metrics[2]?.value },
+    { label: 'Masa muscular', value: item.metrics[3]?.value },
+    { label: 'Masa magra', value: item.masaMagra },
+    { label: 'Grasa visceral', value: item.grasaVisceral },
+  ]
+
+  const clinica = [
     { label: 'Presión arterial', value: item.presionArterial },
     { label: 'Edad metabólica', value: item.edadMetabolica },
-    { label: 'Agua corporal (%)', value: item.aguaCorporal },
-  ].filter(m => m.value)
+    { label: 'Agua corporal', value: item.aguaCorporal },
+    { label: 'Resistencia muscular', value: item.resistenciaMuscular },
+  ]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: item.color + '18', border: `1px solid ${item.color}33` }}>
@@ -66,84 +97,103 @@ export function AssessmentDetail({ item }: { item: AssessmentItem }) {
         </div>
       </div>
 
-      {/* Nivel de actividad física */}
-      <div className="rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap" style={{ background: GREEN + '07', border: `1px solid ${GREEN}20` }}>
-        <SectionLabel icon={Zap} text="Nivel de actividad física" color={GREEN} />
-        <span className="px-3 py-1 rounded-full font-black uppercase tracking-wider" style={{ background: GREEN + '16', color: GREEN, fontSize: 11 }}>
-          {item.nivelActividad}
-        </span>
-      </div>
-
-      {/* Objetivo del usuario */}
-      <div className="rounded-2xl p-4" style={{ background: AMBER + '06', border: `1px solid ${AMBER}1e` }}>
-        <SectionLabel icon={Target} text="Objetivo del usuario" color={AMBER} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 mb-3">
-          {OBJETIVOS.map(o => {
-            const sel = item.objetivoTarjetas.includes(o)
-            return (
-              <div key={o} className="rounded-xl px-2.5 py-2 text-center font-bold transition-all" style={{ fontSize: 10.5, background: sel ? AMBER + '18' : 'rgba(255,255,255,0.03)', color: sel ? AMBER : 'rgba(255,255,255,0.28)', border: `1px solid ${sel ? AMBER + '45' : 'rgba(255,255,255,0.06)'}` }}>
-                {o}
-              </div>
-            )
-          })}
-        </div>
-        <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.65 }}>{item.objetivoDetalle}</p>
-      </div>
-
-      {/* Medidas */}
+      {/* Días de entrenamiento */}
       <div>
-        <SectionLabel icon={Dumbbell} text="Medidas" color={BLUE} />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        <SectionLabel icon={CalendarClock} text="Días de entrenamiento" />
+        {item.diasDisponibles && item.diasDisponibles.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {item.diasDisponibles.map(d => (
+              <Badge key={d} color={BLUE} textColor="#7CC7FF">{d}</Badge>
+            ))}
+          </div>
+        ) : (
+          <EmptyText size={12}>{PLACEHOLDER}</EmptyText>
+        )}
+      </div>
+
+      {/* Nivel de actividad física */}
+      <div className="rounded-2xl p-4" style={{ background: GREEN + '07', border: `1px solid ${GREEN}20` }}>
+        <SectionLabel icon={Zap} text="Nivel de actividad física" />
+        {item.nivelActividad ? (
+          <Badge color={GREEN}>{item.nivelActividad}</Badge>
+        ) : (
+          <EmptyText size={12}>{PLACEHOLDER}</EmptyText>
+        )}
+      </div>
+
+      {/* Objetivo del usuario + Detalle del objetivo (un mismo card ámbar estilo textarea del formulario) */}
+      <div className="rounded-2xl p-4" style={{ background: AMBER + '06', border: `1px solid ${AMBER}1e` }}>
+        <SectionLabel icon={Target} text="Objetivo del usuario" />
+        {item.objetivoTarjetas.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {item.objetivoTarjetas.map(o => (
+              <Badge key={o} color={AMBER}>{o}</Badge>
+            ))}
+          </div>
+        ) : (
+          <EmptyText size={12}>{PLACEHOLDER}</EmptyText>
+        )}
+        {item.objetivoDetalle && (
+          <>
+            <p className="uppercase tracking-wider" style={{ color: MUTED, fontSize: 11, fontWeight: 800, marginTop: 14, marginBottom: 6 }}>Detalle del objetivo</p>
+            <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.65 }}>
+              {item.objetivoDetalle}
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Medidas corporales (todas las tarjetas, valor o placeholder) */}
+      <div>
+        <SectionLabel icon={Ruler} text="Medidas corporales" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5">
           {medidas.map((m, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <p className="text-white font-black truncate" style={{ fontSize: 13.5 }}>{m.value}</p>
-              <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8.5, marginTop: 2 }}>{m.label}</p>
-            </motion.div>
+            <MetricCard key={m.label} label={m.label} value={m.value} delay={i * 0.03} />
           ))}
         </div>
       </div>
 
-      {/* Resistencia muscular */}
-      <div className="rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap" style={{ background: BLUE + '07', border: `1px solid ${BLUE}22` }}>
-        <SectionLabel icon={Activity} text="Resistencia muscular" color={BLUE} />
-        <span className="px-3 py-1 rounded-full font-black uppercase tracking-wider" style={{ background: BLUE + '16', color: '#7CC7FF', fontSize: 11 }}>
-          {item.resistenciaMuscular}
-        </span>
+      {/* Evaluación clínica (todas las tarjetas, valor o placeholder) */}
+      <div>
+        <SectionLabel icon={Stethoscope} text="Evaluación clínica" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5">
+          {clinica.map((m, i) => (
+            <MetricCard key={m.label} label={m.label} value={m.value} delay={i * 0.03} />
+          ))}
+        </div>
       </div>
 
-      {/* Antecedentes de salud */}
+      {/* Antecedentes de salud (solo opciones seleccionadas) */}
       <div className="rounded-2xl p-4" style={{ background: FIRE + '05', border: `1px solid ${FIRE}1c` }}>
-        <SectionLabel icon={ShieldAlert} text="Antecedentes de salud" color={FIRE} />
+        <SectionLabel icon={ShieldAlert} text="Antecedentes de salud" />
         {item.antecedentesSalud.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {item.antecedentesSalud.map((a, i) => (
-              <span key={i} className="px-2.5 py-1 rounded-full font-bold" style={{ background: FIRE + '14', color: FIRE, fontSize: 10.5 }}>{a}</span>
+              <Badge key={i} color={FIRE}>{a}</Badge>
             ))}
           </div>
         ) : (
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>Sin antecedentes registrados</p>
+          <EmptyText size={12}>{PLACEHOLDER}</EmptyText>
         )}
       </div>
 
-      {/* Observaciones del entrenador */}
-      <div className="rounded-2xl p-4" style={cardStyle}>
-        <SectionLabel icon={User} text="Observaciones del entrenador" color={AMBER} />
-        <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.65 }}>{item.observacionesEntrenador}</p>
-      </div>
+      {/* Observaciones del entrenador (opcional: se oculta si viene sin contenido) */}
+      {item.observacionesEntrenador && (
+        <div className="rounded-2xl p-4" style={cardStyle}>
+          <SectionLabel icon={User} text="Observaciones del entrenador" />
+          <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.65 }}>
+            {item.observacionesEntrenador}
+          </p>
+        </div>
+      )}
 
-      {/* Observaciones finales */}
-      <div className="rounded-2xl p-4" style={{ background: GREEN + '06', border: `1px solid ${GREEN}20` }}>
-        <SectionLabel icon={Flag} text="Observaciones finales" color={GREEN} />
-        <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.65 }}>{item.observacionesFinales}</p>
-      </div>
-
-      {/* Footer: días de entrenamiento */}
-      {item.diasDisponibles && item.diasDisponibles.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-          <CalendarClock size={13} style={{ color: BLUE }} />
-          <span style={{ color: 'rgba(255,255,255,0.42)', fontSize: 11.5 }}>
-            Entrena: {item.diasDisponibles.join(', ')}
-          </span>
+      {/* Observaciones finales (opcional: se oculta si viene sin contenido) */}
+      {item.observacionesFinales && (
+        <div className="rounded-2xl p-4" style={{ background: GREEN + '06', border: `1px solid ${GREEN}20` }}>
+          <SectionLabel icon={Flag} text="Observaciones finales" />
+          <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, lineHeight: 1.65 }}>
+            {item.observacionesFinales}
+          </p>
         </div>
       )}
     </div>

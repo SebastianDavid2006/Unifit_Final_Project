@@ -157,6 +157,18 @@ export async function listarRutinasPorUsuario(id_usuario: string) {
               id_ejercicio: true,
               nombre: true,
               url_multimedia: true,
+              grupos_musculares: true,
+              maquinas: {
+                select: {
+                  maquina: {
+                    select: {
+                      id_maquina: true,
+                      nombre: true,
+                      url_multimedia: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },

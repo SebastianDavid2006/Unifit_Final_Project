@@ -29,7 +29,7 @@ export function DetailHeader({ routine, evaluator, detailTab, onTabChange, onBac
         <div className="min-w-0">
           <h2 className="uppercase italic font-black text-white truncate leading-tight" style={{ fontSize: 19 }}>{routine.name}</h2>
           <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5 }}>
-            {routine.duration} · {routine.focus} · Entrenador {evaluator}
+            {routine.duration}{routine.focus ? ` · ${routine.focus}` : ''}{evaluator ? ` · Entrenador ${evaluator}` : ''}
           </p>
         </div>
       </div>

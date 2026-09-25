@@ -100,8 +100,11 @@ export interface ExerciseRow {
   weight: string
   muscle: string
   secondaryMuscle?: string
+  groups?: string[]
   level?: string
   instructions: string
+  image?: string
+  machines?: { id: string; nombre: string; imageUrl: string }[]
 }
 
 export interface RoutineProgress {

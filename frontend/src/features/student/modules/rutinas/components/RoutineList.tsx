@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight, Dumbbell, Trophy } from 'lucide-react'
-import { studentRoutines } from '@/features/student/utils/mockData'
 import type { StudentRoutine } from '@/features/student/types/student'
 import { SectionTitle, GradientBorder, cardStyle, FIRE, AMBER, GREEN } from '@/features/student/components/ui/fitness'
 import { LEVEL_COLOR } from '../routineAssets'
 
 interface RoutineListProps {
+  routines: StudentRoutine[]
   openRoutine: (r: StudentRoutine) => void
   completedIds: string[]
 }
@@ -14,13 +14,13 @@ interface RoutineListProps {
 const FIRST_PAGE = 7
 const OTHER_PAGES = 8
 
-export function RoutineList({ openRoutine, completedIds }: RoutineListProps) {
+export function RoutineList({ routines, openRoutine, completedIds }: RoutineListProps) {
   const [page, setPage] = useState(1)
   /* Página 1: 7 rutinas (la actual ocupa fila entera), siguientes: 8 por página */
-  const totalPages = Math.max(1, Math.ceil((studentRoutines.length - FIRST_PAGE) / OTHER_PAGES) + 1)
+  const totalPages = Math.max(1, Math.ceil((routines.length - FIRST_PAGE) / OTHER_PAGES) + 1)
   const pageStart = page === 1 ? 0 : FIRST_PAGE + (page - 2) * OTHER_PAGES
   const pageSize = page === 1 ? FIRST_PAGE : OTHER_PAGES
-  const visibleRoutines = studentRoutines.slice(pageStart, pageStart + pageSize)
+  const visibleRoutines = routines.slice(pageStart, pageStart + pageSize)
 
   return (
     <div className="space-y-4">

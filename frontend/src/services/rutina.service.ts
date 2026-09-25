@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import { getImageUrl } from '@/lib/config'
 import { mapDuracionFrontToBack, mapDiaFrontToBack } from './mapper'
 
 export interface BackendRutinaEjercicio {
@@ -11,7 +12,12 @@ export interface BackendRutinaEjercicio {
   descanso: number | null
   observaciones: string | null
   orden: number
-  ejercicio?: { nombre: string; grupos_musculares: string[] }
+  ejercicio?: {
+    nombre: string
+    url_multimedia?: string
+    grupos_musculares: string[]
+    maquinas?: { maquina: { id_maquina: string; nombre: string; url_multimedia?: string } }[]
+  }
 }
 
 export interface BackendRutina {
@@ -36,6 +42,12 @@ export interface FrontendRutina {
   ejercicios: FrontendRutinaEjercicio[]
 }
 
+export interface FrontendRutinaMaquina {
+  id: string
+  nombre: string
+  imageUrl: string
+}
+
 export interface FrontendRutinaEjercicio {
   id_ejercicio: string
   nombre: string
@@ -45,7 +57,9 @@ export interface FrontendRutinaEjercicio {
   repeticiones_max: number
   descanso: number
   observaciones: string
+  urlMultimedia: string
   grupos_musculares: string[]
+  maquinas: FrontendRutinaMaquina[]
 }
 
 function mapBackendToFrontend(r: BackendRutina): FrontendRutina {
@@ -64,7 +78,13 @@ function mapBackendToFrontend(r: BackendRutina): FrontendRutina {
       repeticiones_max: e.repeticiones_max ?? 12,
       descanso: e.descanso ?? 60,
       observaciones: e.observaciones ?? '',
+      urlMultimedia: e.ejercicio?.url_multimedia ?? '',
       grupos_musculares: e.ejercicio?.grupos_musculares ?? [],
+      maquinas: (e.ejercicio?.maquinas ?? []).map(m => ({
+        id: m.maquina.id_maquina,
+        nombre: m.maquina.nombre,
+        imageUrl: getImageUrl(m.maquina.url_multimedia),
+      })),
     })),
   }
 }
