@@ -96,8 +96,20 @@ export function StudentLayout({ children, tab, onTabChange, onLogoutClick }: Stu
           <div className="flex items-center gap-2">
             <img src={logo} alt="UNIFIT" style={{ height: 26, objectFit: 'contain' }} />
           </div>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white" style={{ background: 'linear-gradient(135deg,#E63946,#F5A623)', fontSize: 11 }}>
-            AG
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white" style={{ background: 'linear-gradient(135deg,#E63946,#F5A623)', fontSize: 11 }}>
+              AG
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.12 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onLogoutClick}
+              title="Cerrar sesión"
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors"
+              style={{ background: 'rgba(230,57,70,0.12)', border: '1px solid rgba(230,57,70,0.28)', color: '#E63946' }}
+            >
+              <LogOut size={16} />
+            </motion.button>
           </div>
         </header>
 

@@ -4,7 +4,7 @@ import { todayWorkout, weeklyProgress } from '@/features/student/utils/mockData.
 import { getMiPerfil, type BackendUsuario } from '@/services/usuario.service'
 import { getRutinasPorUsuario, type FrontendRutina } from '@/services/rutina.service'
 import { getValoracionesPorUsuario, type AssessmentItem } from '@/services/valoracion.service'
-import { mapDuracionBackToFront, mapNivelBackToFront, mapGrupoMuscularBackToFront } from '@/services/mapper'
+import { mapDuracionBackToFront, mapNivelBackToFront, mapGrupoMuscularBackToFront, mapDiaBackToFront } from '@/services/mapper'
 import { getImageUrl } from '@/lib/config'
 
 interface StudentAppContextType {
@@ -50,6 +50,7 @@ function mapBackendToStudentRoutine(r: FrontendRutina, index: number): StudentRo
     level: (mapNivelBackToFront(r.nivel) || 'Principiante') as StudentRoutine['level'],
     focus: '',
     current: index === 0,
+    days: dias.map(mapDiaBackToFront),
     rows: r.ejercicios.map(e => ({
       name: e.nombre,
       sets: e.series != null ? String(e.series) : '',
@@ -62,6 +63,7 @@ function mapBackendToStudentRoutine(r: FrontendRutina, index: number): StudentRo
       weight: '',
       muscle: e.grupos_musculares?.length ? mapGrupoMuscularBackToFront(e.grupos_musculares[0]) : 'General',
       groups: (e.grupos_musculares ?? []).map(mapGrupoMuscularBackToFront),
+      dia: mapDiaBackToFront(e.dia_semana),
       instructions: e.observaciones || '',
       image: e.urlMultimedia ? getImageUrl(e.urlMultimedia) : '',
       machines: e.maquinas,

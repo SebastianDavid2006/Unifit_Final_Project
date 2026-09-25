@@ -30,9 +30,10 @@ export function CollapsibleCategoryPills({ groups }: CollapsibleCategoryPillsPro
     const w = pop.offsetWidth
     const h = pop.offsetHeight
     const centerX = circle.left + circle.width / 2
-    const left = Math.max(w / 2 + 12, Math.min(centerX, window.innerWidth - w / 2 - 12))
+    const left = Math.max(12, Math.min(centerX - w / 2, window.innerWidth - w - 12))
     const spaceAbove = circle.top
-    const top = spaceAbove >= h + GAP ? circle.top - GAP - h : circle.bottom + GAP
+    const preferredTop = spaceAbove >= h + GAP ? circle.top - GAP - h : circle.bottom + GAP
+    const top = Math.max(8, Math.min(preferredTop, window.innerHeight - h - 8))
     setPos({ top, left })
   }, [open])
 

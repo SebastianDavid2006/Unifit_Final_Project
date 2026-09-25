@@ -6,10 +6,11 @@ import { FIRE, AMBER, GREEN } from '@/features/student/components/ui/fitness'
 interface CelebrationModalProps {
   open: boolean
   routine: StudentRoutine
+  dayLabel?: string
   onClose: () => void
 }
 
-export function CelebrationModal({ open, routine, onClose }: CelebrationModalProps) {
+export function CelebrationModal({ open, routine, dayLabel, onClose }: CelebrationModalProps) {
   return (
     <AnimatePresence>
       {open && (
@@ -97,7 +98,7 @@ export function CelebrationModal({ open, routine, onClose }: CelebrationModalPro
                 transition={{ delay: 0.42 }}
                 style={{ color: 'rgba(255,255,255,0.62)', fontSize: 13, marginTop: 10, lineHeight: 1.65 }}
               >
-                Completaste <span className="font-black text-white">{routine.name}</span> de principio a fin.
+                Completaste la sesión de <span className="font-black text-white">{dayLabel ?? routine.name}</span>.
                 Ese esfuerzo suma — <span style={{ color: '#FFD98A', fontWeight: 800 }}>sigue así, vas por un gran camino.</span>
               </motion.p>
 

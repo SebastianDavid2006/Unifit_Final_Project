@@ -102,6 +102,7 @@ export interface ExerciseRow {
   secondaryMuscle?: string
   groups?: string[]
   level?: string
+  dia?: string
   instructions: string
   image?: string
   machines?: { id: string; nombre: string; imageUrl: string }[]
@@ -123,6 +124,7 @@ export interface StudentRoutine {
   level: 'Principiante' | 'Intermedio' | 'Avanzado'
   focus: string
   current?: boolean
+  days?: string[]
   rows: ExerciseRow[]
   assessmentNum: number
   progress: RoutineProgress

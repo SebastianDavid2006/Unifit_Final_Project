@@ -16,7 +16,7 @@ export function CategoryPill({ group, size = 'md' }: CategoryPillProps) {
   return (
     <span
       className={`inline-flex items-center ${s.gap} ${s.pad} rounded-full font-bold flex-shrink-0`}
-      style={{ background: BLUE + '14', color: BLUE, fontSize: s.fontSize, border: `1px solid ${BLUE}30` }}
+      style={{ background: BLUE + '1f', color: BLUE, fontSize: s.fontSize, border: `1px solid ${BLUE}45` }}
     >
       <img src={MUSCLE_IMG[group] ?? FULL_BODY_IMG} alt={group} className={`${s.img} object-cover rounded-sm flex-shrink-0`} />
       <span className="whitespace-nowrap">{group}</span>

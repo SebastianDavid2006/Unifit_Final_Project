@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
-import { ChevronLeft, Dumbbell, ClipboardCheck } from 'lucide-react'
+import { ChevronLeft, Dumbbell, ClipboardCheck, CalendarDays, Check } from 'lucide-react'
 import type { StudentRoutine } from '@/features/student/types/student'
-import { FIRE, AMBER } from '@/features/student/components/ui/fitness'
+import { FIRE, AMBER, GREEN } from '@/features/student/components/ui/fitness'
 import routineScene from '@/assets/scenes/physical_routine.webp'
 
 interface DetailHeaderProps {
@@ -10,9 +10,12 @@ interface DetailHeaderProps {
   detailTab: 'exercises' | 'assessment'
   onTabChange: (tab: 'exercises' | 'assessment') => void
   onBack: () => void
+  selectedDay?: string | null
+  onDaySelect?: (day: string) => void
+  completedDays?: string[]
 }
 
-export function DetailHeader({ routine, evaluator, detailTab, onTabChange, onBack }: DetailHeaderProps) {
+export function DetailHeader({ routine, evaluator, detailTab, onTabChange, onBack, selectedDay, onDaySelect, completedDays }: DetailHeaderProps) {
   return (
     <>
       {/* Header con volver */}
@@ -79,6 +82,40 @@ export function DetailHeader({ routine, evaluator, detailTab, onTabChange, onBac
           )
         })}
       </div>
+
+      {/* Días de entrenamiento */}
+      {detailTab === 'exercises' && routine.days && routine.days.length > 0 && (
+        <div style={{ marginTop: 28 }}>
+          <span className="flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <CalendarDays size={13} /> Días de entrenamiento
+          </span>
+          <div className="flex items-center gap-2 overflow-x-auto mt-2.5">
+            {routine.days.map(d => {
+              const active = selectedDay === d
+              const done = completedDays?.includes(d)
+              return (
+                <motion.button
+                  key={d}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => onDaySelect?.(d)}
+                  className="px-3.5 py-1.5 rounded-xl flex-shrink-0 font-black uppercase tracking-wider flex items-center gap-1.5"
+                  style={{
+                    background: active ? `linear-gradient(135deg, ${FIRE}, ${AMBER})` : 'rgba(255,255,255,0.05)',
+                    border: active ? 'none' : '1px solid rgba(255,255,255,0.09)',
+                    color: active ? '#fff' : 'rgba(255,255,255,0.55)',
+                    fontSize: 10,
+                    boxShadow: active ? '0 8px 22px rgba(230,57,70,0.28)' : 'none',
+                  }}
+                >
+                  {d}
+                  {done && <Check size={11} strokeWidth={4} style={{ color: active ? '#fff' : GREEN }} />}
+                </motion.button>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </>
   )
 }

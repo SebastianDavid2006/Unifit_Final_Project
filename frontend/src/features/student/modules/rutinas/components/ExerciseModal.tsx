@@ -13,11 +13,12 @@ interface ExerciseModalProps {
   data: { ex: ExerciseRow; index: number } | null
   routine: StudentRoutine
   checkedIndexes: number[]
+  sessionActive: boolean
   onToggle: (index: number) => void
   onClose: () => void
 }
 
-export function ExerciseModal({ data, routine, checkedIndexes, onToggle, onClose }: ExerciseModalProps) {
+export function ExerciseModal({ data, routine, checkedIndexes, sessionActive, onToggle, onClose }: ExerciseModalProps) {
   const [lightbox, setLightbox] = useState<{ src: string; isVideo: boolean } | null>(null)
   return (
     <AnimatePresence>
@@ -145,21 +146,23 @@ export function ExerciseModal({ data, routine, checkedIndexes, onToggle, onClose
                 </div>
               )}
 
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => { onToggle(data.index); onClose() }}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black uppercase tracking-wider"
-                style={{
-                  background: checkedIndexes.includes(data.index) ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${GREEN}, #7CE495)`,
-                  color: checkedIndexes.includes(data.index) ? 'rgba(255,255,255,0.55)' : '#052e12',
-                  fontSize: 12,
-                }}
-              >
-                {checkedIndexes.includes(data.index)
-                  ? <><CheckCircle2 size={17} /> Marcado — desmarcar</>
-                  : <><CheckCircle2 size={17} /> Marcar como hecho</>}
-              </motion.button>
+              {sessionActive && (
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => { onToggle(data.index); onClose() }}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black uppercase tracking-wider"
+                  style={{
+                    background: checkedIndexes.includes(data.index) ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${GREEN}, #7CE495)`,
+                    color: checkedIndexes.includes(data.index) ? 'rgba(255,255,255,0.55)' : '#052e12',
+                    fontSize: 12,
+                  }}
+                >
+                  {checkedIndexes.includes(data.index)
+                    ? <><CheckCircle2 size={17} /> Marcado — desmarcar</>
+                    : <><CheckCircle2 size={17} /> Marcar como hecho</>}
+                </motion.button>
+              )}
             </div>
           </motion.div>
 
