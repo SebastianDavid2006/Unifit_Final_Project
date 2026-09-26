@@ -210,8 +210,16 @@ export async function crearValoracion(data: CrearValoracionData, id_creador: str
 }
 
 export async function editarValoracion(id: string, data: EditarValoracionData) {
-  const valoracion = await prisma.valoracion.findUnique({ where: { id_valoracion: id } })
+  const valoracion = await prisma.valoracion.findUnique({
+    where: { id_valoracion: id },
+    include: { rutina: { select: { estado: true } } },
+  })
   if (!valoracion) throw new HttpError(404, 'Valoración no encontrada')
+  // Solo lectura por relación: si la valoración pertenece a una rutina que ya
+  // no está activa (finalizada/cancelada), no se puede modificar.
+  if (valoracion.rutina && valoracion.rutina.estado !== 'activa') {
+    throw new HttpError(400, 'La valoración pertenece a una rutina que ya no está activa — no se puede modificar')
+  }
 
   return prisma.$transaction(async (tx) => {
     const updated = await tx.valoracion.update({
@@ -277,8 +285,14 @@ export async function editarValoracion(id: string, data: EditarValoracionData) {
 }
 
 export async function desactivarValoracion(id: string) {
-  const valoracion = await prisma.valoracion.findUnique({ where: { id_valoracion: id } })
+  const valoracion = await prisma.valoracion.findUnique({
+    where: { id_valoracion: id },
+    include: { rutina: { select: { estado: true } } },
+  })
   if (!valoracion) throw new HttpError(404, 'Valoración no encontrada')
+  if (valoracion.rutina && valoracion.rutina.estado !== 'activa') {
+    throw new HttpError(400, 'La valoración pertenece a una rutina que ya no está activa — no se puede desactivar')
+  }
 
   return prisma.valoracion.update({
     where: { id_valoracion: id },

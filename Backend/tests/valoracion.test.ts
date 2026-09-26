@@ -412,3 +412,102 @@ describe('Valoración - Validación de datos', () => {
     expect(res.status).toBe(404)
   })
 })
+
+// Solo lectura por relación: una valoración vinculada a una rutina que ya no
+// está activa (finalizada/cancelada) no se puede editar ni desactivar.
+describe.sequential('Valoración - Validación por relación con la rutina', () => {
+  let validacionFinalizadaV = ''
+  let validacionActivaV = ''
+  let rutinaActivaId = ''
+  let ejercicioId = ''
+
+  beforeAll(async () => {
+    const ejercicio = await prisma.ejercicio.findFirst({ select: { id_ejercicio: true } })
+    ejercicioId = ejercicio!.id_ejercicio
+
+    const crearValoracion = async (dias: string) => {
+      const res = await request(app)
+        .post('/api/valoraciones')
+        .set('Authorization', `Bearer ${token('adminToken')}`)
+        .send({
+          id_usuario: directoId,
+          nivel_actividad: 'activo',
+          objetivos: ['salud'],
+          tipo_antecedentes: [],
+          dias_disponibles: [dias],
+        })
+      expect(res.status).toBe(201)
+      return res.body.id_valoracion
+    }
+
+    const crearRutina = async (idValoracion: string, nombre: string, dia: string) => {
+      const res = await request(app)
+        .post('/api/rutinas')
+        .set('Authorization', `Bearer ${token('adminToken')}`)
+        .send({
+          id_usuario: directoId,
+          id_valoracion: idValoracion,
+          nombre,
+          nivel: 'intermedio',
+          ejercicios: [
+            { id_ejercicio: ejercicioId, dia_semana: dia, series: 3, repeticiones_min: 10, repeticiones_max: 12 },
+          ],
+        })
+      expect(res.status).toBe(201)
+      return res.body.id_rutina
+    }
+
+    // Primera rutina (queda finalizada al crear la segunda) y su valoración.
+    validacionFinalizadaV = await crearValoracion('lunes')
+    await crearRutina(validacionFinalizadaV, 'Rutina Finalizada', 'lunes')
+    // Segunda rutina (activa) y su valoración.
+    validacionActivaV = await crearValoracion('martes')
+    rutinaActivaId = await crearRutina(validacionActivaV, 'Rutina Activa', 'martes')
+  })
+
+  it('PUT /valoraciones/:id - editar valoración de rutina finalizada → 400', async () => {
+    const res = await request(app)
+      .put(`/api/valoraciones/${validacionFinalizadaV}`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ observaciones_finales: 'Edición bloqueada' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('La valoración pertenece a una rutina que ya no está activa — no se puede modificar')
+  })
+
+  it('PUT /valoraciones/:id/desactivar - desactivar valoración de rutina finalizada → 400', async () => {
+    const res = await request(app)
+      .put(`/api/valoraciones/${validacionFinalizadaV}/desactivar`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe(
+      'La valoración pertenece a una rutina que ya no está activa — no se puede desactivar',
+    )
+  })
+
+  it('PUT /valoraciones/:id - valoración de rutina activa sigue siendo editable → 200', async () => {
+    const res = await request(app)
+      .put(`/api/valoraciones/${validacionActivaV}`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ observaciones_finales: 'Sigue activa' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.observaciones_finales).toBe('Sigue activa')
+  })
+
+  it('PUT /valoraciones/:id - valoración de rutina cancelada → 400', async () => {
+    const rutinaCancelada = await request(app)
+      .put(`/api/rutinas/${rutinaActivaId}/desactivar`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+    expect(rutinaCancelada.status).toBe(200)
+
+    const res = await request(app)
+      .put(`/api/valoraciones/${validacionActivaV}`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ observaciones_finales: 'Intento' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('La valoración pertenece a una rutina que ya no está activa — no se puede modificar')
+  })
+})

@@ -13,6 +13,7 @@ let ejercicioId1: string
 let ejercicioId2: string
 let rutinaId: string
 let directoRutinaId: string
+let sesionRutinaId: string
 let rutinaSegundaId: string
 let originalParqDirecto: boolean
 let valoracionId: string
@@ -330,21 +331,21 @@ describe.sequential('Rutina - CRUD', () => {
 
   it('PUT /rutinas/:id - admin puede editar', async () => {
     const res = await request(app)
-      .put(`/api/rutinas/${rutinaId}`)
+      .put(`/api/rutinas/${directoRutinaId}`)
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
-        nombre: 'Rutina Fuerza V2',
+        nombre: 'Rutina Cardio V2',
         nivel: 'avanzado',
       })
 
     expect(res.status).toBe(200)
-    expect(res.body.nombre).toBe('Rutina Fuerza V2')
+    expect(res.body.nombre).toBe('Rutina Cardio V2')
     expect(res.body.nivel).toBe('avanzado')
   })
 
   it('PUT /rutinas/:id - entrenador puede editar', async () => {
     const res = await request(app)
-      .put(`/api/rutinas/${rutinaId}`)
+      .put(`/api/rutinas/${directoRutinaId}`)
       .set('Authorization', `Bearer ${token('entrenadorToken')}`)
       .send({
         observaciones: 'Observación del entrenador',
@@ -774,9 +775,49 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
   let sesionFinalizadaId = ''
   let sesionCanceladaId = ''
 
+  // Regla "1 rutina activa": las sesiones solo se prueban sobre la rutina más
+  // reciente del dueño. Se crea aquí una valoración + rutina nuevas para
+  // directo (quedan como su única rutina activa en este punto de la corrida).
+  beforeAll(async () => {
+    const valoracion = await request(app)
+      .post('/api/valoraciones')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        nivel_actividad: 'activo',
+        objetivos: ['salud'],
+        tipo_antecedentes: [],
+        dias_disponibles: ['lunes', 'miercoles'],
+      })
+    expect(valoracion.status).toBe(201)
+
+    const rutina = await request(app)
+      .post('/api/rutinas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        id_valoracion: valoracion.body.id_valoracion,
+        nombre: 'Rutina Sesión',
+        nivel: 'intermedio',
+        ejercicios: [
+          {
+            id_ejercicio: ejercicioId1,
+            dia_semana: 'lunes',
+            series: 4,
+            repeticiones_min: 8,
+            repeticiones_max: 10,
+            descanso: 90,
+          },
+        ],
+      })
+    expect(rutina.status).toBe(201)
+    expect(rutina.body.estado).toBe('activa')
+    sesionRutinaId = rutina.body.id_rutina
+  })
+
   it('POST /rutinas/:id/sesiones - dueño inicia sesión → 201 en_progreso', async () => {
     const res = await request(app)
-      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
 
     expect(res.status).toBe(201)
@@ -787,7 +828,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
 
   it('POST /rutinas/:id/sesiones - segunda sesión del mismo día → 400', async () => {
     const res = await request(app)
-      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
 
     expect(res.status).toBe(400)
@@ -815,7 +856,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
 
   it('POST + PUT /sesiones/:id/cancelar - dueño cancela → 201/200 cancelada', async () => {
     const creada = await request(app)
-      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
 
     expect(creada.status).toBe(201)
@@ -832,7 +873,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
 
   it('GET /rutinas/:id/sesiones - dueño lista → 200 ordenado por fecha desc', async () => {
     const res = await request(app)
-      .get(`/api/rutinas/${rutinaId}/sesiones`)
+      .get(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
 
     expect(res.status).toBe(200)
@@ -846,7 +887,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
 
   it('GET /rutinas/:id/sesiones - admin consulta sesiones (seguimiento) → 200', async () => {
     const res = await request(app)
-      .get(`/api/rutinas/${rutinaId}/sesiones`)
+      .get(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('adminToken')}`)
 
     expect(res.status).toBe(200)
@@ -854,7 +895,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
 
   it('POST /rutinas/:id/sesiones - admin NO puede iniciar sesión ajena → 403', async () => {
     const res = await request(app)
-      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('adminToken')}`)
 
     expect(res.status).toBe(403)
@@ -876,7 +917,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
 
   it('POST /rutinas/:id/sesiones - otro usuario no puede iniciar → 403', async () => {
     const res = await request(app)
-      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('segundoToken')}`)
 
     expect(res.status).toBe(403)
@@ -936,11 +977,11 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     ayer.setHours(10, 0, 0, 0)
 
     const colgada = await prisma.sesionRutina.create({
-      data: { id_rutina: rutinaId, fecha: ayer, hora_inicio: ayer },
+      data: { id_rutina: sesionRutinaId, fecha: ayer, hora_inicio: ayer },
     })
 
     const res = await request(app)
-      .post(`/api/rutinas/${rutinaId}/sesiones`)
+      .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
 
     expect(res.status).toBe(201)
@@ -952,5 +993,110 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     expect(colgadaTras!.hora_fin).not.toBeNull()
     expect(nueva!.estado).toBe('en_progreso')
     expect(nueva!.hora_fin).toBeNull()
+  })
+})
+
+describe.sequential('Rutina - Única activa (estado finalizada)', () => {
+  let rutinaPreviaId = ''
+  let rutinaNuevaId = ''
+  let valoracionNuevaId = ''
+
+  it('POST /rutinas - crear una nueva finaliza la anterior del mismo usuario', async () => {
+    const valoracionPrevia = await request(app)
+      .post('/api/valoraciones')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        nivel_actividad: 'activo',
+        objetivos: ['salud'],
+        tipo_antecedentes: [],
+        dias_disponibles: ['lunes'],
+      })
+    expect(valoracionPrevia.status).toBe(201)
+
+    const previa = await request(app)
+      .post('/api/rutinas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        id_valoracion: valoracionPrevia.body.id_valoracion,
+        nombre: 'Rutina Previa',
+        nivel: 'intermedio',
+        ejercicios: [
+          { id_ejercicio: ejercicioId1, dia_semana: 'lunes', series: 3, repeticiones_min: 10, repeticiones_max: 12 },
+        ],
+      })
+    expect(previa.status).toBe(201)
+    expect(previa.body.estado).toBe('activa')
+    rutinaPreviaId = previa.body.id_rutina
+
+    const valoracionNueva = await request(app)
+      .post('/api/valoraciones')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        nivel_actividad: 'activo',
+        objetivos: ['salud'],
+        tipo_antecedentes: [],
+        dias_disponibles: ['martes'],
+      })
+    expect(valoracionNueva.status).toBe(201)
+    valoracionNuevaId = valoracionNueva.body.id_valoracion
+
+    const nueva = await request(app)
+      .post('/api/rutinas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        id_valoracion: valoracionNuevaId,
+        nombre: 'Rutina Nueva',
+        nivel: 'principiante',
+        ejercicios: [
+          { id_ejercicio: ejercicioId2, dia_semana: 'martes', series: 3, repeticiones_min: 12, repeticiones_max: 15 },
+        ],
+      })
+    expect(nueva.status).toBe(201)
+    expect(nueva.body.estado).toBe('activa')
+    rutinaNuevaId = nueva.body.id_rutina
+
+    const previaTras = await prisma.rutina.findUnique({ where: { id_rutina: rutinaPreviaId } })
+    expect(previaTras!.estado).toBe('finalizada')
+  })
+
+  it('POST /rutinas/:id/sesiones - rutina finalizada NO permite iniciar sesión → 400', async () => {
+    const res = await request(app)
+      .post(`/api/rutinas/${rutinaPreviaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('La rutina no está activa — no se pueden iniciar sesiones en ella')
+  })
+
+  it('PUT /rutinas/:id - editar rutina finalizada → 400', async () => {
+    const res = await request(app)
+      .put(`/api/rutinas/${rutinaPreviaId}`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ nombre: 'Intento de edición' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('No se puede editar una rutina finalizada')
+  })
+
+  it('GET /rutinas/usuario/:id - incluye finalizada y excluye cancelada', async () => {
+    const desactivar = await request(app)
+      .put(`/api/rutinas/${rutinaNuevaId}/desactivar`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+    expect(desactivar.status).toBe(200)
+    const rutinaNuevaEnBD = await prisma.rutina.findUnique({ where: { id_rutina: rutinaNuevaId } })
+    expect(rutinaNuevaEnBD!.estado).toBe('cancelada')
+
+    const res = await request(app)
+      .get(`/api/rutinas/usuario/${directoId}`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(200)
+    const ids = res.body.map((r: any) => r.id_rutina)
+    expect(ids).toContain(rutinaPreviaId)
+    expect(ids).not.toContain(rutinaNuevaId)
   })
 })

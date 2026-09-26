@@ -147,7 +147,8 @@ export async function obtenerRutinaPorId(id: string) {
 
 export async function listarRutinasPorUsuario(id_usuario: string) {
   return prisma.rutina.findMany({
-    where: { id_usuario, estado: 'activa' },
+    // La actual (activa) y las pasadas (finalizada) se ven; las canceladas no.
+    where: { id_usuario, estado: { in: ['activa', 'finalizada'] } },
     include: {
       ejercicios: {
         orderBy: [{ dia_semana: 'asc' }, { orden: 'asc' }],
@@ -217,6 +218,12 @@ export async function crearRutina(data: CrearRutinaData, id_creador: string) {
   }
 
   return prisma.$transaction(async (tx) => {
+    // Regla "1 rutina activa": crear una nueva finaliza las anteriores del usuario.
+    await tx.rutina.updateMany({
+      where: { id_usuario: data.id_usuario, estado: 'activa' },
+      data: { estado: 'finalizada' },
+    })
+
     const rutina = await tx.rutina.create({
       data: {
         id_usuario: data.id_usuario,
@@ -244,6 +251,7 @@ export async function editarRutina(id: string, data: EditarRutinaData) {
   const rutina = await prisma.rutina.findUnique({ where: { id_rutina: id } })
   if (!rutina) throw new HttpError(404, 'Rutina no encontrada')
   if (rutina.estado === 'cancelada') throw new HttpError(400, 'No se puede editar una rutina cancelada')
+  if (rutina.estado === 'finalizada') throw new HttpError(400, 'No se puede editar una rutina finalizada')
 
   if (data.ejercicios) {
     if (data.ejercicios.length === 0) {
@@ -299,9 +307,13 @@ function inicioDeHoy(): Date {
 export async function crearSesion(idRutina: string) {
   const rutina = await prisma.rutina.findUnique({
     where: { id_rutina: idRutina },
-    select: { id_rutina: true },
+    select: { id_rutina: true, estado: true },
   })
   if (!rutina) throw new HttpError(404, 'Rutina no encontrada')
+  // Solo la rutina actual (activa) puede iniciar sesiones; las finalizadas/canceladas no.
+  if (rutina.estado !== 'activa') {
+    throw new HttpError(400, 'La rutina no está activa — no se pueden iniciar sesiones en ella')
+  }
 
   // Regla: una sesión en_progreso de un día anterior queda huérfana ("colgada").
   // Al crear una nueva se auto-cancela con hora_fin = ahora.
