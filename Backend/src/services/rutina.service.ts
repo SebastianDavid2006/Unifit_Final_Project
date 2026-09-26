@@ -389,3 +389,27 @@ export async function finalizarSesion(idSesion: string) {
 export async function cancelarSesion(idSesion: string) {
   return transicionarSesion(idSesion, 'cancelada')
 }
+
+export async function marcarEjercicios(idSesion: string, ids: string[]) {
+  const sesion = await prisma.sesionRutina.findUnique({ where: { id_sesion: idSesion } })
+  if (!sesion) throw new HttpError(404, 'Sesión no encontrada')
+  if (sesion.estado !== 'en_progreso') throw new HttpError(400, 'La sesión no está en curso')
+
+  // Los ids deben pertenecer a ejercicios reales de la rutina de esta sesión —
+  // nunca guardar IDs de otra rutina ni basura en el campo Json.
+  const ejerciciosRutina = await prisma.rutinaEjercicio.findMany({
+    where: { id_rutina: sesion.id_rutina },
+    select: { id_rutina_ejercicio: true },
+  })
+  const validos = new Set(ejerciciosRutina.map(e => e.id_rutina_ejercicio))
+  for (const id of ids) {
+    if (!validos.has(id)) {
+      throw new HttpError(400, 'Uno o más ejercicios no pertenecen a la rutina de esta sesión')
+    }
+  }
+
+  return prisma.sesionRutina.update({
+    where: { id_sesion: idSesion },
+    data: { ejercicios_marcados: [...new Set(ids)] },
+  })
+}

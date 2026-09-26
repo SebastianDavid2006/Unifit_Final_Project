@@ -54,6 +54,7 @@ export interface FrontendRutinaMaquina {
 }
 
 export interface FrontendRutinaEjercicio {
+  id_rutina_ejercicio: string
   id_ejercicio: string
   nombre: string
   dia_semana: string
@@ -77,6 +78,7 @@ function mapBackendToFrontend(r: BackendRutina): FrontendRutina {
     observaciones: r.observaciones ?? '',
     fecha_creacion: r.fecha_creacion,
     ejercicios: (r.ejercicios ?? []).map(e => ({
+      id_rutina_ejercicio: e.id_rutina_ejercicio,
       id_ejercicio: e.id_ejercicio,
       nombre: e.ejercicio?.nombre ?? '',
       dia_semana: e.dia_semana,
@@ -177,6 +179,7 @@ export interface BackendSesionRutina {
   fecha: string
   hora_inicio: string | null
   hora_fin: string | null
+  ejercicios_marcados: string[] | null
 }
 
 export interface FrontendSesionRutina {
@@ -186,6 +189,7 @@ export interface FrontendSesionRutina {
   fecha: string
   horaInicio: string | null
   horaFin: string | null
+  ejerciciosMarcados: string[]
 }
 
 function mapSesionBackendToFrontend(s: BackendSesionRutina): FrontendSesionRutina {
@@ -196,6 +200,7 @@ function mapSesionBackendToFrontend(s: BackendSesionRutina): FrontendSesionRutin
     fecha: s.fecha,
     horaInicio: s.hora_inicio,
     horaFin: s.hora_fin,
+    ejerciciosMarcados: s.ejercicios_marcados ?? [],
   }
 }
 
@@ -211,6 +216,11 @@ export async function iniciarSesion(idRutina: string): Promise<FrontendSesionRut
 
 export async function finalizarSesion(idSesion: string): Promise<FrontendSesionRutina> {
   const { data } = await api.put<BackendSesionRutina>(`/sesiones/${idSesion}/finalizar`)
+  return mapSesionBackendToFrontend(data)
+}
+
+export async function marcarEjercicios(idSesion: string, ids: string[]): Promise<FrontendSesionRutina> {
+  const { data } = await api.patch<BackendSesionRutina>(`/sesiones/${idSesion}/ejercicios`, { ejerciciosMarcados: ids })
   return mapSesionBackendToFrontend(data)
 }
 

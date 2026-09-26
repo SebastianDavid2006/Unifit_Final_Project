@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Dumbbell, AlertTriangle } from 'lucide-react'
+import { useParams, useNavigate } from 'react-router'
 import { useStudentApp } from '@/features/student/hooks/useStudentApp'
 import type { StudentRoutine, ExerciseRow } from '@/features/student/types/student'
 import {
@@ -8,6 +9,7 @@ import {
   iniciarSesion,
   finalizarSesion,
   cancelarSesion,
+  marcarEjercicios,
   type FrontendSesionRutina,
 } from '@/services/rutina.service'
 import { mensajeError } from '@/lib/api'
@@ -46,9 +48,11 @@ function doneDaysDesdeSesiones(routine: StudentRoutine, sesiones: FrontendSesion
 }
 
 export function RoutinesPage() {
-  const { studentRoutines, assessments, loadingRoutines } = useStudentApp()
-  const [view, setView] = useState<View>('list')
-  const [routine, setRoutine] = useState<StudentRoutine | null>(null)
+  const { studentRoutines, assessments, loadingRoutines, refrescarRutinas } = useStudentApp()
+  const { rutinaId } = useParams<{ rutinaId: string }>()
+  const navigate = useNavigate()
+  const routine = rutinaId ? studentRoutines.find(r => r.id === rutinaId) ?? null : null
+  const view: View = rutinaId ? 'detail' : 'list'
   const [detailTab, setDetailTab] = useState<'exercises' | 'assessment'>('exercises')
   const [checked, setChecked] = useState<Record<string, number[]>>({})
   const [completedByRoutine, setCompletedByRoutine] = useState<Record<string, string[]>>({})
@@ -68,20 +72,48 @@ export function RoutinesPage() {
   const allowStart = !!routine && !!selectedDay && selectedDay.toLowerCase() === hoyKey()
 
   const openRoutine = (r: StudentRoutine) => {
-    const today = hoyKey()
-    const defaultDay = r.days?.find(d => d.toLowerCase() === today) ?? r.days?.[0] ?? null
-    setSelectedDay(defaultDay)
-    setRoutine(r)
-    setDetailTab('exercises')
-    setView('detail')
+    navigate('/usuario/rutinas/' + r.id)
   }
 
+  /* Al entrar a una rutina (incluido F5 directo con la id en la URL), elegir el día
+     por defecto: hoy si la rutina lo agenda; si no, el primer día registrado. */
+  useEffect(() => {
+    if (!routine) {
+      setSelectedDay(null)
+      return
+    }
+    const today = hoyKey()
+    const defaultDay = routine.days?.find(d => d.toLowerCase() === today) ?? routine.days?.[0] ?? null
+    setSelectedDay(defaultDay)
+    setDetailTab('exercises')
+    setSessionError(null)
+  }, [rutinaId, studentRoutines])
+
   const toggleExercise = (index: number) => {
-    if (!routine || !sessionActive) return
-    setChecked(prev => {
-      const list = prev[routine.id] || []
-      return { ...prev, [routine.id]: list.includes(index) ? list.filter(i => i !== index) : [...list, index] }
-    })
+    if (!routine || !activeSession) return
+    const wasChecked = (checked[routine.id] || []).includes(index)
+    const next = wasChecked
+      ? (checked[routine.id] || []).filter(i => i !== index)
+      : [...(checked[routine.id] || []), index]
+    setChecked(prev => ({ ...prev, [routine.id]: next }))
+
+    setSessionError(null)
+    const ids = routine.rows
+      .filter((_, i) => next.includes(i))
+      .map(r => r.idRutinaEjercicio)
+      .filter((id): id is string => Boolean(id))
+    marcarEjercicios(activeSession.id, ids)
+      .then(s => setSesiones(prev => prev.map(ses => (ses.id === s.id ? s : ses))))
+      .catch(e => {
+        // Revertir el estado local si el backend rechaza la marca.
+        setChecked(prev => ({
+          ...prev,
+          [routine.id]: wasChecked
+            ? [...(prev[routine.id] || []), index]
+            : (prev[routine.id] || []).filter(i => i !== index),
+        }))
+        setSessionError(mensajeError(e))
+      })
   }
 
   const dayRows = routine && selectedDay
@@ -98,7 +130,14 @@ export function RoutinesPage() {
       const nueva = await iniciarSesion(routine.id)
       setSesiones(prev => [...prev, nueva])
     } catch (e) {
-      setSessionError(mensajeError(e))
+      const msg = mensajeError(e)
+      setSessionError(msg)
+      // Rutina finalizada/desactivada en backend mientras la app estaba abierta:
+      // refrescar para no dejar fantasmas y volver al listado.
+      if (msg.includes('no está activa')) {
+        refrescarRutinas()
+        navigate('/usuario/rutinas')
+      }
     }
   }
 
@@ -149,12 +188,23 @@ export function RoutinesPage() {
             return merged.length === cur.length ? prev : { ...prev, [routine.id]: merged }
           })
         }
+        // Restaurar ejercicios marcados de la sesión en curso (sobreviven a F5).
+        const enCurso = lista.find(s => s.estado === 'en_progreso')
+        const marcas = enCurso?.ejerciciosMarcados ?? []
+        if (marcas.length) {
+          const restaurados = routine.rows
+            .map((ex, i) => ex.idRutinaEjercicio && marcas.includes(ex.idRutinaEjercicio) ? i : -1)
+            .filter(i => i >= 0)
+          if (restaurados.length) {
+            setChecked(prev => ({ ...prev, [routine.id]: restaurados }))
+          }
+        }
       })
       .catch(e => {
         if (active) setSessionError(mensajeError(e))
       })
     return () => { active = false }
-  }, [routine, view])
+  }, [routine])
 
   /* El cronómetro arranca desde el momento real de inicio de la sesión en curso. */
   useEffect(() => {
@@ -178,6 +228,26 @@ export function RoutinesPage() {
   }
 
   if (view === 'list' || !routine) {
+    if (rutinaId && !routine) {
+      return (
+        <div className="rounded-3xl p-8 text-center" style={cardStyle}>
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: FIRE + '14', border: `1px solid ${FIRE}30` }}>
+            <AlertTriangle size={24} style={{ color: FIRE }} />
+          </div>
+          <p className="text-white font-black" style={{ fontSize: 16 }}>Rutina no encontrada</p>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12.5, marginTop: 6, lineHeight: 1.6 }}>
+            El enlace no corresponde a una rutina valida.
+          </p>
+          <button
+            onClick={() => navigate('/usuario/rutinas')}
+            className="mt-4 rounded-xl px-4 py-2 font-black uppercase italic tracking-wide text-white transition-transform hover:-translate-y-0.5"
+            style={{ background: `linear-gradient(135deg, ${FIRE}, #C1121F)`, fontSize: 12, boxShadow: `0 8px 24px ${FIRE}44` }}
+          >
+            Volver a mis rutinas
+          </button>
+        </div>
+      )
+    }
     if (studentRoutines.length === 0) {
       return (
         <div className="rounded-3xl p-8 text-center" style={cardStyle}>
@@ -211,7 +281,7 @@ export function RoutinesPage() {
         evaluator={assessment?.evaluador}
         detailTab={detailTab}
         onTabChange={setDetailTab}
-        onBack={() => setView('list')}
+        onBack={() => navigate('/usuario/rutinas')}
         selectedDay={selectedDay}
         onDaySelect={setSelectedDay}
         completedDays={doneDays}

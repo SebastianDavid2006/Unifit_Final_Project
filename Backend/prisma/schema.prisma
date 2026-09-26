@@ -498,13 +498,14 @@ model RutinaEjercicio {
 }
 
 model SesionRutina {
-  id_sesion      String             @id @default(uuid())
-  id_rutina      String
-  fecha          DateTime
-  hora_inicio    DateTime
-  hora_fin       DateTime?
-  estado         EstadoSesionRutina @default(en_progreso)
-  fecha_creacion DateTime           @default(now())
+  id_sesion           String             @id @default(uuid())
+  id_rutina           String
+  fecha               DateTime
+  hora_inicio         DateTime
+  hora_fin            DateTime?
+  estado              EstadoSesionRutina @default(en_progreso)
+  ejercicios_marcados Json?
+  fecha_creacion      DateTime           @default(now())
 
   rutina Rutina @relation(fields: [id_rutina], references: [id_rutina])
 }

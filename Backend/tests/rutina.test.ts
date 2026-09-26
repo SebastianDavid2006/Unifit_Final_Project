@@ -1050,6 +1050,125 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
       .put(`/api/rutinas/${rutina.body.id_rutina}/desactivar`)
       .set('Authorization', `Bearer ${token('adminToken')}`)
   })
+
+  it('PATCH /sesiones/:id/ejercicios - guarda marcas reales de la rutina → 200 y GET las devuelve', async () => {
+    const ejercicio = await prisma.rutinaEjercicio.findFirst({ where: { id_rutina: sesionRutinaId } })
+    expect(ejercicio).toBeTruthy()
+
+    const sesion = await prisma.sesionRutina.create({
+      data: { id_rutina: sesionRutinaId, fecha: new Date(), hora_inicio: new Date() },
+    })
+
+    const res = await request(app)
+      .patch(`/api/sesiones/${sesion.id_sesion}/ejercicios`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+      .send({ ejerciciosMarcados: [ejercicio!.id_rutina_ejercicio] })
+
+    expect(res.status).toBe(200)
+    expect(res.body.estado).toBe('en_progreso')
+    expect(res.body.ejercicios_marcados).toEqual([ejercicio!.id_rutina_ejercicio])
+
+    const lista = await request(app)
+      .get(`/api/rutinas/${sesionRutinaId}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+    const guardada = lista.body.find((s: any) => s.id_sesion === sesion.id_sesion)
+    expect(guardada.ejercicios_marcados).toEqual([ejercicio!.id_rutina_ejercicio])
+
+    await request(app)
+      .put(`/api/sesiones/${sesion.id_sesion}/cancelar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+  })
+
+  it('PATCH /sesiones/:id/ejercicios - sin body de arreglo → 400', async () => {
+    const res = await request(app)
+      .patch(`/api/sesiones/${sesionCanceladaId}/ejercicios`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+      .send({ ejerciciosMarcados: 42 })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('ejerciciosMarcados debe ser un arreglo de strings')
+  })
+
+  it('PATCH /sesiones/:id/ejercicios - con id de ejercicio de OTRA rutina → 400 (no se guarda basura)', async () => {
+    const valoracion = await request(app)
+      .post('/api/valoraciones')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        nivel_actividad: 'activo',
+        objetivos: ['salud'],
+        tipo_antecedentes: [],
+        dias_disponibles: [DIA_MUESTRA],
+      })
+    expect(valoracion.status).toBe(201)
+
+    const rutinaAjena = await request(app)
+      .post('/api/rutinas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        id_valoracion: valoracion.body.id_valoracion,
+        nombre: 'Rutina Ajena Marcas',
+        nivel: 'intermedio',
+        ejercicios: [
+          { id_ejercicio: ejercicioId1, dia_semana: DIA_MUESTRA, series: 3, repeticiones_min: 10 },
+        ],
+      })
+    expect(rutinaAjena.status).toBe(201)
+    const ejercicioAjeno = await prisma.rutinaEjercicio.findFirst({ where: { id_rutina: rutinaAjena.body.id_rutina } })
+    expect(ejercicioAjeno).toBeTruthy()
+    const idAjeno = ejercicioAjeno!.id_rutina_ejercicio
+
+    const sesion = await prisma.sesionRutina.create({
+      data: { id_rutina: sesionRutinaId, fecha: new Date(), hora_inicio: new Date() },
+    })
+
+    const res = await request(app)
+      .patch(`/api/sesiones/${sesion.id_sesion}/ejercicios`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+      .send({ ejerciciosMarcados: [idAjeno] })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('Uno o más ejercicios no pertenecen a la rutina de esta sesión')
+
+    await request(app)
+      .put(`/api/rutinas/${rutinaAjena.body.id_rutina}/desactivar`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+    await request(app)
+      .put(`/api/sesiones/${sesion.id_sesion}/cancelar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+  })
+
+  it('PATCH /sesiones/:id/ejercicios - sobre sesión no en curso → 400', async () => {
+    const sesion = await prisma.sesionRutina.create({
+      data: { id_rutina: sesionRutinaId, fecha: new Date(), hora_inicio: new Date(), estado: 'finalizada', hora_fin: new Date() },
+    })
+
+    const res = await request(app)
+      .patch(`/api/sesiones/${sesion.id_sesion}/ejercicios`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+      .send({ ejerciciosMarcados: [] })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('La sesión no está en curso')
+  })
+
+  it('PATCH /sesiones/:id/ejercicios - admin NO puede marcar sesión ajena → 403', async () => {
+    const res = await request(app)
+      .patch(`/api/sesiones/${sesionCanceladaId}/ejercicios`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ ejerciciosMarcados: [] })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('PATCH /sesiones/:id/ejercicios - sin token → 401', async () => {
+    const res = await request(app)
+      .patch('/api/sesiones/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/ejercicios')
+      .send({ ejerciciosMarcados: [] })
+
+    expect(res.status).toBe(401)
+  })
 })
 
 describe.sequential('Rutina - Única activa (estado finalizada)', () => {

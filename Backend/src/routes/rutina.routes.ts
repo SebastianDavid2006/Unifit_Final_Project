@@ -10,6 +10,7 @@ import {
   postSesion,
   putCancelarSesion,
   putFinalizarSesion,
+  putMarcarEjercicios,
   putRutina,
 } from '../controllers/rutina.controller'
 import { verificarEstado } from '../middlewares/verificarEstado'
@@ -119,6 +120,14 @@ router.put(
   verificarEstado(),
   requierePropiedad(resolverDueñoSesion, []),
   putCancelarSesion,
+)
+
+router.patch(
+  '/sesiones/:id/ejercicios',
+  verificarToken,
+  verificarEstado(),
+  requierePropiedad(resolverDueñoSesion, []),
+  putMarcarEjercicios,
 )
 
 export default router

@@ -93,6 +93,7 @@ export interface NextSession {
 }
 
 export interface ExerciseRow {
+  idRutinaEjercicio?: string
   name: string
   sets: string
   reps: string

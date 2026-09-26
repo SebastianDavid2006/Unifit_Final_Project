@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router'
+import { useLocation, useNavigate, Routes, Route } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
 import { cerrarSesion } from '@/lib/auth'
 import { LogOut } from 'lucide-react'
@@ -30,7 +30,7 @@ const TAB_PATHS: Record<Tab, string> = {
 export function StudentApp() {
   const location = useLocation()
   const navigate = useNavigate()
-  const tab = PATH_TO_TAB[location.pathname] || 'home'
+  const tab: Tab = location.pathname.startsWith('/usuario/rutinas') ? 'routines' : (PATH_TO_TAB[location.pathname] || 'home')
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const handleTabChange = (t: Tab) => {
@@ -47,7 +47,15 @@ export function StudentApp() {
       <StudentLayout tab={tab} onTabChange={handleTabChange} onLogoutClick={() => setShowLogoutModal(true)}>
         <AnimatePresence mode="wait">
           {tab === 'home' && <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><HomePage /></motion.div>}
-          {tab === 'routines' && <motion.div key="routines" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><RoutinesPage /></motion.div>}
+          {tab === 'routines' && (
+            <motion.div key="routines" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <Routes>
+                <Route path="rutinas" element={<RoutinesPage />} />
+                <Route path="rutinas/:rutinaId" element={<RoutinesPage />} />
+                <Route path="rutinas/*" element={<RoutinesPage />} />
+              </Routes>
+            </motion.div>
+          )}
           {tab === 'agenda' && <motion.div key="agenda" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AgendaPage /></motion.div>}
           {tab === 'profile' && <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ProfilePage /></motion.div>}
         </AnimatePresence>

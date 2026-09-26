@@ -9,6 +9,7 @@ import {
   finalizarSesion,
   listarRutinasActivas,
   listarSesiones,
+  marcarEjercicios,
   obtenerRutinaPorId,
   listarRutinasPorUsuario,
 } from '../services/rutina.service'
@@ -130,6 +131,21 @@ export async function putFinalizarSesion(req: Request, res: Response): Promise<v
 export async function putCancelarSesion(req: Request, res: Response): Promise<void> {
   try {
     const sesion = await cancelarSesion(req.params.id as string)
+    res.json(sesion)
+  } catch (error) {
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function putMarcarEjercicios(req: Request, res: Response): Promise<void> {
+  const ids = req.body?.ejerciciosMarcados
+  if (!Array.isArray(ids) || ids.some((id: unknown) => typeof id !== 'string')) {
+    res.status(400).json({ mensaje: 'ejerciciosMarcados debe ser un arreglo de strings' })
+    return
+  }
+
+  try {
+    const sesion = await marcarEjercicios(req.params.id as string, ids)
     res.json(sesion)
   } catch (error) {
     if (!responderErrorPrisma(error, res)) throw error

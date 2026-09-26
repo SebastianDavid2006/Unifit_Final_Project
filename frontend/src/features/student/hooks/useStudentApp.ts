@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useMemo, useEffect, createElement } from 'react'
+import { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback, useRef, createElement } from 'react'
 import { Student, TodayWorkout, WeeklyProgress, MobileTab, StudentRoutine } from '@/features/student/types/student'
 import { todayWorkout, weeklyProgress } from '@/features/student/utils/mockData.tsx'
 import { getMiPerfil, type BackendUsuario } from '@/services/usuario.service'
@@ -16,6 +16,7 @@ interface StudentAppContextType {
   studentRoutines: StudentRoutine[]
   assessments: AssessmentItem[]
   loadingRoutines: boolean
+  refrescarRutinas: () => void
   workoutStarted: boolean
   setWorkoutStarted: (started: boolean) => void
 }
@@ -55,6 +56,7 @@ function mapBackendToStudentRoutine(r: FrontendRutina): StudentRoutine {
     estado: r.estado,
     days: dias.map(mapDiaBackToFront),
     rows: r.ejercicios.map(e => ({
+      idRutinaEjercicio: e.id_rutina_ejercicio,
       name: e.nombre,
       sets: e.series != null ? String(e.series) : '',
       reps: e.repeticiones_min != null && e.repeticiones_max != null
@@ -90,29 +92,44 @@ export function StudentAppProvider(props: { children: ReactNode }) {
       .catch(() => setStudent(null))
   }, [])
 
-  useEffect(() => {
+  /* Fuente única de rutinas/valoraciones: la pide el proveedor y se puede
+     refrescar (montaje, cambio de usuario y al volver a la pestaña) para no
+     mostrar estados fantasma si el backend cambió mientras la app estaba abierta. */
+  const reqRef = useRef(0)
+  const cargarRutinas = useCallback(() => {
     if (!student?.id) return
-    let active = true
+    const id = ++reqRef.current
     setLoadingRoutines(true)
     Promise.all([
       getRutinasPorUsuario(student.id),
       getValoracionesPorUsuario(student.id),
     ])
       .then(([rutinas, valoraciones]) => {
-        if (!active) return
+        if (reqRef.current !== id) return
         setStudentRoutines(rutinas.map(mapBackendToStudentRoutine))
         setAssessments(valoraciones)
       })
       .catch(() => {
-        if (!active) return
+        if (reqRef.current !== id) return
         setStudentRoutines([])
         setAssessments([])
       })
       .finally(() => {
-        if (active) setLoadingRoutines(false)
+        if (reqRef.current === id) setLoadingRoutines(false)
       })
-    return () => { active = false }
   }, [student?.id])
+
+  useEffect(() => {
+    cargarRutinas()
+  }, [cargarRutinas])
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') cargarRutinas()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [cargarRutinas])
 
   const todayWorkoutData = useMemo(() => todayWorkout, [])
   const weeklyProgressData = useMemo(() => weeklyProgress, [])
@@ -126,9 +143,10 @@ export function StudentAppProvider(props: { children: ReactNode }) {
     studentRoutines,
     assessments,
     loadingRoutines,
+    refrescarRutinas: cargarRutinas,
     workoutStarted: workoutStarted[0],
     setWorkoutStarted: workoutStarted[1],
-  }), [student, tab[0], workoutStarted[0], studentRoutines, assessments, loadingRoutines])
+  }), [student, tab[0], workoutStarted[0], studentRoutines, assessments, loadingRoutines, cargarRutinas])
 
   return createElement(
     StudentAppContext.Provider,
