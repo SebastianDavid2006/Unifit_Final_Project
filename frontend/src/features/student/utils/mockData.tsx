@@ -42,6 +42,7 @@ export const studentRoutines: StudentRoutine[] = [
     level: 'Intermedio',
     focus: 'Tren superior',
     current: true,
+    estado: 'activa',
     rows: [
       { name: 'Sentadilla con barra', sets: '4', reps: '8-10', rest: '90 s', weight: '80 kg', muscle: 'Cudriceps', secondaryMuscle: 'Glteos', instructions: 'Barra alta en trapecio, pies al ancho de hombros. Baja hasta que el fmur quede paralelo al suelo manteniendo la espalda recta y el pecho arriba. Empuja con todo el pie al subir.' },
       { name: 'Press de banca', sets: '4', reps: '8-10', rest: '90 s', weight: '70 kg', muscle: 'Pecho', secondaryMuscle: 'Trceps', instructions: 'Escpulas retradas y pies firmes. Baja la barra controlado hasta el pecho medio y empuja explosivamente sin bloquear los codos bruscamente.' },
@@ -60,6 +61,7 @@ export const studentRoutines: StudentRoutine[] = [
     frequency: '3 días/semana',
     level: 'Avanzado',
     focus: 'Piernas y glúteos',
+    estado: 'finalizada',
     rows: [
       { name: 'Sentadilla libre', sets: '5', reps: '5', rest: '180 s', weight: '120 kg', muscle: 'Cuádriceps', instructions: 'Fuerza pura: series pesadas de 5 repeticiones. Descansa completo entre series y mantén técnica impecable sobre volumen.' },
       { name: 'Prensa de piernas', sets: '4', reps: '8', rest: '120 s', weight: '200 kg', muscle: 'Cuádriceps', instructions: 'Pies a ancho de hombros en la plataforma. Baja hasta 90 grados sin despegar la zona lumbar del respaldo.' },
@@ -78,6 +80,7 @@ export const studentRoutines: StudentRoutine[] = [
     frequency: '4 días/semana',
     level: 'Intermedio',
     focus: 'Cardio y resistencia',
+    estado: 'finalizada',
     rows: [
       { name: 'Burpees', sets: '4', reps: '10', rest: '60 s', weight: 'Peso corporal', muscle: 'Cardio', instructions: 'Flexión + salto explosivo. Mantén ritmo constante; si fatiga excesiva, elimina la flexión pero conserva el salto.' },
       { name: 'Kettlebell swings', sets: '4', reps: '15', rest: '60 s', weight: '24 kg', muscle: 'Glúteos', instructions: 'El movimiento sale de la cadera, no de los brazos. La kettlebell flota; tú solo la proyectas con el impulso de cadera.' },
@@ -96,6 +99,7 @@ export const studentRoutines: StudentRoutine[] = [
     frequency: '4 días/semana',
     level: 'Intermedio',
     focus: 'Cardio y resistencia',
+    estado: 'finalizada',
     rows: [
       { name: 'Sprints en cinta', sets: '6', reps: '30 s', rest: '60 s', weight: '—"', muscle: 'Cardio', instructions: 'Velocidad alta sostenida por 30 segundos, recuperación caminando. Mantén la postura erguida y no te apoyes en las manijas.' },
       { name: 'Battle ropes', sets: '4', reps: '40 s', rest: '40 s', weight: '—"', muscle: 'Cardio', instructions: 'Ondas alternas rápidas con core firme y rodillas semiflexionadas. El ritmo debe ser constante, no explosiones sueltas.' },
@@ -114,6 +118,7 @@ export const studentRoutines: StudentRoutine[] = [
     frequency: '3 días/semana',
     level: 'Principiante',
     focus: 'Abdomen y zona media',
+    estado: 'finalizada',
     rows: [
       { name: 'Crunch abdominal', sets: '3', reps: '15', rest: '45 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Manos a los lados de la cabeza sin tirar del cuello. Sube despegando hombros contrayendo el abdomen, baja lento.' },
       { name: 'Elevación de piernas', sets: '3', reps: '12', rest: '45 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'Tumbado, manos bajo los glúteos para proteger la lumbar. Sube piernas rectas hasta 90 grados y baja sin tocar el suelo.' },
@@ -132,6 +137,7 @@ export const studentRoutines: StudentRoutine[] = [
     frequency: '4 días/semana',
     level: 'Avanzado',
     focus: 'Tren superior',
+    estado: 'finalizada',
     rows: [
       { name: 'Press inclinado con mancuernas', sets: '4', reps: '10-12', rest: '75 s', weight: '22 kg c/u', muscle: 'Pecho', instructions: 'Banco a 30-45 grados. Baja mancuernas a la altura del pecho sintiendo estiramiento y sube juntando sin chocar.' },
       { name: 'Remo con barra', sets: '4', reps: '10', rest: '90 s', weight: '60 kg', muscle: 'Espalda', instructions: 'Tronco a 45 grados, espalda recta. Lleva la barra al ombligo apretando escápulas al final del recorrido.' },
@@ -150,6 +156,7 @@ export const studentRoutines: StudentRoutine[] = [
     frequency: '3 días/semana',
     level: 'Principiante',
     focus: 'Movilidad y prevención',
+    estado: 'finalizada',
     rows: [
       { name: 'Cat-Camel spinal', sets: '2', reps: '10', rest: '30 s', weight: 'Peso corporal', muscle: 'Core', instructions: 'En cuadrupedia, alterna arquear y redondear la espalda lentamente coordinando con la respiración.' },
       { name: '90/90 cadera', sets: '3', reps: '8', rest: '40 s', weight: 'Peso corporal', muscle: 'Piernas', instructions: 'Sentado con piernas a 90 grados, rota las rodillas de lado a lado sin mover el torso. Gana rango progresivamente.' },
@@ -168,6 +175,7 @@ export const studentRoutines: StudentRoutine[] = [
     frequency: '5 días/semana',
     level: 'Avanzado',
     focus: 'Full body intenso',
+    estado: 'finalizada',
     rows: [
       { name: 'Thrusters', sets: '5', reps: '10', rest: '90 s', weight: '40 kg', muscle: 'Full body', instructions: 'Front squat + press overhead en un solo movimiento explosivo. Usa el impulso de piernas para proyectar la barra.' },
       { name: 'Kettlebell swings', sets: '4', reps: '20', rest: '60 s', weight: '24 kg', muscle: 'Glúteos', instructions: 'Cadera como pistón, brazos solo de guía. La kettlebell llega a la altura del pecho con glúteo contraído.' },
@@ -186,6 +194,7 @@ export const studentRoutines: StudentRoutine[] = [
     frequency: '3 días/semana',
     level: 'Principiante',
     focus: 'Full body suave',
+    estado: 'finalizada',
     rows: [
       { name: 'Goblet squat', sets: '3', reps: '12', rest: '60 s', weight: '12 kg', muscle: 'Piernas', instructions: 'Mancuerna vertical al pecho. Baja entre las rodillas con pecho orgulloso y empuja desde el talón.' },
       { name: 'Push-ups inclinados', sets: '3', reps: '10', rest: '60 s', weight: 'Peso corporal', muscle: 'Pecho', instructions: 'Manos elevadas en banco para reducir carga. Cuerpo recto, pecho hacia el banco, codos a 45 grados.' },

@@ -26,7 +26,7 @@ export function RoutineList({ routines, openRoutine, completedIds }: RoutineList
   return (
     <div className="space-y-4">
       <SectionTitle>Rutinas asignadas por tu entrenador</SectionTitle>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-5">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-4 gap-y-10 mt-5">
         {visibleRoutines.map((r, i) => {
           const done = completedIds.includes(r.id)
           if (r.current) {
@@ -77,8 +77,16 @@ export function RoutineList({ routines, openRoutine, completedIds }: RoutineList
           /* --- OTRAS RUTINAS --- */
           return (
             <motion.div key={r.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
-              <motion.button whileHover={{ y: -3 }} whileTap={{ scale: 0.985 }} onClick={() => openRoutine(r)} className="w-full text-left">
+              <motion.button whileHover={{ y: -3 }} whileTap={{ scale: 0.985 }} onClick={() => openRoutine(r)} className="w-full text-left relative">
                 <div className="rounded-[22px] p-5 h-full" style={cardStyle}>
+                  {r.estado === 'finalizada' && (
+                    <span
+                      className="absolute -top-3 left-5 z-10 px-3 py-1 rounded-full uppercase italic font-black tracking-widest"
+                      style={{ background: '#16161F', border: '1px solid rgba(255,255,255,0.22)', color: 'rgba(255,255,255,0.75)', fontSize: 9.5 }}
+                    >
+                      Finalizada
+                    </span>
+                  )}
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <h3 className="uppercase italic font-black text-white truncate flex items-center gap-2" style={{ fontSize: 16 }}>
                       {r.name}

@@ -39,7 +39,7 @@ function mapBackendToStudent(u: BackendUsuario): Student {
   }
 }
 
-function mapBackendToStudentRoutine(r: FrontendRutina, index: number): StudentRoutine {
+function mapBackendToStudentRoutine(r: FrontendRutina): StudentRoutine {
   const dias = [...new Set(r.ejercicios.map(e => e.dia_semana))]
   return {
     id: r.id,
@@ -49,7 +49,10 @@ function mapBackendToStudentRoutine(r: FrontendRutina, index: number): StudentRo
     frequency: `${dias.length} ${dias.length === 1 ? 'día' : 'días'}/semana`,
     level: (mapNivelBackToFront(r.nivel) || 'Principiante') as StudentRoutine['level'],
     focus: '',
-    current: index === 0,
+    // Fuente única de verdad: la "rutina actual" es la única con estado activa
+    // que reporta el backend (no se recalcula por posición ni por fecha).
+    current: r.estado === 'activa',
+    estado: r.estado,
     days: dias.map(mapDiaBackToFront),
     rows: r.ejercicios.map(e => ({
       name: e.nombre,

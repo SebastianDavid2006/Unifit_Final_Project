@@ -3,6 +3,16 @@ import request from 'supertest'
 import jwt from 'jsonwebtoken'
 import app from '../src/app'
 import { prisma } from '../src/utils/prisma'
+import { normalizarDia } from '../src/services/ai.service'
+
+// El "día de hoy" normalizado (sin acentos) — los fixtures de sesión usan HOY
+// para que la suite pase cualquier día de la semana.
+const HOY = normalizarDia(new Date().toLocaleDateString('es-CO', { weekday: 'long' }))
+const esDomingo = HOY === 'domingo'
+// Los domingos no hay entrenamiento por diseño (el enum Prisma no admite domingo),
+// así que los casos "éxito" de sesión no aplican; se saltan con it.skipIf.
+const DIA_MUESTRA = esDomingo ? 'lunes' : HOY
+const OTRO_DIA = HOY === 'lunes' ? 'martes' : 'lunes'
 
 let adminId: string
 let entrenadorId: string
@@ -802,7 +812,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
         ejercicios: [
           {
             id_ejercicio: ejercicioId1,
-            dia_semana: 'lunes',
+            dia_semana: DIA_MUESTRA,
             series: 4,
             repeticiones_min: 8,
             repeticiones_max: 10,
@@ -815,7 +825,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     sesionRutinaId = rutina.body.id_rutina
   })
 
-  it('POST /rutinas/:id/sesiones - dueño inicia sesión → 201 en_progreso', async () => {
+  it.skipIf(esDomingo)('POST /rutinas/:id/sesiones - dueño inicia sesión → 201 en_progreso', async () => {
     const res = await request(app)
       .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
@@ -826,7 +836,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     sesionFinalizadaId = res.body.id_sesion
   })
 
-  it('POST /rutinas/:id/sesiones - segunda sesión del mismo día → 400', async () => {
+  it.skipIf(esDomingo)('POST /rutinas/:id/sesiones - segunda sesión del mismo día → 400', async () => {
     const res = await request(app)
       .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
@@ -835,7 +845,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     expect(res.body.mensaje).toBe('Ya hay una sesión en curso para hoy')
   })
 
-  it('PUT /sesiones/:id/finalizar - dueño completa → 200 finalizada con hora_fin', async () => {
+  it.skipIf(esDomingo)('PUT /sesiones/:id/finalizar - dueño completa → 200 finalizada con hora_fin', async () => {
     const res = await request(app)
       .put(`/api/sesiones/${sesionFinalizadaId}/finalizar`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
@@ -845,7 +855,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     expect(res.body.hora_fin).not.toBeNull()
   })
 
-  it('PUT /sesiones/:id/finalizar - repetida sobre finalizada → 400', async () => {
+  it.skipIf(esDomingo)('PUT /sesiones/:id/finalizar - repetida sobre finalizada → 400', async () => {
     const res = await request(app)
       .put(`/api/sesiones/${sesionFinalizadaId}/finalizar`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
@@ -854,7 +864,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     expect(res.body.mensaje).toBe('La sesión no está en curso')
   })
 
-  it('POST + PUT /sesiones/:id/cancelar - dueño cancela → 201/200 cancelada', async () => {
+  it.skipIf(esDomingo)('POST + PUT /sesiones/:id/cancelar - dueño cancela → 201/200 cancelada', async () => {
     const creada = await request(app)
       .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
@@ -871,7 +881,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     expect(res.body.hora_fin).not.toBeNull()
   })
 
-  it('GET /rutinas/:id/sesiones - dueño lista → 200 ordenado por fecha desc', async () => {
+  it.skipIf(esDomingo)('GET /rutinas/:id/sesiones - dueño lista → 200 ordenado por fecha desc', async () => {
     const res = await request(app)
       .get(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
@@ -972,7 +982,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     expect(res.status).toBe(401)
   })
 
-  it('COLGADA - sesión en_progreso de ayer se auto-cancela al iniciar hoy', async () => {
+  it.skipIf(esDomingo)('COLGADA - sesión en_progreso de ayer se auto-cancela al iniciar hoy', async () => {
     const ayer = new Date(Date.now() - 24 * 60 * 60 * 1000)
     ayer.setHours(10, 0, 0, 0)
 
@@ -993,6 +1003,52 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     expect(colgadaTras!.hora_fin).not.toBeNull()
     expect(nueva!.estado).toBe('en_progreso')
     expect(nueva!.hora_fin).toBeNull()
+  })
+
+  it('DÍA - hoy no es un día de entrenamiento de la rutina → 400', async () => {
+    // Rutina activa con ejercicios SOLO en OTRO_DIA (≠ hoy): no se puede entrenar el día de hoy.
+    const valoracion = await request(app)
+      .post('/api/valoraciones')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        nivel_actividad: 'activo',
+        objetivos: ['salud'],
+        tipo_antecedentes: [],
+        dias_disponibles: [OTRO_DIA],
+      })
+    expect(valoracion.status).toBe(201)
+
+    const rutina = await request(app)
+      .post('/api/rutinas')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        id_usuario: directoId,
+        id_valoracion: valoracion.body.id_valoracion,
+        nombre: 'Rutina Día Ajeno',
+        nivel: 'intermedio',
+        ejercicios: [
+          {
+            id_ejercicio: ejercicioId1,
+            dia_semana: OTRO_DIA,
+            series: 3,
+            repeticiones_min: 10,
+          },
+        ],
+      })
+    expect(rutina.status).toBe(201)
+    expect(rutina.body.estado).toBe('activa')
+
+    const res = await request(app)
+      .post(`/api/rutinas/${rutina.body.id_rutina}/sesiones`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('Hoy no es un día de entrenamiento de esta rutina')
+
+    await request(app)
+      .put(`/api/rutinas/${rutina.body.id_rutina}/desactivar`)
+      .set('Authorization', `Bearer ${token('adminToken')}`)
   })
 })
 

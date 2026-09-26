@@ -13,6 +13,8 @@ interface SessionPanelProps {
   completedDays: string[]
   sessionActive: boolean
   sessionStart: number | null
+  allowStart: boolean
+  todayLabel: string
   onToggle: (index: number) => void
   onStart: () => void
   onCancelConfirmed: () => void
@@ -36,6 +38,8 @@ export function SessionPanel({
   completedDays,
   sessionActive,
   sessionStart,
+  allowStart,
+  todayLabel,
   onToggle,
   onStart,
   onCancelConfirmed,
@@ -54,6 +58,7 @@ export function SessionPanel({
   }, [sessionActive, sessionStart])
 
   const dayCompleted = completedDays.includes(selectedDay)
+  const readOnly = routine.estado !== 'activa'
 
   const visible = useMemo(() => {
     const matches = routine.rows.map((ex, index) => ({ ex, index })).filter(({ ex }) => ex.dia === selectedDay)
@@ -85,9 +90,16 @@ export function SessionPanel({
               <Trophy size={15} style={{ color: GREEN }} />
               <span style={{ color: GREEN, fontSize: 12, fontWeight: 800, whiteSpace: 'nowrap' }}>¡Sesión de {selectedDay} completada!</span>
             </div>
+          ) : readOnly ? (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <Lock size={14} style={{ color: 'rgba(255,255,255,0.45)' }} />
+              <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap' }}>Rutina finalizada · solo lectura</span>
+            </div>
           ) : (
             <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11.5, marginTop: 3, lineHeight: 1.5 }}>
-              Presiona «Iniciar» para comenzar y poder marcar tus ejercicios de {selectedDay}.
+              {allowStart
+                ? `Presiona «Iniciar» para comenzar y poder marcar tus ejercicios de ${selectedDay}.`
+                : `Hoy toca ${todayLabel} — la sesión de ${selectedDay} se habilita solo ese día.`}
             </p>
           )}
         </div>
@@ -111,7 +123,15 @@ export function SessionPanel({
             <Trophy size={18} />
             Completada
           </div>
-        ) : (
+        ) : readOnly ? (
+          <div
+            className="flex flex-col items-center justify-center gap-1.5 px-5 rounded-2xl font-black uppercase tracking-widest flex-shrink-0"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.5)', fontSize: 10.5 }}
+          >
+            <Lock size={18} />
+            Finalizada
+          </div>
+        ) : allowStart ? (
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.96 }}
@@ -122,6 +142,17 @@ export function SessionPanel({
             <Play size={18} />
             Iniciar
           </motion.button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            title={`La sesión de ${selectedDay} se habilita solo ese día. Hoy toca ${todayLabel}.`}
+            className="flex flex-col items-center justify-center gap-1.5 px-5 rounded-2xl font-black uppercase tracking-widest flex-shrink-0"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.45)', fontSize: 12, cursor: 'not-allowed' }}
+          >
+            <Lock size={18} />
+            Iniciar
+          </button>
         )}
       </div>
 
@@ -247,7 +278,7 @@ export function SessionPanel({
         }}
       >
         <Trophy size={18} />
-        {dayCompleted ? `Sesión de ${selectedDay} completada` : 'Completar sesión'}
+        {dayCompleted ? `Sesión de ${selectedDay} completada` : readOnly ? 'Rutina finalizada · solo lectura' : 'Completar sesión'}
       </motion.button>
 
       {/* Modal de confirmación de cancelación */}

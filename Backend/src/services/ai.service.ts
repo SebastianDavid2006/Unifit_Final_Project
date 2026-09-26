@@ -86,12 +86,12 @@ const ACENTOS: Record<string, string> = {
   ú: 'u',
 }
 
-function normalizarDia(dia: string): string {
+export function normalizarDia(dia: string): string {
   const t = dia.trim().toLowerCase()
   return t.split('').map((c) => ACENTOS[c] ?? c).join('')
 }
 
-const DIAS_VALIDOS = new Set(['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'])
+export const DIAS_VALIDOS = new Set(['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'])
 
 function anonimizar(input: GenerarRutinaInput) {
   return {

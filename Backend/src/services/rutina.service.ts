@@ -1,5 +1,6 @@
 import { prisma } from '../utils/prisma'
 import { HttpError } from '../utils/HttpError'
+import { normalizarDia } from './ai.service'
 
 export interface CrearRutinaEjercicioData {
   id_ejercicio: string
@@ -313,6 +314,19 @@ export async function crearSesion(idRutina: string) {
   // Solo la rutina actual (activa) puede iniciar sesiones; las finalizadas/canceladas no.
   if (rutina.estado !== 'activa') {
     throw new HttpError(400, 'La rutina no está activa — no se pueden iniciar sesiones en ella')
+  }
+
+  // Regla "entrena el día planificado solo si es ese día": hoy debe ser un día de
+  // entrenamiento de la rutina (unidad: dia_semana de sus ejercicios, sin acentos).
+  const hoy = normalizarDia(new Date().toLocaleDateString('es-CO', { weekday: 'long' }))
+  const diasRutina = await prisma.rutinaEjercicio.findMany({
+    where: { id_rutina: idRutina },
+    distinct: ['dia_semana'],
+    select: { dia_semana: true },
+  })
+  const diasPlanificados = new Set(diasRutina.map(d => normalizarDia(d.dia_semana)))
+  if (!diasPlanificados.has(hoy)) {
+    throw new HttpError(400, 'Hoy no es un día de entrenamiento de esta rutina')
   }
 
   // Regla: una sesión en_progreso de un día anterior queda huérfana ("colgada").

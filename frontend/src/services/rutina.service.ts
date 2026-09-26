@@ -20,6 +20,8 @@ export interface BackendRutinaEjercicio {
   }
 }
 
+export type RutinaEstado = 'activa' | 'finalizada' | 'cancelada'
+
 export interface BackendRutina {
   id_rutina: string
   id_usuario: string
@@ -27,6 +29,7 @@ export interface BackendRutina {
   nombre: string
   duracion: string | null
   nivel: string | null
+  estado: RutinaEstado
   observaciones: string | null
   fecha_creacion: string
   fecha_modificacion: string
@@ -38,6 +41,7 @@ export interface FrontendRutina {
   nombre: string
   duracion: string
   nivel: string
+  estado: RutinaEstado
   observaciones: string
   fecha_creacion: string
   ejercicios: FrontendRutinaEjercicio[]
@@ -69,6 +73,7 @@ function mapBackendToFrontend(r: BackendRutina): FrontendRutina {
     nombre: r.nombre,
     duracion: r.duracion ?? '',
     nivel: r.nivel ?? '',
+    estado: r.estado,
     observaciones: r.observaciones ?? '',
     fecha_creacion: r.fecha_creacion,
     ejercicios: (r.ejercicios ?? []).map(e => ({
@@ -161,4 +166,55 @@ export async function crearRutina(data: {
 export async function editarRutina(id: string, data: Partial<CrearRutinaPayload>) {
   const { data: result } = await api.put(`/rutinas/${id}`, data)
   return result
+}
+
+export type SesionEstado = 'en_progreso' | 'finalizada' | 'cancelada'
+
+export interface BackendSesionRutina {
+  id_sesion: string
+  id_rutina: string
+  estado: SesionEstado
+  fecha: string
+  hora_inicio: string | null
+  hora_fin: string | null
+}
+
+export interface FrontendSesionRutina {
+  id: string
+  idRutina: string
+  estado: SesionEstado
+  fecha: string
+  horaInicio: string | null
+  horaFin: string | null
+}
+
+function mapSesionBackendToFrontend(s: BackendSesionRutina): FrontendSesionRutina {
+  return {
+    id: s.id_sesion,
+    idRutina: s.id_rutina,
+    estado: s.estado,
+    fecha: s.fecha,
+    horaInicio: s.hora_inicio,
+    horaFin: s.hora_fin,
+  }
+}
+
+export async function getSesionesDeRutina(idRutina: string): Promise<FrontendSesionRutina[]> {
+  const { data } = await api.get<BackendSesionRutina[]>(`/rutinas/${idRutina}/sesiones`)
+  return data.map(mapSesionBackendToFrontend)
+}
+
+export async function iniciarSesion(idRutina: string): Promise<FrontendSesionRutina> {
+  const { data } = await api.post<BackendSesionRutina>(`/rutinas/${idRutina}/sesiones`)
+  return mapSesionBackendToFrontend(data)
+}
+
+export async function finalizarSesion(idSesion: string): Promise<FrontendSesionRutina> {
+  const { data } = await api.put<BackendSesionRutina>(`/sesiones/${idSesion}/finalizar`)
+  return mapSesionBackendToFrontend(data)
+}
+
+export async function cancelarSesion(idSesion: string): Promise<FrontendSesionRutina> {
+  const { data } = await api.put<BackendSesionRutina>(`/sesiones/${idSesion}/cancelar`)
+  return mapSesionBackendToFrontend(data)
 }

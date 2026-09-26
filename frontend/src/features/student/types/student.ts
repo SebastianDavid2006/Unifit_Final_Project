@@ -124,6 +124,7 @@ export interface StudentRoutine {
   level: 'Principiante' | 'Intermedio' | 'Avanzado'
   focus: string
   current?: boolean
+  estado: 'activa' | 'finalizada' | 'cancelada'
   days?: string[]
   rows: ExerciseRow[]
   assessmentNum: number
