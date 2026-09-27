@@ -378,7 +378,12 @@ async function transicionarSesion(idSesion: string, estadoFinal: 'finalizada' | 
 
   return prisma.sesionRutina.update({
     where: { id_sesion: idSesion },
-    data: { estado: estadoFinal, hora_fin: new Date() },
+    data: {
+      estado: estadoFinal,
+      hora_fin: new Date(),
+      // Al cancelar el progreso se reinicia: se descartan las marcas de la sesión.
+      ejercicios_marcados: estadoFinal === 'cancelada' ? [] : sesion.ejercicios_marcados,
+    },
   })
 }
 

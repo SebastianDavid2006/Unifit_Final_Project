@@ -23,6 +23,7 @@ const TABLAS_LIMPIEZA: Array<{ model: any; id: string }> = [
   { model: prisma.valoracion, id: 'id_valoracion' },
 ]
 const idsPrevios = new Map<string, Set<string>>()
+const estadosRutinasPrevias = new Map<string, string>()
 
 async function tomarIdsExistentes(): Promise<void> {
   for (const tabla of TABLAS_LIMPIEZA) {
@@ -39,6 +40,23 @@ async function borrarSoloCreadosEnCorrida(): Promise<void> {
     const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
     const nuevos = filas.filter((f: any) => !previos.has(f[tabla.id])).map((f: any) => f[tabla.id])
     if (nuevos.length) await tabla.model.deleteMany({ where: { [tabla.id]: { in: nuevos } } })
+  }
+}
+
+// crearRutina finaliza la rutina activa anterior al crear una nueva. Estas
+// corridas crean rutinas para usuarios de la DB real, así que se captura el
+// estado inicial de TODAS las rutinas preexistentes para restaurarlo al final
+// y no dejar las rutinas del usuario como 'finalizada'.
+async function tomarEstadosRutinasPrevias(): Promise<void> {
+  const rutinas = await prisma.rutina.findMany({ select: { id_rutina: true, estado: true } })
+  for (const rutina of rutinas) estadosRutinasPrevias.set(rutina.id_rutina, rutina.estado)
+}
+
+async function restaurarEstadosRutinasPrevias(): Promise<void> {
+  for (const [idRutina, estado] of estadosRutinasPrevias) {
+    await prisma.rutina
+      .updateMany({ where: { id_rutina: idRutina }, data: { estado: estado as any } })
+      .catch(() => {})
   }
 }
 
@@ -59,11 +77,13 @@ beforeAll(async () => {
   await prisma.usuario.update({ where: { id_usuario: directoId }, data: { parq_realizado: true } })
 
   await tomarIdsExistentes()
+  await tomarEstadosRutinasPrevias()
 })
 
 afterAll(async () => {
   if (directoId) await prisma.usuario.update({ where: { id_usuario: directoId }, data: { parq_realizado: originalParqDirecto } }).catch(() => {})
   await borrarSoloCreadosEnCorrida()
+  await restaurarEstadosRutinasPrevias()
 })
 
 function token(key: string): string {

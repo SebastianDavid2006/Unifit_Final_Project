@@ -30,6 +30,7 @@ let valoracionId: string
 let valoracionIds: string[] = []
 let otraValoracionId: string
 const EMAIL_SEGUNDO = 'segundo_test@unifit.edu.co'
+const estadosRutinasPrevias = new Map<string, string>()
 
 // Limpieza acotada: solo se eliminan los registros creados durante ESTA corrida,
 // nunca los que ya existían (datos de trabajo reales del usuario).
@@ -56,6 +57,23 @@ async function borrarSoloCreadosEnCorrida(): Promise<void> {
     const filas = await tabla.model.findMany({ select: { [tabla.id]: true } })
     const nuevos = filas.filter((f: any) => !previos.has(f[tabla.id])).map((f: any) => f[tabla.id])
     if (nuevos.length) await tabla.model.deleteMany({ where: { [tabla.id]: { in: nuevos } } })
+  }
+}
+
+// crearRutina finaliza la rutina activa anterior al crear una nueva. Estas
+// corridas crean rutinas para usuarios de la DB real, así que se captura el
+// estado inicial de TODAS las rutinas preexistentes para restaurarlo al final
+// y no dejar las rutinas del usuario como 'finalizada'.
+async function tomarEstadosRutinasPrevias(): Promise<void> {
+  const rutinas = await prisma.rutina.findMany({ select: { id_rutina: true, estado: true } })
+  for (const rutina of rutinas) estadosRutinasPrevias.set(rutina.id_rutina, rutina.estado)
+}
+
+async function restaurarEstadosRutinasPrevias(): Promise<void> {
+  for (const [idRutina, estado] of estadosRutinasPrevias) {
+    await prisma.rutina
+      .updateMany({ where: { id_rutina: idRutina }, data: { estado: estado as any } })
+      .catch(() => {})
   }
 }
 
@@ -91,6 +109,7 @@ beforeAll(async () => {
   }
 
   await tomarIdsExistentes()
+  await tomarEstadosRutinasPrevias()
 
   const ex1 = await prisma.ejercicio.create({
     data: {
@@ -193,6 +212,7 @@ beforeAll(async () => {
 afterAll(async () => {
   if (directoId) await prisma.usuario.update({ where: { id_usuario: directoId }, data: { parq_realizado: originalParqDirecto } }).catch(() => {})
   await borrarSoloCreadosEnCorrida()
+  await restaurarEstadosRutinasPrevias()
   // El usuario transitorio se borra explícito (la rutina/valoración ya las limpió borrarSoloCreadosEnCorrida).
   await prisma.usuario.deleteMany({ where: { email_contacto: EMAIL_SEGUNDO } }).catch(() => {})
   await prisma.ejercicio.deleteMany({ where: { id_ejercicio: { in: [ejercicioId1, ejercicioId2] } } }).catch(() => {})
@@ -864,13 +884,24 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     expect(res.body.mensaje).toBe('La sesión no está en curso')
   })
 
-  it.skipIf(esDomingo)('POST + PUT /sesiones/:id/cancelar - dueño cancela → 201/200 cancelada', async () => {
+  it.skipIf(esDomingo)('POST + PUT /sesiones/:id/cancelar - dueño cancela → 200 cancelada y reinicia el progreso', async () => {
     const creada = await request(app)
       .post(`/api/rutinas/${sesionRutinaId}/sesiones`)
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
 
     expect(creada.status).toBe(201)
     sesionCanceladaId = creada.body.id_sesion
+
+    const ejercicio = await prisma.rutinaEjercicio.findFirst({ where: { id_rutina: sesionRutinaId } })
+    expect(ejercicio).toBeTruthy()
+
+    const marcado = await request(app)
+      .patch(`/api/sesiones/${sesionCanceladaId}/ejercicios`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+      .send({ ejerciciosMarcados: [ejercicio!.id_rutina_ejercicio] })
+
+    expect(marcado.status).toBe(200)
+    expect(marcado.body.ejercicios_marcados).toEqual([ejercicio!.id_rutina_ejercicio])
 
     const res = await request(app)
       .put(`/api/sesiones/${sesionCanceladaId}/cancelar`)
@@ -879,6 +910,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
     expect(res.status).toBe(200)
     expect(res.body.estado).toBe('cancelada')
     expect(res.body.hora_fin).not.toBeNull()
+    expect(res.body.ejercicios_marcados).toEqual([])
   })
 
   it.skipIf(esDomingo)('GET /rutinas/:id/sesiones - dueño lista → 200 ordenado por fecha desc', async () => {

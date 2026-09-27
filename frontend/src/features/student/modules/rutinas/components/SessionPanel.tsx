@@ -167,12 +167,6 @@ export function SessionPanel({
             <motion.div animate={{ width: `${progressPct}%` }} className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${GREEN}, #7CE495)` }} />
           </div>
         </div>
-        {dayCompleted && (
-          <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl" style={{ background: 'rgba(48,209,88,0.12)', border: '1px solid rgba(48,209,88,0.3)' }}>
-            <Trophy size={15} style={{ color: GREEN }} />
-            <span style={{ color: GREEN, fontSize: 11, fontWeight: 800, whiteSpace: 'nowrap' }}>¡Completada!</span>
-          </div>
-        )}
       </div>
 
       {/* Ejercicios del día seleccionado */}

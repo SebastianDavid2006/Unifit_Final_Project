@@ -1,21 +1,20 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
-import { ChevronLeft, ChevronRight, Dumbbell, Trophy } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Dumbbell } from 'lucide-react'
 import type { StudentRoutine } from '@/features/student/types/student'
-import { SectionTitle, GradientBorder, cardStyle, FIRE, AMBER, GREEN } from '@/features/student/components/ui/fitness'
+import { SectionTitle, GradientBorder, cardStyle, FIRE, AMBER } from '@/features/student/components/ui/fitness'
 import { LEVEL_COLOR } from '../routineAssets'
 import { formatDateES } from '@/lib/dateUtils'
 
 interface RoutineListProps {
   routines: StudentRoutine[]
   openRoutine: (r: StudentRoutine) => void
-  completedIds: string[]
 }
 
 const FIRST_PAGE = 7
 const OTHER_PAGES = 8
 
-export function RoutineList({ routines, openRoutine, completedIds }: RoutineListProps) {
+export function RoutineList({ routines, openRoutine }: RoutineListProps) {
   const [page, setPage] = useState(1)
   /* Página 1: 7 rutinas (la actual ocupa fila entera), siguientes: 8 por página */
   const totalPages = Math.max(1, Math.ceil((routines.length - FIRST_PAGE) / OTHER_PAGES) + 1)
@@ -28,7 +27,6 @@ export function RoutineList({ routines, openRoutine, completedIds }: RoutineList
       <SectionTitle>Rutinas asignadas por tu entrenador</SectionTitle>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-4 gap-y-10 mt-5">
         {visibleRoutines.map((r, i) => {
-          const done = completedIds.includes(r.id)
           if (r.current) {
             /* --- RUTINA ACTUAL: resaltada con borde gradiente --- */
             return (
@@ -45,7 +43,6 @@ export function RoutineList({ routines, openRoutine, completedIds }: RoutineList
                       <div className="flex items-center justify-between gap-3 mb-2">
                         <h3 className="uppercase italic font-black text-white truncate flex items-center gap-2" style={{ fontSize: 19 }}>
                           {r.name}
-                          {done && <Trophy size={15} style={{ color: GREEN }} />}
                         </h3>
                         <Dumbbell size={20} style={{ color: FIRE, opacity: 0.7 }} className="flex-shrink-0" />
                       </div>
@@ -90,7 +87,6 @@ export function RoutineList({ routines, openRoutine, completedIds }: RoutineList
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <h3 className="uppercase italic font-black text-white truncate flex items-center gap-2" style={{ fontSize: 16 }}>
                       {r.name}
-                      {done && <Trophy size={13} style={{ color: GREEN }} />}
                     </h3>
                     <Dumbbell size={17} style={{ color: 'rgba(255,255,255,0.25)' }} className="flex-shrink-0" />
                   </div>

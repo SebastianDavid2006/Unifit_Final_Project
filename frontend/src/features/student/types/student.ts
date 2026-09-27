@@ -34,30 +34,12 @@ export interface Achievement {
   color: string
 }
 
-export interface WeeklyProgress {
-  day: string
-  done: boolean
-}
-
 export interface RankingItem {
   position: number
   name: string
   faculty: string
   score: number
   isUser?: boolean
-}
-
-export interface TodayWorkout {
-  name: string
-  duration: string
-  exercises: number
-  level: 'Principiante' | 'Intermedio' | 'Avanzado'
-  completed: number
-  exercises_list: {
-    name: string
-    sets: string
-    done: boolean
-  }[]
 }
 
 export type MobileTab = 'home' | 'routines' | 'agenda' | 'profile'

@@ -13,6 +13,7 @@ import {
   type FrontendSesionRutina,
 } from '@/services/rutina.service'
 import { mensajeError } from '@/lib/api'
+import { hoyKey, capitalizar, doneDaysDesdeSesiones } from '@/features/student/utils/fechas'
 import { cardStyle, FIRE } from '@/features/student/components/ui/fitness'
 import { AssessmentDetail } from '@/features/student/components/ui/AssessmentDetail'
 import { RoutineList } from './components/RoutineList'
@@ -22,30 +23,6 @@ import { ExerciseModal } from './components/ExerciseModal'
 import { CelebrationModal } from './components/CelebrationModal'
 
 type View = 'list' | 'detail'
-
-/** Clave del día de hoy (es-CO, minúsculas, con tildes como rutina.days). */
-function hoyKey(): string {
-  return new Date().toLocaleDateString('es-CO', { weekday: 'long' }).toLowerCase()
-}
-
-function capitalizar(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
-
-/** Días completados desde las sesiones reales: un día cuenta si existe al menos
- *  una sesión finalizada en esa fecha (fuente de verdad: backend). */
-function doneDaysDesdeSesiones(routine: StudentRoutine, sesiones: FrontendSesionRutina[]): string[] {
-  const dias = routine.days ?? []
-  if (!dias.length) return []
-  const nombres = new Set<string>()
-  for (const s of sesiones) {
-    if (s.estado !== 'finalizada') continue
-    const wd = new Date(s.fecha).toLocaleDateString('es-CO', { weekday: 'long' }).toLowerCase()
-    const match = dias.find(d => d.toLowerCase() === wd)
-    if (match) nombres.add(match)
-  }
-  return [...nombres]
-}
 
 export function RoutinesPage() {
   const { studentRoutines, assessments, loadingRoutines, refrescarRutinas } = useStudentApp()
@@ -129,6 +106,7 @@ export function RoutinesPage() {
     try {
       const nueva = await iniciarSesion(routine.id)
       setSesiones(prev => [...prev, nueva])
+      setChecked(prev => ({ ...prev, [routine.id]: [] }))
     } catch (e) {
       const msg = mensajeError(e)
       setSessionError(msg)
@@ -188,8 +166,10 @@ export function RoutinesPage() {
             return merged.length === cur.length ? prev : { ...prev, [routine.id]: merged }
           })
         }
-        // Restaurar ejercicios marcados de la sesión en curso (sobreviven a F5).
-        const enCurso = lista.find(s => s.estado === 'en_progreso')
+        // Restaurar las marcas reales de la sesión en curso (sobreviven a F5); si no
+        // hay sesión en curso, usar la sesión finalizada más reciente para que los
+        // días completados muestren el mismo progreso que se guardó en backend.
+        const enCurso = lista.find(s => s.estado === 'en_progreso') ?? lista.find(s => s.estado === 'finalizada')
         const marcas = enCurso?.ejerciciosMarcados ?? []
         if (marcas.length) {
           const restaurados = routine.rows
@@ -261,14 +241,10 @@ export function RoutinesPage() {
         </div>
       )
     }
-    const fullyCompletedIds = studentRoutines
-      .filter(r => (r.days?.length ?? 0) > 0 && r.days!.every(d => (completedByRoutine[r.id] || []).includes(d)))
-      .map(r => r.id)
     return (
       <RoutineList
         routines={studentRoutines}
         openRoutine={openRoutine}
-        completedIds={fullyCompletedIds}
       />
     )
   }

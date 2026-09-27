@@ -1,29 +1,4 @@
-import { TodayWorkout, WeeklyProgress, StudentRoutine } from '@/features/student/types/student'
-
-export const todayWorkout: TodayWorkout = {
-  name: 'Hipertrofia Superior',
-  duration: '60 min',
-  exercises: 5,
-  level: 'Intermedio',
-  completed: 2,
-  exercises_list: [
-    { name: 'Sentadilla con barra', sets: '4x8-10', done: true },
-    { name: 'Press de banca', sets: '4x8-10', done: true },
-    { name: 'Peso muerto', sets: '3x6-8', done: false },
-    { name: 'Dominadas', sets: '3x8-12', done: false },
-    { name: 'Press militar', sets: '3x10-12', done: false },
-  ],
-}
-
-export const weeklyProgress: WeeklyProgress[] = [
-  { day: 'L', done: true },
-  { day: 'M', done: true },
-  { day: 'X', done: false },
-  { day: 'J', done: true },
-  { day: 'V', done: false },
-  { day: 'S', done: false },
-  { day: 'D', done: false },
-]
+import { StudentRoutine } from '@/features/student/types/student'
 
 export const motivationalQuotes = [
   'EL sNICO ENTRENAMIENTO MALO ES EL QUE NO HICISTE',

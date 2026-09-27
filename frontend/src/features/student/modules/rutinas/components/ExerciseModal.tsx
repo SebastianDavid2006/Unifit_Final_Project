@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Flame, ChevronRight, Clock, Target, Dumbbell, X, CheckCircle2, Maximize2 } from 'lucide-react'
+import { Flame, ChevronRight, Clock, Signal, Dumbbell, X, CheckCircle2, Maximize2 } from 'lucide-react'
 import type { ExerciseRow, StudentRoutine } from '@/features/student/types/student'
 import { AMBER, FIRE, GREEN } from '@/features/student/components/ui/fitness'
-import { MUSCLE_IMG, FULL_BODY_IMG } from '../routineAssets'
+import { MUSCLE_IMG, FULL_BODY_IMG, LEVEL_COLOR } from '../routineAssets'
 import { CategoryPills } from './CategoryPills'
 import { esVideoUrl } from '@/services/ejercicio.service'
 
@@ -79,8 +79,8 @@ export function ExerciseModal({ data, routine, checkedIndexes, sessionActive, on
 
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-3 gap-2.5">
-                <div className="rounded-2xl p-3.5 text-center col-span-1" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}>
-                  <Target size={17} style={{ color: '#9CA3AF', margin: '0 auto 6px' }} />
+                <div className="rounded-2xl p-3.5 text-center col-span-1 flex flex-col items-center justify-center gap-2" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}>
+                  <Signal size={17} style={{ color: LEVEL_COLOR[data.ex.level || routine.level], margin: '0 auto 6px' }} />
                   <p className="text-white font-black" style={{ fontSize: 15 }}>{data.ex.level || routine.level}</p>
                   <p className="uppercase" style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)' }}>Nivel</p>
                 </div>

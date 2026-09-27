@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback, useRef, createElement } from 'react'
-import { Student, TodayWorkout, WeeklyProgress, MobileTab, StudentRoutine } from '@/features/student/types/student'
-import { todayWorkout, weeklyProgress } from '@/features/student/utils/mockData.tsx'
+import { Student, MobileTab, StudentRoutine } from '@/features/student/types/student'
 import { getMiPerfil, type BackendUsuario } from '@/services/usuario.service'
 import { getRutinasPorUsuario, type FrontendRutina } from '@/services/rutina.service'
 import { getValoracionesPorUsuario, type AssessmentItem } from '@/services/valoracion.service'
@@ -11,8 +10,6 @@ interface StudentAppContextType {
   student: Student | null
   tab: MobileTab
   setTab: (tab: MobileTab) => void
-  todayWorkout: TodayWorkout
-  weeklyProgress: WeeklyProgress[]
   studentRoutines: StudentRoutine[]
   assessments: AssessmentItem[]
   loadingRoutines: boolean
@@ -131,15 +128,10 @@ export function StudentAppProvider(props: { children: ReactNode }) {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [cargarRutinas])
 
-  const todayWorkoutData = useMemo(() => todayWorkout, [])
-  const weeklyProgressData = useMemo(() => weeklyProgress, [])
-
   const value = useMemo(() => ({
     student,
     tab: tab[0],
     setTab: tab[1],
-    todayWorkout: todayWorkoutData,
-    weeklyProgress: weeklyProgressData,
     studentRoutines,
     assessments,
     loadingRoutines,
