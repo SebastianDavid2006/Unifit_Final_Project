@@ -106,35 +106,39 @@ export function ExerciseModal({ data, routine, checkedIndexes, sessionActive, on
                 ))}
               </div>
 
-              {(data.ex.machines ?? []).length > 0 && (
-                <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}>
+              <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.09)' }}>
                   <div className="flex items-center gap-2 mb-2.5">
                     <Dumbbell size={14} style={{ color: TEAL }} />
                     <p className="uppercase tracking-widest" style={{ fontSize: 9.5, fontWeight: 800, color: TEAL }}>Equipo que se puede usar</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {(data.ex.machines ?? []).map((m, i) => (
-                      <div key={i} className="rounded-2xl p-3 flex items-center gap-2.5 text-left min-w-0" style={{ background: 'transparent', border: '1px dashed rgba(255,255,255,0.18)', minHeight: 56 }}>
-                        {m.imageUrl ? (
-                          <button
-                            onClick={() => setLightbox({ src: m.imageUrl, isVideo: esVideoUrl(m.imageUrl) })}
-                            className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
-                            style={{ border: `1px solid ${TEAL}40` }}
-                            aria-label={`Ver ${m.nombre} en pantalla completa`}
-                          >
-                            <img src={m.imageUrl} alt={m.nombre} className="w-full h-full object-cover" />
-                          </button>
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: TEAL + '18', color: TEAL }}>
-                            <Dumbbell size={16} />
-                          </div>
-                        )}
-                        <p className="text-white font-bold min-w-0" style={{ fontSize: 11.5, lineHeight: 1.35, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{m.nombre}</p>
-                      </div>
-                    ))}
-                  </div>
+                  {(data.ex.machines ?? []).length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {(data.ex.machines ?? []).map((m, i) => (
+                        <div key={i} className="rounded-2xl p-3 flex items-center gap-2.5 text-left min-w-0" style={{ background: 'transparent', border: '1px dashed rgba(255,255,255,0.18)', minHeight: 56 }}>
+                          {m.imageUrl ? (
+                            <button
+                              onClick={() => setLightbox({ src: m.imageUrl, isVideo: esVideoUrl(m.imageUrl) })}
+                              className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 cursor-pointer"
+                              style={{ border: `1px solid ${TEAL}40` }}
+                              aria-label={`Ver ${m.nombre} en pantalla completa`}
+                            >
+                              <img src={m.imageUrl} alt={m.nombre} className="w-full h-full object-cover" />
+                            </button>
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: TEAL + '18', color: TEAL }}>
+                              <Dumbbell size={16} />
+                            </div>
+                          )}
+                          <p className="text-white font-bold min-w-0" style={{ fontSize: 11.5, lineHeight: 1.35, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{m.nombre}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center" style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', fontWeight: 700, letterSpacing: '0.06em' }}>
+                      No disponible
+                    </p>
+                  )}
                 </div>
-              )}
 
               {data.ex.instructions && (
                 <div className="rounded-2xl p-4" style={{ background: 'rgba(245,166,35,0.05)', border: '1px solid rgba(245,166,35,0.15)' }}>

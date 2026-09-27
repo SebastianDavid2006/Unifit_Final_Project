@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import { Home, Dumbbell, Calendar, User, LogOut } from 'lucide-react'
 import { FitnessBackdrop } from '@/features/student/components/ui/fitness'
+import { useStudentApp } from '@/features/student/hooks/useStudentApp'
 import logo from '@/assets/logo/logo.webp'
 
 export interface StudentLayoutProps {
@@ -18,6 +19,11 @@ const NAV = [
 ]
 
 export function StudentLayout({ children, tab, onTabChange, onLogoutClick }: StudentLayoutProps) {
+  const { student } = useStudentApp()
+  const avatarIniciales = student?.avatar ?? '…'
+  const nombre = student?.name ?? 'Cargando…'
+  const subtitulo = student?.roleLabel ?? ''
+
   return (
     <div className="relative flex h-screen w-full max-w-full overflow-hidden" style={{ background: '#06060C', height: '100dvh' }}>
       <FitnessBackdrop />
@@ -66,11 +72,11 @@ export function StudentLayout({ children, tab, onTabChange, onLogoutClick }: Stu
         <div className="mt-auto rounded-2xl p-3.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white flex-shrink-0" style={{ background: 'linear-gradient(135deg,#E63946,#F5A623)', fontSize: 12 }}>
-              AG
+              {avatarIniciales}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-white font-semibold truncate" style={{ fontSize: 12 }}>Ana García</p>
-              <p className="truncate" style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>Estudiante activa</p>
+              <p className="text-white font-semibold truncate" style={{ fontSize: 12 }}>{nombre}</p>
+              <p className="truncate" style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{subtitulo}</p>
             </div>
             <motion.button
               whileHover={{ scale: 1.12 }}
@@ -98,7 +104,7 @@ export function StudentLayout({ children, tab, onTabChange, onLogoutClick }: Stu
           </div>
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white" style={{ background: 'linear-gradient(135deg,#E63946,#F5A623)', fontSize: 11 }}>
-              AG
+              {avatarIniciales}
             </div>
             <motion.button
               whileHover={{ scale: 1.12 }}

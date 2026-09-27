@@ -13,6 +13,27 @@ export interface Student {
   avatar: string
   goal: string
   adherence: number
+  /* -- Datos reales de perfil (fuente: GET /usuarios/me) -- */
+  secondName?: string
+  secondLastName?: string
+  genderLabel?: string
+  documentType?: string
+  documentNumber?: string
+  birthDate?: string
+  eps?: string
+  bloodType?: string
+  phone?: string
+  contactName?: string
+  contactPhone?: string
+  contactRelation?: string
+  carnetId?: string
+  career?: string
+  institution?: string
+  semestre?: number | null
+  modality?: string
+  jornada?: string
+  roleLabel?: string
+  statusLabel?: string
 }
 
 export interface RoutineWithAssessment {

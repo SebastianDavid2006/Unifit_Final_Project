@@ -1,6 +1,5 @@
 import type { Student } from '@/features/student/types/student'
 import { GradientBorder, GREEN } from '@/features/student/components/ui/fitness'
-import { personalSections } from '../profileData'
 import studentBoy from '@/assets/illustrations/characters/students/student_boy.webp'
 import studentGirl from '@/assets/illustrations/characters/students/student_girl.webp'
 
@@ -11,6 +10,9 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ student, objetivos }: ProfileHeaderProps) {
   const defaultPhoto = student.gender === 'M' ? studentBoy : studentGirl
+  const subtitulo = student.career
+    ? `${student.career}${student.semestre != null ? ` · Semestre ${student.semestre}` : ''}`
+    : (student.roleLabel ?? '')
 
   return (
     <GradientBorder radius={24}>
@@ -29,10 +31,7 @@ export function ProfileHeader({ student, objetivos }: ProfileHeaderProps) {
           <div className="text-center sm:text-left min-w-0">
             <h2 className="uppercase italic font-black text-white leading-tight" style={{ fontSize: 'clamp(20px, 3vw, 26px)' }}>{student.name}</h2>
             <p style={{ color: 'rgba(255,255,255,0.42)', fontSize: 12.5, marginTop: 4 }}>
-              {(() => {
-                const acad = personalSections.find(s => s.title === 'Información académica')?.items || []
-                return `${acad.find(p => p.label === 'Carrera')?.value} · Semestre ${acad.find(p => p.label === 'Semestre')?.value}`
-              })()}
+              {subtitulo}
             </p>
             <div className="flex items-center justify-center sm:justify-start gap-2 mt-3">
               <span className="px-3 py-1 rounded-full font-bold" style={{ background: 'rgba(48,209,88,0.1)', border: '1px solid rgba(48,209,88,0.25)', color: GREEN, fontSize: 10.5 }}>

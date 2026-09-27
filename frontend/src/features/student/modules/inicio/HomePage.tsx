@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { Flame, Clock, Dumbbell, Check, Signal, Moon } from 'lucide-react'
 import { useStudentApp } from '@/features/student/hooks/useStudentApp'
-import { motivationalQuotes } from '@/features/student/utils/mockData'
 import {
   hoyKey,
   capitalizar,
@@ -21,7 +20,7 @@ import { LEVEL_COLOR } from '@/features/student/modules/rutinas/routineAssets'
 import studentBoy from '@/assets/illustrations/characters/students/student_boy.webp'
 import studentGirl from '@/assets/illustrations/characters/students/student_girl.webp'
 
-const QUOTE = motivationalQuotes[0]
+const QUOTE = 'EL ÚNICO ENTRENAMIENTO MALO ES EL QUE NO HICISTE'
 
 export function HomePage() {
   const { student, studentRoutines, loadingRoutines } = useStudentApp()

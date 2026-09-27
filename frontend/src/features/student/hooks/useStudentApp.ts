@@ -20,9 +20,38 @@ interface StudentAppContextType {
 
 const StudentAppContext = createContext<StudentAppContextType | undefined>(undefined)
 
+const GENERO_SIGLA: Record<string, 'M' | 'F'> = {
+  masculino: 'M',
+  femenino: 'F',
+}
+
+const GENERO_LABEL: Record<string, string> = {
+  masculino: 'Masculino',
+  femenino: 'Femenino',
+  otro: 'Otro',
+}
+
+const UNIVERSIDAD_LABEL: Record<string, string> = {
+  uni_colombia: 'Universitaria de Colombia',
+  uni_bogota: 'Universitaria de Bogotá',
+}
+
+const ROL_LABEL: Record<string, string> = {
+  estudiante: 'Estudiante',
+  profesor: 'Profesor',
+  administrativo: 'Administrativo',
+}
+
+const ESTADO_LABEL: Record<string, string> = {
+  pendiente: 'Pendiente',
+  activo: 'Activo',
+  inactivo: 'Inactivo',
+}
+
 function mapBackendToStudent(u: BackendUsuario): Student {
   const buildName = `${u.primer_nombre} ${u.segundo_nombre ?? ''} ${u.primer_apellido} ${u.segundo_apellido ?? ''}`.replace(/\s+/g, ' ').trim()
   const avatar = `${(u.primer_nombre ?? '')[0] ?? ''}${(u.primer_apellido ?? '')[0] ?? ''}`.toUpperCase()
+  const estudiante = u.estudiante
 
   return {
     id: u.id_usuario,
@@ -30,10 +59,30 @@ function mapBackendToStudent(u: BackendUsuario): Student {
     firstName: u.primer_nombre,
     lastName: u.primer_apellido,
     email: u.email_contacto,
-    gender: 'F',
+    gender: GENERO_SIGLA[u.genero ?? ''] ?? 'F',
     avatar,
     goal: 'Sin definir',
     adherence: 0,
+    secondName: u.segundo_nombre ?? '',
+    secondLastName: u.segundo_apellido ?? '',
+    genderLabel: u.genero === 'otro' && u.genero_otro?.trim() ? u.genero_otro.trim() : (GENERO_LABEL[u.genero ?? ''] ?? ''),
+    documentType: u.tipo_documento,
+    documentNumber: u.documento,
+    birthDate: u.fecha_nacimiento ?? '',
+    eps: u.eps ?? '',
+    bloodType: u.grupo_sanguineo ?? '',
+    phone: u.telefono_contacto ?? '',
+    contactName: u.nombre_emergencia ?? '',
+    contactPhone: u.telefono_emergencia ?? '',
+    contactRelation: u.parentesco_emergencia ?? '',
+    carnetId: estudiante?.numero_carnet ?? '',
+    career: estudiante?.programa?.nombre ?? '',
+    institution: estudiante?.programa?.universidad ? (UNIVERSIDAD_LABEL[estudiante.programa.universidad] ?? estudiante.programa.universidad) : '',
+    semestre: estudiante?.semestre ?? null,
+    modality: estudiante?.modalidad ?? '',
+    jornada: estudiante?.jornada ?? '',
+    roleLabel: ROL_LABEL[u.tipo_usuario] ?? u.tipo_usuario,
+    statusLabel: ESTADO_LABEL[u.estado] ?? u.estado,
   }
 }
 
