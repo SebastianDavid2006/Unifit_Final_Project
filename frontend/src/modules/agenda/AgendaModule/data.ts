@@ -24,19 +24,18 @@ export interface DayStatus {
   holiday?: string | null
 }
 
-export const TIME_SLOTS_WEEK = ['6:00', '7:00', '8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
+// Rejilla horaria de las vistas. Fuente única = backend GET /agenda/bloques (regla 1).
+// El módulo la puebla vía setTimeSlots(bloques) al cargar; el default espejo los 14 bloques canónicos.
+export let TIME_SLOTS_WEEK: string[] = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
+
+export function setTimeSlots(inicios: string[]) {
+  TIME_SLOTS_WEEK = inicios.map((h) => {
+    const [hh, mm] = h.split('-')[0].split(':')
+    return `${String(Number(hh)).padStart(2, '0')}:${mm}`
+  })
+}
 
 export const MESH_GRAD = 'radial-gradient(ellipse at 20% 30%, rgba(241,200,39,0.2) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(230,57,70,0.18) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(18,112,183,0.35) 0%, transparent 50%), rgba(18,112,183,0.88)'
-
-export const defaultWeeklyTemplate: Record<string, { active: boolean; open: string; close: string }> = {
-  LUN: { active: true, open: '06:00', close: '22:00' },
-  MAR: { active: true, open: '06:00', close: '22:00' },
-  MIÉ: { active: true, open: '06:00', close: '22:00' },
-  JUE: { active: true, open: '06:00', close: '22:00' },
-  VIE: { active: true, open: '06:00', close: '22:00' },
-  SÁB: { active: true, open: '08:00', close: '18:00' },
-  DOM: { active: false, open: '08:00', close: '14:00' },
-}
 
 export function fmtDate(d: Date) {
   const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0')
@@ -77,10 +76,6 @@ export function getMonthGrid(year: number, month: number): (Date | null)[][] {
   while (wk.length < 7) wk.push(null)
   if (wk.some(x => x)) weeks.push(wk)
   return weeks
-}
-
-export function overlapsRange(open: string, close: string, ranges: { open: string; close: string }[]) {
-  return ranges.some(r => r.open < close && open < r.close)
 }
 
 export function enterMesh(el: HTMLElement) {

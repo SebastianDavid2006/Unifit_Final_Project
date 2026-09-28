@@ -2,11 +2,15 @@ import { z } from 'zod'
 import type { Request, Response } from 'express'
 import {
   cambiarEstadoAgenda,
+  cancelarCitaAgenda,
   crearAgenda,
   editarAgenda,
   eliminarAgenda,
+  eliminarCupo,
   listarAgenda,
   listarAgendaDeUsuario,
+  listarBloques,
+  listarCupos,
   listarCuposDisponibles,
   obtenerAgendaPorId,
   publicarCupos,
@@ -17,8 +21,8 @@ import { responderErrorPrisma } from '../utils/prisma-errors'
 const crearAgendaSchema = z.object({
   id_usuario: z.string().uuid(),
   fecha: z.string().min(1),
+  // Hora de inicio del bloque (p.ej. '08:00'); hora_fin se deriva del bloque
   hora_inicio: z.string().min(1),
-  hora_fin: z.string().optional(),
   tipo: z.enum(['valoracion', 'registro', 'seguimiento', 'otro']),
   tipo_otro: z.string().optional(),
   observaciones: z.string().optional(),
@@ -27,10 +31,8 @@ const crearAgendaSchema = z.object({
 const editarAgendaSchema = z.object({
   fecha: z.string().min(1).optional(),
   hora_inicio: z.string().min(1).optional(),
-  hora_fin: z.string().optional(),
   tipo: z.enum(['valoracion', 'registro', 'seguimiento', 'otro']).optional(),
   tipo_otro: z.string().optional(),
-  estado: z.enum(['pendiente', 'completado', 'cancelado', 'no_asistio']).optional(),
   observaciones: z.string().optional(),
 })
 
@@ -150,10 +152,37 @@ export async function getCuposDisponibles(_req: Request, res: Response): Promise
   res.json(await listarCuposDisponibles())
 }
 
+export async function getBloques(_req: Request, res: Response): Promise<void> {
+  res.json(await listarBloques())
+}
+
+export async function getCupos(_req: Request, res: Response): Promise<void> {
+  res.json(await listarCupos())
+}
+
 export async function postReservarCupo(req: Request, res: Response): Promise<void> {
   try {
     const agenda = await reservarCupo(req.params.id as string, req.usuario!.id_usuario)
     res.status(201).json(agenda)
+  } catch (error) {
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function deleteCupo(req: Request, res: Response): Promise<void> {
+  try {
+    const resultado = await eliminarCupo(req.params.id as string)
+    res.json(resultado)
+  } catch (error) {
+    if (!responderErrorPrisma(error, res)) throw error
+  }
+}
+
+export async function postCancelarAgenda(req: Request, res: Response): Promise<void> {
+  try {
+    const esStaff = req.usuario!.rol === 'admin' || req.usuario!.rol === 'entrenador'
+    const agenda = await cancelarCitaAgenda(req.params.id as string, req.usuario!.id_usuario, esStaff)
+    res.json(agenda)
   } catch (error) {
     if (!responderErrorPrisma(error, res)) throw error
   }

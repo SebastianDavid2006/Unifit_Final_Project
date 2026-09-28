@@ -11,6 +11,7 @@ import aiRoutes from './ai.routes'
 import biometriaRoutes from './biometria.routes'
 import asistenciaRoutes from './asistencia.routes'
 import documentoRoutes from './documento.routes'
+import festivosRoutes from './festivos.routes'
 
 const router = Router()
 
@@ -26,5 +27,6 @@ router.use(aiRoutes)
 router.use(biometriaRoutes)
 router.use(asistenciaRoutes)
 router.use(documentoRoutes)
+router.use(festivosRoutes)
 
 export default router

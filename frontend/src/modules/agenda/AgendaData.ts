@@ -7,7 +7,7 @@ export const GOLD_GRAD = 'linear-gradient(135deg, #F1C827, #FFD60A, #D4A800)'
 export interface Appointment {
   id: string; date: string; startTime: string; endTime: string
   type: 'class' | 'initial_assessment' | 'physical_assessment' | 'registration' | 'event'
-  title: string; studentName?: string; trainer?: string; notes?: string
+  title: string; studentName?: string
 }
 
 export const dayKey = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB']

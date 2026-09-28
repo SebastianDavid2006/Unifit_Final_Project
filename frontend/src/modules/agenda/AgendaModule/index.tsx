@@ -5,22 +5,20 @@ import {
 } from '../AgendaData'
 import type { Appointment } from '../AgendaData'
 import {
-  defaultWeeklyTemplate, fmtDate, getMonthGrid, getWeekDates, overlapsRange, typeLabels,
+  fmtDate, getMonthGrid, getWeekDates, setTimeSlots, typeLabels,
 } from './data'
 import type { DayStatus } from './data'
-import { getHoliday } from './holidays'
 import { Banner } from './components/Banner'
 import { DayModal } from './components/DayModal'
 import { AppointmentModal, type AppointmentType } from './components/AppointmentModal'
-import { PublishModal } from './components/PublishModal'
 import { YearView } from './views/YearView'
 import { MonthView } from './views/MonthView'
 import { WeekView } from './views/WeekView'
 import { DayView } from './views/DayView'
 import { agendaToAppointment, apptTipoToAgenda } from './backend'
 import {
-  crearAgenda, editarAgenda, eliminarAgenda,
-  getAgenda, getCuposDisponibles, publicarCupos, type HorarioPorDia,
+  crearAgenda, editarAgenda, eliminarAgenda, eliminarCupo,
+  getAgenda, getBloques, getCupos, obtenerFestivos, publicarCupos, type BloqueDelDia, type CupoConReserva, type HorarioPorDia,
 } from '@/services/agenda.service'
 
 interface AgendaStudent {
@@ -53,11 +51,11 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
   const [pressedCell, setPressedCell] = useState<{ col: number; row: number } | null>(null)
   const [dayModalDate, setDayModalDate] = useState<string | null>(null)
 
-  const [weeklyTemplate] = useState(defaultWeeklyTemplate)
-
-  const [dayExceptions, setDayExceptions] = useState<Record<string, { active: boolean; open?: string; close?: string; reason?: string }>>({})
-
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [cupos, setCupos] = useState<CupoConReserva[]>([])
+  const [bloques, setBloques] = useState<BloqueDelDia[]>([])
+  const [festivos, setFestivos] = useState<Map<string, string>>(new Map())
+  const [publishedDates, setPublishedDates] = useState<Set<string>>(new Set())
   const [editingApptId, setEditingApptId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -65,22 +63,10 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
   const byName = useRef<Map<string, string>>(new Map())
 
   const [newApptType, setNewApptType] = useState<AppointmentType>('initial_assessment')
-  const [showPublishModal, setShowPublishModal] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(false)
-  const [publishStart, setPublishStart] = useState('')
-  const [publishEnd, setPublishEnd] = useState('')
-  const [publishedDates, setPublishedDates] = useState<Set<string>>(new Set())
-  const [publishDays, setPublishDays] = useState<string[]>(['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE'])
-  const [publishStep, setPublishStep] = useState<1 | 2>(1)
-  const [publishSelectedDay, setPublishSelectedDay] = useState<string | null>(null)
-  const [showPublishConfirm, setShowPublishConfirm] = useState(false)
-  const [showPublishSuccess, setShowPublishSuccess] = useState(false)
-  const [publishDayConfig, setPublishDayConfig] = useState<Record<string, { ranges: { open: string; close: string }[] }>>({})
-  const [rangeConflict, setRangeConflict] = useState<{ day: string; msg: string } | null>(null)
   const [newApptStart, setNewApptStart] = useState('08:00')
-  const [newApptEnd, setNewApptEnd] = useState('09:00')
   const [newApptStudent, setNewApptStudent] = useState('')
   const [studentListOpen, setStudentListOpen] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const studentMatches = useMemo(() => {
     const q = newApptStudent.trim().toLowerCase()
@@ -96,11 +82,14 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
     let activo = true
     setIsLoading(true)
     setLoadError(null)
-    Promise.all([getAgenda(), getCuposDisponibles()])
-      .then(([agenda, cupos]) => {
+    Promise.all([getAgenda(), getCupos(), getBloques()])
+      .then(([agenda, cuposData, bloquesData]) => {
         if (!activo) return
         setAppointments(agenda.map(agendaToAppointment))
-        setPublishedDates(new Set(cupos.map(c => c.fecha)))
+        setCupos(cuposData)
+        setBloques(bloquesData)
+        setPublishedDates(new Set(cuposData.map(c => c.fecha)))
+        setTimeSlots(bloquesData.map(b => b.inicio.slice(0, 5)))
       })
       .catch(() => {
         if (activo) setLoadError('No se pudo cargar la agenda')
@@ -111,44 +100,76 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
     return () => { activo = false }
   }, [students])
 
+  const year = currentMonth.getFullYear()
+  const month = currentMonth.getMonth()
+  useEffect(() => {
+    let activo = true
+    obtenerFestivos(year)
+      .then(fs => { if (activo) setFestivos(new Map(fs.map(f => [f.date, f.name]))) })
+      .catch(() => { if (activo) setFestivos(new Map()) })
+    return () => { activo = false }
+  }, [year])
+
+  useEffect(() => {
+    if (dayModalDate) void refreshCupos()
+  }, [dayModalDate])
+
   function getDayStatus(dateStr: string): DayStatus {
-    const dt = new Date(dateStr + 'T12:00:00')
-    const dk = dayKey[dt.getDay()]
-    const base = weeklyTemplate[dk] || { active: false, open: '08:00', close: '18:00' }
-    const holiday = getHoliday(dateStr)
-    if (dayExceptions[dateStr]) {
-      const ex = dayExceptions[dateStr]
-      return { active: ex.active, open: ex.open || base.open, close: ex.close || base.close, holiday: null }
-    }
-    if (holiday) return { active: false, open: base.open, close: base.close, holiday: holiday.name }
-    return { ...base, holiday: null }
+    const hol = festivos.get(dateStr)
+    if (hol) return { active: false, open: '08:00', close: '22:00', holiday: hol }
+    return { active: true, open: '08:00', close: '22:00', holiday: null }
   }
 
   function getApptsForDate(dateStr: string) {
     return appointments.filter(a => a.date === dateStr)
   }
 
+  const ocupadosEnFecha = useMemo(() => {
+    const s = new Set<string>()
+    if (!selectedDate) return s
+    for (const a of appointments) if (a.date === selectedDate) s.add(a.startTime.slice(0, 5))
+    return s
+  }, [appointments, selectedDate])
+
+  const cuposLibresEnFecha = useMemo(() => {
+    const s = new Set<string>()
+    if (!selectedDate) return s
+    for (const c of cupos) if (c.fecha === selectedDate && !c.reserva) s.add(c.hora_inicio.slice(0, 5))
+    return s
+  }, [cupos, selectedDate])
+
+  function handleStepFecha(delta: -1 | 1) {
+    if (!selectedDate) return
+    const d = new Date(selectedDate + 'T12:00:00')
+    d.setDate(d.getDate() + delta)
+    setSelectedDate(fmtDate(d))
+  }
+
   async function handleSaveAppointment() {
     if (!selectedDate) return
-    if (getDayStatus(selectedDate).holiday) return
     setActionError(null)
+    const bloque = bloques.find(b => b.inicio.slice(0, 5) === newApptStart)
+    if (!bloque) {
+      setActionError('Selecciona un bloque válido (08:00 – 22:00)')
+      return
+    }
     const fecha = selectedDate
     const hora_inicio = newApptStart
-    const hora_fin = newApptEnd || undefined
+    const hora_fin = bloque.fin
     const tipo = apptTipoToAgenda[newApptType]
     const tipo_otro = (newApptType === 'class' || newApptType === 'event') ? (typeLabels[newApptType] || 'Otro') : undefined
     try {
       if (editingApptId) {
         await editarAgenda(editingApptId, { fecha, hora_inicio, hora_fin, tipo, tipo_otro })
-        const fallbackEnd = `${String(Number(newApptStart.split(':')[0]) + 1).padStart(2, '0')}:${newApptStart.split(':')[1] || '00'}`
         setAppointments(prev => prev.map(a => a.id === editingApptId ? {
-          ...a, date: fecha, startTime: newApptStart, endTime: newApptEnd || fallbackEnd,
+          ...a, date: fecha, startTime: hora_inicio, endTime: hora_fin,
           type: newApptType, title: typeLabels[newApptType] || 'Cita',
           studentName: newApptStudent || undefined,
         } : a))
         setEditingApptId(null)
         setShowApptModal(false)
         setNewApptStudent('')
+        void refreshCupos()
         return
       }
       const idUsuario = byName.current.get(newApptStudent)
@@ -160,6 +181,7 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
       setAppointments(prev => [...prev, agendaToAppointment(creada)])
       setShowApptModal(false)
       setNewApptStudent('')
+      void refreshCupos()
     } catch (e) {
       setActionError('No se pudo guardar la cita')
     }
@@ -170,7 +192,6 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
     setSelectedDate(a.date)
     setNewApptType(a.type as AppointmentType)
     setNewApptStart(a.startTime)
-    setNewApptEnd(a.endTime)
     setNewApptStudent(a.studentName || '')
     setEditingApptId(a.id)
     setShowApptModal(true)
@@ -182,139 +203,105 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
       setAppointments(prev => prev.filter(a => a.id !== id))
       setShowApptModal(false)
       setEditingApptId(null)
+      void refreshCupos()
     } catch (e) {
       setActionError('No se pudo eliminar la cita')
     }
   }
 
+  function handleVolverAlDia() {
+    setShowApptModal(false)
+    setEditingApptId(null)
+    setNewApptStudent('')
+    setDayModalDate(selectedDate)
+  }
+
   function handleSlotClick(dateStr: string, timeStr: string) {
     if (getDayStatus(dateStr).holiday) return
+    if (dateStr < todayStr) return
     setSelectedDate(dateStr)
     const [h, m] = timeStr.split(':')
-    const normalized = `${String(Number(h)).padStart(2, '0')}:${m.padStart(2, '0')}`
-    setNewApptStart(normalized)
-    setNewApptEnd(`${String(Number(h) + 1).padStart(2, '0')}:${m.padStart(2, '0')}`)
+    setNewApptStart(`${String(Number(h)).padStart(2, '0')}:${m.padStart(2, '0')}`)
     setNewApptType('initial_assessment')
     setNewApptStudent('')
     setEditingApptId(null)
     setShowApptModal(true)
   }
 
-  function getDayConfig(day: string) {
-    return publishDayConfig[day] || { ranges: [{ open: '06:00', close: '22:00' }] }
+  function handleSelectDate(ds: string) {
+    setSelectedDate(ds)
+    setDayModalDate(ds)
   }
 
-  function updateDayRange(day: string, index: number, field: 'open' | 'close', value: string) {
-    const cfg = getDayConfig(day)
-    const ranges = cfg.ranges.map((r, i) => i === index ? { ...r, [field]: value } : r)
-    const current = ranges[index]
-    if (overlapsRange(current.open, current.close, ranges.slice(0, index))) {
-      setRangeConflict({ day, msg: 'Horas ocupadas por un horario anterior' })
-      return
-    }
-    setRangeConflict(null)
-    setPublishDayConfig(prev => ({ ...prev, [day]: { ...cfg, ranges } }))
+  function handleSelectMonth(mi: number) {
+    setViewMode('month')
+    setCurrentMonth(new Date(year, mi, 1))
   }
 
-  function addDayRange(day: string) {
-    const cfg = getDayConfig(day)
-    const defaults = [
-      { open: '06:00', close: '08:00' }, { open: '08:00', close: '10:00' },
-      { open: '10:00', close: '12:00' }, { open: '12:00', close: '14:00' },
-      { open: '14:00', close: '16:00' }, { open: '16:00', close: '18:00' },
-      { open: '18:00', close: '20:00' }, { open: '20:00', close: '22:00' },
-    ]
-    const free = defaults.find(d => !overlapsRange(d.open, d.close, cfg.ranges)) || { open: '07:00', close: '09:00' }
-    setRangeConflict(null)
-    setPublishDayConfig(prev => ({ ...prev, [day]: { ...cfg, ranges: [...cfg.ranges, free] } }))
+  function handleAddAppointmentFromModal() {
+    if (selectedDate && selectedDate < todayStr) return
+    setDayModalDate(null)
+    setNewApptType('initial_assessment')
+    setNewApptStart('08:00')
+    setNewApptStudent('')
+    setEditingApptId(null)
+    setShowApptModal(true)
   }
 
-  function removeDayRange(day: string, index: number) {
-    const cfg = getDayConfig(day)
-    setRangeConflict(null)
-    setPublishDayConfig(prev => ({ ...prev, [day]: { ...cfg, ranges: cfg.ranges.filter((_, i) => i !== index) } }))
-  }
-
-  function dayIsComplete(day: string) {
-    const cfg = getDayConfig(day)
-    return cfg.ranges.length > 0 && cfg.ranges.every(r => r.open && r.close && r.open < r.close)
-  }
-
-  async function handlePublish() {
-    if (!publishStart || !publishEnd) return
+  async function handlePublishDay(rangos: { inicio: string; fin: string }[]): Promise<boolean> {
+    if (!dayModalDate || rangos.length === 0) return false
     setActionError(null)
-
-    const horariosPorDia = publishDays
-      .map(key => {
-        const cfg = getDayConfig(key)
-        if (cfg.ranges.length === 0) return null
-        return {
-          dia: DIA_KEY_TO_LABEL[key],
-          rangos: cfg.ranges.map(r => ({ inicio: r.open, fin: r.close })),
-        }
-      })
-      .filter((x): x is HorarioPorDia => x !== null)
-
-    if (horariosPorDia.length === 0) {
-      setActionError('Configura al menos un horario por día para publicar')
-      return
+    const dk = dayKey[new Date(dayModalDate + 'T12:00:00').getDay()]
+    const dia = DIA_KEY_TO_LABEL[dk]
+    if (!dia) {
+      setActionError('Fecha inválida para publicar')
+      return false
     }
-
     try {
       await publicarCupos({
-        fecha_inicio: publishStart,
-        fecha_fin: publishEnd,
-        horarios_por_dia: horariosPorDia,
+        fecha_inicio: dayModalDate,
+        fecha_fin: dayModalDate,
+        horarios_por_dia: [{ dia, rangos }],
       })
-      const start = new Date(publishStart + 'T00:00:00')
-      const end = new Date(publishEnd + 'T00:00:00')
-      const newDates = new Set(publishedDates)
-      const current = new Date(start)
-      while (current <= end) {
-        newDates.add(fmtDate(current))
-        current.setDate(current.getDate() + 1)
-      }
-      setPublishedDates(newDates)
-      setRangeConflict(null)
-      setShowPublishConfirm(false)
-      setShowPublishSuccess(true)
+      const updated = await getCupos()
+      setCupos(updated)
+      setPublishedDates(new Set(updated.map(c => c.fecha)))
+      return true
     } catch (e) {
-      setActionError('No se pudo publicar los cupos')
-      setShowPublishConfirm(false)
+      setActionError('No se pudo publicar los cupos del día')
+      return false
     }
   }
 
-  function openPublishModal() {
-    setPublishStep(1)
-    setRangeConflict(null)
-    setPublishSelectedDay(null)
-    setShowPublishConfirm(false)
-    setShowPublishSuccess(false)
-    setShowPublishModal(true)
+  async function refreshCupos() {
+    try {
+      const updated = await getCupos()
+      setCupos(updated)
+      setPublishedDates(new Set(updated.map(c => c.fecha)))
+    } catch { /* silencioso */ }
   }
 
-  function closePublishModal() {
-    setRangeConflict(null)
-    setPublishStep(1)
-    setPublishSelectedDay(null)
-    setShowPublishConfirm(false)
-    setShowPublishSuccess(false)
-    setShowPublishModal(false)
+  async function handleQuitarCupo(idCupo: string): Promise<boolean> {
+    try {
+      await eliminarCupo(idCupo)
+      const updated = await getCupos()
+      setCupos(updated)
+      setPublishedDates(new Set(updated.map(c => c.fecha)))
+      return true
+    } catch (e) {
+      setActionError('No se pudo quitar el cupo')
+      return false
+    }
   }
-
-  const allDaysComplete = publishDays.length > 0 && publishDays.every(dayIsComplete)
-  const selDay = publishStep === 2 ? (publishSelectedDay && publishDays.includes(publishSelectedDay) ? publishSelectedDay : (publishDays[0] ?? null)) : null
 
   const editingAppt = editingApptId ? appointments.find(a => a.id === editingApptId) : null
   const apptDirty = !!editingAppt && (
     newApptType !== editingAppt.type ||
     newApptStart !== editingAppt.startTime ||
-    newApptEnd !== editingAppt.endTime ||
-    newApptStudent !== (editingAppt.studentName || '')
+    newApptStudent !== (editingAppt.studentName || '') ||
+    selectedDate !== editingAppt.date
   )
 
-  const year = currentMonth.getFullYear()
-  const month = currentMonth.getMonth()
   const todayStr = fmtDate(new Date())
   const weekDates = getWeekDates(currentMonth)
 
@@ -351,38 +338,6 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
     ? `${dayLabelsGetDay[currentMonth.getDay()]} ${currentMonth.getDate()} de ${monthNames[currentMonth.getMonth()]}`
     : `${monthNames[month]} ${year}`
 
-  function openHoliday(ds: string) {
-    setDayExceptions(prev => ({ ...prev, [ds]: { active: true } }))
-  }
-
-  function revertHoliday(ds: string) {
-    setDayExceptions(prev => {
-      const next = { ...prev }
-      delete next[ds]
-      return next
-    })
-  }
-
-  const handleSelectDate = (ds: string) => {
-    setSelectedDate(ds)
-    setDayModalDate(ds)
-  }
-
-  const handleSelectMonth = (mi: number) => {
-    setViewMode('month')
-    setCurrentMonth(new Date(year, mi, 1))
-  }
-
-  const handleAddAppointmentFromModal = () => {
-    setDayModalDate(null)
-    setNewApptType('initial_assessment')
-    setNewApptStart('08:00')
-    setNewApptEnd('09:00')
-    setNewApptStudent('')
-    setEditingApptId(null)
-    setShowApptModal(true)
-  }
-
   const headerProps = {
     viewMode,
     onViewModeChange: setViewMode,
@@ -408,7 +363,7 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
 
   return (
     <div className="p-8 pt-12 max-w-[1440px] mx-auto relative overflow-x-hidden" style={{ maxWidth: '100%' }}>
-      <Banner onOpenPublish={userRole !== 'entrenador' ? openPublishModal : undefined} />
+      <Banner />
 
       {loadError && (
         <div className="rounded-xl px-4 py-3" style={{ background: 'rgba(230,57,70,0.1)', border: '1px solid rgba(230,57,70,0.35)', color: '#FF8FA3', fontSize: 12 }}>
@@ -435,13 +390,14 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
         date={dayModalDate}
         onClose={() => setDayModalDate(null)}
         status={dayModalDate ? getDayStatus(dayModalDate) : null}
-        holidayName={dayModalDate ? getHoliday(dayModalDate)?.name ?? null : null}
-        isOverridden={!!(dayModalDate && dayExceptions[dayModalDate])}
-        onOpenHoliday={() => { if (dayModalDate) openHoliday(dayModalDate) }}
-        onRevertHoliday={() => { if (dayModalDate) revertHoliday(dayModalDate) }}
         appts={dayModalDate ? getApptsForDate(dayModalDate) : []}
         onAddAppointment={handleAddAppointmentFromModal}
         onEdit={handleEditAppointment}
+        isAdmin={userRole === 'admin'}
+        blocks={bloques}
+        cuposDeFecha={dayModalDate ? cupos.filter(c => c.fecha === dayModalDate) : []}
+        onPublishDay={handlePublishDay}
+        onQuitarCupo={handleQuitarCupo}
       />
 
       <AppointmentModal
@@ -450,47 +406,23 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
         editing={!!editingApptId}
         dirty={apptDirty}
         onClose={() => { setShowApptModal(false); setEditingApptId(null) }}
+        onBack={handleVolverAlDia}
         onSave={handleSaveAppointment}
         onDelete={() => { if (editingApptId) handleDeleteAppointment(editingApptId) }}
         apptType={newApptType}
         onTypeChange={setNewApptType}
+        fecha={selectedDate || ''}
+        onStepFecha={editingApptId ? handleStepFecha : undefined}
+        blocks={bloques}
+        ocupados={ocupadosEnFecha}
+        cuposLibres={cuposLibresEnFecha}
         startTime={newApptStart}
-        endTime={newApptEnd}
         onStartChange={setNewApptStart}
-        onEndChange={setNewApptEnd}
         student={newApptStudent}
         onStudentChange={setNewApptStudent}
         studentMatches={studentMatches}
         studentListOpen={studentListOpen}
         setStudentListOpen={setStudentListOpen}
-      />
-
-      <PublishModal
-        show={showPublishModal}
-        publishStep={publishStep}
-        onClose={closePublishModal}
-        publishStart={publishStart}
-        publishEnd={publishEnd}
-        onStartChange={setPublishStart}
-        onEndChange={setPublishEnd}
-        publishDays={publishDays}
-        onToggleDay={(key) => setPublishDays(prev => prev.includes(key) ? prev.filter(d => d !== key) : [...prev, key])}
-        selDay={selDay}
-        onSelectDay={setPublishSelectedDay}
-        allDaysComplete={allDaysComplete}
-        dayIsComplete={dayIsComplete}
-        showPublishSuccess={showPublishSuccess}
-        showPublishConfirm={showPublishConfirm}
-        onContinue={() => { setPublishSelectedDay(publishDays[0] ?? null); setPublishStep(2) }}
-        onBack={() => setPublishStep(1)}
-        onOpenConfirm={() => setShowPublishConfirm(true)}
-        onCancelConfirm={() => setShowPublishConfirm(false)}
-        onPublish={handlePublish}
-        getDayConfig={getDayConfig}
-        updateDayRange={updateDayRange}
-        addDayRange={addDayRange}
-        removeDayRange={removeDayRange}
-        rangeConflict={rangeConflict}
       />
 
       <AnimatePresence>

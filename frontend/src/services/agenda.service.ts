@@ -56,7 +56,6 @@ export interface FrontendAgenda {
   estado: BackendAgenda['estado']
   observaciones: string
   estudiante: string
-  creador: string
 }
 
 export interface FrontendCupo {
@@ -74,9 +73,6 @@ function mapAgendaBackToFront(a: BackendAgenda): FrontendAgenda {
   const estudiante = a.usuario
     ? `${a.usuario.primer_nombre} ${a.usuario.primer_apellido}`.trim()
     : ''
-  const creador = a.creador
-    ? `${a.creador.primer_nombre} ${a.creador.primer_apellido}`.trim()
-    : ''
   return {
     id: a.id_agenda,
     id_usuario: a.id_usuario,
@@ -88,7 +84,6 @@ function mapAgendaBackToFront(a: BackendAgenda): FrontendAgenda {
     estado: a.estado,
     observaciones: a.observaciones ?? '',
     estudiante,
-    creador,
   }
 }
 
@@ -109,11 +104,6 @@ export async function getAgenda(): Promise<FrontendAgenda[]> {
 export async function getMiAgenda(): Promise<FrontendAgenda[]> {
   const { data } = await api.get<BackendAgenda[]>('/agenda/mis-citas')
   return data.map(mapAgendaBackToFront)
-}
-
-export async function getAgendaPorId(id: string): Promise<FrontendAgenda> {
-  const { data } = await api.get<BackendAgenda>(`/agenda/${id}`)
-  return mapAgendaBackToFront(data)
 }
 
 export interface CrearAgendaPayload {
@@ -177,4 +167,65 @@ export async function getCuposDisponibles(): Promise<FrontendCupo[]> {
 export async function reservarCupo(idCupo: string): Promise<FrontendAgenda> {
   const { data } = await api.post<BackendAgenda>(`/cupos/${idCupo}/reservar`)
   return mapAgendaBackToFront(data)
+}
+
+export interface BloqueDelDia {
+  bloque: 'AM' | 'PM'
+  inicio: string
+  fin: string
+}
+
+// Fuente única de bloques fijos del día (GET /agenda/bloques, regla 1)
+export async function getBloques(): Promise<BloqueDelDia[]> {
+  const { data } = await api.get<BloqueDelDia[]>('/agenda/bloques')
+  return data
+}
+
+export interface CupoConReserva {
+  id_cupo: string
+  fecha: string
+  hora_inicio: string
+  hora_fin: string
+  reserva: {
+    id_agenda: string
+    id_usuario: string
+    estado: string
+    alumno: string
+    tipo: string
+  } | null
+}
+
+function normCupoConReserva(c: {
+  id_cupo: string
+  fecha: string
+  hora_inicio: string
+  hora_fin: string
+  reserva: CupoConReserva['reserva']
+}): CupoConReserva {
+  return {
+    id_cupo: c.id_cupo,
+    fecha: normFecha(c.fecha),
+    hora_inicio: c.hora_inicio,
+    hora_fin: c.hora_fin,
+    reserva: c.reserva,
+  }
+}
+
+export interface Festivo {
+  date: string
+  name: string
+}
+
+export async function obtenerFestivos(anio: number): Promise<Festivo[]> {
+  const { data } = await api.get<{ anio: number; festivos: Festivo[] }>(`/festivos?anio=${anio}`)
+  return data.festivos
+}
+
+export async function getCupos(): Promise<CupoConReserva[]> {
+  const { data } = await api.get<CupoConReserva[]>('/cupos')
+  return data.map(normCupoConReserva)
+}
+
+export async function eliminarCupo(idCupo: string): Promise<void> {
+  await api.delete(`/cupos/${idCupo}`)
 }

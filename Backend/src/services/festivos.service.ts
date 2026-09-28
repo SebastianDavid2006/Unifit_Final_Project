@@ -1,11 +1,27 @@
-import { fmtDate } from './data'
+// Festivos colombianos — única fuente. Se CALCULAN para cualquier año
+// (Pascua de Gauss + Ley Emiliani), nunca se hardcodea un año en el front.
 
 export interface Holiday {
   date: string
   name: string
 }
 
-function easterDate(year: number): Date {
+// Utility: formatear fecha a string YYYY-MM-DD
+export function fmtDate(d: Date): string {
+  return d.toISOString().split('T')[0]
+}
+
+// Helper: avanzar al siguiente lunes (Ley Emiliani)
+function nextMonday(d: Date): Date {
+  const r = new Date(d)
+  const day = r.getDay()
+  const add = day === 1 ? 0 : (8 - day) % 7
+  r.setDate(r.getDate() + add)
+  return r
+}
+
+// Helper: calcular fecha de Pascua (algoritmo de Gauss)
+function easterCalc(year: number): Date {
   const a = year % 19
   const b = Math.floor(year / 100)
   const c = year % 100
@@ -23,25 +39,14 @@ function easterDate(year: number): Date {
   return new Date(year, month - 1, day)
 }
 
-function on(year: number, month: number, day: number): Date {
-  return new Date(year, month - 1, day)
-}
-
-function nextMonday(d: Date): Date {
-  const r = new Date(d)
-  const day = r.getDay()
-  const add = day === 1 ? 0 : (8 - day) % 7
-  r.setDate(r.getDate() + add)
-  return r
-}
-
-export function getColombianHolidays(year: number): Holiday[] {
-  const easter = easterDate(year)
-  const sunday = (offset: number) => {
-    const r = new Date(easter)
+// Helper: obtener festivos colombianos para un año (Ley Emiliani + variables)
+function getColombianHolidays(year: number, easterDate: Date): Holiday[] {
+  const sunday = (offset: number): Date => {
+    const r = new Date(easterDate)
     r.setDate(r.getDate() + offset)
     return r
   }
+  const on = (y: number, m: number, d: number): Date => new Date(y, m - 1, d)
   const emiliani = (d: Date, name: string): Holiday => ({ date: fmtDate(nextMonday(d)), name })
   const list: Holiday[] = [
     { date: fmtDate(on(year, 1, 1)), name: 'Año Nuevo' },
@@ -71,13 +76,7 @@ export function getColombianHolidays(year: number): Holiday[] {
   return list.sort((a, b) => a.date.localeCompare(b.date))
 }
 
-let holidayCache: { year: number; list: Holiday[] } | null = null
-
-export function getHoliday(dateStr: string): { name: string } | null {
-  const year = Number(dateStr.slice(0, 4))
-  if (!holidayCache || holidayCache.year !== year) {
-    holidayCache = { year, list: getColombianHolidays(year) }
-  }
-  const found = holidayCache.list.find(h => h.date === dateStr)
-  return found ? { name: found.name } : null
+export function obtenerFestivos(anio: number): Holiday[] {
+  const easterDate = easterCalc(anio)
+  return getColombianHolidays(anio, easterDate)
 }

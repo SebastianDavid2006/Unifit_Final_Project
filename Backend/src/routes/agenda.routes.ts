@@ -1,12 +1,16 @@
 import { Router } from 'express'
 import {
   deleteAgenda,
+  deleteCupo,
   getAgenda,
   getAgendaDeUsuario,
   getAgendaPorId,
+  getBloques,
+  getCupos,
   getCuposDisponibles,
   getMiAgenda,
   postAgenda,
+  postCancelarAgenda,
   postPublicarCupos,
   postReservarCupo,
   putAgenda,
@@ -35,6 +39,13 @@ router.get(
   verificarToken,
   verificarEstado(RUTAS_EXCEPTUADAS),
   getMiAgenda,
+)
+
+router.get(
+  '/agenda/bloques',
+  verificarToken,
+  verificarEstado(),
+  getBloques,
 )
 
 router.get(
@@ -83,6 +94,20 @@ router.put(
   putEstadoAgenda,
 )
 
+router.post(
+  '/agenda/:id/cancelar',
+  verificarToken,
+  verificarEstado(),
+  requierePropiedad(async (req) => {
+    const agenda = await prisma.agenda.findUnique({
+      where: { id_agenda: req.params.id as string },
+      select: { id_usuario: true },
+    })
+    return agenda?.id_usuario ?? null
+  }, ['admin', 'entrenador']),
+  postCancelarAgenda,
+)
+
 router.delete(
   '/agenda/:id',
   verificarToken,
@@ -104,6 +129,22 @@ router.get(
   verificarToken,
   verificarEstado(RUTAS_EXCEPTUADAS),
   getCuposDisponibles,
+)
+
+router.get(
+  '/cupos',
+  verificarToken,
+  verificarEstado(),
+  requiereRol('admin', 'entrenador'),
+  getCupos,
+)
+
+router.delete(
+  '/cupos/:id',
+  verificarToken,
+  verificarEstado(),
+  requiereRol('admin'),
+  deleteCupo,
 )
 
 router.post(

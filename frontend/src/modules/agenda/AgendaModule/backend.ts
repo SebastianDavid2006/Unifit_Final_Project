@@ -27,11 +27,10 @@ export function agendaToAppointment(a: FrontendAgenda): Appointment {
   return {
     id: a.id,
     date: a.fecha,
-    startTime: a.horaInicio,
-    endTime: end,
+    startTime: a.horaInicio.slice(0, 5),
+    endTime: end.slice(0, 5),
     type,
     title: typeLabels[type] || 'Cita',
     studentName: a.estudiante || undefined,
-    trainer: a.creador || undefined,
   }
 }
