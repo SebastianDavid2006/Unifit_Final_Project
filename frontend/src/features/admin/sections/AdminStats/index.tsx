@@ -1,18 +1,17 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { CAREER_STATS } from '@/data/stats/careerStats'
 import CareerFilter from './components/CareerFilter'
 import OverviewSection from './sections/OverviewSection'
 import CareersSection from './sections/CareersSection'
 import StudentsSection from './sections/StudentsSection'
-import { evolutionData, institutionOf, normalizeNivel, type FilterCategory, type EvolutionPoint } from './data'
-import { useAsistenciaEvolucion } from '@/hooks/useAsistencia'
+import {
+  filterOptions, mapCarrera, type CareerRow, type FilterCategory,
+} from './data'
+import { useDashboardStats } from '@/features/shared/dashboard/useDashboardStats'
 import { isValidDate } from '@/lib/dateUtils'
 
-const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
-
-function toDate(value: string): Date | null {
-  if (!isValidDate(value)) return null
+function toDate(value: string): Date | undefined {
+  if (!isValidDate(value)) return undefined
   return new Date(value!)
 }
 
@@ -24,40 +23,21 @@ export default function AdminStats({ tab, showCareerFilter, statsRange }: {
   const [filterCategory, setFilterCategory] = useState<FilterCategory>('institucion')
   const [filterSelections, setFilterSelections] = useState<Record<string, Set<string>>>({})
 
-  const startDate = toDate(statsRange.start)
-  const endDate = toDate(statsRange.end)
-  const { data: evolucionReal } = useAsistenciaEvolucion(startDate, endDate, 'mes')
+  const { stats, loading } = useDashboardStats(toDate(statsRange.start), toDate(statsRange.end))
 
-  const filteredEvolution = useMemo<EvolutionPoint[]>(() => {
-    const base = (statsRange.start && statsRange.end)
-      ? evolutionData.filter(m => m.date >= statsRange.start && m.date <= statsRange.end)
-      : evolutionData
+  const carreras = useMemo<CareerRow[]>(() => (stats?.carreras ?? []).map(mapCarrera), [stats])
+  const filterOpts = useMemo(() => filterOptions(carreras), [carreras])
 
-    if (!evolucionReal || evolucionReal.length === 0) return base
-
-    let acumulado = 0
-    return evolucionReal.map(p => {
-      const mes = Number(p.fecha.split('-')[1]) - 1
-      acumulado += p.usuarios
-      return {
-        mes: MESES_CORTOS[mes] ?? p.fecha,
-        date: p.fecha,
-        usuarios: acumulado,
-        asistencia: p.usuarios,
-      }
-    })
-  }, [evolucionReal, statsRange.start, statsRange.end])
-
-  const careerData = useMemo(() => CAREER_STATS.filter(c => {
+  const filteredCarreras = useMemo(() => carreras.filter(c => {
     const entries = Object.entries(filterSelections).filter(([, v]) => v.size > 0)
     if (entries.length === 0) return true
-    return entries.every(([cat, vals]) => {
-      if (cat === 'nivel') return vals.has(normalizeNivel(c.cat))
-      if (cat === 'programa') return vals.has(c.faculty)
-      if (cat === 'institucion') return vals.has(institutionOf(c.faculty))
+    return entries.every(([category, vals]) => {
+      if (category === 'nivel') return vals.has(c.cat)
+      if (category === 'programa') return vals.has(c.programa)
+      if (category === 'institucion') return vals.has(c.universidadLabel)
       return true
     })
-  }), [filterSelections])
+  }), [carreras, filterSelections])
 
   const handleToggle = (category: FilterCategory, option: string) => {
     setFilterSelections(prev => {
@@ -89,6 +69,7 @@ export default function AdminStats({ tab, showCareerFilter, statsRange }: {
         <CareerFilter
           category={filterCategory}
           selections={filterSelections}
+          options={filterOpts}
           onCategory={setFilterCategory}
           onToggle={handleToggle}
           onSelectAll={handleSelectAll}
@@ -98,9 +79,9 @@ export default function AdminStats({ tab, showCareerFilter, statsRange }: {
       <div style={{ filter: showCareerFilter ? 'blur(4px)' : 'none', opacity: showCareerFilter ? 0.5 : 1, pointerEvents: showCareerFilter ? 'none' : 'auto', transition: 'filter 0.3s ease, opacity 0.3s ease' }}>
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            {tab === 'overview' && <OverviewSection careerData={careerData} filteredEvolution={filteredEvolution} />}
-            {tab === 'careers' && <CareersSection careerData={careerData} />}
-            {tab === 'students' && <StudentsSection />}
+            {tab === 'overview' && <OverviewSection stats={stats} loading={loading} />}
+            {tab === 'careers' && <CareersSection carreras={filteredCarreras} loading={loading} />}
+            {tab === 'students' && <StudentsSection stats={stats} loading={loading} />}
           </motion.div>
         </AnimatePresence>
       </div>

@@ -1,3 +1,5 @@
 /src/generated/prisma
 dist/
 /uploads/multimedia
+/uploads/documents
+/uploads/temp

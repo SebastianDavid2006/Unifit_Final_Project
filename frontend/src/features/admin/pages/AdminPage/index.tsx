@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLocation, useNavigate, Outlet } from 'react-router'
 import { AnimatePresence, motion } from 'motion/react'
-import { api, mensajeError } from '@/lib/api'
 import { cerrarSesion } from '@/lib/auth'
 import AdminDashboardView from '@/features/admin/sections/AdminDashboard'
 import AdminTrainers from '@/features/admin/sections/AdminTrainers'

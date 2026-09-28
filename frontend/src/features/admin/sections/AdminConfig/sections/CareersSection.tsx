@@ -3,7 +3,8 @@ import { motion } from 'motion/react'
 import { GraduationCap, Inbox } from 'lucide-react'
 import { useProgramas } from '@/hooks/useCatalogo'
 import { NIVEL_LABELS, UNIVERSIDAD_LABELS, UNIVERSIDADES, NIVELES, type Universidad, type NivelPrograma } from '@/types/catalogo'
-import { CAREER_REGISTERED } from '@/data/stats/careerStats'
+import { useDashboardStats } from '@/features/shared/dashboard/useDashboardStats'
+import { mapCarrera } from '@/features/admin/sections/AdminStats/data'
 import Pagination from '@/features/admin/components/Pagination'
 import Tag from '@/features/admin/components/Tag'
 import ModalShell, { ModalCloseButton } from '../components/ModalShell'
@@ -13,8 +14,9 @@ import AddButton from '../components/AddButton'
 import ConfirmModal from '../components/ConfirmModal'
 import { BLUE, BLUE_GRAD, INSTITUTION_COLORS, PAGE_SIZE, FIELD_STYLE, enterField, leaveField, focusField, blurField } from '../components/fields'
 
-function CareerList({ programas, onOpenAdd, onOpenEdit, onRequestDelete, onRequestInactivate, onRequestActivate }: {
+function CareerList({ programas, registeredByProgram, onOpenAdd, onOpenEdit, onRequestDelete, onRequestInactivate, onRequestActivate }: {
   programas: ReturnType<typeof useProgramas>['programas']
+  registeredByProgram: Map<string, number>
   onOpenAdd: () => void
   onOpenEdit: (id: string) => void
   onRequestDelete: (id: string, name: string) => void
@@ -70,7 +72,7 @@ function CareerList({ programas, onOpenAdd, onOpenEdit, onRequestDelete, onReque
               const instLabel = UNIVERSIDAD_LABELS[p.universidad]
               const nivelLabel = NIVEL_LABELS[p.tipo_programa]
               const color = INSTITUTION_COLORS[UNIVERSIDADES.indexOf(p.universidad) % INSTITUTION_COLORS.length]
-              const studentsCount = CAREER_REGISTERED[p.nombre] ?? 0
+              const studentsCount = registeredByProgram.get(p.nombre) ?? 0
               return (
                 <motion.div
                   key={p.id_programa}
@@ -271,6 +273,12 @@ type ConfirmState =
 
 export default function CareersSection() {
   const { programas, crear, actualizar, eliminar } = useProgramas()
+  const { stats } = useDashboardStats()
+  const registeredByProgram = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const c of (stats?.carreras ?? []).map(mapCarrera)) map.set(c.programa, c.registrados)
+    return map
+  }, [stats])
   const [modal, setModal] = useState<ModalState | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
 
@@ -314,6 +322,7 @@ export default function CareersSection() {
     <div className="space-y-6">
       <CareerList
         programas={programas}
+        registeredByProgram={registeredByProgram}
         onOpenAdd={() => setModal({ kind: 'add' })}
         onOpenEdit={id => setModal({ kind: 'edit', id })}
         onRequestDelete={(id, name) => setConfirm({ kind: 'delete', id, name })}

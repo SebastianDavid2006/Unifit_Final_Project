@@ -1,55 +1,82 @@
-import { CAREER_STATS } from '@/data/stats/careerStats'
+import { UNIVERSIDADES, type EstadisticasCarrera } from '@/services/estadisticas.service'
 
 export const BLUE = '#1270B7'
 export const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #1A8CDB, #0D5F9E)'
 
-export type CareerStat = (typeof CAREER_STATS)[number]
-
 export const CAT_COLORS: Record<string, string> = {
-  técnico: '#1270B7',
-  profesional: '#30D158',
-  especialización: '#BF5AF2',
+  'Técnico': '#1270B7',
+  'Profesional': '#30D158',
+  'Especialización': '#BF5AF2',
 }
 
 export const NIVEL_OPTIONS = ['Técnico', 'Profesional', 'Especialización']
-export const normalizeNivel = (cat: string) =>
-  cat === 'técnico' ? 'Técnico' : cat === 'profesional' ? 'Profesional' : cat === 'especialización' ? 'Especialización' : cat
 
-const INSTITUCIONES_STATS = ['Universitaria de Colombia', 'Universitaria de Bogotá']
+export const normalizeNivel = (tipo: string) =>
+  tipo === 'tecnico' ? 'Técnico' : tipo === 'profesional' ? 'Profesional' : 'Especialización'
 
-export const institutionOf = (_faculty: string) => 'Universitaria de Colombia'
+export const MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-export const PROGRAM_OPTIONS = [...new Set(CAREER_STATS.map(c => c.faculty))]
+export function mesCorto(fecha: string): string {
+  const [anio, mes] = fecha.split('-').map(Number)
+  if (!anio || !mes) return fecha
+  return `${MESES_CORTOS[mes - 1] ?? ''} ${anio}`
+}
 
-export type EvolutionPoint = { mes: string; date: string; usuarios: number; asistencia: number }
+export type CareerRow = {
+  programa: string
+  universidadLabel: string
+  cat: string
+  registrados: number
+  asistencias: number
+}
 
-export const evolutionData: EvolutionPoint[] = [
-  { mes: 'Ene', date: '2026-01-15', usuarios: 380, asistencia: 2350 },
-  { mes: 'Feb', date: '2026-02-15', usuarios: 415, asistencia: 2540 },
-  { mes: 'Mar', date: '2026-03-15', usuarios: 450, asistencia: 2780 },
-  { mes: 'Abr', date: '2026-04-15', usuarios: 495, asistencia: 3010 },
-  { mes: 'May', date: '2026-05-15', usuarios: 545, asistencia: 3290 },
-  { mes: 'Jun', date: '2026-06-15', usuarios: 595, asistencia: 3550 },
-  { mes: 'Jul', date: '2026-07-15', usuarios: 660, asistencia: 3860 },
-  { mes: 'Ago', date: '2026-08-15', usuarios: 720, asistencia: 4150 },
-  { mes: 'Sep', date: '2026-09-15', usuarios: 775, asistencia: 4430 },
-  { mes: 'Oct', date: '2026-10-15', usuarios: 805, asistencia: 4680 },
-  { mes: 'Nov', date: '2026-11-15', usuarios: 830, asistencia: 4980 },
-  { mes: 'Dic', date: '2026-12-15', usuarios: 847, asistencia: 5200 },
-]
+export const mapCarrera = (c: EstadisticasCarrera): CareerRow => ({
+  programa: c.programa,
+  universidadLabel: UNIVERSIDADES[c.universidad],
+  cat: normalizeNivel(c.tipo_programa),
+  registrados: c.registrados,
+  asistencias: c.asistencias,
+})
+
+export const emptyCareer: CareerRow = {
+  programa: '—',
+  universidadLabel: '—',
+  cat: '—',
+  registrados: 0,
+  asistencias: 0,
+}
+
+export const CARGOS: Record<string, string> = {
+  estudiante: 'Estudiante',
+  egresado: 'Egresado',
+  docente: 'Docente',
+  administrativo: 'Administrativo',
+}
+
+export const SEXOS: Record<string, string> = {
+  masculino: 'Masculino',
+  femenino: 'Femenino',
+  otro: 'Otro',
+}
+
+export const SEXO_COLORS: Record<string, string> = {
+  Masculino: '#1270B7',
+  Femenino: '#FF6B8A',
+  Otro: '#BF5AF2',
+}
 
 export type FilterCategory = 'institucion' | 'nivel' | 'programa'
 
-export const FILTER_LABELS: Record<string, string> = {
+export const FILTER_LABELS: Record<FilterCategory, string> = {
   institucion: 'Institución',
   nivel: 'Nivel académico',
   programa: 'Programa',
 }
 
-export const FILTER_OPTIONS: Record<string, string[]> = {
-  institucion: [...INSTITUCIONES_STATS],
-  nivel: NIVEL_OPTIONS,
-  programa: PROGRAM_OPTIONS,
+export function filterOptions(carreras: CareerRow[]): Record<FilterCategory, string[]> {
+  return {
+    institucion: [...new Set(carreras.map(c => c.universidadLabel))],
+    nivel: [...new Set(carreras.map(c => c.cat))],
+    programa: [...new Set(carreras.map(c => c.programa))],
+  }
 }
-
-export const emptyCareer = { faculty: '—', registered: 0, attendance: 0, color: BLUE }

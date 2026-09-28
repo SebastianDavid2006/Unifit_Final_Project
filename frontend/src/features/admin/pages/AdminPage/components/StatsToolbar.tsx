@@ -40,7 +40,7 @@ export default function StatsToolbar({
       }}>
         {([
           { id: 'overview', label: 'Resumen', icon: BarChart3 },
-          { id: 'students', label: 'Estudiantes', icon: Users },
+          { id: 'students', label: 'Usuarios', icon: Users },
           { id: 'careers', label: 'Carreras', icon: GraduationCap },
         ] as const).map(t => (
           <motion.button key={t.id} onClick={() => onStatsTabChange(t.id)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}

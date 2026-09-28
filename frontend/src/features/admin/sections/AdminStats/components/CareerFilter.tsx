@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search } from 'lucide-react'
-import { FILTER_LABELS, FILTER_OPTIONS, type FilterCategory } from '../data'
+import { FILTER_LABELS, type FilterCategory } from '../data'
 
-export default function CareerFilter({ category, selections, onCategory, onToggle, onSelectAll, onClearAll }: {
+export default function CareerFilter({ category, selections, options, onCategory, onToggle, onSelectAll, onClearAll }: {
   category: FilterCategory
   selections: Record<string, Set<string>>
+  options: Record<FilterCategory, string[]>
   onCategory: (c: FilterCategory) => void
   onToggle: (category: FilterCategory, option: string) => void
   onSelectAll: (category: FilterCategory) => void
@@ -109,7 +110,7 @@ export default function CareerFilter({ category, selections, onCategory, onToggl
                     </motion.div>
                     Todos
                   </motion.button>
-                  {FILTER_OPTIONS[category]
+                  {options[category]
                     ?.filter(opt => opt.toLowerCase().includes(search.toLowerCase()))
                     .map(opt => (
                       <motion.button key={opt} layout
