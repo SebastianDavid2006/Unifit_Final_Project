@@ -5,7 +5,7 @@ export interface Exercise {
   name: string
   zone: string
   description: string
-  status: Status
+  activo: boolean
   muscleGroups: string[]
   recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
   imageUrl: string

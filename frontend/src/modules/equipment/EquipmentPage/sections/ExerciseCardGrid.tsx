@@ -85,7 +85,7 @@ export function ExerciseCardGrid({ exercises, onPreview }: ExerciseCardGridProps
           <div className="px-5 pt-4 pb-3">
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-bold text-[#1A1A1E] text-base leading-tight">{e.name}</h3>
-              <StatusBadge status={e.status} />
+              <StatusBadge status={e.activo ? 'active' : 'inactive'} />
             </div>
             <div className="flex flex-wrap gap-2 mb-2">
               {e.muscleGroups.map((mg, i) => (

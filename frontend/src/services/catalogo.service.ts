@@ -1,8 +1,8 @@
 import { api } from '@/lib/api'
 import type { Programa, Cargo, Area } from '@/types/catalogo'
 
-export async function listarProgramas(): Promise<Programa[]> {
-  const res = await api.get('/programas')
+export async function listarProgramas(incluirInactivos = false): Promise<Programa[]> {
+  const res = await api.get('/programas', { params: incluirInactivos ? { incluirInactivos: true } : undefined })
   return res.data
 }
 
@@ -17,23 +17,19 @@ export async function crearPrograma(data: {
 
 export async function actualizarPrograma(
   id: string,
-  data: { nombre?: string; universidad?: string; tipo_programa?: string },
+  data: { nombre?: string; universidad?: string; tipo_programa?: string; activo?: boolean },
 ): Promise<Programa> {
   const res = await api.put(`/programas/${id}`, data)
   return res.data
 }
 
-export async function eliminarPrograma(id: string): Promise<void> {
-  await api.delete(`/programas/${id}`)
-}
-
-export async function listarCargos(): Promise<Cargo[]> {
-  const res = await api.get('/cargos')
+export async function listarCargos(incluirInactivos = false): Promise<Cargo[]> {
+  const res = await api.get('/cargos', { params: incluirInactivos ? { incluirInactivos: true } : undefined })
   return res.data
 }
 
-export async function listarAreas(): Promise<Area[]> {
-  const res = await api.get('/areas')
+export async function listarAreas(incluirInactivos = false): Promise<Area[]> {
+  const res = await api.get('/areas', { params: incluirInactivos ? { incluirInactivos: true } : undefined })
   return res.data
 }
 
@@ -47,20 +43,12 @@ export async function crearCargo(nombre: string): Promise<Cargo> {
   return res.data
 }
 
-export async function actualizarArea(id: string, nombre: string): Promise<Area> {
-  const res = await api.put(`/areas/${id}`, { nombre })
+export async function actualizarArea(id: string, data: { nombre?: string; activo?: boolean }): Promise<Area> {
+  const res = await api.put(`/areas/${id}`, data)
   return res.data
 }
 
-export async function actualizarCargo(id: string, nombre: string): Promise<Cargo> {
-  const res = await api.put(`/cargos/${id}`, { nombre })
+export async function actualizarCargo(id: string, data: { nombre?: string; activo?: boolean }): Promise<Cargo> {
+  const res = await api.put(`/cargos/${id}`, data)
   return res.data
-}
-
-export async function eliminarArea(id: string): Promise<void> {
-  await api.delete(`/areas/${id}`)
-}
-
-export async function eliminarCargo(id: string): Promise<void> {
-  await api.delete(`/cargos/${id}`)
 }

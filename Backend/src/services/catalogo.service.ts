@@ -2,8 +2,11 @@ import { prisma } from '../utils/prisma'
 import { HttpError } from '../utils/HttpError'
 import type { Universidad, NivelPrograma } from '@prisma/client'
 
-export async function listarProgramas() {
-  return prisma.programa.findMany({ where: { activo: true }, orderBy: { nombre: 'asc' } })
+export async function listarProgramas(incluirInactivos = false) {
+  return prisma.programa.findMany({
+    where: incluirInactivos ? undefined : { activo: true },
+    orderBy: { nombre: 'asc' },
+  })
 }
 
 export async function crearPrograma(nombre: string, universidad: Universidad, tipo_programa: NivelPrograma) {
@@ -25,12 +28,18 @@ export async function eliminarPrograma(id: string) {
   await prisma.programa.update({ where: { id_programa: id }, data: { activo: false } })
 }
 
-export async function listarCargos() {
-  return prisma.cargo.findMany({ where: { activo: true }, orderBy: { nombre: 'asc' } })
+export async function listarCargos(incluirInactivos = false) {
+  return prisma.cargo.findMany({
+    where: incluirInactivos ? undefined : { activo: true },
+    orderBy: { nombre: 'asc' },
+  })
 }
 
-export async function listarAreas() {
-  return prisma.area.findMany({ where: { activo: true }, orderBy: { nombre: 'asc' } })
+export async function listarAreas(incluirInactivos = false) {
+  return prisma.area.findMany({
+    where: incluirInactivos ? undefined : { activo: true },
+    orderBy: { nombre: 'asc' },
+  })
 }
 
 export async function crearCargo(nombre: string) {
@@ -41,16 +50,16 @@ export async function crearArea(nombre: string) {
   return prisma.area.create({ data: { nombre } })
 }
 
-export async function actualizarCargo(id: string, nombre: string) {
+export async function actualizarCargo(id: string, data: { nombre?: string; activo?: boolean }) {
   const existente = await prisma.cargo.findUnique({ where: { id_cargo: id } })
   if (!existente) throw new HttpError(404, 'Cargo no encontrado')
-  return prisma.cargo.update({ where: { id_cargo: id }, data: { nombre } })
+  return prisma.cargo.update({ where: { id_cargo: id }, data })
 }
 
-export async function actualizarArea(id: string, nombre: string) {
+export async function actualizarArea(id: string, data: { nombre?: string; activo?: boolean }) {
   const existente = await prisma.area.findUnique({ where: { id_area: id } })
   if (!existente) throw new HttpError(404, 'Área no encontrada')
-  return prisma.area.update({ where: { id_area: id }, data: { nombre } })
+  return prisma.area.update({ where: { id_area: id }, data })
 }
 
 export async function eliminarCargo(id: string) {

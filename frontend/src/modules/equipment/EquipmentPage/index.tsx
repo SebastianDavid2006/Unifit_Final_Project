@@ -2,10 +2,11 @@
 import type { Machine, Exercise } from '@/data/shared/types'
 import type { FrontendMachine } from '@/services/maquina.service'
 import type { FrontendExercise } from '@/services/ejercicio.service'
-import { BLUE, RED } from '@/data/shared/constants'
+import { BLUE } from '@/data/shared/constants'
 import { WeightsView } from '@/assets/models/ui/equipment/weights/WeightsModel'
-import { TrashView } from '@/assets/models/ui/actions/trash/TrashModel'
 import { PenView } from '@/assets/models/ui/actions/pen/PenModel'
+import { Power } from 'lucide-react'
+import { getUsuario } from '@/lib/auth'
 import { useToast } from '@/modules/equipment/hooks/useToast'
 import { useMachines } from '@/modules/equipment/hooks/useMachines'
 import { useExercises } from '@/modules/equipment/hooks/useExercises'
@@ -13,7 +14,7 @@ import { EquipmentBanner } from './sections/EquipmentBanner'
 import { CreateOptionsOverlay } from './sections/CreateOptionsOverlay'
 import { MachineCardGrid } from './sections/MachineCardGrid'
 import { ExerciseCardGrid } from './sections/ExerciseCardGrid'
-import { DeleteConfirmDialog } from './sections/DeleteConfirmDialog'
+import { DisableConfirmDialog } from './sections/DisableConfirmDialog'
 import { MachineModal } from './components/MachineModal'
 import { ExerciseManagerModal } from './components/ExerciseManagerModal'
 import { MachinePreviewModal } from './components/MachinePreviewModal'
@@ -29,23 +30,37 @@ interface Props {
   onViewModeChange: (v: 'machines' | 'exercises') => void
   onSearchChange: (v: string) => void
   onSearchFocus: (v: boolean) => void
-  userRole?: 'admin' | 'entrenador'
 }
 
 export default function EquipmentPage(props: Props) {
+  const sesionRol = getUsuario()?.rol
+  const userRole: 'admin' | 'entrenador' | undefined =
+    sesionRol === 'admin' || sesionRol === 'entrenador' ? sesionRol : undefined
+
   const machine = useMachines(props.search)
   const ex = useExercises()
   const createToast = useToast()
-  const deleteToast = useToast()
+  const actionToast = useToast()
   const editToast = useToast()
 
   const [showCreateOptions, setShowCreateOptions] = useState(false)
   const [previewMachine, setPreviewMachine] = useState<Machine | null>(null)
   const [previewMuscleFilter, setPreviewMuscleFilter] = useState<string>('all')
   const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'machine' | 'exercise'; id: string } | null>(null)
+  const [disableConfirm, setDisableConfirm] = useState<{ type: 'machine' | 'exercise'; id: string } | null>(null)
   const [pendingMachineToast, setPendingMachineToast] = useState<{ name: string; edited: boolean } | null>(null)
   const [pendingExerciseToast, setPendingExerciseToast] = useState<{ name: string } | null>(null)
+  const [actionToastTitle, setActionToastTitle] = useState('Máquina deshabilitada')
+  const [pendingActionToast, setPendingActionToast] = useState<{ title: string; name: string } | null>(null)
+
+  const showInactive = machine.incluirInactivos || ex.incluirInactivos
+  const toggleInactive = () => {
+    const next = !showInactive
+    machine.setIncluirInactivos(next)
+    ex.setIncluirInactivos(next)
+    setMachinePage(1)
+    setExercisePage(1)
+  }
 
   // Pagination
   const PAGE_SIZE = 6
@@ -80,6 +95,14 @@ export default function EquipmentPage(props: Props) {
     }
   }, [ex.showModal])
 
+  useEffect(() => {
+    if (pendingActionToast) {
+      setActionToastTitle(pendingActionToast.title)
+      actionToast.trigger(pendingActionToast.name)
+      setPendingActionToast(null)
+    }
+  }, [pendingActionToast])
+
   async function handleSaveMachine() {
     const result = await machine.save()
     if (!result) return
@@ -103,25 +126,46 @@ export default function EquipmentPage(props: Props) {
     ex.setCreatedCount(0)
   }
 
-  async function handleDelete() {
-    if (!deleteConfirm) return
-    const name = deleteConfirm.type === 'machine'
-      ? machine.machines.find(m => m.id === deleteConfirm.id)?.name
-      : ex.exercises.find(e => e.id === deleteConfirm.id)?.name
-    if (deleteConfirm.type === 'machine') {
-      await machine.remove(deleteConfirm.id)
+  async function handleDisable() {
+    if (!disableConfirm) return
+    const { type, id } = disableConfirm
+    const name = type === 'machine'
+      ? machine.machines.find(m => m.id === id)?.name
+      : ex.exercises.find(e => e.id === id)?.name
+    let title = ''
+    if (type === 'machine') {
+      const target = machine.machines.find(m => m.id === id)
+      if (target?.status === 'inactive') {
+        await machine.reactivate(id)
+        title = 'Máquina reactivada'
+      } else {
+        await machine.disable(id)
+        title = 'Máquina deshabilitada'
+      }
       setPreviewMachine(null)
-      if (name) deleteToast.trigger(name)
     } else {
-      await ex.remove(deleteConfirm.id)
+      const target = ex.exercises.find(e => e.id === id)
+      if (target && !target.activo) {
+        await ex.reactivate(id)
+        title = 'Ejercicio reactivado'
+      } else {
+        await ex.disable(id)
+        title = 'Ejercicio deshabilitado'
+      }
       setPreviewExercise(null)
     }
-    setDeleteConfirm(null)
+    if (name) setPendingActionToast({ title, name })
+    setDisableConfirm(null)
   }
 
   return (
     <div className="p-8 pt-12 max-w-[1440px] mx-auto relative overflow-x-hidden" style={{ maxWidth: '100%' }}>
-      <EquipmentBanner onCreate={() => setShowCreateOptions(true)} />
+      <EquipmentBanner
+        onCreate={() => setShowCreateOptions(true)}
+        userRole={userRole}
+        showInactive={showInactive}
+        onToggleInactive={toggleInactive}
+      />
 
       <CreateOptionsOverlay
         show={showCreateOptions}
@@ -193,25 +237,25 @@ export default function EquipmentPage(props: Props) {
         previewMuscleFilter={previewMuscleFilter}
         onMuscleFilterChange={setPreviewMuscleFilter}
         onEdit={m => { setPreviewMachine(null); machine.openEdit(m as FrontendMachine) }}
-        onDelete={m => setDeleteConfirm({ type: 'machine', id: m.id })}
+        onToggleActive={m => setDisableConfirm({ type: 'machine', id: m.id })}
         onClose={() => setPreviewMachine(null)}
-        userRole={props.userRole}
+        userRole={userRole}
       />
 
       {/* â”€â”€ Exercise Preview Modal â”€â”€ */}
       <ExercisePreviewModal
         exercise={previewExercise as FrontendExercise}
         onEdit={e => { setPreviewExercise(null); ex.openEdit(e as FrontendExercise) }}
-        onDelete={e => setDeleteConfirm({ type: 'exercise', id: e.id })}
+        onToggleActive={e => setDisableConfirm({ type: 'exercise', id: e.id })}
         onClose={() => setPreviewExercise(null)}
-        userRole={props.userRole}
+        userRole={userRole}
       />
 
-      {/* â”€â”€ Delete Confirm â”€â”€ */}
-      <DeleteConfirmDialog
-        confirm={deleteConfirm}
-        onCancel={() => setDeleteConfirm(null)}
-        onConfirm={handleDelete}
+      {/* â”€â”€ Disable Confirm â”€â”€ */}
+      <DisableConfirmDialog
+        confirm={disableConfirm}
+        onCancel={() => setDisableConfirm(null)}
+        onConfirm={handleDisable}
       />
 
       {/* â”€â”€ Save Error Modal â”€â”€ */}
@@ -221,16 +265,16 @@ export default function EquipmentPage(props: Props) {
         onClose={() => { machine.clearSaveError(); ex.clearSaveError() }}
       />
 
-      {/* â”€â”€ Delete Toast â”€â”€ */}
+      {/* â”€â”€ Deshabilitar / Reactivar Toast â”€â”€ */}
       <Toast
-        show={deleteToast.show}
-        name={deleteToast.name}
-        progress={deleteToast.progress}
-        title="Máquina eliminada"
-        icon={<TrashView />}
-        iconStyle={{ background: `${RED}08` }}
-        boxShadow="0 24px 80px rgba(244,56,67,0.12), 0 8px 32px rgba(0,0,0,0.08)"
-        progressGradient="linear-gradient(90deg, #F43843, #FF6B6B)"
+        show={actionToast.show}
+        name={actionToast.name}
+        progress={actionToast.progress}
+        title={actionToastTitle}
+        icon={<Power size={26} />}
+        iconStyle={{ background: 'rgba(245,166,35,0.12)', color: '#B4531D' }}
+        boxShadow="0 24px 80px rgba(245,166,35,0.14), 0 8px 32px rgba(0,0,0,0.08)"
+        progressGradient="linear-gradient(90deg, #F5A623, #FF8C42)"
       />
 
       {/* â”€â”€ Edit Toast â”€â”€ */}

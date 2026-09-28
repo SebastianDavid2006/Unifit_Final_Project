@@ -14,6 +14,8 @@ let huellaDirectoId: string
 let indiceAdmin: number
 let indiceEntrenador: number
 let indiceDirecto: number
+let bloqueadoId: string
+let indiceBloqueado: number
 
 // Limpieza acotada: solo se eliminan los registros creados durante ESTA corrida,
 // nunca los que ya existían (enrolamientos/asistencias reales del usuario).
@@ -65,10 +67,11 @@ beforeAll(async () => {
 
   await tomarIdsExistentes()
 
-  const [idxAdmin, idxEntrenador, idxDirecto] = await indicesLibres(3)
+  const [idxAdmin, idxEntrenador, idxDirecto, idxBloqueado] = await indicesLibres(4)
   indiceAdmin = idxAdmin
   indiceEntrenador = idxEntrenador
   indiceDirecto = idxDirecto
+  indiceBloqueado = idxBloqueado
 
   const hAdmin = await prisma.huella.create({
     data: { id_usuario: adminId, indice_sensor: indiceAdmin, activo: true },
@@ -83,6 +86,22 @@ beforeAll(async () => {
   huellaAdminId = hAdmin.id_huella
   huellaEntrenadorId = hEntrenador.id_huella
   huellaDirectoId = hDirecto.id_huella
+
+  const sufijo = Date.now()
+  const bloqueado = await prisma.usuario.create({
+    data: {
+      primer_nombre: 'Sensor',
+      primer_apellido: 'Bloqueado',
+      email_contacto: `sensor.bloqueado${sufijo}@unifit.edu.co`,
+      documento: `SENSOR-BLOQ-${sufijo}`,
+      genero: 'otro',
+      estado: 'pendiente',
+    },
+  })
+  bloqueadoId = bloqueado.id_usuario
+  await prisma.huella.create({
+    data: { id_usuario: bloqueadoId, indice_sensor: indiceBloqueado, activo: true },
+  })
 })
 
 afterAll(async () => {
@@ -161,6 +180,33 @@ describe.sequential('Asistencia - Sensor', () => {
     expect(res.body.tipo).toBe('salida')
     expect(res.body.asistencia.duracion_minutos).toBeLessThanOrEqual(360)
     expect(res.body.asistencia.observaciones).toContain('límite 6h')
+  })
+})
+
+describe.sequential('Asistencia - Sensor bloquea usuarios no activos', () => {
+  afterAll(async () => {
+    await prisma.huella.deleteMany({ where: { id_usuario: bloqueadoId } })
+    await prisma.usuario.deleteMany({ where: { id_usuario: bloqueadoId } })
+  })
+
+  it('POST /asistencia/sensor - usuario pendiente rechazado (403)', async () => {
+    const res = await request(app)
+      .post('/api/asistencia/sensor')
+      .set('x-api-key', API_KEY)
+      .send({ indice_sensor: indiceBloqueado })
+
+    expect(res.status).toBe(403)
+  })
+
+  it('POST /asistencia/sensor - usuario inactivo rechazado (403)', async () => {
+    await prisma.usuario.update({ where: { id_usuario: bloqueadoId }, data: { estado: 'inactivo' } })
+
+    const res = await request(app)
+      .post('/api/asistencia/sensor')
+      .set('x-api-key', API_KEY)
+      .send({ indice_sensor: indiceBloqueado })
+
+    expect(res.status).toBe(403)
   })
 })
 

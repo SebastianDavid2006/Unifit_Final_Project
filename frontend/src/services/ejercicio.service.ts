@@ -20,7 +20,7 @@ export interface FrontendExercise {
   name: string
   zone: string
   description: string
-  status: 'active' | 'maintenance' | 'inactive'
+  activo: boolean
   muscleGroups: string[]
   recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
   imageUrl: string
@@ -44,7 +44,7 @@ function mapBackendToFrontend(ej: BackendEjercicio): FrontendExercise {
     name: ej.nombre,
     zone: ej.grupos_musculares.length > 0 ? mapGrupoMuscularBackToFront(ej.grupos_musculares[0]) : 'General',
     description: ej.descripcion ?? '',
-    status: ej.activo ? 'active' : 'inactive',
+    activo: ej.activo,
     muscleGroups: ej.grupos_musculares.map(mapGrupoMuscularBackToFront),
     recommendedLevel: mapNivelBackToFront(ej.nivel).toLowerCase() as 'principiante' | 'intermedio' | 'avanzado',
     imageUrl: esVideo ? '' : media,
@@ -59,6 +59,7 @@ function mapFrontendToBackend(ex: Partial<FrontendExercise>): {
   grupos_musculares?: string[]
   nivel?: string
   url_multimedia?: string
+  activo?: boolean
 } {
   const data: Record<string, unknown> = {}
   if (ex.name !== undefined) data.nombre = ex.name
@@ -66,11 +67,14 @@ function mapFrontendToBackend(ex: Partial<FrontendExercise>): {
   if (ex.muscleGroups !== undefined) data.grupos_musculares = ex.muscleGroups.map(mapGrupoMuscularFrontToBack)
   if (ex.recommendedLevel !== undefined) data.nivel = mapNivelFrontToBack(ex.recommendedLevel)
   if (ex.imageUrl !== undefined) data.url_multimedia = ex.imageUrl || ''
+  if (ex.activo !== undefined) data.activo = ex.activo
   return data
 }
 
-export async function getEjercicios(): Promise<FrontendExercise[]> {
-  const { data } = await api.get<BackendEjercicio[]>('/ejercicios')
+export async function getEjercicios(incluirInactivos = false): Promise<FrontendExercise[]> {
+  const { data } = await api.get<BackendEjercicio[]>('/ejercicios', {
+    params: incluirInactivos ? { incluirInactivos: true } : undefined,
+  })
   return data.map(mapBackendToFrontend)
 }
 
@@ -102,6 +106,10 @@ export async function editarEjercicio(id: string, exercise: Partial<FrontendExer
   return mapBackendToFrontend(data)
 }
 
-export async function desactivarEjercicio(id: string): Promise<void> {
-  await api.put(`/ejercicios/${id}/desactivar`)
+export async function deshabilitarEjercicio(id: string): Promise<FrontendExercise> {
+  return editarEjercicio(id, { activo: false })
+}
+
+export async function reactivarEjercicio(id: string): Promise<FrontendExercise> {
+  return editarEjercicio(id, { activo: true })
 }

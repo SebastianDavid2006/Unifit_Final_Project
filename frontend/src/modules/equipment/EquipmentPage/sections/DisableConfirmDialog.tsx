@@ -1,14 +1,13 @@
-﻿import { motion, AnimatePresence } from 'motion/react'
-import { TrashView } from '@/assets/models/ui/actions/trash/TrashModel'
-import { RED } from '@/data/shared/constants'
+import { motion, AnimatePresence } from 'motion/react'
+import { Power } from 'lucide-react'
 
-interface DeleteConfirmDialogProps {
+interface DisableConfirmDialogProps {
   confirm: { type: 'machine' | 'exercise'; id: string } | null
   onCancel: () => void
   onConfirm: () => void
 }
 
-export function DeleteConfirmDialog({ confirm, onCancel, onConfirm }: DeleteConfirmDialogProps) {
+export function DisableConfirmDialog({ confirm, onCancel, onConfirm }: DisableConfirmDialogProps) {
   return (
     <AnimatePresence>
       {confirm && (
@@ -34,13 +33,13 @@ export function DeleteConfirmDialog({ confirm, onCancel, onConfirm }: DeleteConf
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0" style={{ background: `${RED}10` }}>
-              <TrashView />
+            <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center" style={{ background: 'rgba(245,166,35,0.12)', color: '#B4531D' }}>
+              <Power size={22} />
             </div>
             <div>
-              <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>Â¿Eliminar {confirm.type === 'machine' ? 'máquina' : 'ejercicio'}?</p>
+              <p className="text-sm font-bold mb-1" style={{ color: '#1A1A1E' }}>¿Deshabilitar {confirm.type === 'machine' ? 'máquina' : 'ejercicio'}?</p>
               <p className="text-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.4)' }}>
-                Esta acción no se puede deshacer.
+                No se pierde ningún registro: podrás reactivarlo cuando quieras desde el toggle «Ver deshabilitados».
               </p>
             </div>
             <div className="flex items-center gap-2.5 w-full">
@@ -58,9 +57,9 @@ export function DeleteConfirmDialog({ confirm, onCancel, onConfirm }: DeleteConf
                 whileTap={{ scale: 0.98 }}
                 onClick={onConfirm}
                 className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                style={{ background: RED }}
+                style={{ background: '#F5A623' }}
               >
-                Eliminar
+                Deshabilitar
               </motion.button>
             </div>
           </motion.div>

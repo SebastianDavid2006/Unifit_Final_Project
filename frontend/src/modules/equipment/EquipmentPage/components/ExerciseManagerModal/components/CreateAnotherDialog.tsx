@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { Dumbbell } from 'lucide-react'
-import type { Status } from '@/data/shared/types'
 import { GREEN_GRAD } from '@/data/shared/constants'
 
 interface CreateAnotherDialogProps {
@@ -51,7 +50,7 @@ export function CreateAnotherDialog({ show, onAskCreateAnother, onStepChange, on
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  onFormChange({ name: '', zone: '', description: '', status: 'active' as Status, muscleGroups: [], recommendedLevel: 'principiante', imageUrl: '', videoUrl: '' })
+                  onFormChange({ name: '', zone: '', description: '', muscleGroups: [], recommendedLevel: 'principiante', imageUrl: '', videoUrl: '' })
                   onStepChange(0)
                   onAskCreateAnother(false)
                 }}

@@ -32,10 +32,11 @@ const editarMaquinaSchema = z.object({
   nivel: z.enum(['principiante', 'intermedio', 'avanzado']).optional(),
   url_multimedia: z.string().optional(),
   ejercicioIds: z.array(z.string()).optional(),
+  estado: z.enum(['disponible', 'mantenimiento', 'sin_servicio']).optional(),
 })
 
-export async function getMaquinas(_req: Request, res: Response): Promise<void> {
-  res.json(await listarMaquinasActivas())
+export async function getMaquinas(req: Request, res: Response): Promise<void> {
+  res.json(await listarMaquinasActivas(req.query.incluirInactivos === 'true'))
 }
 
 export async function getMaquinaPorId(req: Request, res: Response): Promise<void> {

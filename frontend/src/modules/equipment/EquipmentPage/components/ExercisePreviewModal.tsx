@@ -1,14 +1,14 @@
 ﻿import type { Exercise } from '@/data/shared/types'
-import { BLUE, RED, muscleIcons } from '@/data/shared/constants'
+import { BLUE, muscleIcons } from '@/data/shared/constants'
 import { StatusBadge } from '@/shared/components/ui/StatusBadge'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Pencil, Trash2, Dumbbell } from 'lucide-react'
+import { X, Pencil, Power, RotateCcw, Dumbbell } from 'lucide-react'
 import { LEVEL_BADGE } from '@/modules/equipment/data'
 
 interface ExercisePreviewModalProps {
   exercise: Exercise | null
   onEdit: (exercise: Exercise) => void
-  onDelete: (exercise: Exercise) => void
+  onToggleActive: (exercise: Exercise) => void
   onClose: () => void
   userRole?: 'admin' | 'entrenador'
 }
@@ -68,7 +68,7 @@ export function ExercisePreviewModal(props: ExercisePreviewModalProps) {
             <div className="px-6 pt-5 pb-6">
               <div className="flex items-start justify-between mb-3">
                 <h2 className="text-lg font-bold" style={{ color: '#1A1A1E' }}>{props.exercise.name}</h2>
-                <StatusBadge status={props.exercise.status} />
+                <StatusBadge status={props.exercise.activo ? 'active' : 'inactive'} />
               </div>
 
               <div className="flex flex-wrap gap-2 mb-4">
@@ -114,17 +114,31 @@ export function ExercisePreviewModal(props: ExercisePreviewModalProps) {
                         <Pencil size={13} /> Editar
                       </div>
                     </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => props.onDelete(props.exercise)}
-                      className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                      style={{ background: RED }}
-                    >
-                      <div className="flex items-center justify-center gap-1.5">
-                        <Trash2 size={13} /> Eliminar
-                      </div>
-                    </motion.button>
+                    {!props.exercise.activo ? (
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => props.onToggleActive(props.exercise)}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                        style={{ background: `${BLUE}10`, color: BLUE, border: `1px solid ${BLUE}25` }}
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <RotateCcw size={13} /> Reactivar
+                        </div>
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => props.onToggleActive(props.exercise)}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                        style={{ background: 'rgba(245,166,35,0.12)', color: '#B4531D', border: '1px solid rgba(245,166,35,0.25)' }}
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Power size={13} /> Deshabilitar
+                        </div>
+                      </motion.button>
+                    )}
                   </>
                 )}
               </div>

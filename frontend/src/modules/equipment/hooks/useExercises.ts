@@ -9,7 +9,6 @@ interface ExForm {
   name: string
   zone: string
   description: string
-  status: 'active' | 'maintenance' | 'inactive'
   muscleGroups: string[]
   recommendedLevel: 'principiante' | 'intermedio' | 'avanzado'
   imageUrl: string
@@ -18,7 +17,7 @@ interface ExForm {
 }
 
 const defaultForm: ExForm = {
-  name: '', zone: '', description: '', status: 'active',
+  name: '', zone: '', description: '',
   muscleGroups: [], recommendedLevel: 'principiante',
   imageUrl: '', imageFile: null, videoUrl: '',
 }
@@ -26,6 +25,7 @@ const defaultForm: ExForm = {
 export function useExercises() {
   const [exercises, setExercises] = useState<FrontendExercise[]>([])
   const [loading, setLoading] = useState(true)
+  const [incluirInactivos, setIncluirInactivos] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<FrontendExercise | null>(null)
   const [step, setStep] = useState(0)
@@ -37,10 +37,10 @@ export function useExercises() {
   const [filterZone, setFilterZone] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  const loadExercises = useCallback(async () => {
+  const loadExercises = useCallback(async (incluir: boolean) => {
     try {
       setLoading(true)
-      const data = await ejercicioService.getEjercicios()
+      const data = await ejercicioService.getEjercicios(incluir)
       // Sort by fecha_creacion descending (most recent first)
       const sorted = [...data].sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime())
       setExercises(sorted)
@@ -51,15 +51,16 @@ export function useExercises() {
     }
   }, [])
 
-  useEffect(() => { loadExercises() }, [loadExercises])
+  useEffect(() => { loadExercises(incluirInactivos) }, [incluirInactivos, loadExercises])
 
   const zones = useMemo(() => [...new Set(exercises.map(e => e.zone))], [exercises])
 
   const filtered = useMemo(() => {
     let list = exercises
+    if (!incluirInactivos) list = list.filter(e => e.activo)
     if (filterZone) list = list.filter(e => e.zone === filterZone)
     return list
-  }, [exercises, filterZone])
+  }, [exercises, filterZone, incluirInactivos])
 
   function openAdd() {
     setEditing(null)
@@ -76,7 +77,7 @@ export function useExercises() {
     setSaveError(null)
     setShowModal(true)
     setForm({
-      name: e.name, zone: e.zone, description: e.description, status: e.status,
+      name: e.name, zone: e.zone, description: e.description,
       muscleGroups: [...e.muscleGroups], recommendedLevel: e.recommendedLevel,
       imageUrl: e.imageUrl, imageFile: null, videoUrl: e.videoUrl,
     })
@@ -90,13 +91,13 @@ export function useExercises() {
     const zone = zoneFromGroups.length > 0 ? zoneFromGroups[0] : (form.zone || 'Cardio')
     const data = {
       name: form.name.trim(), zone,
-      description: form.description, status: form.status,
+      description: form.description,
       muscleGroups: form.muscleGroups, recommendedLevel: form.recommendedLevel,
       imageUrl: form.imageUrl, imageFile: form.imageFile, videoUrl: form.videoUrl,
     }
     try {
       if (!editing) {
-        const created = await ejercicioService.crearEjercicio(data)
+        const created = await ejercicioService.crearEjercicio({ ...data, activo: true })
         // Prepend new items (most recent first)
         setExercises(prev => [created, ...prev])
         setCreatedCount(c => c + 1)
@@ -114,12 +115,21 @@ export function useExercises() {
     }
   }
 
-  async function remove(id: string) {
+  async function disable(id: string) {
     try {
-      await ejercicioService.desactivarEjercicio(id)
-      setExercises(prev => prev.filter(e => e.id !== id))
+      const updated = await ejercicioService.deshabilitarEjercicio(id)
+      setExercises(prev => prev.map(e => e.id === id ? updated : e))
     } catch (err) {
-      console.error('Error deactivating exercise:', err)
+      console.error('Error deshabilitando ejercicio:', err)
+    }
+  }
+
+  async function reactivate(id: string) {
+    try {
+      const updated = await ejercicioService.reactivarEjercicio(id)
+      setExercises(prev => prev.map(e => e.id === id ? updated : e))
+    } catch (err) {
+      console.error('Error reactivando ejercicio:', err)
     }
   }
 
@@ -138,6 +148,8 @@ export function useExercises() {
     filtered,
     zones,
     loading,
+    incluirInactivos,
+    setIncluirInactivos,
     showModal,
     setShowModal,
     editing,
@@ -160,7 +172,8 @@ export function useExercises() {
     openAdd,
     openEdit,
     save,
-    remove,
+    disable,
+    reactivate,
     closeModal,
     defaultForm,
   }

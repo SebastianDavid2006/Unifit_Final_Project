@@ -34,10 +34,11 @@ const editarEjercicioSchema = z.object({
   grupos_musculares: z.array(z.string()).optional(),
   nivel: z.enum(['principiante', 'intermedio', 'avanzado']).optional(),
   url_multimedia: z.string().optional(),
+  activo: z.boolean().optional(),
 })
 
-export async function getEjercicios(_req: Request, res: Response): Promise<void> {
-  res.json(await listarEjerciciosActivos())
+export async function getEjercicios(req: Request, res: Response): Promise<void> {
+  res.json(await listarEjerciciosActivos(req.query.incluirInactivos === 'true'))
 }
 
 export async function getEjercicioPorId(req: Request, res: Response): Promise<void> {

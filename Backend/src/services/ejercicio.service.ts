@@ -17,11 +17,12 @@ export interface EditarEjercicioData {
   grupos_musculares?: string[]
   nivel?: string
   url_multimedia?: string
+  activo?: boolean
 }
 
-export async function listarEjerciciosActivos() {
+export async function listarEjerciciosActivos(incluirInactivos = false) {
   return prisma.ejercicio.findMany({
-    where: { activo: true },
+    where: incluirInactivos ? undefined : { activo: true },
     orderBy: { nombre: 'asc' },
   })
 }
@@ -57,6 +58,7 @@ export async function editarEjercicio(id: string, data: EditarEjercicioData) {
       ...(data.grupos_musculares !== undefined && { grupos_musculares: data.grupos_musculares as any }),
       ...(data.nivel !== undefined && { nivel: data.nivel as any }),
       ...(data.url_multimedia !== undefined && { url_multimedia: data.url_multimedia }),
+      ...(data.activo !== undefined && { activo: data.activo }),
     },
   })
 }

@@ -1,8 +1,8 @@
 ﻿import type { Machine, Exercise } from '@/data/shared/types'
-import { BLUE, RED, BLUE_GRAD, muscleIcons, statusConfig } from '@/data/shared/constants'
+import { BLUE, BLUE_GRAD, muscleIcons, statusConfig } from '@/data/shared/constants'
 import { StatusBadge } from '@/shared/components/ui/StatusBadge'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Pencil, Trash2, List } from 'lucide-react'
+import { X, Pencil, Power, RotateCcw, List } from 'lucide-react'
 import { EQUIPMENT_IMAGES } from '@/modules/equipment/data'
 
 interface MachinePreviewModalProps {
@@ -11,7 +11,7 @@ interface MachinePreviewModalProps {
   previewMuscleFilter: string
   onMuscleFilterChange: (filter: string) => void
   onEdit: (machine: Machine) => void
-  onDelete: (machine: Machine) => void
+  onToggleActive: (machine: Machine) => void
   onClose: () => void
   userRole?: 'admin' | 'entrenador'
 }
@@ -120,17 +120,31 @@ export function MachinePreviewModal(props: MachinePreviewModalProps) {
                         <Pencil size={13} /> Editar
                       </div>
                     </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => props.onDelete(props.machine)}
-                      className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
-                      style={{ background: RED }}
-                    >
-                      <div className="flex items-center justify-center gap-1.5">
-                        <Trash2 size={13} /> Eliminar
-                      </div>
-                    </motion.button>
+                    {props.machine.status === 'inactive' ? (
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => props.onToggleActive(props.machine)}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                        style={{ background: `${BLUE}10`, color: BLUE, border: `1px solid ${BLUE}25` }}
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <RotateCcw size={13} /> Reactivar
+                        </div>
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => props.onToggleActive(props.machine)}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
+                        style={{ background: 'rgba(245,166,35,0.12)', color: '#B4531D', border: '1px solid rgba(245,166,35,0.25)' }}
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Power size={13} /> Deshabilitar
+                        </div>
+                      </motion.button>
+                    )}
                   </>
                 )}
               </div>

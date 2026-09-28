@@ -1,9 +1,16 @@
 import { motion } from 'motion/react'
-import { Plus } from 'lucide-react'
-import { BLUE_GRAD } from '@/data/shared/constants'
+import { Plus, Eye, EyeOff } from 'lucide-react'
+import { BLUE, BLUE_GRAD } from '@/data/shared/constants'
 import { EQUIPMENT_IMAGES } from '@/modules/equipment/data'
 
-export function EquipmentBanner({ onCreate }: { onCreate: () => void }) {
+interface EquipmentBannerProps {
+  onCreate: () => void
+  userRole?: 'admin' | 'entrenador'
+  showInactive: boolean
+  onToggleInactive: () => void
+}
+
+export function EquipmentBanner({ onCreate, userRole, showInactive, onToggleInactive }: EquipmentBannerProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -40,6 +47,24 @@ export function EquipmentBanner({ onCreate }: { onCreate: () => void }) {
           </div>
         </div>
         <div className="flex items-center gap-3 pr-4">
+          {userRole !== 'entrenador' && (
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={onToggleInactive}
+              title={showInactive ? 'Ocultar deshabilitados' : 'Ver deshabilitados'}
+              className="h-11 flex items-center gap-1.5 px-3 rounded-full cursor-pointer transition-all duration-200"
+              style={{
+                background: showInactive ? `${BLUE}14` : 'rgba(0,0,0,0.04)',
+                border: `1px solid ${showInactive ? `${BLUE}33` : 'rgba(0,0,0,0.08)'}`,
+                color: showInactive ? BLUE : 'rgba(0,0,0,0.45)',
+              }}
+            >
+              {showInactive ? <Eye size={16} /> : <EyeOff size={16} />}
+              <span className="text-xs font-extrabold whitespace-nowrap">
+                {showInactive ? 'Ocultar deshabilitados' : 'Ver deshabilitados'}
+              </span>
+            </motion.button>
+          )}
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={onCreate}

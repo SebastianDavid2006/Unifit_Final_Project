@@ -69,6 +69,7 @@ function mapFrontendToBackend(m: Partial<FrontendMachine>): {
   nivel?: string
   url_multimedia?: string
   ejercicioIds?: string[]
+  estado?: string
 } {
   const data: Record<string, unknown> = {}
   if (m.name !== undefined) data.nombre = m.name
@@ -77,11 +78,14 @@ function mapFrontendToBackend(m: Partial<FrontendMachine>): {
   if (m.recommendedLevel !== undefined) data.nivel = mapNivelFrontToBack(m.recommendedLevel)
   if (m.imageDataUrl !== undefined) data.url_multimedia = m.imageDataUrl || ''
   if (m.exerciseIds !== undefined) data.ejercicioIds = m.exerciseIds
+  if (m.status !== undefined) data.estado = STATUS_MAP_REV[m.status]
   return data
 }
 
-export async function getMaquinas(): Promise<FrontendMachine[]> {
-  const { data } = await api.get<BackendMaquina[]>('/maquinas')
+export async function getMaquinas(incluirInactivos = false): Promise<FrontendMachine[]> {
+  const { data } = await api.get<BackendMaquina[]>('/maquinas', {
+    params: incluirInactivos ? { incluirInactivos: true } : undefined,
+  })
   return data.map(mapBackendToFrontend)
 }
 
@@ -114,6 +118,10 @@ export async function editarMaquina(id: string, machine: Partial<FrontendMachine
   return mapBackendToFrontend(data)
 }
 
-export async function desactivarMaquina(id: string): Promise<void> {
-  await api.put(`/maquinas/${id}/desactivar`)
+export async function deshabilitarMaquina(id: string): Promise<FrontendMachine> {
+  return editarMaquina(id, { status: 'inactive' })
+}
+
+export async function reactivarMaquina(id: string): Promise<FrontendMachine> {
+  return editarMaquina(id, { status: 'active' })
 }

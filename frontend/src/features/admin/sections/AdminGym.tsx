@@ -62,7 +62,7 @@ export default function AdminGym(props: Props) {
   }
 
   if (props.tab === 'schedule') {
-    return <AgendaModule students={props.students} userRole="admin" />
+    return <AgendaModule students={props.students} />
   }
 
   return null

@@ -26,6 +26,7 @@ const defaultForm: MachineForm = {
 export function useMachines(search: string) {
   const [machines, setMachines] = useState<FrontendMachine[]>([])
   const [loading, setLoading] = useState(true)
+  const [incluirInactivos, setIncluirInactivos] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingMachine, setEditingMachine] = useState<FrontendMachine | null>(null)
   const [step, setStep] = useState(0)
@@ -34,10 +35,10 @@ export function useMachines(search: string) {
   const [form, setForm] = useState<MachineForm>(defaultForm)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  const loadMachines = useCallback(async () => {
+  const loadMachines = useCallback(async (incluir: boolean) => {
     try {
       setLoading(true)
-      const data = await maquinaService.getMaquinas()
+      const data = await maquinaService.getMaquinas(incluir)
       // Sort by fecha_creacion descending (most recent first)
       const sorted = [...data].sort((a, b) => new Date(b.fecha_creacion).getTime() - new Date(a.fecha_creacion).getTime())
       setMachines(sorted)
@@ -48,10 +49,11 @@ export function useMachines(search: string) {
     }
   }, [])
 
-  useEffect(() => { loadMachines() }, [loadMachines])
+  useEffect(() => { loadMachines(incluirInactivos) }, [incluirInactivos, loadMachines])
 
   const filtered = useMemo(() => {
     let list = machines
+    if (!incluirInactivos) list = list.filter(m => m.status !== 'inactive')
     if (search) {
       const q = search.toLowerCase()
       list = list.filter(m =>
@@ -60,7 +62,7 @@ export function useMachines(search: string) {
       )
     }
     return list
-  }, [machines, search])
+  }, [machines, incluirInactivos, search])
 
   function openAdd() {
     setEditingMachine(null)
@@ -123,17 +125,22 @@ export function useMachines(search: string) {
     setSaveError(null)
   }
 
-  async function remove(id: string) {
+  async function disable(id: string) {
     try {
-      await maquinaService.desactivarMaquina(id)
-      setMachines(prev => prev.filter(m => m.id !== id))
+      const updated = await maquinaService.deshabilitarMaquina(id)
+      setMachines(prev => prev.map(m => m.id === id ? updated : m))
     } catch (err) {
-      console.error('Error deactivating machine:', err)
+      console.error('Error deshabilitando máquina:', err)
     }
   }
 
-  function changeStatus(id: string, status: FrontendMachine['status']) {
-    setMachines(prev => prev.map(m => m.id === id ? { ...m, status } : m))
+  async function reactivate(id: string) {
+    try {
+      const updated = await maquinaService.reactivarMaquina(id)
+      setMachines(prev => prev.map(m => m.id === id ? updated : m))
+    } catch (err) {
+      console.error('Error reactivando máquina:', err)
+    }
   }
 
   function toggleExerciseSelection(id: string) {
@@ -150,6 +157,8 @@ export function useMachines(search: string) {
     setMachines,
     filtered,
     loading,
+    incluirInactivos,
+    setIncluirInactivos,
     showModal,
     setShowModal,
     editingMachine,
@@ -167,8 +176,8 @@ export function useMachines(search: string) {
     openEdit,
     save,
     closeModal,
-    remove,
-    changeStatus,
+    disable,
+    reactivate,
     toggleExerciseSelection,
     defaultForm,
   }

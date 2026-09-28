@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
-import { GraduationCap, Inbox } from 'lucide-react'
+import { Eye, EyeOff, GraduationCap, Inbox } from 'lucide-react'
 import { useProgramas } from '@/hooks/useCatalogo'
 import { NIVEL_LABELS, UNIVERSIDAD_LABELS, UNIVERSIDADES, NIVELES, type Universidad, type NivelPrograma } from '@/types/catalogo'
-import { useDashboardStats } from '@/features/shared/dashboard/useDashboardStats'
-import { mapCarrera } from '@/features/admin/sections/AdminStats/data'
 import Pagination from '@/features/admin/components/Pagination'
 import Tag from '@/features/admin/components/Tag'
 import ModalShell, { ModalCloseButton } from '../components/ModalShell'
@@ -14,13 +12,13 @@ import AddButton from '../components/AddButton'
 import ConfirmModal from '../components/ConfirmModal'
 import { BLUE, BLUE_GRAD, INSTITUTION_COLORS, PAGE_SIZE, FIELD_STYLE, enterField, leaveField, focusField, blurField } from '../components/fields'
 
-function CareerList({ programas, registeredByProgram, onOpenAdd, onOpenEdit, onRequestDelete, onRequestInactivate, onRequestActivate }: {
+function CareerList({ programas, incluirInactivos, onToggleIncluir, onOpenAdd, onOpenEdit, onRequestDisable, onRequestActivate }: {
   programas: ReturnType<typeof useProgramas>['programas']
-  registeredByProgram: Map<string, number>
+  incluirInactivos: boolean
+  onToggleIncluir: () => void
   onOpenAdd: () => void
   onOpenEdit: (id: string) => void
-  onRequestDelete: (id: string, name: string) => void
-  onRequestInactivate: (id: string, name: string, count: number) => void
+  onRequestDisable: (id: string, name: string) => void
   onRequestActivate: (id: string, name: string) => void
 }) {
   const [query, setQuery] = useState('')
@@ -48,6 +46,21 @@ function CareerList({ programas, registeredByProgram, onOpenAdd, onOpenEdit, onR
       <div className="relative px-6 pt-5 pb-4 flex items-center justify-between gap-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
         <div className="absolute -right-8 -top-10 w-40 h-40 rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, ${BLUE}1F, transparent 65%)` }} />
         <ListSearch value={query} onChange={setQuery} placeholder="Buscar carrera, institución o nivel..." />
+        <button
+          onClick={onToggleIncluir}
+          title={incluirInactivos ? 'Ocultar deshabilitadas' : 'Ver deshabilitadas'}
+          className="absolute right-[140px] top-1/2 -translate-y-1/2 h-9 flex items-center gap-1.5 px-3 rounded-xl transition-all duration-200 cursor-pointer"
+          style={{
+            background: incluirInactivos ? `${BLUE}14` : 'rgba(0,0,0,0.04)',
+            border: `1px solid ${incluirInactivos ? `${BLUE}33` : 'rgba(0,0,0,0.08)'}`,
+            color: incluirInactivos ? BLUE : 'rgba(0,0,0,0.45)',
+          }}
+        >
+          {incluirInactivos ? <Eye size={14} /> : <EyeOff size={14} />}
+          <span className="text-[11px] font-extrabold whitespace-nowrap">
+            {incluirInactivos ? 'Ver solo activas' : 'Ver deshabilitadas'}
+          </span>
+        </button>
         <AddButton background={BLUE_GRAD} glow={`${BLUE}42`} onClick={onOpenAdd} />
       </div>
 
@@ -72,7 +85,7 @@ function CareerList({ programas, registeredByProgram, onOpenAdd, onOpenEdit, onR
               const instLabel = UNIVERSIDAD_LABELS[p.universidad]
               const nivelLabel = NIVEL_LABELS[p.tipo_programa]
               const color = INSTITUTION_COLORS[UNIVERSIDADES.indexOf(p.universidad) % INSTITUTION_COLORS.length]
-              const studentsCount = registeredByProgram.get(p.nombre) ?? 0
+              const disabled = !p.activo
               return (
                 <motion.div
                   key={p.id_programa}
@@ -82,10 +95,17 @@ function CareerList({ programas, registeredByProgram, onOpenAdd, onOpenEdit, onR
                   className="grid grid-cols-[2fr_1.6fr_1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card"
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}12`, border: `1px solid ${color}20` }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}12`, border: `1px solid ${color}20`, opacity: disabled ? 0.5 : 1 }}>
                       <GraduationCap size={16} style={{ color }} />
                     </div>
-                    <p className="text-[#1A1A1E] text-sm font-extrabold truncate">{p.nombre}</p>
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <p className="text-[#1A1A1E] text-sm font-extrabold truncate">{p.nombre}</p>
+                      {disabled && (
+                        <Tag color="rgba(0,0,0,0.4)" bg="rgba(0,0,0,0.05)" weight="extrabold" size="sm">
+                          Deshabilitada
+                        </Tag>
+                      )}
+                    </div>
                   </div>
                   <p className="text-xs font-bold truncate" style={{ color: 'rgba(0,0,0,0.6)' }}>{instLabel}</p>
                   <div className="flex flex-col gap-1.5 w-fit">
@@ -94,13 +114,12 @@ function CareerList({ programas, registeredByProgram, onOpenAdd, onOpenEdit, onR
                     </Tag>
                   </div>
                   <RowActions
-                    state={studentsCount > 0 ? 'inactivate' : 'delete'}
-                    onReactivate={() => {}}
-                    onInactivate={() => onRequestInactivate(p.id_programa, p.nombre, studentsCount)}
-                    onDelete={() => onRequestDelete(p.id_programa, p.nombre)}
+                    state={disabled ? 'reactivate' : 'inactivate'}
+                    onReactivate={() => onRequestActivate(p.id_programa, p.nombre)}
+                    onInactivate={() => onRequestDisable(p.id_programa, p.nombre)}
                     onEdit={() => onOpenEdit(p.id_programa)}
-                    inactivateTitle={`Inactivar carrera (${studentsCount} estudiantes)`}
-                    deleteTitle="Eliminar carrera"
+                    inactivateTitle="Deshabilitar carrera"
+                    reactivateTitle="Reactivar carrera"
                     editTitle="Editar"
                   />
                 </motion.div>
@@ -115,12 +134,12 @@ function CareerList({ programas, registeredByProgram, onOpenAdd, onOpenEdit, onR
   )
 }
 
-function CareerModal({ mode, initialName, initialUniversidad, initialNivel, programs, onSave, onClose }: {
+function CareerModal({ mode, initialName, initialUniversidad, initialNivel, programas, onSave, onClose }: {
   mode: 'add' | 'edit'
   initialName: string
   initialUniversidad: Universidad
   initialNivel: NivelPrograma
-  programs: ReturnType<typeof useProgramas>['programas']
+  programas: ReturnType<typeof useProgramas>['programas']
   onSave: (name: string, universidad: Universidad, nivel: NivelPrograma) => void
   onClose: () => void
 }) {
@@ -129,7 +148,7 @@ function CareerModal({ mode, initialName, initialUniversidad, initialNivel, prog
   const [nivel, setNivel] = useState<NivelPrograma>(initialNivel)
 
   const nameNorm = name.trim()
-  const isDuplicate = programs.some(p => {
+  const isDuplicate = programas.some(p => {
     if (mode === 'edit' && p.nombre.toLowerCase() === initialName.toLowerCase() && p.universidad === initialUniversidad && p.tipo_programa === initialNivel) return false
     return p.nombre.toLowerCase() === nameNorm.toLowerCase() && p.universidad === universidad && p.tipo_programa === nivel
   })
@@ -268,17 +287,12 @@ type ModalState =
   | { kind: 'edit'; id: string }
 
 type ConfirmState =
-  | { kind: 'delete'; id: string; name: string }
-  | { kind: 'inactivate'; id: string; name: string; count: number }
+  | { kind: 'disable'; id: string; name: string }
+  | { kind: 'activate'; id: string; name: string }
 
 export default function CareersSection() {
-  const { programas, crear, actualizar, eliminar } = useProgramas()
-  const { stats } = useDashboardStats()
-  const registeredByProgram = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const c of (stats?.carreras ?? []).map(mapCarrera)) map.set(c.programa, c.registrados)
-    return map
-  }, [stats])
+  const [incluirInactivos, setIncluirInactivos] = useState(false)
+  const { programas, crear, actualizar, refresh } = useProgramas(incluirInactivos)
   const [modal, setModal] = useState<ModalState | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
 
@@ -298,23 +312,25 @@ export default function CareersSection() {
     }
   }
 
-  const handleDeleteCareer = async () => {
+  const handleDisableCareer = async () => {
     if (!confirm) return
     try {
-      await eliminar(confirm.id)
+      await actualizar(confirm.id, { activo: false })
+      await refresh()
       setConfirm(null)
     } catch (err) {
-      console.error('Error deleting career:', err)
+      console.error('Error disabling career:', err)
     }
   }
 
-  const handleInactivateCareer = async () => {
+  const handleActivateCareer = async () => {
     if (!confirm) return
     try {
-      await actualizar(confirm.id, {})
+      await actualizar(confirm.id, { activo: true })
+      await refresh()
       setConfirm(null)
     } catch (err) {
-      console.error('Error inactivating career:', err)
+      console.error('Error activating career:', err)
     }
   }
 
@@ -322,12 +338,12 @@ export default function CareersSection() {
     <div className="space-y-6">
       <CareerList
         programas={programas}
-        registeredByProgram={registeredByProgram}
+        incluirInactivos={incluirInactivos}
+        onToggleIncluir={() => setIncluirInactivos(v => !v)}
         onOpenAdd={() => setModal({ kind: 'add' })}
         onOpenEdit={id => setModal({ kind: 'edit', id })}
-        onRequestDelete={(id, name) => setConfirm({ kind: 'delete', id, name })}
-        onRequestInactivate={(id, name, count) => setConfirm({ kind: 'inactivate', id, name, count })}
-        onRequestActivate={() => {}}
+        onRequestDisable={(id, name) => setConfirm({ kind: 'disable', id, name })}
+        onRequestActivate={(id, name) => setConfirm({ kind: 'activate', id, name })}
       />
 
       {modal && (
@@ -336,30 +352,30 @@ export default function CareersSection() {
           initialName={editProgram?.nombre ?? ''}
           initialUniversidad={editProgram?.universidad ?? 'uni_colombia'}
           initialNivel={editProgram?.tipo_programa ?? 'profesional'}
-          programs={programas}
+          programas={programas}
           onSave={handleSaveCareer}
           onClose={() => setModal(null)}
         />
       )}
 
-      {confirm && confirm.kind === 'delete' && (
+      {confirm && confirm.kind === 'disable' && (
         <ConfirmModal
-          title="¿Eliminar carrera?"
-          description={`La carrera "${confirm.name}" no tiene estudiantes registrados y se eliminará de forma permanente. Esta acción no se puede deshacer.`}
-          confirmLabel="Eliminar"
-          color="#F43843"
-          onConfirm={handleDeleteCareer}
+          title="¿Deshabilitar carrera?"
+          description={`La carrera "${confirm.name}" dejará de estar disponible para nuevos registros. Su historial no se pierde y podrás habilitarla cuando quieras.`}
+          confirmLabel="Deshabilitar"
+          color="#F5A623"
+          onConfirm={handleDisableCareer}
           onClose={() => setConfirm(null)}
         />
       )}
 
-      {confirm && confirm.kind === 'inactivate' && (
+      {confirm && confirm.kind === 'activate' && (
         <ConfirmModal
-          title="¿Inactivar carrera?"
-          description={`La carrera "${confirm.name}" tiene ${confirm.count} estudiantes registrados y no se puede eliminar. Al inactivarla dejará de estar disponible para nuevos registros.`}
-          confirmLabel="Inactivar"
-          color="#F5A623"
-          onConfirm={handleInactivateCareer}
+          title="¿Habilitar carrera?"
+          description={`La carrera "${confirm.name}" volverá a estar disponible para nuevos registros.`}
+          confirmLabel="Habilitar"
+          color="#30D158"
+          onConfirm={handleActivateCareer}
           onClose={() => setConfirm(null)}
         />
       )}

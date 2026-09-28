@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import type { Exercise, Status } from '@/data/shared/types'
+import type { Exercise } from '@/data/shared/types'
 import { BLUE, meshInputBg, meshInputHover } from '@/data/shared/constants'
 import { MuscleGroupPicker } from '@/modules/equipment/EquipmentPage/components/MuscleGroupPicker'
 import { LevelSelector } from '@/modules/equipment/EquipmentPage/components/LevelSelector'
@@ -23,7 +23,6 @@ interface ExerciseManagerModalProps {
     name: string
     zone: string
     description: string
-    status: Status
     muscleGroups: string[]
     recommendedLevel: string
     imageUrl: string

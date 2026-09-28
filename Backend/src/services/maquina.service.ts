@@ -18,11 +18,12 @@ export interface EditarMaquinaData {
   nivel?: string
   url_multimedia?: string
   ejercicioIds?: string[]
+  estado?: 'disponible' | 'mantenimiento' | 'sin_servicio'
 }
 
-export async function listarMaquinasActivas() {
+export async function listarMaquinasActivas(incluirInactivos = false) {
   return prisma.maquina.findMany({
-    where: { estado: { not: 'sin_servicio' } },
+    where: incluirInactivos ? undefined : { estado: { not: 'sin_servicio' } },
     orderBy: { nombre: 'asc' },
     include: {
       ejercicios: {
@@ -82,6 +83,7 @@ export async function editarMaquina(id: string, data: EditarMaquinaData) {
         ...(data.grupos_musculares !== undefined && { grupos_musculares: data.grupos_musculares as any }),
         ...(data.nivel !== undefined && { nivel: data.nivel as any }),
         ...(data.url_multimedia !== undefined && { url_multimedia: data.url_multimedia }),
+        ...(data.estado !== undefined && { estado: data.estado }),
       },
     })
 

@@ -3,7 +3,6 @@ import {
   listarProgramas,
   crearPrograma,
   actualizarPrograma,
-  eliminarPrograma,
 } from '@/services/catalogo.service'
 import type { Programa, Universidad, NivelPrograma } from '@/types/catalogo'
 import { UNIVERSIDADES, NIVELES, UNIVERSIDAD_LABELS, NIVEL_LABELS } from '@/types/catalogo'
@@ -49,7 +48,7 @@ export function useProgramasAgrupados() {
   }
 }
 
-export function useProgramas() {
+export function useProgramas(incluirInactivos = false) {
   const [programas, setProgramas] = useState<Programa[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<unknown>(null)
@@ -57,14 +56,14 @@ export function useProgramas() {
   const fetchProgramas = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await listarProgramas()
+      const data = await listarProgramas(incluirInactivos)
       setProgramas(data)
     } catch (err) {
       setError(err)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [incluirInactivos])
 
   useEffect(() => {
     fetchProgramas()
@@ -76,16 +75,11 @@ export function useProgramas() {
     return creado
   }, [])
 
-  const actualizar = useCallback(async (id: string, data: { nombre?: string; universidad?: Universidad; tipo_programa?: NivelPrograma }) => {
+  const actualizar = useCallback(async (id: string, data: { nombre?: string; universidad?: Universidad; tipo_programa?: NivelPrograma; activo?: boolean }) => {
     const actualizado = await actualizarPrograma(id, data)
     setProgramas(prev => prev.map(p => p.id_programa === id ? actualizado : p))
     return actualizado
   }, [])
 
-  const eliminar = useCallback(async (id: string) => {
-    await eliminarPrograma(id)
-    setProgramas(prev => prev.filter(p => p.id_programa !== id))
-  }, [])
-
-  return { programas, loading, error, refresh: fetchProgramas, crear, actualizar, eliminar }
+  return { programas, loading, error, refresh: fetchProgramas, crear, actualizar }
 }

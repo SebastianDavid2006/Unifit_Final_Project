@@ -20,6 +20,7 @@ import {
   crearAgenda, editarAgenda, eliminarAgenda, eliminarCupo,
   getAgenda, getBloques, getCupos, obtenerFestivos, publicarCupos, type BloqueDelDia, type CupoConReserva, type HorarioPorDia,
 } from '@/services/agenda.service'
+import { getUsuario } from '@/lib/auth'
 
 interface AgendaStudent {
   name: string
@@ -40,7 +41,8 @@ const DIA_KEY_TO_LABEL: Record<string, HorarioPorDia['dia']> = {
   SÁB: 'sáb',
 }
 
-export default function AgendaModule({ students = [], userRole }: { students?: AgendaStudent[]; userRole?: 'admin' | 'entrenador' }) {
+export default function AgendaModule({ students = [] }: { students?: AgendaStudent[] }) {
+  const isAdmin = getUsuario()?.rol === 'admin'
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [showApptModal, setShowApptModal] = useState(false)
@@ -393,7 +395,7 @@ export default function AgendaModule({ students = [], userRole }: { students?: A
         appts={dayModalDate ? getApptsForDate(dayModalDate) : []}
         onAddAppointment={handleAddAppointmentFromModal}
         onEdit={handleEditAppointment}
-        isAdmin={userRole === 'admin'}
+        isAdmin={isAdmin}
         blocks={bloques}
         cuposDeFecha={dayModalDate ? cupos.filter(c => c.fecha === dayModalDate) : []}
         onPublishDay={handlePublishDay}

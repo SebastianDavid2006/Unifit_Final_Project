@@ -9,11 +9,18 @@ const MAX_DURACION_MINUTOS = 360
 export async function registrarDesdeSensor(indiceSensor: number) {
   const huella = await prisma.huella.findUnique({
     where: { indice_sensor: indiceSensor },
-    select: { id_usuario: true },
+    select: {
+      id_usuario: true,
+      usuario: { select: { estado: true } },
+    },
   })
 
   if (!huella) {
     throw new HttpError(404, 'Huella no registrada en el sistema')
+  }
+
+  if (huella.usuario.estado !== 'activo') {
+    throw new HttpError(403, 'Usuario no autorizado para registrar asistencia')
   }
 
   return prisma.$transaction(async (tx: Tx) => {

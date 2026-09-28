@@ -16,19 +16,24 @@ import {
 } from '../services/catalogo.service'
 import { HttpError } from '../utils/HttpError'
 
-export async function getProgramas(_req: Request, res: Response): Promise<void> {
-  res.json(await listarProgramas())
+export async function getProgramas(req: Request, res: Response): Promise<void> {
+  res.json(await listarProgramas(req.query.incluirInactivos === 'true'))
 }
 
-export async function getCargos(_req: Request, res: Response): Promise<void> {
-  res.json(await listarCargos())
+export async function getCargos(req: Request, res: Response): Promise<void> {
+  res.json(await listarCargos(req.query.incluirInactivos === 'true'))
 }
 
-export async function getAreas(_req: Request, res: Response): Promise<void> {
-  res.json(await listarAreas())
+export async function getAreas(req: Request, res: Response): Promise<void> {
+  res.json(await listarAreas(req.query.incluirInactivos === 'true'))
 }
 
 const nombreSchema = z.object({ nombre: z.string().min(1).max(120) })
+
+const actualizarNombreSchema = z.object({
+  nombre: z.string().min(1).max(120).optional(),
+  activo: z.boolean().optional(),
+})
 
 export async function postCargo(req: Request, res: Response): Promise<void> {
   const parsed = nombreSchema.safeParse(req.body)
@@ -67,13 +72,13 @@ export async function postArea(req: Request, res: Response): Promise<void> {
 }
 
 export async function putCargo(req: Request, res: Response): Promise<void> {
-  const parsed = nombreSchema.safeParse(req.body)
+  const parsed = actualizarNombreSchema.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
     return
   }
   try {
-    const cargo = await actualizarCargo(req.params.id as string, parsed.data.nombre)
+    const cargo = await actualizarCargo(req.params.id as string, parsed.data)
     res.json(cargo)
   } catch (error) {
     if (error instanceof HttpError) {
@@ -85,13 +90,13 @@ export async function putCargo(req: Request, res: Response): Promise<void> {
 }
 
 export async function putArea(req: Request, res: Response): Promise<void> {
-  const parsed = nombreSchema.safeParse(req.body)
+  const parsed = actualizarNombreSchema.safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
     return
   }
   try {
-    const area = await actualizarArea(req.params.id as string, parsed.data.nombre)
+    const area = await actualizarArea(req.params.id as string, parsed.data)
     res.json(area)
   } catch (error) {
     if (error instanceof HttpError) {
@@ -105,7 +110,7 @@ export async function putArea(req: Request, res: Response): Promise<void> {
 export async function deleteCargo(req: Request, res: Response): Promise<void> {
   try {
     await eliminarCargo(req.params.id as string)
-    res.json({ mensaje: 'Cargo eliminado' })
+    res.json({ mensaje: 'Cargo deshabilitado' })
   } catch (error) {
     if (error instanceof HttpError) {
       res.status(error.status).json({ mensaje: error.message })
@@ -118,7 +123,7 @@ export async function deleteCargo(req: Request, res: Response): Promise<void> {
 export async function deleteArea(req: Request, res: Response): Promise<void> {
   try {
     await eliminarArea(req.params.id as string)
-    res.json({ mensaje: 'Área eliminada' })
+    res.json({ mensaje: 'Área deshabilitada' })
   } catch (error) {
     if (error instanceof HttpError) {
       res.status(error.status).json({ mensaje: error.message })
@@ -138,6 +143,7 @@ const programaUpdateSchema = z.object({
   nombre: z.string().min(1).max(120).optional(),
   universidad: z.enum(['uni_colombia', 'uni_bogota']).optional(),
   tipo_programa: z.enum(['tecnico', 'profesional', 'especializacion']).optional(),
+  activo: z.boolean().optional(),
 })
 
 export async function postPrograma(req: Request, res: Response): Promise<void> {
@@ -179,7 +185,7 @@ export async function putPrograma(req: Request, res: Response): Promise<void> {
 export async function deletePrograma(req: Request, res: Response): Promise<void> {
   try {
     await eliminarPrograma(req.params.id as string)
-    res.json({ mensaje: 'Programa eliminado' })
+    res.json({ mensaje: 'Programa deshabilitado' })
   } catch (error) {
     if (error instanceof HttpError) {
       res.status(error.status).json({ mensaje: error.message })

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
-import { Inbox } from 'lucide-react'
-import { listarAreas, listarCargos, crearArea, crearCargo, actualizarArea, actualizarCargo, eliminarArea, eliminarCargo } from '@/services/catalogo.service'
-import { FLAT_REGISTERED } from '@/data/stats/flatStats'
+import { Eye, EyeOff, Inbox } from 'lucide-react'
+import { listarAreas, listarCargos, crearArea, crearCargo, actualizarArea, actualizarCargo } from '@/services/catalogo.service'
 import Pagination from '@/features/admin/components/Pagination'
 import Tag from '@/features/admin/components/Tag'
 import ModalShell, { ModalCloseButton } from '../components/ModalShell'
@@ -16,15 +15,15 @@ import type { Area, Cargo } from '@/types/catalogo'
 
 type FlatItem = Area | Cargo
 
-function FlatList({ apartado, items, inactive, onOpenAdd, onOpenEdit, onRequestDelete, onRequestInactivate, onRequestActivate }: {
+function FlatList({ apartado, items, incluirInactivos, onToggleIncluir, onOpenAdd, onOpenEdit, onRequestDisable, onRequestActivate }: {
   apartado: ApartadoConfig
   items: FlatItem[]
-  inactive: string[]
+  incluirInactivos: boolean
+  onToggleIncluir: () => void
   onOpenAdd: () => void
   onOpenEdit: (index: number) => void
-  onRequestDelete: (index: number, name: string) => void
-  onRequestInactivate: (name: string, count: number) => void
-  onRequestActivate: (name: string) => void
+  onRequestDisable: (id: string, name: string) => void
+  onRequestActivate: (id: string, name: string) => void
 }) {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
@@ -44,6 +43,21 @@ function FlatList({ apartado, items, inactive, onOpenAdd, onOpenEdit, onRequestD
       <div className="relative px-6 pt-5 pb-4 flex items-center justify-between gap-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
         <div className="absolute -right-8 -top-10 w-40 h-40 rounded-full pointer-events-none" style={{ background: `radial-gradient(circle, ${color}1F, transparent 65%)` }} />
         <ListSearch value={query} onChange={setQuery} placeholder={`Buscar ${title.toLowerCase()}...`} />
+        <button
+          onClick={onToggleIncluir}
+          title={incluirInactivos ? 'Ocultar deshabilitados' : 'Ver deshabilitados'}
+          className="absolute right-[140px] top-1/2 -translate-y-1/2 h-9 flex items-center gap-1.5 px-3 rounded-xl transition-all duration-200 cursor-pointer"
+          style={{
+            background: incluirInactivos ? `${color}14` : 'rgba(0,0,0,0.04)',
+            border: `1px solid ${incluirInactivos ? `${color}33` : 'rgba(0,0,0,0.08)'}`,
+            color: incluirInactivos ? color : 'rgba(0,0,0,0.45)',
+          }}
+        >
+          {incluirInactivos ? <Eye size={14} /> : <EyeOff size={14} />}
+          <span className="text-[11px] font-extrabold whitespace-nowrap">
+            {incluirInactivos ? 'Ver solo activos' : 'Ver deshabilitados'}
+          </span>
+        </button>
         <AddButton background={BLUE_GRAD} glow={`${BLUE}42`} onClick={onOpenAdd} />
       </div>
 
@@ -64,8 +78,7 @@ function FlatList({ apartado, items, inactive, onOpenAdd, onOpenEdit, onRequestD
           <div className="space-y-2">
             {paged.map((item, i) => {
               const originalIndex = items.findIndex(it => it.id === item.id)
-              const inactiveItem = inactive.includes(item.nombre)
-              const registered = FLAT_REGISTERED[apartado.key]?.[item.nombre] ?? 0
+              const disabled = !item.activo
               return (
                 <motion.div
                   key={`${item.id}-${i}`}
@@ -75,27 +88,25 @@ function FlatList({ apartado, items, inactive, onOpenAdd, onOpenEdit, onRequestD
                   className="grid grid-cols-[1fr_auto] items-center gap-4 p-4 rounded-2xl premium-card"
                 >
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}12`, border: `1px solid ${color}20`, opacity: inactiveItem ? 0.5 : 1 }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}12`, border: `1px solid ${color}20`, opacity: disabled ? 0.5 : 1 }}>
                       <Icon size={16} style={{ color }} />
                     </div>
                     <div className="flex flex-col gap-1 min-w-0">
                       <p className="text-[#1A1A1E] text-sm font-extrabold truncate">{item.nombre}</p>
-                      {inactiveItem && (
+                      {disabled && (
                         <Tag color="rgba(0,0,0,0.4)" bg="rgba(0,0,0,0.05)" weight="extrabold" size="sm">
-                          Inactiva
+                          Deshabilitado
                         </Tag>
                       )}
                     </div>
                   </div>
                   <RowActions
-                    state={inactiveItem ? 'reactivate' : registered > 0 ? 'inactivate' : 'delete'}
-                    onReactivate={() => onRequestActivate(item.nombre)}
-                    onInactivate={() => onRequestInactivate(item.nombre, registered)}
-                    onDelete={() => onRequestDelete(originalIndex, item.nombre)}
+                    state={disabled ? 'reactivate' : 'inactivate'}
+                    onReactivate={() => onRequestActivate(item.id, item.nombre)}
+                    onInactivate={() => onRequestDisable(item.id, item.nombre)}
                     onEdit={() => onOpenEdit(originalIndex)}
                     reactivateTitle="Reactivar"
-                    inactivateTitle={`Inactivar (${registered} usuarios)`}
-                    deleteTitle="Eliminar"
+                    inactivateTitle="Deshabilitar"
                     editTitle="Editar"
                   />
                 </motion.div>
@@ -199,16 +210,15 @@ function ItemsModal({ apartado, mode, editIndex, existing, onSave, onClose }: {
 }
 
 type ConfirmState =
-  | { kind: 'delete'; index: number; name: string }
-  | { kind: 'inactivate'; name: string; count: number }
-  | { kind: 'activate'; name: string }
+  | { kind: 'disable'; id: string; name: string }
+  | { kind: 'activate'; id: string; name: string }
 
 type ModalState = { kind: 'add' | 'edit'; editIndex: number | null }
 
 export default function FlatSection({ apartado }: { apartado: ApartadoConfig }) {
   const [items, setItems] = useState<FlatItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [inactive, setInactive] = useState<string[]>([])
+  const [incluirInactivos, setIncluirInactivos] = useState(false)
   const [modal, setModal] = useState<ModalState | null>(null)
   const [confirm, setConfirm] = useState<ConfirmState | null>(null)
 
@@ -218,20 +228,18 @@ export default function FlatSection({ apartado }: { apartado: ApartadoConfig }) 
   const fetchItems = useCallback(async () => {
     setLoading(true)
     try {
-      const data = isArea ? await listarAreas() : await listarCargos()
-      setItems(data.filter(item => item.activo))
+      const data = isArea ? await listarAreas(incluirInactivos) : await listarCargos(incluirInactivos)
+      setItems(data)
     } catch {
       // fallback to empty
     } finally {
       setLoading(false)
     }
-  }, [isArea])
+  }, [isArea, incluirInactivos])
 
   useEffect(() => {
     fetchItems()
   }, [fetchItems])
-
-  const inactiveList = inactive // We'll keep inactive in localStorage for now since backend doesn't have this concept
 
   const handleSaveFlat = async (names: string[]) => {
     if (!modal) return
@@ -239,7 +247,7 @@ export default function FlatSection({ apartado }: { apartado: ApartadoConfig }) 
     try {
       if (modal.kind === 'edit' && modal.editIndex !== null) {
         const item = items[modal.editIndex]
-        const updated = isArea ? await actualizarArea(item.id, names[0]) : await actualizarCargo(item.id, names[0])
+        const updated = isArea ? await actualizarArea(item.id, { nombre: name }) : await actualizarCargo(item.id, { nombre: name })
         setItems(items.map((item, i) => i === modal.editIndex ? updated : item))
       } else {
         const created = isArea ? await crearArea(name) : await crearCargo(name)
@@ -251,25 +259,24 @@ export default function FlatSection({ apartado }: { apartado: ApartadoConfig }) 
     }
   }
 
-  const handleDeleteFlat = async (index: number) => {
-    const item = items[index]
+  const handleDisable = async (id: string) => {
     try {
-      if (isArea) await eliminarArea(item.id)
-      else await eliminarCargo(item.id)
-      setItems(prev => prev.filter((_, i) => i !== index))
+      if (isArea) await actualizarArea(id, { activo: false })
+      else await actualizarCargo(id, { activo: false })
+      await fetchItems()
     } catch (err) {
-      console.error('Error deleting flat:', err)
+      console.error('Error disabling flat:', err)
     }
   }
 
-  const toggleInactive = (name: string, shouldInactivate: boolean) => {
-    const current = inactive
-    const next = shouldInactivate
-      ? current.includes(name) ? current : [...current, name]
-      : current.filter(n => n !== name)
-    setInactive(next)
-    // Keep inactive in localStorage for now
-    localStorage.setItem('unifit_flat_inactivos_v1', JSON.stringify({ areas: inactive, cargos: inactive }))
+  const handleActivate = async (id: string) => {
+    try {
+      if (isArea) await actualizarArea(id, { activo: true })
+      else await actualizarCargo(id, { activo: true })
+      await fetchItems()
+    } catch (err) {
+      console.error('Error activating flat:', err)
+    }
   }
 
   return (
@@ -277,12 +284,12 @@ export default function FlatSection({ apartado }: { apartado: ApartadoConfig }) 
       <FlatList
         apartado={apartado}
         items={items}
-        inactive={inactiveList}
+        incluirInactivos={incluirInactivos}
+        onToggleIncluir={() => setIncluirInactivos(v => !v)}
         onOpenAdd={() => setModal({ kind: 'add', editIndex: null })}
         onOpenEdit={index => setModal({ kind: 'edit', editIndex: index })}
-        onRequestDelete={(index, name) => setConfirm({ kind: 'delete', index, name })}
-        onRequestInactivate={(name, count) => setConfirm({ kind: 'inactivate', name, count })}
-        onRequestActivate={name => setConfirm({ kind: 'activate', name })}
+        onRequestDisable={(id, name) => setConfirm({ kind: 'disable', id, name })}
+        onRequestActivate={(id, name) => setConfirm({ kind: 'activate', id, name })}
       />
 
       {modal && (
@@ -296,35 +303,24 @@ export default function FlatSection({ apartado }: { apartado: ApartadoConfig }) 
         />
       )}
 
-      {confirm && confirm.kind === 'delete' && (
+      {confirm && confirm.kind === 'disable' && (
         <ConfirmModal
-          title={`¿Eliminar ${apartado.singular}?`}
-          description={`El ${apartado.singular} "${confirm.name}" no tiene usuarios registrados y se eliminará de forma permanente. Esta acción no se puede deshacer.`}
-          confirmLabel="Eliminar"
-          color="#F43843"
-          onConfirm={() => { handleDeleteFlat(confirm.index); setConfirm(null) }}
-          onClose={() => setConfirm(null)}
-        />
-      )}
-
-      {confirm && confirm.kind === 'inactivate' && (
-        <ConfirmModal
-          title={`¿Inactivar ${apartado.singular}?`}
-          description={`El ${apartado.singular} "${confirm.name}" tiene ${confirm.count} usuarios registrados y no se puede eliminar. Al inactivarlo dejará de estar disponible para nuevos registros.`}
-          confirmLabel="Inactivar"
+          title={`¿Deshabilitar ${apartado.singular}?`}
+          description={`El ${apartado.singular} "${confirm.name}" dejará de estar disponible. Su historial no se pierde y podrás habilitarlo cuando quieras.`}
+          confirmLabel="Deshabilitar"
           color="#F5A623"
-          onConfirm={() => { toggleInactive(confirm.name, true); setConfirm(null) }}
+          onConfirm={() => { handleDisable(confirm.id); setConfirm(null) }}
           onClose={() => setConfirm(null)}
         />
       )}
 
       {confirm && confirm.kind === 'activate' && (
         <ConfirmModal
-          title={`¿Reactivar ${apartado.singular}?`}
-          description={`El ${apartado.singular} "${confirm.name}" volverá a estar activo y disponible para nuevos registros.`}
-          confirmLabel="Reactivar"
+          title={`¿Habilitar ${apartado.singular}?`}
+          description={`El ${apartado.singular} "${confirm.name}" volverá a estar disponible.`}
+          confirmLabel="Habilitar"
           color="#30D158"
-          onConfirm={() => { toggleInactive(confirm.name, false); setConfirm(null) }}
+          onConfirm={() => { handleActivate(confirm.id); setConfirm(null) }}
           onClose={() => setConfirm(null)}
         />
       )}
