@@ -23,7 +23,7 @@ import studentGirl from '@/assets/illustrations/characters/students/student_girl
 const QUOTE = 'EL ÚNICO ENTRENAMIENTO MALO ES EL QUE NO HICISTE'
 
 export function HomePage() {
-  const { student, studentRoutines, loadingRoutines } = useStudentApp()
+  const { student, studentRoutines, loadingRoutines, assessments } = useStudentApp()
   const rutinaActiva = studentRoutines.find(r => r.estado === 'activa') ?? null
   const [sesiones, setSesiones] = useState<FrontendSesionRutina[]>([])
   const [sesionesError, setSesionesError] = useState<string | null>(null)
@@ -85,6 +85,12 @@ export function HomePage() {
   const proxLabel = rutinaActiva ? proximaSesionLabel(rutinaActiva) : null
   const photo = student?.gender === 'M' ? studentBoy : studentGirl
 
+  /* Objetivo real de la última valoración. Si es "Otro", se muestra el detalle. */
+  const ultimaVal = assessments[0]
+  const objetivoTexto = (ultimaVal?.objetivoTarjetas?.includes('Otro') && ultimaVal?.objetivoDetalle?.trim())
+    ? ultimaVal.objetivoDetalle.trim()
+    : (ultimaVal?.objetivoTarjetas?.join(' · ') ?? '')
+
   if (loadingRoutines) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
@@ -116,9 +122,15 @@ export function HomePage() {
               <h1 className="uppercase italic font-black text-white leading-[0.95]" style={{ fontSize: 'clamp(28px, 5vw, 44px)', letterSpacing: '-0.01em' }}>
                 Hola, <span style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{student?.firstName}</span>
               </h1>
-              <p className="uppercase italic font-black mt-2" style={{ fontSize: 'clamp(11px, 1.6vw, 14px)', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.38)' }}>
+              <p className="uppercase italic font-black mt-4" style={{ fontSize: 'clamp(11px, 1.6vw, 14px)', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.38)' }}>
                 "{QUOTE}"
               </p>
+              {objetivoTexto && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold mt-3 w-fit" style={{ background: 'rgba(48,209,88,0.1)', border: '1px solid rgba(48,209,88,0.25)', fontSize: 10.5 }}>
+                  <span style={{ color: GREEN }}>OBJETIVO:</span>
+                  <span style={{ color: AMBER }}>{objetivoTexto}</span>
+                </span>
+              )}
             </div>
             <motion.img
               src={photo}

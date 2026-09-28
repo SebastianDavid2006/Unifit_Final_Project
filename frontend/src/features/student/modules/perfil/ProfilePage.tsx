@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { ClipboardList, UserCog, X, ChevronRight, CalendarClock, FileText } from 'lucide-react'
 import { useStudentApp } from '@/features/student/hooks/useStudentApp'
 import { getValoracionesPorUsuario, type AssessmentItem } from '@/services/valoracion.service'
-import { loadDocs, DOC_ORDER } from '@/data/documents'
+import { getDocumentosVigentes, type DocumentoLegalItem } from '@/services/documento.service'
 import { SectionTitle, cardStyle, BLUE, GREEN, AMBER } from '@/features/student/components/ui/fitness'
 import { ProfileHeader } from './components/ProfileHeader'
 import { MetricsRow } from './components/MetricsRow'
@@ -20,6 +20,8 @@ export function ProfilePage() {
   const [historySel, setHistorySel] = useState<number | null>(null)
   const [assessments, setAssessments] = useState<AssessmentItem[]>([])
   const [loadingAssessments, setLoadingAssessments] = useState(true)
+  const [docs, setDocs] = useState<DocumentoLegalItem[]>([])
+  const [loadingDocs, setLoadingDocs] = useState(true)
 
   useEffect(() => {
     if (!student?.id) return
@@ -30,18 +32,26 @@ export function ProfilePage() {
       .finally(() => setLoadingAssessments(false))
   }, [student?.id])
 
+  useEffect(() => {
+    setLoadingDocs(true)
+    getDocumentosVigentes()
+      .then(setDocs)
+      .catch(() => setDocs([]))
+      .finally(() => setLoadingDocs(false))
+  }, [])
+
   const menuItems = [
     { id: 'history' as const, label: 'Historial de valoraciones', desc: `${assessments.length} valoraciones registradas`, icon: ClipboardList, color: BLUE },
     { id: 'asistencia' as const, label: 'Historial de asistencias', desc: 'Tus días de entrenamiento', icon: CalendarClock, color: AMBER },
     { id: 'personal' as const, label: 'Datos personales', desc: 'Información de tu perfil', icon: UserCog, color: GREEN },
   ]
 
-  const docCount = DOC_ORDER.filter(k => loadDocs()[k].dataUrl).length
+  const docCount = docs.filter(d => d.url_pdf).length
   const docCountLabel = `${docCount} documento${docCount === 1 ? '' : 's'} registrado${docCount === 1 ? '' : 's'}`
 
   return (
     <div className="space-y-6">
-      {student && <ProfileHeader student={student} objetivos={assessments[0]?.objetivoTarjetas ?? []} />}
+      {student && <ProfileHeader student={student} />}
 
       <MetricsRow assessments={assessments} />
 
@@ -142,11 +152,12 @@ export function ProfilePage() {
                     onSelect={setHistorySel}
                     onBack={() => setHistorySel(null)}
                     assessments={assessments}
+                    loading={loadingAssessments}
                   />
                 )}
                 {modal === 'asistencia' && <HistorialAsistenciasPanel />}
                 {modal === 'personal' && <PersonalDataPanel />}
-                {modal === 'gym-docs' && <GymDocumentsPanel />}
+                {modal === 'gym-docs' && <GymDocumentsPanel docs={docs} loading={loadingDocs} />}
               </div>
             </motion.div>
           </motion.div>

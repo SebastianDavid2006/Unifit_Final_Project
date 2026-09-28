@@ -9,11 +9,30 @@ interface HistoryPanelProps {
   onSelect: (num: number) => void
   onBack: () => void
   assessments: AssessmentItem[]
+  loading?: boolean
 }
 
-export function HistoryPanel({ selectedNum, onSelect, onBack, assessments }: HistoryPanelProps) {
+export function HistoryPanel({ selectedNum, onSelect, onBack, assessments, loading }: HistoryPanelProps) {
   /* Lista de valoraciones (actual de primeras) */
   if (selectedNum === null) {
+    if (loading && assessments.length === 0) {
+      return (
+        <div className="space-y-3">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="rounded-2xl h-24 animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+          ))}
+        </div>
+      )
+    }
+
+    if (assessments.length === 0) {
+      return (
+        <div className="rounded-2xl p-6 text-center" style={cardStyle}>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>No hay valoraciones cargadas.</p>
+        </div>
+      )
+    }
+
     return (
       <>
         {assessments.map((a, i) => (

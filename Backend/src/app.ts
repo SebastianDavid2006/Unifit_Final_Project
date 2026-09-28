@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import express, { type NextFunction, type Request, type Response } from 'express'
 import path from 'path'
-import cors from 'cors'
+import cors, { type CorsOptions } from 'cors'
 import morgan from 'morgan'
 import multer from 'multer'
 import apiRoutes from './routes'
@@ -9,7 +9,22 @@ import { HttpError } from './utils/HttpError'
 
 const app = express()
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
+// Orígenes permitidos por CORS: lista explícita separada por coma
+const ORIGENES_PERMITIDOS: string[] = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origen) => origen.trim())
+  .filter((origen) => origen.length > 0)
+
+const opcionesCors: CorsOptions = {
+  origin: (origenSolicitado, callback) => {
+    if (origenSolicitado && ORIGENES_PERMITIDOS.includes(origenSolicitado)) {
+      callback(null, origenSolicitado)
+      return
+    }
+    callback(null, false)
+  },
+  credentials: true,
+}
 
 // Manual security headers (replacing helmet)
 app.use((req, res, next) => {
@@ -27,19 +42,13 @@ app.use((req, res, next) => {
   next()
 })
 
-app.use(cors({
-  origin: FRONTEND_URL,
-  credentials: true
-}))
+app.use(cors(opcionesCors))
 
 app.use(morgan('dev'))
 app.use(express.json())
 
 app.use('/uploads',
-  cors({
-    origin: FRONTEND_URL,
-    credentials: true
-  }),
+  cors(opcionesCors),
   (req, res, next) => {
     res.header('Cross-Origin-Resource-Policy', 'cross-origin')
     next()

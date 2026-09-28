@@ -4,11 +4,34 @@ import { BLUE, BLUE_GRAD } from '@/modules/students/NewStudentData'
 import parqBanner from '@/assets/illustrations/banners/parq_banner.webp'
 import dataProcessingBanner from '@/assets/illustrations/banners/data_proccesing_banner.webp'
 import contractIUDCBanner from '@/assets/illustrations/banners/contractIUDC_banner.webp'
-import type { StoredDocs } from '@/data/documents'
+import { getImageUrl } from '@/lib/config'
+import { getDocumentosVigentes } from '@/services/documento.service'
+
+export interface DocsRegistro {
+  tratamiento: { dataUrl: string | null }
+  contrato: { dataUrl: string | null }
+  parq: { dataUrl: string | null }
+}
+
+export async function cargarDocsRegistro(): Promise<DocsRegistro> {
+  const base: DocsRegistro = { tratamiento: { dataUrl: null }, contrato: { dataUrl: null }, parq: { dataUrl: null } }
+  try {
+    const lista = await getDocumentosVigentes()
+    for (const d of lista) {
+      if (!d.url_pdf) continue
+      const dataUrl = getImageUrl(d.url_pdf)
+      if (d.tipo === 'contrato_gym') base.contrato = { dataUrl }
+      if (d.tipo === 'tratamiento_datos') base.tratamiento = { dataUrl }
+    }
+  } catch {
+    /* sin documentos disponibles */
+  }
+  return base
+}
 
 interface StepDocAgreementProps {
   step: number
-  docs: StoredDocs
+  docs: DocsRegistro
   aceptaDatos: boolean
   setAceptaDatos: (val: boolean) => void
   aceptaContrato: boolean

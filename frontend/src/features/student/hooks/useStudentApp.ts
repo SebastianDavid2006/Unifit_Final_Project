@@ -61,7 +61,6 @@ function mapBackendToStudent(u: BackendUsuario): Student {
     email: u.email_contacto,
     gender: GENERO_SIGLA[u.genero ?? ''] ?? 'F',
     avatar,
-    goal: 'Sin definir',
     adherence: 0,
     secondName: u.segundo_nombre ?? '',
     secondLastName: u.segundo_apellido ?? '',
@@ -83,6 +82,8 @@ function mapBackendToStudent(u: BackendUsuario): Student {
     jornada: estudiante?.jornada ?? '',
     roleLabel: ROL_LABEL[u.tipo_usuario] ?? u.tipo_usuario,
     statusLabel: ESTADO_LABEL[u.estado] ?? u.estado,
+    cargo: u.profesor?.cargo?.nombre ?? u.administrativo?.cargo?.nombre ?? '',
+    area: u.profesor?.area?.nombre ?? u.administrativo?.area?.nombre ?? '',
   }
 }
 

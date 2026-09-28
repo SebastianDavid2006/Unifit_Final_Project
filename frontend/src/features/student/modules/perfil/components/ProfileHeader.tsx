@@ -1,18 +1,21 @@
 import type { Student } from '@/features/student/types/student'
-import { GradientBorder, GREEN } from '@/features/student/components/ui/fitness'
+import { GradientBorder } from '@/features/student/components/ui/fitness'
 import studentBoy from '@/assets/illustrations/characters/students/student_boy.webp'
 import studentGirl from '@/assets/illustrations/characters/students/student_girl.webp'
 
 interface ProfileHeaderProps {
   student: Student
-  objetivos: string[]
 }
 
-export function ProfileHeader({ student, objetivos }: ProfileHeaderProps) {
+export function ProfileHeader({ student }: ProfileHeaderProps) {
   const defaultPhoto = student.gender === 'M' ? studentBoy : studentGirl
-  const subtitulo = student.career
-    ? `${student.career}${student.semestre != null ? ` · Semestre ${student.semestre}` : ''}`
-    : (student.roleLabel ?? '')
+  const tipo = student.roleLabel ?? ''
+  const resto = student.roleLabel === 'Estudiante'
+    ? [student.career, student.semestre != null ? `Semestre ${student.semestre}` : '']
+    : [student.cargo, student.area]
+  const subtitulo = tipo
+    ? `${tipo}${resto.some(Boolean) ? ` | ${resto.filter(Boolean).join(' · ')}` : ''}`
+    : resto.filter(Boolean).join(' · ')
 
   return (
     <GradientBorder radius={24}>
@@ -31,13 +34,8 @@ export function ProfileHeader({ student, objetivos }: ProfileHeaderProps) {
           <div className="text-center sm:text-left min-w-0">
             <h2 className="uppercase italic font-black text-white leading-tight" style={{ fontSize: 'clamp(20px, 3vw, 26px)' }}>{student.name}</h2>
             <p style={{ color: 'rgba(255,255,255,0.42)', fontSize: 12.5, marginTop: 4 }}>
-              {subtitulo}
+              {subtitulo || '\u00A0'}
             </p>
-            <div className="flex items-center justify-center sm:justify-start gap-2 mt-3">
-              <span className="px-3 py-1 rounded-full font-bold" style={{ background: 'rgba(48,209,88,0.1)', border: '1px solid rgba(48,209,88,0.25)', color: GREEN, fontSize: 10.5 }}>
-                Objetivo: {objetivos.length ? objetivos.join(' · ') : 'Sin definir'}
-              </span>
-            </div>
           </div>
         </div>
       </div>

@@ -7,9 +7,8 @@ import { api, mensajeError, mapearErroresBackend } from '@/lib/api'
 import { useProgramasAgrupados } from '@/hooks/useCatalogo'
 import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
 import type { Universidad, NivelPrograma } from '@/types/catalogo'
-import { loadDocs, type StoredDocs } from '@/data/documents'
-import { validarPasoInfo, validarAcudiente } from '@/lib/validacionRegistro'
 import { BLUE_GRAD, RED, STEPS_ADULT, STEPS_MINOR, INITIAL_FORM } from '@/modules/students/NewStudentData'
+import { validarPasoInfo, validarAcudiente } from '@/lib/validacionRegistro'
 import type { TipoUsuario } from '@/modules/students/NewStudentData'
 import { isMinor as isMinorUtil } from '@/lib/dateUtils'
 import {
@@ -18,7 +17,7 @@ import {
 
 import { Step1Info } from './sections/Step1Info'
 import { StepAcudiente } from './sections/StepAcudiente'
-import { StepDocAgreement } from './sections/StepDocAgreement'
+import { StepDocAgreement, type DocsRegistro, cargarDocsRegistro } from './sections/StepDocAgreement'
 import { SuccessView } from './sections/SuccessView'
 
 type DocRequisito = 'tratamiento' | 'contrato' | 'parq'
@@ -56,7 +55,7 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
   const [aceptaDatos, setAceptaDatos] = useState(false)
   const [aceptaContrato, setAceptaContrato] = useState(false)
   const [aceptaParq, setAceptaParq] = useState(false)
-  const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
+  const [docs, setDocs] = useState<DocsRegistro>({ tratamiento: { dataUrl: null }, contrato: { dataUrl: null }, parq: { dataUrl: null } })
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
@@ -84,7 +83,7 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
       setAceptaDatos(false)
       setAceptaContrato(false)
       setAceptaParq(false)
-      setDocs(loadDocs())
+      cargarDocsRegistro().then(setDocs)
       setSuccess(false)
       setShake(false)
       setConfirmClose(false)

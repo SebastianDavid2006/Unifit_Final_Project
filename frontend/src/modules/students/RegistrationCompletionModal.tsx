@@ -5,8 +5,7 @@ import {
 } from 'lucide-react'
 import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
 import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_congratulations.webp'
-import { StepDocAgreement } from '@/modules/students/NewStudentModal/sections/StepDocAgreement'
-import { loadDocs, type StoredDocs } from '@/data/documents'
+import { StepDocAgreement, type DocsRegistro, cargarDocsRegistro } from '@/modules/students/NewStudentModal/sections/StepDocAgreement'
 import { api, mensajeError } from '@/lib/api'
 
 const BLUE = '#1270B7'
@@ -30,7 +29,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
   const [aceptaDatos, setAceptaDatos] = useState(false)
   const [aceptaContratoState, setAceptaContratoState] = useState(false)
   const [aceptaParqState, setAceptaParqState] = useState(false)
-  const [docs, setDocs] = useState<StoredDocs>(() => loadDocs())
+  const [docs, setDocs] = useState<DocsRegistro>({ tratamiento: { dataUrl: null }, contrato: { dataUrl: null }, parq: { dataUrl: null } })
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -52,7 +51,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
       setAceptaDatos(datosAccepted)
       setAceptaContratoState(contratoAccepted)
       setAceptaParqState(parqAccepted)
-      setDocs(loadDocs())
+      cargarDocsRegistro().then(setDocs)
       setSuccess(false)
       setLoading(false)
       setError('')

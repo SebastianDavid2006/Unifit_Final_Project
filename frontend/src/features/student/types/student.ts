@@ -11,7 +11,6 @@ export interface Student {
   email: string
   gender: 'M' | 'F'
   avatar: string
-  goal: string
   adherence: number
   /* -- Datos reales de perfil (fuente: GET /usuarios/me) -- */
   secondName?: string
@@ -34,6 +33,8 @@ export interface Student {
   jornada?: string
   roleLabel?: string
   statusLabel?: string
+  cargo?: string
+  area?: string
 }
 
 export interface RoutineWithAssessment {
