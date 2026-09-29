@@ -28,10 +28,10 @@ flowchart LR
         bridge <-->|"serial USB (COM)"| esp32
     end
 
-    ext -->|"HTTP /api/biometria<br/>x-api-key"| be
+    ext -->|"HTTP /api/biometria + /api/asistencia<br/>x-api-key"| be
 ```
 
-La comunicación es **inversa**: el dispositivo (a través del bridge) *llama* a la API del backend, no al revés. El bridge consulta periódicamente (polling) si hay huellas pendientes de enrolar o verificar.
+La comunicación es **inversa**: el dispositivo (a través del bridge) *llama* a la API del backend, no al revés. El bridge **consulta periódicamente (polling)** si hay huellas pendientes de enrolar y, además, **verifica de forma continua** las huellas que posa el usuario para registrar entradas y salidas.
 
 ## Flujo biométrico
 
@@ -53,6 +53,51 @@ sequenceDiagram
     Note over BE: Huella.activo = true
     FE->>BE: GET /biometria/estado/:id (polling)
 ```
+
+## Flujo de asistencia (entrada / salida)
+
+El bridge mantiene un ciclo propio de verificación **independiente** del polling de
+enrolamientos. Cada `INTERVALO_VERIFY_MS` envía `VERIFY` al ESP32 si no hay nada más
+pendiente; el sensor responde con el `slot` de la huella reconocida y el bridge lo
+envía al backend.
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant HW as ESP32 + AS608
+    participant BR as Bridge
+    participant BE as Backend
+
+    loop Cada INTERVALO_VERIFY_MS
+        BR->>HW: VERIFY
+        HW-->>BR: {"tipo":"verify_result","ok":false,"error":"Sin dedo detectado"}
+    end
+    U->>HW: Posar el dedo
+    HW-->>BR: {"tipo":"verify_result","ok":true,"slot":2}
+    BR->>BE: POST /asistencia/sensor {"indice_sensor":2}
+    Note over BE: Sin sesión abierta → ENTRADA
+    BE-->>BR: 201 {"tipo":"entrada"}
+    BR->>BR: Log: [ASISTENCIA] ENTRADA - slot 2
+```
+
+Quien decide si es **entrada** o **salida** es el backend (única fuente de verdad):
+si el usuario no tiene una asistencia abierta, registra entrada; si ya la tiene, la
+cierra y devuelve la duración. El bridge solo reenvía el `slot`.
+
+Reglas del ciclo:
+
+| Regla | Valor por defecto | Motivo |
+|---|---|---|
+| `INTERVALO_VERIFY_MS` | `1000` | Cada cuánto se consulta el sensor |
+| `COOLDOWN_VERIFY_MS` | `5000` | Evita registrar dos veces si el dedo sigue apoyado |
+| `TIMEOUT_VERIFY_MS` | `13000` | Libera el ciclo si el sensor no responde (el firmware captura hasta 10s) |
+
+Prioridades: si hay un **enrolamiento en curso**, el ciclo de verificación se detiene
+(el sensor está ocupado); y si el puerto serial se cierra, los estados internos se
+reinician al reconectar.
+
+La confirmación es la **línea de log del bridge** y, en la app, el historial de
+asistencias del usuario.
 
 ## Componentes
 
@@ -86,7 +131,17 @@ BAUD_RATE=115200
 BACKEND_URL=http://localhost:3000/api
 BIOMETRIA_API_KEY=una_clave_secreta_larga
 INTERVALO_POLL_MS=2000
+INTERVALO_VERIFY_MS=1000
+COOLDOWN_VERIFY_MS=5000
+TIMEOUT_VERIFY_MS=13000
 ```
+
+`PUERTO_SERIAL` es opcional: si se omite, el bridge detecta solo el ESP32 (CH340 /
+CP210x / Espressif) y lo confirma leyendo su mensaje `ready`.
+
+`BIOMETRIA_API_KEY` debe ser **la misma** que tiene el backend en su entorno (ver
+`BIOMETRIA_API_KEY` en `docker-compose.yml`); es la credencial con la que el bridge
+llama a `/api/biometria/*` y `/api/asistencia/sensor`.
 
 Para ejecutarlo:
 
@@ -119,6 +174,15 @@ Respuestas del ESP32 (JSON):
 - El bridge se autentica con **API Key** (header `x-api-key`), distinto al JWT de los usuarios.
 - **El template biométrico vive en el sensor AS608**, no en la base de datos.
   En la base de datos solo se guarda metadata (índice/`slot` del sensor).
+- El backend es el único que decide entrada vs. salida y aplica las reglas (usuario
+  activo, una sola sesión abierta, duración máxima de 6 h).
 - Rate limiting por endpoint para mitigar abuso.
+
+## Mejoras futuras
+
+- **Aviso audible en el PC de recepción** al registrar entrada/salida (el bridge puede
+  reproducir un `.wav` por evento sin tocar el firmware).
+- **Indicador luminoso** en el puente o en el propio sensor.
+- **Auto-verificación en firmware** para eliminar el ciclo de sondeo del bridge.
 
 Ver [`docs/protocolo-biometrico.md`](../docs/protocolo-biometrico.md) para el detalle completo del protocolo.

@@ -164,8 +164,14 @@ export async function getCuposDisponibles(): Promise<FrontendCupo[]> {
   return data.map(mapCupoBackToFront)
 }
 
-export async function reservarCupo(idCupo: string): Promise<FrontendAgenda> {
-  const { data } = await api.post<BackendAgenda>(`/cupos/${idCupo}/reservar`)
+export async function reservarCupo(
+  idCupo: string,
+  tipo?: 'registro' | 'valoracion',
+): Promise<FrontendAgenda> {
+  const { data } = await api.post<BackendAgenda>(
+    `/cupos/${idCupo}/reservar`,
+    tipo ? { tipo } : undefined,
+  )
   return mapAgendaBackToFront(data)
 }
 

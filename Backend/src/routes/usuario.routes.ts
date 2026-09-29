@@ -12,7 +12,6 @@ import {
   activarUsuarioHandler,
   cambiarRolHandler,
   actualizarPerfilHandler,
-  crearCita,
   obtenerMiCita,
 } from '../controllers/usuario.controller'
 import { verificarToken } from '../middlewares/verificarToken'
@@ -129,14 +128,7 @@ router.put(
   actualizarPerfilHandler,
 )
 
-// Cita de valoración (onboarding)
-router.post(
-  '/usuarios/me/cita',
-  verificarToken,
-  verificarEstado(['/api/usuarios/me/cita']),
-  crearCita,
-)
-
+// Cita de valoración (onboarding) - solo consulta; la reserva se hace sobre cupos
 router.get(
   '/usuarios/me/cita',
   verificarToken,

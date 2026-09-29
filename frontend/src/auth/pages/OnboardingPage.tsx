@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Calendar, CheckCircle2, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { api } from '@/lib/api'
+import { getCuposDisponibles, reservarCupo, type FrontendCupo } from '@/services/agenda.service'
 import { cerrarSesion, mapRolToPlatform } from '@/lib/auth'
 import { useNavigate, useLocation } from 'react-router'
 import logotipo from '@/assets/logo/logo.webp'
-import missingIllustration from '@/assets/illustrations/characters/coach/coach_missing_fingerprint_and_signature.webp'
 import successVideoDesktop from '@/assets/scenes/videos/desktop/registration_pending_dekstop.mp4'
 import successVideoMobile from '@/assets/scenes/videos/mobile/registration_pending_mobile.mp4'
 
@@ -16,60 +16,30 @@ const GREEN = '#30D158'
 
 type OnboardingPhase = 'schedule' | 'waiting' | 'success'
 
-const COLOMBIAN_HOLIDAYS_2026 = new Map([
-  ['2026-01-01', 'Año Nuevo'],
-  ['2026-01-06', 'Reyes Magos'],
-  ['2026-03-23', 'San José'],
-  ['2026-04-02', 'Jueves Santo'],
-  ['2026-04-03', 'Viernes Santo'],
-  ['2026-05-01', 'Día del Trabajo'],
-  ['2026-06-15', 'Corpus Christi'],
-  ['2026-06-22', 'Sagrado Corazón'],
-  ['2026-07-06', 'San Pedro y San Pablo'],
-  ['2026-07-20', 'Independencia'],
-  ['2026-08-07', 'Batalla de Boyacá'],
-  ['2026-08-17', 'Asunción de la Virgen'],
-  ['2026-10-12', 'Día de la Raza'],
-  ['2026-11-02', 'Todos los Santos'],
-  ['2026-11-16', 'Independencia de Cartagena'],
-  ['2026-12-08', 'Inmaculada Concepción'],
-  ['2026-12-25', 'Navidad'],
-])
-
-interface DaySlot {
+interface CupoSlot {
+  id: string
   time: string
-  available: boolean
 }
 
 interface DayInfo {
   date: Date
   isToday: boolean
   isPast: boolean
-  isHoliday: boolean
-  holidayName?: string
-  slots: DaySlot[]
-}
-
-const AVAILABLE_HOURS = ['07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
-
-function generateDayInfo(date: Date, today: Date): DayInfo {
-  const dateStr = date.toISOString().split('T')[0]
-  const isToday = date.toDateString() === today.toDateString()
-  const isPast = date < today && !isToday
-  const isHoliday = COLOMBIAN_HOLIDAYS_2026.has(dateStr)
-  const holidayName = COLOMBIAN_HOLIDAYS_2026.get(dateStr)
-  const dayOfWeek = date.getDay()
-
-  const slots: DaySlot[] = AVAILABLE_HOURS.map(time => ({
-    time,
-    available: !isPast && !isHoliday && dayOfWeek !== 0 && Math.random() > 0.3
-  }))
-
-  return { date, isToday, isPast, isHoliday, holidayName, slots }
+  slots: CupoSlot[]
 }
 
 function formatDateKey(date: Date): string {
-  return date.toISOString().split('T')[0]
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function makeDayInfo(date: Date, today: Date, cuposPorFecha: Map<string, CupoSlot[]>): DayInfo {
+  const isToday = date.toDateString() === today.toDateString()
+  const isPast = date < today && !isToday
+  const slots = isPast ? [] : cuposPorFecha.get(formatDateKey(date)) ?? []
+  return { date, isToday, isPast, slots }
 }
 
 interface SessionUser {
@@ -129,11 +99,28 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<DayInfo | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [selectedCupoId, setSelectedCupoId] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [showDuplicateCitaModal, setShowDuplicateCitaModal] = useState(false)
+  const [cupos, setCupos] = useState<FrontendCupo[]>([])
+  const [loadingCupos, setLoadingCupos] = useState(false)
+  const [cuposError, setCuposError] = useState<string | null>(null)
+  const [bookError, setBookError] = useState<string | null>(null)
+  const [citaCheck, setCitaCheck] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
   const today = useMemo(() => new Date(), [])
+
+  const cuposPorFecha = useMemo(() => {
+    const map = new Map<string, CupoSlot[]>()
+    for (const c of cupos) {
+      const key = c.fecha.slice(0, 10)
+      const slots = map.get(key) ?? []
+      slots.push({ id: c.id, time: c.horaInicio.slice(0, 5) })
+      map.set(key, slots)
+    }
+    for (const slots of map.values()) slots.sort((a, b) => a.time.localeCompare(b.time))
+    return map
+  }, [cupos])
 
   const daysInMonth = useMemo(() => {
     const year = currentMonth.getFullYear()
@@ -145,78 +132,79 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
 
     for (let i = 0; i < startDay; i++) days.push(null)
     for (let d = 1; d <= lastDay.getDate(); d++) {
-      days.push(generateDayInfo(new Date(year, month, d), today))
+      days.push(makeDayInfo(new Date(year, month, d), today, cuposPorFecha))
     }
     return days
-  }, [currentMonth, today])
+  }, [currentMonth, today, cuposPorFecha])
 
-  // Check for existing cita on mount and when phase changes to schedule
+  // Check for existing cita on mount, when phase changes to schedule, and after a failed booking
   useEffect(() => {
     if (phase === 'schedule') {
-      console.log('🔍 [Onboarding] useEffect: Checking cita (phase=schedule)')
       api.get('/usuarios/me/cita')
         .then(res => {
-          console.log('✅ [Onboarding] Cita found:', res.data)
           const cita = res.data as CitaResponse
           if (cita && cita.fecha && cita.hora_inicio) {
-            console.log('🔄 [Onboarding] Setting phase=waiting + navigate')
             const hora = new Date(cita.hora_inicio).toTimeString().slice(0, 5)
-            setSelectedDay(generateDayInfo(new Date(cita.fecha), today))
+            setSelectedDay(makeDayInfo(new Date(cita.fecha), today, new Map()))
             setSelectedTime(hora)
             setPhase('waiting')
             navigate('/incorporacion/asistencia-presencial', { replace: true })
           }
         })
         .catch(err => {
-          console.log('ℹ️ [Onboarding] No cita (404) or error:', err.response?.status)
           if (err.response?.status !== 404) console.error(err)
         })
     }
-  }, [phase, today, navigate])
+  }, [phase, today, navigate, citaCheck])
+
+  // Cargar los cupos reales publicados por el gimnasio (fuente única de disponibilidad)
+  useEffect(() => {
+    if (phase !== 'schedule') return
+    let cancelled = false
+    setLoadingCupos(true)
+    setCuposError(null)
+    getCuposDisponibles()
+      .then(list => { if (!cancelled) setCupos(list) })
+      .catch(() => { if (!cancelled) setCuposError('No se pudieron cargar los horarios disponibles') })
+      .finally(() => { if (!cancelled) setLoadingCupos(false) })
+    return () => { cancelled = true }
+  }, [phase])
 
   const handleDayClick = (day: DayInfo | null) => {
-    if (!day || day.isPast || day.isHoliday || day.slots.every(s => !s.available)) return
+    if (!day || day.isPast || day.slots.length === 0) return
     setSelectedDay(day)
     setSelectedTime(null)
+    setSelectedCupoId(null)
+    setBookError(null)
     setShowConfirmModal(false)
   }
 
-  const handleTimeClick = (time: string, available: boolean) => {
-    if (!available) return
-    setSelectedTime(time)
+  const handleTimeClick = (slot: CupoSlot) => {
+    setSelectedTime(slot.time)
+    setSelectedCupoId(slot.id)
+    setBookError(null)
     setShowConfirmModal(true)
   }
 
   const handleConfirmBooking = async () => {
-    if (!selectedDay || !selectedTime) return
+    if (!selectedCupoId) return
     setShowConfirmModal(false)
-    setShowSuccessModal(true)
+    setBookError(null)
 
     try {
-      await api.post('/usuarios/me/cita', {
-        fecha: formatDateKey(selectedDay.date),
-        hora: selectedTime,
-      })
-
+      await reservarCupo(selectedCupoId, 'valoracion')
+      setShowSuccessModal(true)
       setTimeout(() => {
         setShowSuccessModal(false)
         setPhase('waiting')
         navigate('/incorporacion/asistencia-presencial', { replace: true })
       }, 1500)
     } catch (error) {
-      console.log('❌ [Booking] Error:', error.response?.status, error.response?.data?.mensaje)
-      if (error.response?.status === 400) {
-        const msg = error.response?.data?.mensaje || ''
-        if (msg.includes('pendiente')) {
-          console.log('⚠️ [Booking] Duplicate cita detected → show modal')
-          setShowSuccessModal(false)
-          setShowDuplicateCitaModal(true)
-          return
-        }
-        setShowSuccessModal(false)
-        setPhase('waiting')
-        navigate('/incorporacion/asistencia-presencial', { replace: true })
-      }
+      const err = error as { response?: { data?: { mensaje?: string } } }
+      const msg = err.response?.data?.mensaje
+      setBookError(msg || 'No se pudo agendar la cita. Elige otro horario.')
+      getCuposDisponibles().then(setCupos).catch(() => {})
+      setCitaCheck(t => t + 1)
     }
   }
 
@@ -305,6 +293,19 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                     Selecciona día y hora para tu primera valoración física
                   </motion.p>
 
+                  {loadingCupos && (
+                    <p className="text-xs text-center mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>Cargando horarios disponibles…</p>
+                  )}
+                  {cuposError && !loadingCupos && (
+                    <p className="text-xs text-center mb-4" style={{ color: FIRE }}>{cuposError}</p>
+                  )}
+                  {!loadingCupos && !cuposError && cupos.length === 0 && (
+                    <p className="text-xs text-center mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>Aún no hay horarios publicados. Intenta de nuevo más tarde.</p>
+                  )}
+                  {bookError && (
+                    <p className="text-xs text-center mb-4" style={{ color: FIRE }}>{bookError}</p>
+                  )}
+
                   <div className="rounded-2xl mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                       <motion.button
@@ -337,27 +338,26 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                       {daysInMonth.map((day, i) => (
                         <motion.button
                           key={day ? formatDateKey(day.date) : `empty-${i}`}
-                          whileHover={{ scale: day && !day.isPast && !day.isHoliday && day.slots.some(s => s.available) ? 1.05 : 1 }}
+                          whileHover={{ scale: day && !day.isPast && day.slots.length > 0 ? 1.05 : 1 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => day && handleDayClick(day)}
-                          disabled={!day || day.isPast || day.isHoliday || day.slots.every(s => !s.available)}
+                          disabled={!day || day.isPast || day.slots.length === 0}
                           className="relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all"
                           style={{
-                            background: day && !day.isPast && !day.isHoliday && day.slots.some(s => s.available)
+                            background: day && !day.isPast && day.slots.length > 0
                               ? (selectedDay?.date.getTime() === day.date.getTime() ? `linear-gradient(135deg, ${FIRE}, ${AMBER})` : 'rgba(255,255,255,0.04)')
                               : 'transparent',
-                            border: day && !day.isPast && !day.isHoliday && day.slots.some(s => s.available)
+                            border: day && !day.isPast && day.slots.length > 0
                               ? (selectedDay?.date.getTime() === day.date.getTime() ? 'none' : '1px solid rgba(255,255,255,0.08)')
                               : 'none',
-                            color: day?.isToday ? '#7ec8e3' : day?.isPast || day?.isHoliday || day?.slots.every(s => !s.available) ? 'rgba(255,255,255,0.15)' : '#fff',
-                            opacity: day?.isPast || day?.isHoliday || day?.slots.every(s => !s.available) ? 0.4 : 1,
+                            color: day?.isToday ? '#7ec8e3' : day?.isPast || day?.slots.length === 0 ? 'rgba(255,255,255,0.15)' : '#fff',
+                            opacity: day?.isPast || day?.slots.length === 0 ? 0.4 : 1,
                           }}
                         >
                           <span style={{ fontSize: day?.isToday ? 15 : 13, fontWeight: day?.isToday ? 800 : 500 }}>
                             {day?.date.getDate()}
                           </span>
                           {day?.isToday && <span className="w-2 h-2 rounded-full mt-1" style={{ background: '#7ec8e3' }} />}
-                          {day?.isHoliday && <span className="text-[8px] mt-1" style={{ color: AMBER }}>🎉</span>}
                         </motion.button>
                       ))}
                     </div>
@@ -381,7 +381,7 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                             {selectedDay.isToday && <span className="ml-2 text-[10px] font-bold" style={{ color: '#7ec8e3' }}>Hoy</span>}
                           </p>
                           <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                            {selectedDay.slots.filter(s => s.available).length} horarios disponibles
+                            {selectedDay.slots.length} horarios disponibles
                           </p>
                         </div>
                       </div>
@@ -389,25 +389,19 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                       <div className="grid grid-cols-4 gap-2">
                         {selectedDay.slots.map(slot => (
                           <motion.button
-                            key={slot.time}
-                            whileHover={slot.available ? { scale: 1.05 } : {}}
-                            whileTap={slot.available ? { scale: 0.95 } : {}}
-                            onClick={() => handleTimeClick(slot.time, slot.available)}
-                            disabled={!slot.available}
+                            key={slot.id}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleTimeClick(slot)}
                             className="aspect-square rounded-xl font-bold text-sm transition-all"
                             style={{
                               background: selectedTime === slot.time
                                 ? `linear-gradient(135deg, ${FIRE}, ${AMBER})`
-                                : slot.available
-                                ? 'rgba(255,255,255,0.05)'
-                                : 'rgba(255,255,255,0.02)',
+                                : 'rgba(255,255,255,0.05)',
                               border: selectedTime === slot.time
                                 ? 'none'
-                                : slot.available
-                                ? '1px solid rgba(255,255,255,0.08)'
-                                : '1px solid rgba(255,255,255,0.03)',
-                              color: slot.available ? (selectedTime === slot.time ? '#fff' : '#fff') : 'rgba(255,255,255,0.15)',
-                              opacity: slot.available ? 1 : 0.4,
+                                : '1px solid rgba(255,255,255,0.08)',
+                              color: '#fff',
                             }}
                           >
                             {slot.time}
@@ -608,48 +602,6 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                   <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.5)' }}>
                     Tu valoración ha sido programada exitosamente.
                   </p>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {showDuplicateCitaModal && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
-                onClick={() => setShowDuplicateCitaModal(false)}
-              >
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                  onClick={e => e.stopPropagation()}
-                  className="w-full max-w-sm rounded-3xl p-6 text-center"
-                  style={{ background: '#12121C', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 30px 80px rgba(0,0,0,0.6)' }}
-                >
-                  <div className="mx-auto mb-4 w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${AMBER}, ${FIRE})` }}>
-                    <Calendar size={28} style={{ color: '#fff' }} />
-                  </div>
-                  <h3 className="uppercase italic font-black text-white mb-2" style={{ fontSize: 20, letterSpacing: '0.02em' }}>
-                    Cita ya agendada
-                  </h3>
-                  <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                    Ya tienes una cita de valoración pendiente programada.
-                  </p>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => { setShowDuplicateCitaModal(false); navigate('/incorporacion/asistencia-presencial', { replace: true }) }}
-                    className="w-full py-3 rounded-xl font-black text-white"
-                    style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, boxShadow: `0 8px 24px ${FIRE}40` }}
-                  >
-                    Ver mi cita
-                  </motion.button>
                 </motion.div>
               </motion.div>
             )}

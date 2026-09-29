@@ -29,25 +29,6 @@ function fmtDateKey(d: Date): string {
   return `${y}-${m}-${dd}`
 }
 
-/* Festivos Colombia (Emiliani) — cálculo con Pascua */
-function easterSunday(year: number): Date {
-  const a = year % 19
-  const b = Math.floor(year / 100)
-  const c = year % 100
-  const d = Math.floor(b / 4)
-  const e = b % 4
-  const f = Math.floor((b + 8) / 25)
-  const g = Math.floor((b - f + 1) / 3)
-  const h = (19 * a + b - d - g + 15) % 30
-  const i = Math.floor(c / 4)
-  const k = c % 4
-  const l = (32 + 2 * e + 2 * i - h - k) % 7
-  const m = Math.floor((a + 11 * h + 22 * l) / 451)
-  const month = Math.floor((h + l - 7 * m + 114) / 31)
-  const day = ((h + l - 7 * m + 114) % 31) + 1
-  return new Date(year, month - 1, day)
-}
-
 export function offset(d: Date, days: number): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days)
 }
@@ -64,42 +45,10 @@ export function freeSlots(info: DayAvailability): number {
   return info.slots.filter(s => !s.taken).length
 }
 
-export function colombianHolidays(year: number): Map<string, string> {
-  const map = new Map<string, string>()
-  const key = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-  const addFixed = (m: number, day: number, name: string, moveMonday: boolean) => {
-    let d = new Date(year, m, day)
-    if (moveMonday) d = offset(d, (8 - d.getDay()) % 7 || 7)
-    map.set(key(d), name)
-  }
-  const addEasterBased = (days: number, name: string, moveMonday: boolean) => {
-    let d = offset(easterSunday(year), days)
-    if (moveMonday) d = offset(d, (8 - d.getDay()) % 7 || 7)
-    map.set(key(d), name)
-  }
-  addFixed(0, 1, 'Año Nuevo', false)
-  addFixed(0, 6, 'Reyes Magos', true)
-  addFixed(2, 19, 'San José', true)
-  addFixed(4, 1, 'Día del Trabajo', false)
-  addFixed(6, 20, 'Independencia', false)
-  addFixed(7, 7, 'Batalla de Boyacá', false)
-  addEasterBased(-3, 'Jueves Santo', false)
-  addEasterBased(-2, 'Viernes Santo', false)
-  addEasterBased(43, 'Ascensión', true)
-  addEasterBased(64, 'Corpus Christi', true)
-  addEasterBased(71, 'Sagrado Corazón', true)
-  addFixed(7, 15, 'Asunción', true)
-  addFixed(9, 12, 'Día de la Raza', true)
-  addFixed(10, 1, 'Todos los Santos', true)
-  addFixed(10, 11, 'Independencia de Cartagena', true)
-  addFixed(11, 8, 'Inmaculada Concepción', false)
-  addFixed(11, 25, 'Navidad', false)
-  return map
-}
-
-/* Disponibilidad real: consulta los cupos publicados cargados del backend */
+/* Disponibilidad real: consulta los cupos publicados cargados del backend.
+   Los festivos llegan ya calculados desde el backend (GET /festivos) */
 export function getDayInfo(date: Date, holidays: Map<string, string>): DayAvailability {
-  const holidayName = holidays.get(`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`)
+  const holidayName = holidays.get(fmtDateKey(date))
   if (holidayName) return { date, isHoliday: true, holidayName, isCoachDay: false, slots: [] }
   const slots = cuposPorFecha[fmtDateKey(date)] || []
   if (slots.length === 0) return { date, isHoliday: false, isCoachDay: false, slots: [] }

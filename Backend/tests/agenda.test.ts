@@ -758,3 +758,88 @@ describe.sequential('Agenda - Bloques, opción A y cancelación', () => {
     expect(staff.status).toBe(200)
   })
 })
+
+describe.sequential('Cupos - Reserva con tipo (valoración/registro)', () => {
+  const publicarDia = async (fecha: string, dia: string) => {
+    const res = await request(app)
+      .post('/api/cupos/publicar')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        fecha_inicio: fecha,
+        fecha_fin: fecha,
+        horarios_por_dia: [{ dia, rangos: [{ inicio: '08:00', fin: '09:00' }] }],
+      })
+    expect(res.status).toBe(201)
+  }
+
+  const cupoLibreDe = async (fecha: string) =>
+    prisma.cupo.findFirst({ where: { fecha: new Date(`${fecha}T00:00:00`), agenda: { is: null } } })
+
+  it('POST /cupos/:id/reservar - tipo valoracion crea cita de valoracion y alimenta GET /usuarios/me/cita', async () => {
+    await publicarDia('2026-12-11', 'vie')
+    const cupo = await cupoLibreDe('2026-12-11')
+    expect(cupo).not.toBeNull()
+
+    const res = await request(app)
+      .post(`/api/cupos/${cupo!.id_cupo}/reservar`)
+      .set('Authorization', `Bearer ${token('pendienteToken')}`)
+      .send({ tipo: 'valoracion' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.tipo).toBe('valoracion')
+    expect(res.body.observaciones).toContain('Valoración')
+
+    const miCita = await request(app)
+      .get('/api/usuarios/me/cita')
+      .set('Authorization', `Bearer ${token('pendienteToken')}`)
+    expect(miCita.status).toBe(200)
+    expect(miCita.body.tipo).toBe('valoracion')
+  })
+
+  it('POST /cupos/:id/reservar - segunda valoracion del mismo usuario → 400 y no consume el cupo', async () => {
+    await publicarDia('2026-12-15', 'mar')
+    const cupo = await cupoLibreDe('2026-12-15')
+    expect(cupo).not.toBeNull()
+
+    const res = await request(app)
+      .post(`/api/cupos/${cupo!.id_cupo}/reservar`)
+      .set('Authorization', `Bearer ${token('pendienteToken')}`)
+      .send({ tipo: 'valoracion' })
+
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toBe('Ya tienes una cita de valoración pendiente')
+
+    const sigueLibre = await cupoLibreDe('2026-12-15')
+    expect(sigueLibre).not.toBeNull()
+  })
+
+  it('POST /cupos/:id/reservar - sin tipo usa registro por defecto', async () => {
+    await publicarDia('2026-12-12', 'sáb')
+    const cupo = await cupoLibreDe('2026-12-12')
+    expect(cupo).not.toBeNull()
+
+    const res = await request(app)
+      .post(`/api/cupos/${cupo!.id_cupo}/reservar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+
+    expect(res.status).toBe(201)
+    expect(res.body.tipo).toBe('registro')
+    expect(res.body.observaciones).toBe('Reservado a través de cupo')
+  })
+
+  it('POST /cupos/:id/reservar - tipo inválido → 400 y no consume el cupo', async () => {
+    await publicarDia('2026-12-14', 'lun')
+    const cupo = await cupoLibreDe('2026-12-14')
+    expect(cupo).not.toBeNull()
+
+    const res = await request(app)
+      .post(`/api/cupos/${cupo!.id_cupo}/reservar`)
+      .set('Authorization', `Bearer ${token('usuarioToken')}`)
+      .send({ tipo: 'otro' })
+
+    expect(res.status).toBe(400)
+
+    const sigueLibre = await cupoLibreDe('2026-12-14')
+    expect(sigueLibre).not.toBeNull()
+  })
+})

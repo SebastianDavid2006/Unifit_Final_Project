@@ -6,10 +6,10 @@ import { es } from 'date-fns/locale'
 import type { DayAvailability } from '@/features/student/types/student'
 import { SectionTitle, FIRE, AMBER, GREEN } from '@/features/student/components/ui/fitness'
 import {
-  colombianHolidays, offset, sameDay, weekStart, sessionDateTimeOf, HOURS_24_MS,
+  offset, sameDay, weekStart, sessionDateTimeOf, HOURS_24_MS,
   setCuposDisponiblesPorFecha, getCupoIdPorSlot, type CupoSlot,
 } from './agendaUtils'
-import { getCuposDisponibles, getMiAgenda, reservarCupo } from '@/services/agenda.service'
+import { getCuposDisponibles, getMiAgenda, reservarCupo, obtenerFestivos } from '@/services/agenda.service'
 import { MonthView } from './components/MonthView'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
@@ -18,17 +18,26 @@ import { BookingConfirmModal, BookingSuccessModal } from './components/BookingMo
 
 export function AgendaPage() {
   const today = useMemo(() => new Date(), [])
-  const holidays = useMemo(() => {
-    const y = today.getFullYear()
-    const map = colombianHolidays(y)
-    ;[...colombianHolidays(y + 1).entries()].forEach(([k, v]) => map.set(k, v))
-    return map
-  }, [today])
 
   const [currentDate, setCurrentDate] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1))
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const [selected, setSelected] = useState<DayAvailability | null>(null)
   const [weekOffset, setWeekOffset] = useState(0)
+  const [holidays, setHolidays] = useState<Map<string, string>>(new Map())
+
+  const anioVista = currentDate.getFullYear()
+  useEffect(() => {
+    let activo = true
+    Promise.all([obtenerFestivos(anioVista), obtenerFestivos(anioVista + 1)])
+      .then(([anioActual, anioSiguiente]) => {
+        if (!activo) return
+        const map = new Map<string, string>()
+        for (const f of [...anioActual, ...anioSiguiente]) map.set(f.date, f.name)
+        setHolidays(map)
+      })
+      .catch(() => { if (activo) setHolidays(new Map()) })
+    return () => { activo = false }
+  }, [anioVista])
 
   /* ---- Flujo de reserva ---- */
   const [pendingBooking, setPendingBooking] = useState<{ info: DayAvailability; time: string } | null>(null)

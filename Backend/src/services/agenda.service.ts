@@ -594,7 +594,11 @@ export async function listarCuposDisponibles() {
   return cupos.map(mapCupo)
 }
 
-export async function reservarCupo(id_cupo: string, id_usuario: string) {
+export async function reservarCupo(
+  id_cupo: string,
+  id_usuario: string,
+  tipo: 'registro' | 'valoracion' = 'registro',
+) {
   return prisma.$transaction(async (tx) => {
     const cupo = await tx.cupo.findUnique({
       where: { id_cupo: id_cupo },
@@ -619,6 +623,14 @@ export async function reservarCupo(id_cupo: string, id_usuario: string) {
     })
     if (!usuario) throw new HttpError(404, 'Usuario no encontrado')
 
+    if (tipo === 'valoracion') {
+      const valoracionPendiente = await tx.agenda.findFirst({
+        where: { id_usuario, tipo: 'valoracion', estado: 'pendiente' },
+        select: { id_agenda: true },
+      })
+      if (valoracionPendiente) throw new HttpError(400, 'Ya tienes una cita de valoración pendiente')
+    }
+
     const citaMismoDia = await tx.agenda.findFirst({
       where: { id_usuario, fecha: cupo.fecha, estado: { not: 'cancelado' } },
       select: { id_agenda: true },
@@ -633,8 +645,8 @@ export async function reservarCupo(id_cupo: string, id_usuario: string) {
         fecha: cupo.fecha,
         hora_inicio: cupo.hora_inicio,
         hora_fin: cupo.hora_fin,
-        tipo: 'registro',
-        observaciones: 'Reservado a través de cupo',
+        tipo,
+        observaciones: tipo === 'valoracion' ? 'Valoración reservada a través de cupo' : 'Reservado a través de cupo',
       },
       include: {
         usuario: {

@@ -58,6 +58,10 @@ const publicarCuposSchema = z.object({
     .min(1),
 })
 
+const reservarCupoSchema = z.object({
+  tipo: z.enum(['valoracion', 'registro']).optional(),
+})
+
 export async function getAgenda(_req: Request, res: Response): Promise<void> {
   res.json(await listarAgenda())
 }
@@ -161,8 +165,14 @@ export async function getCupos(_req: Request, res: Response): Promise<void> {
 }
 
 export async function postReservarCupo(req: Request, res: Response): Promise<void> {
+  const parsed = reservarCupoSchema.safeParse(req.body ?? {})
+  if (!parsed.success) {
+    res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
+    return
+  }
+
   try {
-    const agenda = await reservarCupo(req.params.id as string, req.usuario!.id_usuario)
+    const agenda = await reservarCupo(req.params.id as string, req.usuario!.id_usuario, parsed.data.tipo ?? 'registro')
     res.status(201).json(agenda)
   } catch (error) {
     if (!responderErrorPrisma(error, res)) throw error

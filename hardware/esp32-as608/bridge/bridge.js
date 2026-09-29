@@ -8,6 +8,11 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000/api'
 const API_KEY = process.env.BIOMETRIA_API_KEY || ''
 const INTERVALO_POLL_MS = parseInt(process.env.INTERVALO_POLL_MS || '5000', 10)
 const TIMEOUT_DETECCION_MS = parseInt(process.env.TIMEOUT_DETECCION_MS || '4000', 10)
+// Verificación de asistencia: cada cuánto se consulta el sensor y qué tan rápido
+// se puede volver a registrar tras una huella reconocida (evita doble toque).
+const INTERVALO_VERIFY_MS = parseInt(process.env.INTERVALO_VERIFY_MS || '1000', 10)
+const COOLDOWN_VERIFY_MS = parseInt(process.env.COOLDOWN_VERIFY_MS || '5000', 10)
+const TIMEOUT_VERIFY_MS = parseInt(process.env.TIMEOUT_VERIFY_MS || '13000', 10)
 
 let backoffMs = INTERVALO_POLL_MS
 
@@ -29,6 +34,9 @@ let parser = null
 let esp32Listo = false
 let enrolamientoActivo = null
 let detectando = false
+let verificando = false
+let cooldownHasta = 0
+let verifyWatchdog = null
 
 function log(msg) {
   console.log(`[${new Date().toISOString()}] ${msg}`)
@@ -176,6 +184,9 @@ function conectarSerial(pathPort) {
   puerto.on('close', () => {
     log('Puerto serial cerrado. Reintentando...')
     esp32Listo = false
+    verificando = false
+    cooldownHasta = 0
+    if (verifyWatchdog) { clearTimeout(verifyWatchdog); verifyWatchdog = null }
     reintentarConexion()
   })
 
@@ -236,10 +247,20 @@ function procesarMensajeESP32(datos) {
       break
 
     case 'verify_result':
+      if (verifyWatchdog) { clearTimeout(verifyWatchdog); verifyWatchdog = null }
+      verificando = false
       if (datos.ok) {
-        log(`Huella verificada - slot ${datos.slot}`)
-      } else {
-        log(`Verificación: ${datos.error}`)
+        const slot = datos.slot
+        log(`Huella verificada - slot ${slot}`)
+        cooldownHasta = Date.now() + COOLDOWN_VERIFY_MS
+        if (enrolamientoActivo) {
+          log(`[ASISTENCIA] Verificación descartada: hay un enrolamiento en curso`)
+        } else {
+          registrarAsistencia(slot)
+        }
+      } else if (datos.error !== 'Sin dedo detectado') {
+        // "Sin dedo detectado" es el caso normal (nadie frente al sensor): no se loguea
+        log(`[ASISTENCIA] Sensor: ${datos.error}`)
       }
       break
 
@@ -259,7 +280,9 @@ function procesarMensajeESP32(datos) {
 }
 
 async function verificarPendientes() {
-  if (!esp32Listo || enrolamientoActivo || detectando) return
+  // El enrolamiento tiene prioridad, pero nunca se interrumpe una verificación
+  // en curso: el sensor está ocupado y su respuesta llegaría tarde.
+  if (!esp32Listo || enrolamientoActivo || detectando || verificando) return
 
   try {
     const res = await api.get('/biometria/pendientes')
@@ -324,10 +347,62 @@ async function completarEnrolamiento(slot) {
   enrolamientoActivo = null
 }
 
+// --- Verificación de asistencia (entrada / salida por huella) ---
+
+function cicloVerificacion() {
+  if (!esp32Listo || enrolamientoActivo || detectando || verificando) return
+  if (Date.now() < cooldownHasta) return
+  if (!puerto || !puerto.isOpen) return
+
+  verificando = true
+  puerto.write('VERIFY\n')
+
+  // El firmware captura hasta ~10s; si no llega respuesta, liberamos el flag
+  // para no quedar bloqueados si el sensor falla a mitad de captura.
+  if (verifyWatchdog) clearTimeout(verifyWatchdog)
+  verifyWatchdog = setTimeout(() => {
+    verifyWatchdog = null
+    verificando = false
+    log('[ASISTENCIA] El sensor no respondió al VERIFY; se reintentará en el próximo ciclo')
+  }, TIMEOUT_VERIFY_MS)
+}
+
+function verifyLoop() {
+  cicloVerificacion()
+  setTimeout(verifyLoop, INTERVALO_VERIFY_MS)
+}
+
+async function registrarAsistencia(indiceSensor) {
+  try {
+    const res = await api.post('/asistencia/sensor', { indice_sensor: indiceSensor })
+    const data = res.data || {}
+    const asistencia = data.asistencia || {}
+    if (data.tipo === 'salida') {
+      const duracion = asistencia.duracion_minutos
+      log(`[ASISTENCIA] SALIDA - slot ${indiceSensor} (${duracion !== undefined ? duracion : '?'} min)`)
+    } else {
+      log(`[ASISTENCIA] ENTRADA - slot ${indiceSensor}`)
+    }
+  } catch (err) {
+    if (err.response) {
+      const msg = (err.response.data && err.response.data.mensaje) || ''
+      if (err.response.status === 429) {
+        cooldownHasta = Date.now() + COOLDOWN_VERIFY_MS * 2
+        log(`[ASISTENCIA] Rate limit (429). Pausa de ${COOLDOWN_VERIFY_MS * 2}ms`)
+      } else {
+        log(`[ASISTENCIA] RECHAZO (${err.response.status}) - slot ${indiceSensor}: ${msg}`)
+      }
+    } else {
+      log(`[ASISTENCIA] Error de red: ${err.message}`)
+    }
+  }
+}
+
 log('=== Bridge Biométrico UNIFIT ===')
 log(`Backend: ${BACKEND_URL}`)
 log(`Baud Rate: ${BAUD_RATE}`)
 log(`API Key: ${API_KEY ? '***configurada***' : 'NO CONFIGURADA'} (usa la misma del backend)`)
+log(`Asistencia por huella: cada ${INTERVALO_VERIFY_MS}ms, cooldown ${COOLDOWN_VERIFY_MS}ms`)
 
 ;(async () => {
   const ruta = await detectarPuertoEsp32()
@@ -347,6 +422,9 @@ log(`API Key: ${API_KEY ? '***configurada***' : 'NO CONFIGURADA'} (usa la misma 
       setTimeout(pollLoop, backoffMs)
     }
     pollLoop()
+
+    log('ESP32 listo. Iniciando verificación de asistencia (entrada/salida por huella)...')
+    verifyLoop()
   } else {
     log('No se pudo detectar el ESP32. Reintentando en 5s...')
     setTimeout(reintentarConexion, 5000)

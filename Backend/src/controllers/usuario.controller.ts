@@ -26,11 +26,11 @@ import {
   actualizarPerfil,
   buscarExistentePorCredenciales,
 } from '../services/usuario.service'
-import { crearCita, obtenerMiCita } from './cita.controller'
+import { obtenerMiCita } from './cita.controller'
 import { responderErrorPrisma } from '../utils/prisma-errors'
 import { HttpError } from '../utils/HttpError'
 
-export { crearCita, obtenerMiCita }
+export { obtenerMiCita }
 import { prisma } from '../utils/prisma'
 
 const DISPOSABLE_DOMAINS = new Set([
