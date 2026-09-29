@@ -61,8 +61,49 @@ export default function StudentsSection({ stats, loading }: {
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <ChartCard icon={TrendingUp} title="EVOLUCIÓN DE USUARIOS" delay={0.25}>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-8">
+        <ChartCard icon={Users} title="DISTRIBUCIÓN POR SEXO" delay={0.25}>
+          {loading ? empty('Cargando…') : sexData.length === 0 ? empty('Sin datos de sexo') : (
+            <>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie data={sexData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" stroke="#FFFFFF" strokeWidth={2}>
+                    {sexData.map(s => <Cell key={s.name} fill={s.color} />)}
+                  </Pie>
+                  <ReTooltip contentStyle={tooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+              {leyenda(sexData)}
+            </>
+          )}
+        </ChartCard>
+
+        <ChartCard icon={Activity} title="ACTIVOS VS INACTIVOS" delay={0.3}>
+          {loading ? empty('Cargando…') : activityData.filter(d => d.value > 0).length === 0 ? empty('Sin usuarios con estado') : (
+            <>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie data={activityData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" stroke="#FFFFFF" strokeWidth={2}>
+                    {activityData.map(d => <Cell key={d.name} fill={d.color} />)}
+                  </Pie>
+                  <ReTooltip contentStyle={tooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center gap-6 mt-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#30D158' }} />
+                  <span className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>Activos {pct(usuarios?.activos ?? 0)}%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ background: '#F43843' }} />
+                  <span className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>Inactivos {pct(usuarios?.inactivos ?? 0)}%</span>
+                </div>
+              </div>
+            </>
+          )}
+        </ChartCard>
+
+        <ChartCard icon={TrendingUp} title="EVOLUCIÓN DE USUARIOS" delay={0.35}>
           {loading ? empty('Cargando…') : usersSeries.length === 0 ? empty('Aún no hay usuarios registrados') : (
             <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={usersSeries}>
@@ -82,49 +123,6 @@ export default function StudentsSection({ stats, loading }: {
           )}
         </ChartCard>
 
-        <ChartCard icon={Users} title="DISTRIBUCIÓN POR SEXO" delay={0.3}>
-          {loading ? empty('Cargando…') : sexData.length === 0 ? empty('Sin datos de sexo') : (
-            <>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={sexData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" paddingAngle={4}>
-                    {sexData.map(s => <Cell key={s.name} fill={s.color} />)}
-                  </Pie>
-                  <ReTooltip contentStyle={tooltipStyle} />
-                </PieChart>
-              </ResponsiveContainer>
-              {leyenda(sexData)}
-            </>
-          )}
-        </ChartCard>
-
-        <ChartCard icon={Activity} title="ACTIVOS VS INACTIVOS" delay={0.35}>
-          {loading ? empty('Cargando…') : activityData.filter(d => d.value > 0).length === 0 ? empty('Sin usuarios con estado') : (
-            <>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={activityData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" paddingAngle={4}>
-                    {activityData.map(d => <Cell key={d.name} fill={d.color} />)}
-                  </Pie>
-                  <ReTooltip contentStyle={tooltipStyle} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex justify-center gap-6 mt-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ background: '#30D158' }} />
-                  <span className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>Activos {pct(usuarios?.activos ?? 0)}%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ background: '#F43843' }} />
-                  <span className="text-[10px] font-medium" style={{ color: 'rgba(0,0,0,0.5)' }}>Inactivos {pct(usuarios?.inactivos ?? 0)}%</span>
-                </div>
-              </div>
-            </>
-          )}
-        </ChartCard>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4">
         <ChartCard icon={Briefcase} title="DISTRIBUCIÓN POR CARGO UNIVERSITARIO" delay={0.4}>
           {loading ? empty('Cargando…') : cargoData.length === 0 ? empty('Sin datos de cargo universitario') : (
             <ResponsiveContainer width="100%" height={280}>

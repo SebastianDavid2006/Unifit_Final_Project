@@ -47,6 +47,7 @@ export interface Trainer {
   secondLastName: string
   email: string
   phone: string
+  documentType: string
   document: string
   speciality: string
   role: 'trainer' | 'admin'
@@ -84,6 +85,13 @@ import { formatDateES, formatDateTimeES } from '@/lib/dateUtils'
 
 function formatDate(dateStr?: string): string {
   return formatDateES(dateStr, { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function toDateInputValue(dateStr?: string | null): string {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toISOString().slice(0, 10)
 }
 
 const GENERO_LABEL: Record<string, string> = {
@@ -137,7 +145,7 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     secondLastName: u.segundo_apellido ?? '',
     documentType: u.tipo_documento,
     documentNumber: u.documento,
-    birthDate: u.fecha_nacimiento ?? '',
+    birthDate: toDateInputValue(u.fecha_nacimiento),
     gender: mapGenero(u),
     eps: u.eps ?? '',
     bloodType: u.grupo_sanguineo ?? '',
@@ -186,7 +194,8 @@ export function mapBackendToTrainer(u: BackendUsuario): Trainer {
     secondLastName: u.segundo_apellido ?? '',
     email: u.email_contacto,
     phone: u.telefono_contacto ?? '',
-    document: `${u.tipo_documento}. ${u.documento}`,
+    documentType: u.tipo_documento,
+    document: u.documento,
     speciality: u.rol === 'admin' ? 'Administración del Sistema' : 'Entrenamiento General',
     role: u.rol === 'admin' ? 'admin' : 'trainer',
     status: STATUS_MAP[u.estado] ?? 'process',
@@ -195,8 +204,8 @@ export function mapBackendToTrainer(u: BackendUsuario): Trainer {
     contactName: '',
     contactPhone: '',
     contactRelation: '',
-    birthDate: u.fecha_nacimiento ?? '',
-    gender: '',
+    birthDate: toDateInputValue(u.fecha_nacimiento),
+    gender: mapGenero(u),
     eps: '',
     bloodType: '',
     accessLevel: u.rol === 'admin' ? 'Completo' : 'Parcial',
@@ -233,6 +242,26 @@ export async function cambiarRol(id: string, rol: 'admin' | 'entrenador' | 'usua
 export async function actualizarPerfil(id: string, data: Record<string, unknown>): Promise<BackendUsuario> {
   const res = await api.put(`/usuarios/${id}/perfil`, data)
   return res.data
+}
+
+/**
+ * Traduce el Trainer de la UI al snake_case que espera el backend. El género
+ * va en minúscula porque el enum de Prisma lo almacena así, mientras la UI lo
+ * muestra capitalizado.
+ */
+export async function actualizarEntrenador(id: string, t: Trainer): Promise<BackendUsuario> {
+  return actualizarPerfil(id, {
+    primer_nombre: t.firstName,
+    segundo_nombre: t.secondName || undefined,
+    primer_apellido: t.lastName,
+    segundo_apellido: t.secondLastName || undefined,
+    email_contacto: t.email,
+    telefono_contacto: t.phone || undefined,
+    documento: t.document,
+    tipo_documento: t.documentType,
+    fecha_nacimiento: t.birthDate || undefined,
+    genero: t.gender ? t.gender.toLowerCase() : undefined,
+  })
 }
 
 export async function desactivarUsuario(id: string): Promise<void> {

@@ -1,13 +1,12 @@
-﻿import { motion, AnimatePresence } from 'motion/react'
+﻿import { useState } from 'react'
+import type { ReactNode } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
 import { X, Power, PenLine, Check } from 'lucide-react'
 import type { Trainer } from '@/services/usuario.service'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
-import { LockView } from '@/assets/models/ui/objects/lock/LockModel'
-import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
-import { CalendarView } from '@/assets/models/ui/objects/calendar/CalendarModel'
 import { BLUE_GRAD, GREEN_BLUE_GRAD, RED } from '../../../data'
-import { calcAge } from '@/lib/dateUtils'
+import { TIPO_DOC, GENEROS } from '@/data/config/catalogosRegistro'
 
 interface TrainerInfoModalProps {
   isOpen: boolean
@@ -16,54 +15,93 @@ interface TrainerInfoModalProps {
   draft: Record<string, string> | null
   onClose: () => void
   onEdit: () => void
-  onSave: () => void
+  onSave: () => void | Promise<void>
   onStatusChange: () => void
   onDraftChange: (key: string, value: string) => void
+  guardando?: boolean
+  errorGuardado?: string | null
 }
 
-const CATEGORIES = [
+type CampoType = 'text' | 'email' | 'date' | 'select'
+
+interface Campo {
+  key: string
+  label: string
+  type?: CampoType
+  required?: boolean
+  options?: { value: string; label: string }[]
+}
+
+const TIPO_DOC_CODIGOS = TIPO_DOC.map(o => ({ value: o.value, label: o.value }))
+const GENEROS_OPCIONES = GENEROS.map(g => ({ value: g, label: g }))
+
+const CATEGORIES: { title: string; model: ReactNode; fields: Campo[] }[] = [
   {
     title: 'Información personal',
     model: <StudentCardView />,
     fields: [
-      { key: 'firstName', label: 'Primer nombre' },
+      { key: 'firstName', label: 'Primer nombre', required: true },
       { key: 'secondName', label: 'Segundo nombre' },
-      { key: 'lastName', label: 'Primer apellido' },
+      { key: 'lastName', label: 'Primer apellido', required: true },
       { key: 'secondLastName', label: 'Segundo apellido' },
-      { key: 'document', label: 'Documento' },
-      { key: 'birthDate', label: 'Fecha de nacimiento' },
-      { key: 'gender', label: 'Género' },
-      { key: 'age', label: 'Edad', readOnly: true },
-    ] as const,
-  },
-  {
-    title: 'Información médica',
-    model: <StethoscopeView />,
-    fields: [
-      { key: 'eps', label: 'EPS' },
-      { key: 'bloodType', label: 'Grupo sanguíneo' },
-    ] as const,
+      { key: 'documentType', label: 'Tipo de documento', type: 'select', required: true, options: TIPO_DOC_CODIGOS },
+      { key: 'document', label: 'Número de documento', required: true },
+      { key: 'birthDate', label: 'Fecha de nacimiento', type: 'date', required: true },
+      { key: 'gender', label: 'Género', type: 'select', required: true, options: GENEROS_OPCIONES },
+    ],
   },
   {
     title: 'Información de contacto',
     model: <TelephoneView />,
     fields: [
-      { key: 'email', label: 'Email' },
+      { key: 'email', label: 'Email', type: 'email', required: true },
       { key: 'phone', label: 'Teléfono' },
-      { key: 'contactName', label: 'Contacto de emergencia' },
-      { key: 'contactRelation', label: 'Parentesco' },
-      { key: 'contactPhone', label: 'Teléfono de emergencia' },
-    ] as const,
+    ],
   },
-] as const
+]
 
-export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, onEdit, onSave, onStatusChange, onDraftChange }: TrainerInfoModalProps) {
+export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, onEdit, onSave, onStatusChange, onDraftChange, guardando = false, errorGuardado = null }: TrainerInfoModalProps) {
+  const [errores, setErrores] = useState<Record<string, boolean>>({})
+
   if (!isOpen) return null
 
-  const calculateAge = () => {
-    const age = calcAge(trainer.birthDate)
-    return age >= 0 ? `${age} años` : 'â€”'
+  function faltantes(): string[] {
+    return CATEGORIES.flatMap(cat => cat.fields.filter(f => errores[f.key]).map(f => f.label))
   }
+
+  function validar(): boolean {
+    if (!draft) return false
+    const vacios: Record<string, boolean> = {}
+    for (const cat of CATEGORIES) {
+      for (const f of cat.fields) {
+        if (f.required && !(draft[f.key] ?? '').trim()) vacios[f.key] = true
+      }
+    }
+    setErrores(vacios)
+    return Object.keys(vacios).length === 0
+  }
+
+  function limpiarError(key: string) {
+    if (!errores[key]) return
+    setErrores(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }
+
+  async function handleSave() {
+    if (validar()) await onSave()
+  }
+
+  // Al cerrar ya no se auto-guarda: con persistencia remota el guardado es
+  // asíncrono y cerraría antes de que el backend responda. Para discarding
+  // cambios hay que pulsar Guardar explícitamente.
+  function handleClose() {
+    onClose()
+  }
+
+  const faltantesList = faltantes()
 
   return (
     <motion.div
@@ -73,7 +111,7 @@ export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, on
       transition={{ duration: 0.2 }}
       className="fixed inset-0 z-[115] flex items-center justify-center p-6"
       style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)' }}
-      onClick={() => { onClose(); if (editMode) onSave() }}
+      onClick={handleClose}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 12 }}
@@ -131,12 +169,13 @@ export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, on
                     <Power size={16} />
                   </motion.button>
                   <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={onSave}
-                    title="Guardar"
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer"
-                    style={{ background: GREEN_BLUE_GRAD }}
+                    whileHover={{ scale: guardando ? 1 : 1.1 }}
+                    whileTap={{ scale: guardando ? 1 : 0.9 }}
+                    onClick={handleSave}
+                    disabled={guardando}
+                    title={guardando ? 'Guardando...' : 'Guardar'}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white cursor-pointer disabled:cursor-not-allowed"
+                    style={{ background: guardando ? 'rgba(18,112,183,0.45)' : GREEN_BLUE_GRAD }}
                   >
                     <Check size={16} />
                   </motion.button>
@@ -166,7 +205,7 @@ export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, on
             <motion.button
               whileHover={{ scale: 1.1, background: 'rgba(244,56,67,0.1)', color: '#F43843' }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => { onClose(); if (editMode) onSave() }}
+              onClick={handleClose}
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"
               style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(0,0,0,0.45)' }}
             >
@@ -186,6 +225,20 @@ export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, on
             className="flex-1 min-h-0 overflow-y-auto px-7 py-6"
             style={{ scrollbarWidth: 'thin' }}
           >
+            {editMode && errorGuardado && (
+              <div className="mb-4 rounded-xl px-4 py-3" style={{ background: 'rgba(244,56,67,0.08)', border: '1px solid rgba(244,56,67,0.25)' }}>
+                <p className="text-xs font-bold" style={{ color: RED }}>No se pudo guardar</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.55)' }}>{errorGuardado}</p>
+              </div>
+            )}
+
+            {editMode && faltantesList.length > 0 && (
+              <div className="mb-4 rounded-xl px-4 py-3" style={{ background: 'rgba(244,56,67,0.08)', border: '1px solid rgba(244,56,67,0.25)' }}>
+                <p className="text-xs font-bold" style={{ color: RED }}>Faltan campos obligatorios</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.55)' }}>{faltantesList.join(', ')}</p>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               {CATEGORIES.map((cat, ci) => (
                 <motion.div
@@ -209,24 +262,41 @@ export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, on
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-x-5 gap-y-3 flex-1">
-                    {cat.fields.map(f => (
-                      <div key={f.key} className="flex flex-col">
-                        <p className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>{f.label}</p>
-                        {editMode && draft && !f.readOnly ? (
-                          <input
-                            type="text"
-                            value={draft[f.key] ?? (f.key === 'age' ? calculateAge() : (trainer as any)[f.key] ?? '')}
-                            onChange={e => onDraftChange(f.key, e.target.value)}
-                            className="text-sm font-semibold w-full border rounded p-1"
-                            style={{ color: '#0D1B2A' }}
-                          />
-                        ) : (
-                          <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>
-                            {f.key === 'age' ? calculateAge() : (trainer as any)[f.key] ?? 'â€”'}
+                    {cat.fields.map(f => {
+                      const valor = draft?.[f.key] ?? (trainer as any)[f.key] ?? ''
+                      const conError = !!errores[f.key]
+                      return (
+                        <div key={f.key} className="flex flex-col">
+                          <p className="text-[10px] font-bold uppercase tracking-wide mb-0.5" style={{ color: conError ? RED : 'rgba(0,0,0,0.4)' }}>
+                            {f.label}
+                            {f.required && <span style={{ color: RED }}> *</span>}
                           </p>
-                        )}
-                      </div>
-                    ))}
+                          {editMode && draft ? (
+                            f.type === 'select' ? (
+                              <select
+                                value={valor}
+                                onChange={e => { onDraftChange(f.key, e.target.value); limpiarError(f.key) }}
+                                className="text-sm font-semibold w-full border rounded p-1 bg-transparent"
+                                style={{ color: '#0D1B2A', borderColor: conError ? RED : 'rgba(0,0,0,0.12)' }}
+                              >
+                                <option value="">Seleccionar</option>
+                                {f.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                              </select>
+                            ) : (
+                              <input
+                                type={f.type === 'date' ? 'date' : f.type === 'email' ? 'email' : 'text'}
+                                value={valor}
+                                onChange={e => { onDraftChange(f.key, e.target.value); limpiarError(f.key) }}
+                                className="text-sm font-semibold w-full border rounded p-1 bg-transparent"
+                                style={{ color: '#0D1B2A', borderColor: conError ? RED : 'rgba(0,0,0,0.12)' }}
+                              />
+                            )
+                          ) : (
+                            <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{valor || '—'}</p>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </motion.div>
               ))}

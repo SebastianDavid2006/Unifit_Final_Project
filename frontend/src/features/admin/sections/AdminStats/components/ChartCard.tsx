@@ -3,10 +3,11 @@ import { motion } from 'motion/react'
 import type { LucideIcon } from 'lucide-react'
 import { BLUE } from '../data'
 
-export default function ChartCard({ icon: Icon, title, delay, children }: {
+export default function ChartCard({ icon: Icon, title, delay, fill = false, children }: {
   icon: LucideIcon
   title: string
   delay: number
+  fill?: boolean
   children: ReactNode
 }) {
   return (
@@ -15,7 +16,7 @@ export default function ChartCard({ icon: Icon, title, delay, children }: {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
       whileHover={{ scale: 1.01 }}
-      className="rounded-2xl p-6 premium-card"
+      className={`rounded-2xl p-6 premium-card ${fill ? 'flex flex-col' : ''}`}
     >
       <div className="flex items-center gap-2 mb-5">
         <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${BLUE}10` }}>
@@ -23,7 +24,9 @@ export default function ChartCard({ icon: Icon, title, delay, children }: {
         </div>
         <span className="text-xs font-bold tracking-wide" style={{ color: '#1A1A1E' }}>{title}</span>
       </div>
-      {children}
+      {fill
+        ? <div className="flex-1 min-h-0 flex flex-col">{children}</div>
+        : children}
     </motion.div>
   )
 }

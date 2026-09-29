@@ -24,7 +24,9 @@ export default function CareersSection({ carreras, loading }: {
       acc[c.universidadLabel] = (acc[c.universidadLabel] ?? 0) + c.registrados
       return acc
     }, {})
-  ).map(([name, value]) => ({ name, value, color: name.includes('Bogotá') ? '#BF5AF2' : BLUE })).filter(d => d.value > 0)
+  ).map(([name, value]) => ({ name, value, color: name.includes('Bogotá') ? '#BF5AF2' : BLUE })).filter(d => d.value > 0).sort((a, b) => b.value - a.value)
+  const totalUni = universoPie.reduce((acc, d) => acc + d.value, 0)
+  const pctUni = (value: number) => (totalUni > 0 ? Math.round((value / totalUni) * 100) : 0)
 
   const totalCareers = visibleCareers.length
   const topRegistered = [...visibleCareers].sort((a, b) => b.registrados - a.registrados)[0] ?? emptyCareer
@@ -32,8 +34,8 @@ export default function CareersSection({ carreras, loading }: {
   const lowestAttendance = [...visibleCareers].sort((a, b) => a.asistencias - b.asistencias)[0] ?? emptyCareer
 
   const cards = [
-    { label: 'Carreras con Estudiantes', value: String(totalCareers), sub: 'Programas en el sistema', color: '#BF5AF2' },
-    { label: 'Más Registradas', value: topRegistered.programa, sub: `${topRegistered.registrados} registrados`, color: BLUE },
+    { label: 'Carreras registradas', value: String(totalCareers), sub: 'Programas en el sistema', color: '#BF5AF2' },
+    { label: 'Más registradas', value: topRegistered.programa, sub: `${topRegistered.registrados} registrados`, color: BLUE },
     { label: 'Más Asistencia', value: topAttendance.programa, sub: `${topAttendance.asistencias} asistencias`, color: '#30D158' },
     { label: 'Menos Asistencia', value: lowestAttendance.programa, sub: `${lowestAttendance.asistencias} asistencias`, color: '#F43843' },
   ]
@@ -48,12 +50,6 @@ export default function CareersSection({ carreras, loading }: {
 
   return (
     <>
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        {cards.map((card, i) => (
-          <KpiCard key={card.label} label={card.label} value={card.value} sub={card.sub} color={card.color} index={i} />
-        ))}
-      </div>
-
       {!loading && totalCareers === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -64,6 +60,51 @@ export default function CareersSection({ carreras, loading }: {
           <p className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.4)' }}>No hay carreras que coincidan con los filtros seleccionados</p>
         </motion.div>
       )}
+
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="flex flex-col gap-4">
+          {cards.map((card, i) => (
+            <KpiCard key={card.label} label={card.label} value={card.value} sub={card.sub} color={card.color} index={i} />
+          ))}
+        </div>
+
+        <ChartCard icon={GraduationCap} title="ESTUDIANTES POR UNIVERSIDAD" delay={0.35} fill>
+          {loading || universoPie.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <span className="text-xs font-semibold" style={{ color: 'rgba(0,0,0,0.3)' }}>{loading ? 'Cargando…' : 'Sin estudiantes registrados'}</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 min-h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={universoPie} cx="50%" cy="50%" innerRadius="46%" outerRadius="70%" dataKey="value" stroke="#FFFFFF" strokeWidth={2}>
+                      {universoPie.map(d => <Cell key={d.name} fill={d.color} />)}
+                    </Pie>
+                    <ReTooltip contentStyle={tooltipStyle} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex flex-col gap-3 mt-2">
+                {universoPie.map(d => (
+                  <div key={d.name}>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
+                        <span className="text-[11px] font-bold truncate" style={{ color: 'rgba(0,0,0,0.6)' }}>{d.name}</span>
+                      </div>
+                      <span className="text-[11px] font-bold flex-shrink-0" style={{ color: d.color }}>{d.value} est. · {pctUni(d.value)}%</span>
+                    </div>
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.05)' }}>
+                      <div className="h-full rounded-full" style={{ width: `${pctUni(d.value)}%`, background: d.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </ChartCard>
+      </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
         <ChartCard icon={Users} title="ESTUDIANTES REGISTRADOS POR CARRERA" delay={0.25}>
@@ -128,29 +169,6 @@ export default function CareersSection({ carreras, loading }: {
           </motion.button>
         </ChartCard>
       </div>
-
-      <ChartCard icon={GraduationCap} title="ESTUDIANTES POR UNIVERSIDAD" delay={0.35}>
-        {loading ? empty('Cargando…') : universoPie.length === 0 ? empty('Sin estudiantes registrados') : (
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie data={universoPie} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" paddingAngle={4}>
-                  {universoPie.map(d => <Cell key={d.name} fill={d.color} />)}
-                </Pie>
-                <ReTooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-col gap-3">
-              {universoPie.map(d => (
-                <div key={d.name} className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ background: d.color }} />
-                  <span className="text-[11px] font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{d.name} — {d.value} estudiantes</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </ChartCard>
 
       {careersModal && (
         <motion.div

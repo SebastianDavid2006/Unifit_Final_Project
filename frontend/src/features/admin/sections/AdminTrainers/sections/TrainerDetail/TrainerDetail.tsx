@@ -1,79 +1,73 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import type { Trainer } from '@/services/usuario.service'
-import { BLUE_GRAD, GREEN_BLUE_GRAD, RED, GREEN, gymTenure } from '../../data'
-
-import DetailCard from '../../components/DetailCard'
-import FieldList from '../../components/FieldList'
-import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
-import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
-import { LockView } from '@/assets/models/ui/objects/lock/LockModel'
-import { CalendarView } from '@/assets/models/ui/objects/calendar/CalendarModel'
-import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
-import coach2Gif from '@/assets/illustrations/characters/coach_2/animated/coach_2.gif'
-import lectorHuellaImg from '@/assets/illustrations/actions/fingerprint.webp'
-import checkSuccessImg from '@/assets/illustrations/actions/feedback/success_check.webp'
+import { actualizarEntrenador } from '@/services/usuario.service'
+import { mensajeError } from '@/lib/api'
 
 import { TrainerGrid } from './components/TrainerGrid'
 import { TrainerInfoModal } from './modals/TrainerInfoModal'
-import { TrainerFingerprintModal } from './modals/TrainerFingerprintModal'
 import { TrainerConfirmModal } from './modals/TrainerConfirmModal'
 
 export default function TrainerDetail({ trainer: trainerProp }: { trainer: Trainer }) {
   const [trainer, setTrainer] = useState<Trainer>(trainerProp)
   const [showInfoModal, setShowInfoModal] = useState(false)
-  const [showFingerprintModal, setShowFingerprintModal] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<Record<string, string> | null>(null)
   const [confirm, setConfirm] = useState<'save' | 'status' | null>(null)
+  const [guardando, setGuardando] = useState(false)
+  const [errorGuardado, setErrorGuardado] = useState<string | null>(null)
 
   function buildDraft(): Record<string, string> {
     return {
-      name: trainer.name,
       firstName: trainer.firstName,
       secondName: trainer.secondName,
       lastName: trainer.lastName,
       secondLastName: trainer.secondLastName,
+      documentType: trainer.documentType,
       document: trainer.document,
       birthDate: trainer.birthDate,
       gender: trainer.gender,
-      eps: trainer.eps,
-      bloodType: trainer.bloodType,
       email: trainer.email,
       phone: trainer.phone,
-      contactName: trainer.contactName,
-      contactRelation: trainer.contactRelation,
-      contactPhone: trainer.contactPhone,
     }
   }
 
   function startEdit() {
     setDraft(buildDraft())
+    setErrorGuardado(null)
     setEditMode(true)
   }
 
-  function saveDraft() {
-    if (!draft) return
-    setTrainer(prev => ({
-      ...prev,
+  async function saveDraft() {
+    if (!draft || guardando) return
+    setGuardando(true)
+    setErrorGuardado(null)
+
+    const actualizado: Trainer = {
+      ...trainer,
       name: [draft.firstName, draft.secondName, draft.lastName, draft.secondLastName].filter(Boolean).join(' '),
       firstName: draft.firstName,
       secondName: draft.secondName,
       lastName: draft.lastName,
       secondLastName: draft.secondLastName,
+      documentType: draft.documentType,
       document: draft.document,
       birthDate: draft.birthDate,
       gender: draft.gender,
-      eps: draft.eps,
-      bloodType: draft.bloodType,
       email: draft.email,
       phone: draft.phone,
-      contactName: draft.contactName,
-      contactRelation: draft.contactRelation,
-      contactPhone: draft.contactPhone,
-    }))
-    setEditMode(false)
-    setDraft(null)
+    }
+
+    try {
+      await actualizarEntrenador(trainer.id, actualizado)
+      setTrainer(actualizado)
+      setEditMode(false)
+      setDraft(null)
+    } catch (err) {
+      setErrorGuardado(mensajeError(err))
+    } finally {
+      setGuardando(false)
+    }
   }
 
   function handleDraftChange(key: string, value: string) {
@@ -96,10 +90,10 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
   return (
     <div className="relative z-10 p-8 overflow-hidden">
       <div className="w-full">
-        <TrainerGrid trainer={trainer} onShowInfo={() => setShowInfoModal(true)} onShowFingerprint={() => setShowFingerprintModal(true)} />
+        <TrainerGrid trainer={trainer} onShowInfo={() => setShowInfoModal(true)} />
       </div>
 
-      {/* â”€â”€ Info completa (modal por categorías) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* Info completa (modal por categorias) */}
       <AnimatePresence>
         {showInfoModal && (
           <TrainerInfoModal
@@ -107,16 +101,18 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             trainer={trainer}
             editMode={editMode}
             draft={draft}
-            onClose={() => { setShowInfoModal(false); setEditMode(false); setDraft(null); }}
+            onClose={() => { setShowInfoModal(false); setEditMode(false); setDraft(null); setErrorGuardado(null) }}
             onEdit={startEdit}
             onSave={saveDraft}
             onStatusChange={() => setConfirm('status')}
             onDraftChange={handleDraftChange}
+            guardando={guardando}
+            errorGuardado={errorGuardado}
           />
         )}
       </AnimatePresence>
 
-      {/* â”€â”€ Confirmación de cambios â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* Confirmacion de cambios */}
       <AnimatePresence>
         {confirm && (
           <TrainerConfirmModal
@@ -125,18 +121,6 @@ export default function TrainerDetail({ trainer: trainerProp }: { trainer: Train
             type={confirm}
             onConfirm={handleConfirm}
             onCancel={() => setConfirm(null)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* â”€â”€ Modal Huella Digital â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <AnimatePresence>
-        {showFingerprintModal && (
-          <TrainerFingerprintModal
-            isOpen={true}
-            trainer={trainer}
-            huella={trainer.huella}
-            onClose={() => setShowFingerprintModal(false)}
           />
         )}
       </AnimatePresence>

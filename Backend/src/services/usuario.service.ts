@@ -398,24 +398,60 @@ export async function cambiarRol(id: string, nuevoRol: 'admin' | 'entrenador' | 
   })
 }
 
-export async function actualizarPerfil(id: string, data: { nombre_completo?: string; email_contacto?: string; telefono_contacto?: string; id_cargo?: string; id_area?: string }) {
+interface DatosActualizarPerfil {
+  primer_nombre?: string
+  segundo_nombre?: string
+  primer_apellido?: string
+  segundo_apellido?: string
+  email_contacto?: string
+  telefono_contacto?: string
+  documento?: string
+  tipo_documento?: TipoDocumento
+  fecha_nacimiento?: Date
+  genero?: Genero
+  genero_otro?: string
+  id_cargo?: string
+  id_area?: string
+}
+
+export async function actualizarPerfil(id: string, data: DatosActualizarPerfil) {
   const usuario = await prisma.usuario.findUnique({ where: { id_usuario: id } })
   if (!usuario) throw new HttpError(404, 'Usuario no encontrado')
 
+  // documento y email son @unique. Se comprueban antes de escribir para poder
+  // decir cuál de los dos chocó; el NOT evita que un guardado sin cambios
+  // colisione consigo mismo.
+  if (data.documento && data.documento !== usuario.documento) {
+    const dup = await prisma.usuario.findFirst({
+      where: { documento: data.documento, NOT: { id_usuario: id } },
+      select: { id_usuario: true },
+    })
+    if (dup) throw new HttpError(409, 'Ese documento ya está registrado a nombre de otra persona')
+  }
+
+  if (data.email_contacto && data.email_contacto !== usuario.email_contacto) {
+    const dup = await prisma.usuario.findFirst({
+      where: { email_contacto: data.email_contacto, NOT: { id_usuario: id } },
+      select: { id_usuario: true },
+    })
+    if (dup) throw new HttpError(409, 'Ese correo ya está registrado a nombre de otra persona')
+  }
+
   const updateData: Record<string, unknown> = {}
+
+  // Se asigna campo por campo con !== undefined en vez de parsear un nombre
+  // completo: al partir un string por espacios el segundo apellido se perdía.
+  if (data.primer_nombre !== undefined) updateData.primer_nombre = data.primer_nombre
+  if (data.segundo_nombre !== undefined) updateData.segundo_nombre = data.segundo_nombre
+  if (data.primer_apellido !== undefined) updateData.primer_apellido = data.primer_apellido
+  if (data.segundo_apellido !== undefined) updateData.segundo_apellido = data.segundo_apellido
   if (data.email_contacto) updateData.email_contacto = data.email_contacto
   if (data.telefono_contacto !== undefined) updateData.telefono_contacto = data.telefono_contacto
-
-  if (data.nombre_completo) {
-    const partes = data.nombre_completo.trim().split(/\s+/)
-    if (partes.length >= 2) {
-      updateData.primer_nombre = partes[0]
-      updateData.primer_apellido = partes[partes.length - 1]
-      if (partes.length >= 3) {
-        updateData.segundo_nombre = partes.slice(1, partes.length - 1).join(' ')
-      }
-    }
-  }
+  if (data.documento) updateData.documento = data.documento
+  if (data.tipo_documento) updateData.tipo_documento = data.tipo_documento
+  if (data.fecha_nacimiento !== undefined) updateData.fecha_nacimiento = data.fecha_nacimiento
+  if (data.genero) updateData.genero = data.genero
+  if (data.genero_otro !== undefined) updateData.genero_otro = data.genero_otro
 
   return prisma.$transaction(async (tx: Tx) => {
     if (Object.keys(updateData).length > 0) {

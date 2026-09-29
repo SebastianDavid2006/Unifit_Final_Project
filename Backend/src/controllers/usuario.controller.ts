@@ -29,6 +29,15 @@ import {
 import { obtenerMiCita } from './cita.controller'
 import { responderErrorPrisma } from '../utils/prisma-errors'
 import { HttpError } from '../utils/HttpError'
+import {
+  DOC_REGEX,
+  nombreSchema,
+  telefonoSchema,
+  calcularEdad,
+  esStaff,
+  validarDocumento,
+  validarEdad,
+} from '../utils/validaciones-usuario'
 
 export { obtenerMiCita }
 import { prisma } from '../utils/prisma'
@@ -43,41 +52,6 @@ const DISPOSABLE_DOMAINS = new Set([
   'incognitomail.org', 'mohmal.com', 'tmpmail.org',
 ])
 
-const DOC_REGEX: Record<TipoDocumento, RegExp> = {
-  CC: /^\d{7,10}$/,
-  TI: /^\d{10,11}$/,
-  CE: /^\d{6,10}$/,
-  PA: /^[A-Za-z0-9]{6,9}$/,
-  RC: /^\d{10,12}$/,
-}
-
-const nombreSchema = z
-  .string()
-  .trim()
-  .min(2, 'Muy corto')
-  .max(50, 'Muy largo')
-  .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s-]+$/, 'Solo letras, espacios y guiones')
-  .refine((val) => !/(.)\1{3,}/.test(val), 'Valor no válido')
-
-const telefonoSchema = z
-  .string()
-  .superRefine((v, ctx) => {
-    if (v.length > 10) {
-      ctx.addIssue({ code: 'custom', message: 'El teléfono no debe superar los 10 dígitos' })
-      return
-    }
-    if (!/^\d{10}$/.test(v)) {
-      ctx.addIssue({ code: 'custom', message: 'Teléfono debe tener 10 dígitos' })
-      return
-    }
-    if (!v.startsWith('3')) {
-      ctx.addIssue({ code: 'custom', message: 'Teléfono debe iniciar con 3' })
-      return
-    }
-    if (/^(\d)\1{9}$/.test(v) || /^(0123456789|1234567890|9876543210)$/.test(v)) {
-      ctx.addIssue({ code: 'custom', message: 'Teléfono no válido' })
-    }
-  })
 
 export const registrarSchema = z
   .object({
@@ -185,22 +159,13 @@ export const registrarSchema = z
       }
       // Staff real debe ser mayor de 18 años
       if (val.fecha_nacimiento) {
-        const hoy = new Date()
-        let edad = hoy.getFullYear() - val.fecha_nacimiento.getFullYear()
-        const mes = hoy.getMonth() - val.fecha_nacimiento.getMonth()
-        if (mes < 0 || (mes === 0 && hoy.getDate() < val.fecha_nacimiento.getDate())) edad--
-        if (edad < 18) {
-          ctx.addIssue({ code: 'custom', path: ['fecha_nacimiento'], message: 'Staff debe ser mayor de 18 años' })
-        }
+        validarEdad(val.fecha_nacimiento, val.rol, ctx, ['fecha_nacimiento'])
       }
     }
 
     // --- Común: formato de documento según tipo_documento ---
     if (val.documento && val.tipo_documento) {
-      const regex = DOC_REGEX[val.tipo_documento]
-      if (regex && !regex.test(val.documento)) {
-        ctx.addIssue({ code: 'custom', path: ['documento'], message: `Formato de documento inválido para ${val.tipo_documento}` })
-      }
+      validarDocumento(val.documento, val.tipo_documento, ctx, ['documento'])
     }
 
     // --- Común (solo estudiante): formato de número de carnet ---
@@ -213,13 +178,7 @@ export const registrarSchema = z
 
     // --- Común: validación acudiente para menores de edad ---
     if (val.fecha_nacimiento) {
-      const hoy = new Date()
-      let edad = hoy.getFullYear() - val.fecha_nacimiento.getFullYear()
-      const mes = hoy.getMonth() - val.fecha_nacimiento.getMonth()
-      if (mes < 0 || (mes === 0 && hoy.getDate() < val.fecha_nacimiento.getDate())) {
-        edad--
-      }
-      if (edad < 18) {
+      if (calcularEdad(val.fecha_nacimiento) < 18) {
         if (!val.acudiente_primer_nombre?.trim()) {
           ctx.addIssue({ code: 'custom', path: ['acudiente_primer_nombre'], message: 'Nombre del acudiente es requerido para menores de edad' })
         }
@@ -425,16 +384,61 @@ export async function cambiarRolHandler(req: Request, res: Response): Promise<vo
   }
 }
 
-const actualizarPerfilSchema = z.object({
-  nombre_completo: z.string().optional(),
-  email_contacto: z.string().email('El correo electrónico no es válido').optional(),
-  telefono_contacto: z.string().optional(),
-  id_cargo: z.string().uuid().optional(),
-  id_area: z.string().uuid().optional(),
-})
+/**
+ * El schema depende del id destino porque las reglas dependen del rol real del
+ * usuario en base: el personal (admin/entrenador) debe ser mayor de 18 años,
+ * mientras que los miembros del gym admiten desde los 15. Validar contra el rol
+ * guardado y no contra quien hace la petición evita que un entrenador se
+ * self-edite a una fecha que lo deje en edad menor de 18.
+ */
+const actualizarPerfilSchema = (idUsuario: string) =>
+  z
+    .object({
+      primer_nombre: nombreSchema.optional(),
+      segundo_nombre: nombreSchema.optional(),
+      primer_apellido: nombreSchema.optional(),
+      segundo_apellido: nombreSchema.optional(),
+      email_contacto: z
+        .string()
+        .email('El correo electrónico no es válido')
+        .max(254, 'El correo electrónico es demasiado largo')
+        .transform((v) => v.toLowerCase())
+        .optional(),
+      telefono_contacto: telefonoSchema.optional(),
+      documento: z.string().min(1, 'El documento es requerido').optional(),
+      tipo_documento: z.enum(TipoDocumento).optional(),
+      fecha_nacimiento: z
+        .string()
+        .pipe(z.coerce.date())
+        .refine((d) => d <= new Date(), 'Fecha no puede ser futura')
+        .optional(),
+      genero: z.enum(Genero).optional(),
+      genero_otro: z.string().trim().min(1, 'Especifica el género').optional(),
+      id_cargo: z.string().uuid().optional(),
+      id_area: z.string().uuid().optional(),
+    })
+    .superRefine(async (val, ctx) => {
+      const usuario = await prisma.usuario.findUnique({
+        where: { id_usuario: idUsuario },
+        select: { rol: true },
+      })
+      if (!usuario) return
+
+      if (val.fecha_nacimiento) {
+        validarEdad(val.fecha_nacimiento, usuario.rol, ctx, ['fecha_nacimiento'])
+      }
+
+      if (val.documento && val.tipo_documento) {
+        validarDocumento(val.documento, val.tipo_documento, ctx, ['documento'])
+      }
+
+      if (val.genero === 'otro' && !val.genero_otro?.trim()) {
+        ctx.addIssue({ code: 'custom', path: ['genero_otro'], message: 'Especifica el género' })
+      }
+    })
 
 export async function actualizarPerfilHandler(req: Request, res: Response): Promise<void> {
-  const parsed = actualizarPerfilSchema.safeParse(req.body)
+  const parsed = actualizarPerfilSchema(req.params.id as string).safeParse(req.body)
   if (!parsed.success) {
     res.status(400).json({ mensaje: 'Datos inválidos', errores: parsed.error.flatten() })
     return
