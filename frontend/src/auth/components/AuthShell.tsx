@@ -63,10 +63,20 @@ export function AuthShell({
   const backButton = (top: number) => (
     <button
       onClick={onBack}
-      className="absolute z-40 w-8 h-8 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors"
-      style={{ top, left: 16, color: 'rgba(255,255,255,0.5)' }}
+      aria-label="Volver"
+      className="absolute z-40 w-10 h-10 rounded-2xl flex items-center justify-center cursor-pointer transition-colors"
+      style={{
+        top,
+        left: 16,
+        color: 'rgba(255,255,255,0.9)',
+        background: 'rgba(255,255,255,0.10)',
+        border: '1px solid rgba(255,255,255,0.18)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.35)',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.18)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)' }}
     >
-      <ArrowLeft size={16} />
+      <ArrowLeft size={20} />
     </button>
   )
 

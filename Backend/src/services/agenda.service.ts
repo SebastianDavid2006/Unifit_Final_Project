@@ -568,20 +568,16 @@ export async function publicarCupos(data: PublicarCuposData, id_creador: string)
 
 export async function listarCuposDisponibles() {
   const ahora = new Date()
-  const hoy = new Date(ahora)
-  hoy.setHours(0, 0, 0, 0)
+  // 'fecha' se almacena como medianoche UTC del día calendario del gimnasio, así
+  // que el límite inferior debe construirse en UTC o los cupos de HOY quedan fuera
+  // (en UTC negativo la medianoche local cae horas después de la fecha almacenada).
+  const hoy = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()))
   const manana = new Date(hoy)
-  manana.setDate(manana.getDate() + 1)
+  manana.setUTCDate(manana.getUTCDate() + 1)
 
   const cupos = await prisma.cupo.findMany({
     where: {
-      OR: [
-        { fecha: { gte: manana } },
-        {
-          fecha: { gte: hoy, lt: manana },
-          hora_inicio: { gt: ahora },
-        },
-      ],
+      fecha: { gte: manana },
       agenda: { is: null },
     },
     include: {
@@ -591,7 +587,28 @@ export async function listarCuposDisponibles() {
     },
     orderBy: [{ fecha: 'asc' }, { hora_inicio: 'asc' }],
   })
-  return cupos.map(mapCupo)
+
+  const deHoy = await prisma.cupo.findMany({
+    where: {
+      fecha: { gte: hoy, lt: manana },
+      agenda: { is: null },
+    },
+    include: {
+      creador: {
+        select: { id_usuario: true, primer_nombre: true, primer_apellido: true },
+      },
+    },
+    orderBy: [{ hora_inicio: 'asc' }],
+  })
+
+  // De HOY solo se muestran los bloques que aún no han comenzado. El descarte se
+  // hace en memoria a propósito: 'hora_inicio' es una columna TIME (hora de reloj
+  // del gimnasio) y filtrarla contra un timestamp completo en SQL mezcla la fecha
+  // UTC con la hora local, descartando cupos que aún no empiezan. Se reutiliza la
+  // misma regla que aplica publicarCupos y reservarCupo.
+  const disponiblesHoy = deHoy.filter(c => !bloqueYaComenzo(c.hora_inicio, ahora))
+
+  return [...disponiblesHoy, ...cupos].map(mapCupo)
 }
 
 export async function reservarCupo(
@@ -608,14 +625,10 @@ export async function reservarCupo(
     if (!cupo) throw new HttpError(404, 'Cupo no encontrado')
     if (cupo.agenda) throw new HttpError(400, 'Este cupo ya está reservado')
 
-    const ahora = new Date()
-    const hoy = new Date(ahora)
-    hoy.setHours(0, 0, 0, 0)
-    const manana = new Date(hoy)
-    manana.setDate(manana.getDate() + 1)
-
-    const cupoVencido = cupo.fecha < hoy || (cupo.fecha.getTime() === hoy.getTime() && cupo.hora_inicio <= ahora)
-    if (cupoVencido) throw new HttpError(400, 'Este cupo ya no está disponible')
+    // Misma regla que crearAgenda y actualizarAgenda: comparar la fecha almacenada
+    // (medianoche UTC) contra el hoy local mezcla husos y daba por vencidos los
+    // cupos de HOY que todavía no empiezan.
+    validarAgendable(cupo.fecha, cupo.hora_inicio)
 
     const usuario = await tx.usuario.findUnique({
       where: { id_usuario },

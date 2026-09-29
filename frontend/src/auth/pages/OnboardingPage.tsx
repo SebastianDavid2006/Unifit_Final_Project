@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Calendar, CheckCircle2, ArrowRight, ChevronLeft, ChevronRight, Lock, CalendarCheck } from 'lucide-react'
+import { Calendar, CheckCircle2, ArrowRight, ChevronLeft, ChevronRight, Lock, CalendarCheck, LogOut } from 'lucide-react'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { api } from '@/lib/api'
 import { getCuposDisponibles, reservarCupo, obtenerFestivos, type FrontendCupo } from '@/services/agenda.service'
@@ -114,6 +114,7 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
   const [selectedCupoId, setSelectedCupoId] = useState<string | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showExitModal, setShowExitModal] = useState(false)
   const [cupos, setCupos] = useState<FrontendCupo[]>([])
   const [loadingCupos, setLoadingCupos] = useState(false)
   const [cuposError, setCuposError] = useState<string | null>(null)
@@ -289,7 +290,7 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
   )
 
   return (
-    <AuthShell onBack={onBack} autoDesktopVideo videosPaused={true}>
+    <AuthShell onBack={() => setShowExitModal(true)} autoDesktopVideo videosPaused={showConfirmModal || showSuccessModal || showExitModal}>
       {(ctx) => (
         <div className={`flex-1 min-h-0 overflow-y-auto flex flex-col ${ctx.isPhonePreview ? 'px-5' : 'px-6 sm:px-10'}`}>
           <AnimatePresence mode="wait">
@@ -489,25 +490,6 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                       )}
                     </motion.div>
                   )}
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="mt-auto pt-6"
-                    style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
-                  >
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setPhase('schedule')}
-                      className="w-full h-14 rounded-2xl text-base font-bold flex items-center justify-center gap-2 cursor-pointer"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '2px solid rgba(255,255,255,0.15)', color: '#fff' }}
-                    >
-                      <ArrowRight size={18} style={{ transform: 'rotate(180deg)' }} />
-                      Volver
-                    </motion.button>
-                  </motion.div>
                 </div>
               )}
 
@@ -648,6 +630,59 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                       style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, boxShadow: `0 8px 24px ${FIRE}40` }}
                     >
                       Confirmar
+                    </motion.button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {showExitModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+                onClick={() => setShowExitModal(false)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                  onClick={e => e.stopPropagation()}
+                  className="w-full max-w-sm rounded-3xl p-6 text-center"
+                  style={{ background: '#12121C', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 30px 80px rgba(0,0,0,0.6)' }}
+                >
+                  <div className="mx-auto mb-4 w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})` }}>
+                    <LogOut size={26} style={{ color: '#fff' }} />
+                  </div>
+                  <h3 className="uppercase italic font-black text-white mb-2" style={{ fontSize: 20, letterSpacing: '0.02em' }}>
+                    ¿Salir de tu cuenta?
+                  </h3>
+                  <p className="text-sm mb-6" style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+                    Tendrás que iniciar sesión nuevamente para agendar tu valoración.
+                  </p>
+                  <div className="flex gap-3">
+                    <motion.button
+                      whileHover={{ background: 'rgba(255,255,255,0.1)' }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setShowExitModal(false)}
+                      className="flex-1 py-3 rounded-xl font-bold text-white"
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}
+                    >
+                      Cancelar
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={onBack}
+                      className="flex-1 py-3 rounded-xl font-black text-white"
+                      style={{ background: `linear-gradient(135deg, ${FIRE}, ${AMBER})`, boxShadow: `0 8px 24px ${FIRE}40` }}
+                    >
+                      Salir
                     </motion.button>
                   </div>
                 </motion.div>
