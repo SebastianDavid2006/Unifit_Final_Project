@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Check, PenLine, Power, X, AlertTriangle } from 'lucide-react'
+import { Check, PenLine, Power, X, AlertTriangle, Users } from 'lucide-react'
 import { StudentCardView } from '@/assets/models/ui/objects/student_card/StudentCardModel'
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
 import { StethoscopeView } from '@/assets/models/ui/objects/stethoscope/StethoscopeModel'
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
 import { ModalShell } from '@/modules/students/shared/components/ModalShell'
 import type { Student } from '../../../../StudentProfileData'
-import { calcAge } from '@/lib/dateUtils'
+import { esEstudiante, esPersonal } from '../../../../StudentProfileData'
+import { calcAge, isMinor } from '@/lib/dateUtils'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN = '#22C55E'
@@ -92,6 +93,13 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
   }
 
   const fullName = [student.firstName, student.secondName, student.lastName, student.secondLastName].filter(Boolean).join(' ')
+
+  const personal = esPersonal(editable)
+  const ac = student.acudiente
+  const mostrarAcudiente = esEstudiante(student) && (Boolean(ac) || isMinor(student.birthDate))
+  const nombreAcudiente = ac
+    ? [ac.primerNombre, ac.segundoNombre, ac.primerApellido, ac.segundoApellido].filter(Boolean).join(' ')
+    : ''
 
   return (
     <ModalShell isOpen={isOpen} onClose={onClose} maxWidth="max-w-5xl" zIndex={115} backdropBlur="blur(6px)" backdropOpacity="rgba(0,0,0,0.35)">
@@ -221,10 +229,10 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                   ],
                 },
                 {
-                  title: student.role === 'profesor' || student.role === 'administrativo' ? 'Información laboral' : 'Información académica',
+                  title: personal ? 'Información laboral' : 'Información académica',
                   model: <CapView />,
                   fields:
-                    student.role === 'profesor' || student.role === 'administrativo'
+                    personal
                       ? [
                           { key: 'area', label: 'Área', value: editable.area || '—' },
                           { key: 'cargo', label: 'Cargo', value: editable.cargo || '—' },
@@ -259,6 +267,18 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                     { key: 'contactPhone', label: 'Teléfono de emergencia', value: editable.contactPhone },
                   ],
                 },
+                ...(mostrarAcudiente
+                  ? [
+                      {
+                        title: 'Acudiente',
+                        model: <Users size={26} color="#0D1B2A" />,
+                        fields: [
+                          { key: 'acudienteNombre', label: 'Nombre completo', value: nombreAcudiente || 'No registrado', readOnly: true },
+                          { key: 'acudienteTelefono', label: 'Teléfono', value: ac?.telefonoContacto || 'No registrado', readOnly: true },
+                        ],
+                      },
+                    ]
+                  : []),
               ].map((cat, ci) => (
                 <motion.div
                   key={cat.title}

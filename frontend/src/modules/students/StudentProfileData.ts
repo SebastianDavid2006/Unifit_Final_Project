@@ -46,6 +46,7 @@ export interface Student {
   lastVisit: string
   avatar: string
   goal: string
+  valoraciones?: number
   sessions: number
   weight: number
   height: number
@@ -60,6 +61,22 @@ export interface Student {
   firma?: string
   huella?: string
   acudiente?: Acudiente
+  tipo_usuario?: TipoUsuario
+}
+
+export type TipoUsuario = 'estudiante' | 'profesor' | 'administrativo'
+
+export function getTipoUsuario(student: { tipo_usuario?: TipoUsuario; role?: TipoUsuario }): TipoUsuario {
+  return student.tipo_usuario ?? student.role ?? 'estudiante'
+}
+
+export function esEstudiante(student: { tipo_usuario?: TipoUsuario; role?: TipoUsuario }): boolean {
+  return getTipoUsuario(student) === 'estudiante'
+}
+
+export function esPersonal(student: { tipo_usuario?: TipoUsuario; role?: TipoUsuario }): boolean {
+  const tipo = getTipoUsuario(student)
+  return tipo === 'profesor' || tipo === 'administrativo'
 }
 
 export const RED = '#E63946'

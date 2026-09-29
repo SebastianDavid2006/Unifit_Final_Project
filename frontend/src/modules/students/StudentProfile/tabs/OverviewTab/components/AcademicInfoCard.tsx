@@ -1,5 +1,7 @@
 import { CapView } from '@/assets/models/ui/objects/cap/CapModel'
+import { Briefcase } from 'lucide-react'
 import type { Student } from '@/modules/students/StudentProfileData'
+import { esEstudiante } from '@/modules/students/StudentProfileData'
 
 interface AcademicInfoCardProps {
   student: Student
@@ -7,21 +9,29 @@ interface AcademicInfoCardProps {
 }
 
 export function AcademicInfoCard({ student, className = '' }: AcademicInfoCardProps) {
-  const fields = [
-    { label: 'Programa', value: student.program || 'No registrado' },
-    { label: 'Semestre', value: student.semestre ? `${student.semestre}°` : 'No registrado' },
-    { label: 'Jornada', value: student.jornada || 'No registrado' },
-    { label: 'Modalidad', value: student.modality || 'No registrado' },
-    { label: 'EPS', value: student.eps || 'No registrado' },
-    { label: 'Grupo sanguíneo', value: student.bloodType || 'No registrado' },
-  ]
+  const esAlumno = esEstudiante(student)
+
+  const fields = esAlumno
+    ? [
+        { label: 'Programa', value: student.program || 'No registrado' },
+        { label: 'Semestre', value: student.semestre ? `${student.semestre}°` : 'No registrado' },
+        { label: 'Jornada', value: student.jornada || 'No registrado' },
+      ]
+    : [
+        { label: 'Cargo', value: student.cargo || 'No registrado' },
+        { label: 'Área', value: student.area || 'No registrado' },
+      ]
+
+  const title = esAlumno ? 'Información académica' : 'Información laboral'
 
   return (
     <div className={`rounded-[28px] p-4 cursor-default ${className}`} style={{ background: 'rgba(255,255,255,0.5)', height: '100%' }}>
       <div className="flex items-center gap-2.5 mb-2">
         <div className="w-1 h-5 rounded-full flex-shrink-0" style={{ background: 'rgba(230,57,70,0.3)' }} />
-        <div className="w-8 h-8 flex-shrink-0"><CapView /></div>
-        <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>Información académica</p>
+        <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+          {esAlumno ? <CapView /> : <Briefcase size={26} color="#0D1B2A" />}
+        </div>
+        <p className="text-lg font-extrabold capitalize" style={{ color: '#0D1B2A' }}>{title}</p>
       </div>
       <div className="flex flex-col">
         {fields.map((field, fi, arr) => (

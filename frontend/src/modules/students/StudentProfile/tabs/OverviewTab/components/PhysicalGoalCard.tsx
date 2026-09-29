@@ -3,10 +3,11 @@ import type { Student } from '@/modules/students/StudentProfileData'
 
 interface PhysicalGoalCardProps {
   student: Student
+  objetivo: string
   className?: string
 }
 
-export function PhysicalGoalCard({ student, className = '' }: PhysicalGoalCardProps) {
+export function PhysicalGoalCard({ objetivo, className = '' }: PhysicalGoalCardProps) {
   return (
     <div className={`rounded-[28px] p-5 relative overflow-hidden cursor-default ${className}`} style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,185,0,0.05), rgba(255,215,0,0.08))', height: '100%' }}>
       <div className="absolute inset-0 pointer-events-none" style={{
@@ -21,7 +22,7 @@ export function PhysicalGoalCard({ student, className = '' }: PhysicalGoalCardPr
           <p className="text-lg font-extrabold capitalize" style={{ color: '#B8860B' }}>Objetivo físico</p>
         </div>
         <div className="rounded-2xl p-4" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.15)' }}>
-          <p className="text-sm font-bold leading-relaxed" style={{ color: '#B8860B' }}>{student.goal}</p>
+          <p className="text-sm font-bold leading-relaxed" style={{ color: '#B8860B' }}>{student.goal?.trim() || 'Sin objetivo registrado'}</p>
         </div>
       </div>
     </div>
