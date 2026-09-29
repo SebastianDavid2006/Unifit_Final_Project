@@ -36,6 +36,8 @@ interface SeedUsuario {
   primer_nombre: string
   primer_apellido: string
   email_contacto: string
+  telefono_contacto: string
+  fecha_nacimiento: string
   genero: 'masculino' | 'femenino' | 'otro'
   rol: 'admin' | 'entrenador' | 'usuario'
   tipo_usuario: 'estudiante' | 'profesor' | 'administrativo'
@@ -50,6 +52,8 @@ const USUARIOS: SeedUsuario[] = [
     primer_nombre: 'Administrador',
     primer_apellido: 'Sistema',
     email_contacto: 'admin@unifit.edu.co',
+    telefono_contacto: '3001234567',
+    fecha_nacimiento: '1985-03-15',
     genero: 'otro',
     rol: 'admin',
     tipo_usuario: 'administrativo',
@@ -62,6 +66,8 @@ const USUARIOS: SeedUsuario[] = [
     primer_nombre: 'Carlos',
     primer_apellido: 'Entrenador',
     email_contacto: 'entrenador@unifit.edu.co',
+    telefono_contacto: '3012345678',
+    fecha_nacimiento: '1990-07-22',
     genero: 'masculino',
     rol: 'entrenador',
     tipo_usuario: 'profesor',
@@ -74,6 +80,8 @@ const USUARIOS: SeedUsuario[] = [
     primer_nombre: 'Laura',
     primer_apellido: 'Pendiente',
     email_contacto: 'pendiente@unifit.edu.co',
+    telefono_contacto: '3023456789',
+    fecha_nacimiento: '1995-11-08',
     genero: 'femenino',
     rol: 'usuario',
     tipo_usuario: 'estudiante',
@@ -86,6 +94,8 @@ const USUARIOS: SeedUsuario[] = [
     primer_nombre: 'Andrés',
     primer_apellido: 'CambiarPass',
     email_contacto: 'cambiar@unifit.edu.co',
+    telefono_contacto: '3034567890',
+    fecha_nacimiento: '1998-01-30',
     genero: 'masculino',
     rol: 'usuario',
     tipo_usuario: 'estudiante',
@@ -98,6 +108,8 @@ const USUARIOS: SeedUsuario[] = [
     primer_nombre: 'Valentina',
     primer_apellido: 'Directa',
     email_contacto: 'directo@unifit.edu.co',
+    telefono_contacto: '3045678901',
+    fecha_nacimiento: '1993-05-12',
     genero: 'femenino',
     rol: 'usuario',
     tipo_usuario: 'estudiante',
@@ -110,6 +122,8 @@ const USUARIOS: SeedUsuario[] = [
     primer_nombre: 'Roberto',
     primer_apellido: 'Inactivo',
     email_contacto: 'inactivo@unifit.edu.co',
+    telefono_contacto: '3056789012',
+    fecha_nacimiento: '1997-09-25',
     genero: 'masculino',
     rol: 'usuario',
     tipo_usuario: 'estudiante',
@@ -188,6 +202,8 @@ async function seedUsuarios(): Promise<void> {
         primer_nombre: u.primer_nombre,
         primer_apellido: u.primer_apellido,
         email_contacto: u.email_contacto,
+        telefono_contacto: u.telefono_contacto,
+        fecha_nacimiento: new Date(u.fecha_nacimiento),
         genero: u.genero,
         rol: u.rol,
         tipo_usuario: u.tipo_usuario,

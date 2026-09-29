@@ -135,6 +135,9 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   const setTab = onTabChange ?? setLocalTab
   const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
   const imcNum = parseFloat(imc)
+  const objetivoFisico = assessments[0]
+    ? [assessments[0].objetivoTarjetas?.[0], assessments[0].objetivoDetalle].filter(Boolean).join(' — ')
+    : ''
 
   const {
     WEEK_DAYS,
@@ -250,7 +253,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
               <div className="text-left h-full">
 
               {currentTab === 'general' && (
-                <OverviewTab student={editable} imc={imc} onShowInfo={() => setShowInfoModal(true)} onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))} />
+                <OverviewTab student={editable} imc={imc} objetivo={objetivoFisico} onShowInfo={() => setShowInfoModal(true)} onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))} />
               )}
               {currentTab === 'actividad' && (
                 <ProgressTab
@@ -272,6 +275,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
               {currentTab === 'valoracion' && (
                 <AssessmentTab
                   canCreateValuation={canCreateValuation}
+                  loading={loadingAssessments}
                   pagedAssessments={pagedAssessments}
                   totalAssessments={assessments.length}
                   ultimaRutina={assessments[0]?.routine?.nombre ?? ''}
