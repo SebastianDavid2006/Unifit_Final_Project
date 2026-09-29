@@ -40,6 +40,39 @@ describe('Estado pendiente → 403 en ruta protegida', () => {
   })
 })
 
+// ─── GET /usuarios/me: la fuente de verdad del estado ────────
+// El frontend consulta este endpoint para sincronizar el estado con la BD.
+// Si un 'pendiente' recibe 403, ProtectedRoute usa un estado obsoleto en
+// localStorage y redirige en bucle a /incorporacion.
+describe('GET /api/usuarios/me → accesible según estado', () => {
+  it('pendiente → 200 (puede conocer su propio estado)', async () => {
+    const res = await get('/api/usuarios/me', (globalThis as any).pendienteToken)
+    expect(res.status).toBe(200)
+    expect(res.body.estado).toBe('pendiente')
+  })
+
+  it('activo → 200', async () => {
+    const res = await get('/api/usuarios/me', (globalThis as any).usuarioToken)
+    expect(res.status).toBe(200)
+    expect(res.body.estado).toBe('activo')
+  })
+
+  it('inactivo → 403 (la excepción NO afloja el candado de inactivo)', async () => {
+    const res = await get('/api/usuarios/me', (globalThis as any).inactivoToken)
+    expect(res.status).toBe(403)
+  })
+
+  it('no filtra password_hash', async () => {
+    const res = await get('/api/usuarios/me', (globalThis as any).pendienteToken)
+    expect(res.body).not.toHaveProperty('password_hash')
+  })
+
+  it('sin token → 401', async () => {
+    const res = await get('/api/usuarios/me')
+    expect(res.status).toBe(401)
+  })
+})
+
 // ─── Sin token / token inválido → 401 ────────────────────────
 describe('Sin token / token inválido → 401', () => {
   it('GET /api/usuarios sin header Authorization', async () => {

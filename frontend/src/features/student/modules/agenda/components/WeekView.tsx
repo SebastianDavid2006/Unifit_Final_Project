@@ -39,9 +39,11 @@ export function WeekView({ baseWeek, onChangeWeek, today, holidays, hasBooking, 
           const free = freeSlots(info)
           const full = info.isCoachDay && free === 0
           const isToday = sameDay(date, today)
+          // Un día que ya pasó no se agenda: se muestra como "Pasado", no como "sin cupos".
+          const esPasado = !isToday && date.getTime() < today.getTime()
 
-          const statusColor = info.isHoliday ? AMBER : full ? FIRE : info.isCoachDay ? GREEN : 'rgba(255,255,255,0.25)'
-          const statusText = info.isHoliday ? 'Festivo' : full ? 'Lleno' : info.isCoachDay ? `${free} libres` : 'Descanso'
+          const statusColor = esPasado ? 'rgba(255,255,255,0.25)' : info.isHoliday ? AMBER : full ? FIRE : info.isCoachDay ? GREEN : 'rgba(255,255,255,0.25)'
+          const statusText = esPasado ? 'Pasado' : info.isHoliday ? 'Festivo' : full ? 'Lleno' : info.isCoachDay ? `${free} libres` : 'Sin cupos'
 
           return (
             <div
@@ -51,7 +53,7 @@ export function WeekView({ baseWeek, onChangeWeek, today, holidays, hasBooking, 
                 background: 'rgba(255,255,255,0.025)',
                 border: `1px solid ${isBookedDay(date) ? 'rgba(48,209,88,0.55)' : `${statusColor}30`}`,
                 boxShadow: isBookedDay(date) ? '0 0 26px rgba(48,209,88,0.16), inset 0 0 30px rgba(48,209,88,0.05)' : 'none',
-                opacity: info.isHoliday ? 0.8 : 1,
+                opacity: esPasado ? 0.45 : info.isHoliday ? 0.8 : 1,
                 ...(hasBooking && !isBookedDay(date) ? { opacity: 0.28, filter: 'blur(1.2px)' } : {}),
               }}
             >
@@ -73,13 +75,15 @@ export function WeekView({ baseWeek, onChangeWeek, today, holidays, hasBooking, 
 
               {/* Derecha: horarios */}
               <div className="flex-1 min-w-0 p-3 flex items-center">
-                {info.isHoliday ? (
+                {esPasado ? (
+                  <p className="w-full text-center py-2" style={{ color: 'rgba(255,255,255,0.28)', fontSize: 12 }}>Este día ya pasó</p>
+                ) : info.isHoliday ? (
                   <p className="flex items-center gap-2 w-full justify-center py-2" style={{ color: 'rgba(255,255,255,0.38)', fontSize: 12 }}>
                     <Lock size={13} style={{ color: AMBER }} />
                     {info.holidayName} — el gimnasio no abre
                   </p>
                 ) : !info.isCoachDay ? (
-                  <p className="w-full text-center py-2" style={{ color: 'rgba(255,255,255,0.28)', fontSize: 12 }}>El entrenador descansa este día</p>
+                  <p className="w-full text-center py-2" style={{ color: 'rgba(255,255,255,0.28)', fontSize: 12 }}>Cupos no publicados</p>
                 ) : (
                   <div className="flex flex-wrap gap-2 w-full">
                     {info.slots.map((s, i) => (

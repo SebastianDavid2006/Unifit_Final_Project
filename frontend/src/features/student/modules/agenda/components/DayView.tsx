@@ -4,10 +4,11 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { DayAvailability } from '@/features/student/types/student'
 import { cardStyle, FIRE, AMBER, GREEN } from '@/features/student/components/ui/fitness'
-import { getDayInfo, offset } from '../agendaUtils'
+import { getDayInfo, offset, sameDay } from '../agendaUtils'
 
 interface DayViewProps {
   currentDate: Date
+  today: Date
   onChangeDate: (delta: number) => void
   holidays: Map<string, string>
   /** true si hay una cita activa en la agenda */
@@ -16,8 +17,10 @@ interface DayViewProps {
   onBook: (info: DayAvailability, time: string) => void
 }
 
-export function DayView({ currentDate, onChangeDate, holidays, hasBooking, isBookedDay, onBook }: DayViewProps) {
+export function DayView({ currentDate, today, onChangeDate, holidays, hasBooking, isBookedDay, onBook }: DayViewProps) {
   const info = getDayInfo(currentDate, holidays)
+  // Un día que ya pasó no se agenda: se muestra como "Día pasado", no como "sin cupos".
+  const esPasado = !sameDay(currentDate, today) && currentDate.getTime() < today.getTime()
 
   return (
     <motion.div key="day" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3" style={hasBooking && !isBookedDay(currentDate) ? { opacity: 0.28, filter: 'blur(1.2px)' } : undefined}>
@@ -33,7 +36,13 @@ export function DayView({ currentDate, onChangeDate, holidays, hasBooking, isBoo
         </button>
       </div>
 
-      {info.isCoachDay && !info.isHoliday ? (
+      {esPasado ? (
+        <div className="flex flex-col items-center py-12 rounded-3xl" style={cardStyle}>
+          <CalendarCheck size={36} style={{ marginBottom: 12, opacity: 0.35, color: 'rgba(255,255,255,0.4)' }} />
+          <p className="text-white font-bold" style={{ fontSize: 15 }}>Día pasado</p>
+          <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 12, marginTop: 4 }}>Este día ya pasó y no se puede agendar</p>
+        </div>
+      ) : info.isCoachDay && !info.isHoliday ? (
         <div className="space-y-2">
           {info.slots.map((slot, i) => (
             <motion.div
@@ -77,8 +86,8 @@ export function DayView({ currentDate, onChangeDate, holidays, hasBooking, isBoo
       ) : (
         <div className="flex flex-col items-center py-12 rounded-3xl" style={cardStyle}>
           <CalendarCheck size={36} style={{ marginBottom: 12, opacity: 0.4, color: 'rgba(255,255,255,0.5)' }} />
-          <p className="text-white font-bold" style={{ fontSize: 15 }}>Sin agenda este día</p>
-          <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 12, marginTop: 4 }}>El entrenador descansa</p>
+          <p className="text-white font-bold" style={{ fontSize: 15 }}>Cupos no publicados</p>
+          <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 12, marginTop: 4 }}>No hay horarios para este día</p>
         </div>
       )}
     </motion.div>

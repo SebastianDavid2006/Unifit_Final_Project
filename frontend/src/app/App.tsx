@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router'
-import { guardarSesion, getUsuario, getToken, cerrarSesion, mapRolToPlatform, type Rol } from '@/lib/auth'
-import { api } from '@/lib/api'
+import { guardarSesion, getToken, cerrarSesion, mapRolToPlatform } from '@/lib/auth'
+import { SesionProvider, useSesion } from '@/lib/sesion'
 import { toast, Toaster } from 'sonner'
-import { LoginPage, type LoginSession } from '@/auth/pages/LoginPage'
+import { LoginPage } from '@/auth/pages/LoginPage'
 import { RegisterPage } from '@/auth/pages/RegisterPage'
 import { ChangePasswordPage } from '@/auth/pages/ChangePasswordPage'
 import { OnboardingPage } from '@/auth/pages/OnboardingPage'
@@ -51,10 +51,11 @@ function ParticleField() {
 
 function LoginPageWrapper() {
   const navigate = useNavigate()
+  const { usuario } = useSesion()
 
-  const token = getToken()
-  const usuario = getUsuario()
-  if (token && usuario) {
+  // El estado de sesión viene del provider. Si hay usuario, se redirige
+  // directo a su pantalla correspondiente (única fuente de verdad).
+  if (usuario) {
     if (usuario.estado === 'pendiente') return <Navigate to="/incorporacion" replace />
     if (usuario.debe_cambiar_password) return <Navigate to="/cambiar-clave" replace />
     const platform = mapRolToPlatform(usuario.rol)
@@ -63,45 +64,11 @@ function LoginPageWrapper() {
     return <Navigate to="/admin/dashboard" replace />
   }
 
-  const handleLoginSuccess = async (session: { user: { debeCambiarContrasena: boolean; estado: string; rol: string } }) => {
-    if (session.user.debeCambiarContrasena) {
-      navigate('/cambiar-clave')
-      return
-    }
-    if (session.user.estado === 'pendiente') {
-      try {
-        console.log('🔍 [Login] Checking for existing cita...')
-        const res = await api.get('/usuarios/me/cita')
-        console.log('✅ [Login] Cita found:', res.data)
-        navigate('/incorporacion/asistencia-presencial')
-      } catch (err) {
-        console.error('❌ [Login] Error checking cita:', {
-          status: err.response?.status,
-          message: err.response?.data?.mensaje,
-          isAxiosError: err.isAxiosError
-        })
-        if (err.isAxiosError && err.response?.status === 404) {
-          console.log('ℹ️ [Login] No cita found (404) → /incorporacion')
-          navigate('/incorporacion')
-        } else {
-          console.log('⚠️ [Login] Other error, fallback → /incorporacion')
-          navigate('/incorporacion')
-        }
-      }
-      return
-    }
-    const platform = mapRolToPlatform(session.user.rol as Rol)
-    if (platform === 'student') navigate('/usuario/inicio')
-    else if (platform === 'trainer') navigate('/entrenador/dashboard')
-    else navigate('/admin/dashboard')
-  }
-
   return (
     <LoginPage
-      onSelect={(platform, session) => {
-        if (session) {
-          handleLoginSuccess(session)
-        }
+      onSelect={() => {
+        // LoginPage ya guardó la sesión; aquí no se navega porque el
+        // provider actualiza el estado y el guard de arriba redirige solo.
       }}
       onRegister={() => navigate('/registro')}
     />
@@ -115,7 +82,7 @@ function RegisterWrapper() {
 
 function ChangePasswordWrapper() {
   const navigate = useNavigate()
-  const usuario = getUsuario()
+  const { usuario } = useSesion()
   if (!usuario) return <Navigate to="/login" replace />
 
   // SOLO permitir si estado === 'activo' Y debe_cambiar_password
@@ -140,7 +107,7 @@ function ChangePasswordWrapper() {
 
 function OnboardingWrapper() {
   const navigate = useNavigate()
-  const usuario = getUsuario()
+  const { usuario } = useSesion()
   if (!usuario) return <Navigate to="/login" replace />
 
   // Si ya está activo, ir directo a la app
@@ -215,7 +182,9 @@ function AppShell() {
           <Route path="/login" element={<LoginPageWrapper />} />
           <Route path="/registro" element={<RegisterWrapper />} />
           <Route path="/cambiar-clave" element={<ChangePasswordWrapper />} />
+          {/* /incorporacion = agenda para agendar la cita de valoración */}
           <Route path="/incorporacion" element={<OnboardingWrapper />} />
+          {/* /incorporacion/asistencia-presencial = cita ya agendada (espera) */}
       <Route path="/incorporacion/asistencia-presencial" element={<OnboardingWrapper />} />
           <Route path="/usuario/*" element={<ProtectedRoute rolesPermitidos={['usuario']}><StudentApp /></ProtectedRoute>} />
           <Route path="/admin/*" element={<ProtectedRoute rolesPermitidos={['admin']}><AdminPage /></ProtectedRoute>}>
@@ -250,7 +219,9 @@ function AppShell() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppShell />
+      <SesionProvider>
+        <AppShell />
+      </SesionProvider>
     </BrowserRouter>
   )
 }

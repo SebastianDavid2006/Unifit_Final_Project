@@ -35,7 +35,7 @@ export function DayDetailSheet({ info, hasBooking, onBook, onClose }: DayDetailS
                 {freeSlots(info) > 0 ? `${freeSlots(info)} cupos disponibles` : 'Sin cupos — agenda llena'}
               </p>
             ) : (
-              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5, marginTop: 3 }}>El entrenador no abre agenda este día</p>
+              <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11.5, marginTop: 3 }}>No hay cupos publicados</p>
             )}
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.55)' }}>
@@ -96,7 +96,7 @@ export function DayDetailSheet({ info, hasBooking, onBook, onClose }: DayDetailS
       {!info.isCoachDay && !info.isHoliday && (
         <div className="flex flex-col items-center py-8" style={{ color: 'rgba(255,255,255,0.35)' }}>
           <CalendarCheck size={34} style={{ marginBottom: 10, opacity: 0.4 }} />
-          <p style={{ fontSize: 12.5 }}>Descanso del entrenador</p>
+          <p style={{ fontSize: 12.5 }}>Cupos no publicados</p>
         </div>
       )}
     </motion.div>

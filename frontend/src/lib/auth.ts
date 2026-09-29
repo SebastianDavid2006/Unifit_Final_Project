@@ -16,9 +16,15 @@ export interface UsuarioSesion {
 const TOKEN_KEY = 'unifit_token'
 const USUARIO_KEY = 'unifit_usuario'
 
+// Única señal de que la sesión cambió. Las dos funciones de abajo son el único
+// punto de escritura, así que con este aviso <SesionProvider> se mantiene al día
+// sin que cada uno de los 10 call sites tenga que sincronizarse a mano.
+export const SESION_CAMBIADA = 'unifit:sesion'
+
 export function guardarSesion(token: string, usuario: UsuarioSesion): void {
   localStorage.setItem(TOKEN_KEY, token)
   localStorage.setItem(USUARIO_KEY, JSON.stringify(usuario))
+  window.dispatchEvent(new Event(SESION_CAMBIADA))
 }
 
 export function getToken(): string | null {
@@ -38,6 +44,7 @@ export function getUsuario(): UsuarioSesion | null {
 export function cerrarSesion(): void {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USUARIO_KEY)
+  window.dispatchEvent(new Event(SESION_CAMBIADA))
 }
 
 export function mapRolToPlatform(rol: Rol): Platform {

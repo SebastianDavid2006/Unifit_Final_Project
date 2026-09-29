@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router'
 import { toast } from 'sonner'
-import { getUsuario, getToken, mapRolToPlatform, type Rol } from '@/lib/auth'
+import { getToken, cerrarSesion, mapRolToPlatform, type Rol } from '@/lib/auth'
+import { useSesion } from '@/lib/sesion'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -8,22 +9,23 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, rolesPermitidos }: ProtectedRouteProps) {
-  const token = getToken()
-  const usuario = getUsuario()
+  const { usuario } = useSesion()
 
-  if (!token || !usuario) {
+  if (!getToken() || !usuario) {
     return <Navigate to="/login" replace />
   }
 
   if (usuario.estado === 'inactivo') {
-    localStorage.removeItem('unifit_token')
-    localStorage.removeItem('unifit_usuario')
+    cerrarSesion()
     toast.error('Tu cuenta ha sido suspendida')
     return <Navigate to="/login" replace />
   }
 
+  // 'pendiente' va a /incorporacion, que sí está registrada en App.tsx.
+  // Antes apuntaba a /usuario/activacion, ruta inexistente que caía en
+  // /usuario/* y volvía a pasar por este guard: bucle infinito de redirección.
   if (usuario.estado === 'pendiente') {
-    return <Navigate to="/usuario/activacion" replace />
+    return <Navigate to="/incorporacion" replace />
   }
 
   if (usuario.debe_cambiar_password) {

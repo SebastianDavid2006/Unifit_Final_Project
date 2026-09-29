@@ -18,11 +18,7 @@ api.interceptors.response.use(
   (response) => response,
   (error: unknown) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      const teniaSesion = getToken() !== null
       cerrarSesion()
-      if (teniaSesion) {
-        window.location.href = '/'
-      }
     }
     return Promise.reject(error)
   },

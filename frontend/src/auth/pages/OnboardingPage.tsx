@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Calendar, CheckCircle2, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calendar, CheckCircle2, ArrowRight, ChevronLeft, ChevronRight, Lock, CalendarCheck } from 'lucide-react'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { api } from '@/lib/api'
-import { getCuposDisponibles, reservarCupo, type FrontendCupo } from '@/services/agenda.service'
+import { getCuposDisponibles, reservarCupo, obtenerFestivos, type FrontendCupo } from '@/services/agenda.service'
 import { cerrarSesion, mapRolToPlatform } from '@/lib/auth'
 import { useNavigate, useLocation } from 'react-router'
 import logotipo from '@/assets/logo/logo.webp'
@@ -14,6 +14,10 @@ const FIRE = '#E63946'
 const AMBER = '#F5A623'
 const GREEN = '#30D158'
 
+// Fases del onboarding, según la URL:
+// - 'schedule' → /incorporacion: agenda para agendar la cita (aún sin cita).
+// - 'waiting'  → /incorporacion/asistencia-presencial: cita ya agendada (espera).
+// - 'success'  → sin uso (fase reservada, hoy nunca se activa).
 type OnboardingPhase = 'schedule' | 'waiting' | 'success'
 
 interface CupoSlot {
@@ -25,6 +29,11 @@ interface DayInfo {
   date: Date
   isToday: boolean
   isPast: boolean
+  /** Sin cupos publicados no hay nada que agendar (misma regla que la agenda del estudiante) */
+  isRestDay: boolean
+  /** Festivo: el gimnasio no abre */
+  isHoliday: boolean
+  holidayName?: string
   slots: CupoSlot[]
 }
 
@@ -35,11 +44,12 @@ function formatDateKey(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-function makeDayInfo(date: Date, today: Date, cuposPorFecha: Map<string, CupoSlot[]>): DayInfo {
+function makeDayInfo(date: Date, today: Date, cuposPorFecha: Map<string, CupoSlot[]>, holidayName?: string): DayInfo {
   const isToday = date.toDateString() === today.toDateString()
   const isPast = date < today && !isToday
   const slots = isPast ? [] : cuposPorFecha.get(formatDateKey(date)) ?? []
-  return { date, isToday, isPast, slots }
+  // Sin cupos publicados no hay nada que agendar: se informa que no se publicaron.
+  return { date, isToday, isPast, isHoliday: holidayName !== undefined, holidayName, isRestDay: slots.length === 0, slots }
 }
 
 interface SessionUser {
@@ -80,6 +90,8 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
   const navigate = useNavigate()
   const location = useLocation()
   const [phase, setPhase] = useState<OnboardingPhase>(() => {
+    // Si el usuario llega directo a /incorporacion/asistencia-presencial,
+    // se arranca en la fase de espera; si no, en la agenda.
     if (typeof window !== 'undefined' && window.location.pathname.includes('/asistencia-presencial')) {
       return 'waiting'
     }
@@ -122,6 +134,23 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
     return map
   }, [cupos])
 
+  // Días festivos del año visible y el siguiente (el usuario puede avanzar meses).
+  const [holidays, setHolidays] = useState<Map<string, string>>(new Map())
+
+  useEffect(() => {
+    let activo = true
+    const anio = currentMonth.getFullYear()
+    Promise.all([obtenerFestivos(anio), obtenerFestivos(anio + 1)])
+      .then(([anioActual, anioSiguiente]) => {
+        if (!activo) return
+        const map = new Map<string, string>()
+        for (const f of [...anioActual, ...anioSiguiente]) map.set(f.date, f.name)
+        setHolidays(map)
+      })
+      .catch(() => { if (activo) setHolidays(new Map()) })
+    return () => { activo = false }
+  }, [currentMonth])
+
   const daysInMonth = useMemo(() => {
     const year = currentMonth.getFullYear()
     const month = currentMonth.getMonth()
@@ -132,12 +161,16 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
 
     for (let i = 0; i < startDay; i++) days.push(null)
     for (let d = 1; d <= lastDay.getDate(); d++) {
-      days.push(makeDayInfo(new Date(year, month, d), today, cuposPorFecha))
+      const date = new Date(year, month, d)
+      days.push(makeDayInfo(date, today, cuposPorFecha, holidays.get(formatDateKey(date))))
     }
     return days
-  }, [currentMonth, today, cuposPorFecha])
+  }, [currentMonth, today, cuposPorFecha, holidays])
 
   // Check for existing cita on mount, when phase changes to schedule, and after a failed booking
+  // Única consulta de cita pendiente: si el usuario ya agendó su valoración,
+  // se redirige a la pantalla de espera (asistencia-presencial).
+  // El 404 es la respuesta esperada cuando todavía no tiene cita.
   useEffect(() => {
     if (phase === 'schedule') {
       api.get('/usuarios/me/cita')
@@ -145,7 +178,7 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
           const cita = res.data as CitaResponse
           if (cita && cita.fecha && cita.hora_inicio) {
             const hora = new Date(cita.hora_inicio).toTimeString().slice(0, 5)
-            setSelectedDay(makeDayInfo(new Date(cita.fecha), today, new Map()))
+            setSelectedDay(makeDayInfo(new Date(cita.fecha + 'T12:00:00'), today, new Map()))
             setSelectedTime(hora)
             setPhase('waiting')
             navigate('/incorporacion/asistencia-presencial', { replace: true })
@@ -171,7 +204,10 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
   }, [phase])
 
   const handleDayClick = (day: DayInfo | null) => {
-    if (!day || day.isPast || day.slots.length === 0) return
+    // Cualquier día de hoy en adelante se puede abrir, tenga o no cupos: si no
+    // tiene, el panel de abajo informa que no se publicaron cupos. Los días
+    // pasados y los festivos no se pueden agendar.
+    if (!day || day.isPast || day.isHoliday) return
     setSelectedDay(day)
     setSelectedTime(null)
     setSelectedCupoId(null)
@@ -329,6 +365,21 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                       </motion.button>
                     </div>
 
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 pb-2" style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: GREEN }} />
+                        Con horarios
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }} />
+                        Sin cupos
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: AMBER }} />
+                        Festivo
+                      </span>
+                    </div>
+
                     <div className="grid grid-cols-7 gap-0.5 p-2">
                       {['D', 'L', 'M', 'X', 'J', 'V', 'S'].map((d, i) => (
                         <div key={d} className="h-8 flex items-center justify-center text-[10px] font-bold uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -338,26 +389,40 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                       {daysInMonth.map((day, i) => (
                         <motion.button
                           key={day ? formatDateKey(day.date) : `empty-${i}`}
-                          whileHover={{ scale: day && !day.isPast && day.slots.length > 0 ? 1.05 : 1 }}
+                          whileHover={{ scale: day && !day.isPast && !day.isHoliday ? 1.05 : 1 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => day && handleDayClick(day)}
-                          disabled={!day || day.isPast || day.slots.length === 0}
+                          disabled={!day || day.isPast || day.isHoliday}
                           className="relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all"
                           style={{
-                            background: day && !day.isPast && day.slots.length > 0
-                              ? (selectedDay?.date.getTime() === day.date.getTime() ? `linear-gradient(135deg, ${FIRE}, ${AMBER})` : 'rgba(255,255,255,0.04)')
+                            background: day && !day.isPast
+                              ? (selectedDay?.date.getTime() === day.date.getTime()
+                                ? `linear-gradient(135deg, ${FIRE}, ${AMBER})`
+                                : day.isHoliday
+                                  ? 'rgba(245,166,35,0.08)'
+                                  : day.isRestDay
+                                    ? 'rgba(255,255,255,0.02)'
+                                    : 'rgba(48,209,88,0.07)')
                               : 'transparent',
-                            border: day && !day.isPast && day.slots.length > 0
-                              ? (selectedDay?.date.getTime() === day.date.getTime() ? 'none' : '1px solid rgba(255,255,255,0.08)')
+                            border: day && !day.isPast
+                              ? (selectedDay?.date.getTime() === day.date.getTime()
+                                ? 'none'
+                                : day.isHoliday
+                                  ? '1px solid rgba(245,166,35,0.35)'
+                                  : day.isRestDay
+                                    ? '1px solid rgba(255,255,255,0.05)'
+                                    : '1px solid rgba(48,209,88,0.28)')
                               : 'none',
-                            color: day?.isToday ? '#7ec8e3' : day?.isPast || day?.slots.length === 0 ? 'rgba(255,255,255,0.15)' : '#fff',
-                            opacity: day?.isPast || day?.slots.length === 0 ? 0.4 : 1,
+                            color: day?.isToday ? '#7ec8e3' : day?.isPast ? 'rgba(255,255,255,0.15)' : '#fff',
+                            opacity: day?.isPast ? 0.4 : day?.isHoliday ? 0.65 : 1,
+                            cursor: day && !day.isPast && !day.isHoliday ? 'pointer' : 'not-allowed',
                           }}
                         >
                           <span style={{ fontSize: day?.isToday ? 15 : 13, fontWeight: day?.isToday ? 800 : 500 }}>
                             {day?.date.getDate()}
                           </span>
                           {day?.isToday && <span className="w-2 h-2 rounded-full mt-1" style={{ background: '#7ec8e3' }} />}
+                          {day?.isHoliday && <Lock size={9} className="absolute bottom-1" style={{ color: AMBER }} />}
                         </motion.button>
                       ))}
                     </div>
@@ -380,34 +445,48 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                             {selectedDay.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
                             {selectedDay.isToday && <span className="ml-2 text-[10px] font-bold" style={{ color: '#7ec8e3' }}>Hoy</span>}
                           </p>
-                          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                            {selectedDay.slots.length} horarios disponibles
-                          </p>
+                          {!selectedDay.isRestDay && (
+                            <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                              {selectedDay.slots.length === 1 ? '1 horario disponible' : `${selectedDay.slots.length} horarios disponibles`}
+                            </p>
+                          )}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-4 gap-2">
-                        {selectedDay.slots.map(slot => (
-                          <motion.button
-                            key={slot.id}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleTimeClick(slot)}
-                            className="aspect-square rounded-xl font-bold text-sm transition-all"
-                            style={{
-                              background: selectedTime === slot.time
-                                ? `linear-gradient(135deg, ${FIRE}, ${AMBER})`
-                                : 'rgba(255,255,255,0.05)',
-                              border: selectedTime === slot.time
-                                ? 'none'
-                                : '1px solid rgba(255,255,255,0.08)',
-                              color: '#fff',
-                            }}
-                          >
-                            {slot.time}
-                          </motion.button>
-                        ))}
-                      </div>
+                      {selectedDay.slots.length === 0 ? (
+                        <div className="flex flex-col items-center py-6 text-center">
+                          <CalendarCheck size={32} className="mb-2" style={{ opacity: 0.4, color: 'rgba(255,255,255,0.5)' }} />
+                          <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.7)' }}>
+                            Cupos no publicados
+                          </p>
+                          <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                            Elige otro día para ver los horarios disponibles.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-4 gap-2">
+                          {selectedDay.slots.map(slot => (
+                            <motion.button
+                              key={slot.id}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleTimeClick(slot)}
+                              className="aspect-square rounded-xl font-bold text-sm transition-all"
+                              style={{
+                                background: selectedTime === slot.time
+                                  ? `linear-gradient(135deg, ${FIRE}, ${AMBER})`
+                                  : 'rgba(255,255,255,0.05)',
+                                border: selectedTime === slot.time
+                                  ? 'none'
+                                  : '1px solid rgba(255,255,255,0.08)',
+                                color: '#fff',
+                              }}
+                            >
+                              {slot.time}
+                            </motion.button>
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   )}
 

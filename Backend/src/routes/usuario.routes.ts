@@ -49,10 +49,15 @@ router.get(
 )
 
 // Obtener perfil propio (dueño)
+// Exceptuado de verificarEstado: es el endpoint con el que el frontend conoce el
+// estado real en BD, incluido 'pendiente'. Sin esto, un usuario ya activado queda
+// con estado obsoleto en localStorage y ProtectedRoute lo devuelve a /incorporacion
+// en bucle. Solo se exime 'pendiente'; 'inactivo' sigue bloqueado (verificarEstado
+// lo rechaza antes de evaluar excepciones).
 router.get(
   '/usuarios/me',
   verificarToken,
-  verificarEstado(),
+  verificarEstado(['/api/usuarios/me']),
   getMiPerfil,
 )
 

@@ -222,6 +222,7 @@ export function AgendaPage() {
             <DayView
               key={'day' + cuposTick}
               currentDate={currentDate}
+              today={today}
               onChangeDate={delta => setCurrentDate(d => offset(d, delta))}
               holidays={holidays}
               hasBooking={!!booked}

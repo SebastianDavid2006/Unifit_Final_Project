@@ -50,12 +50,14 @@ export function MonthView({ currentDate, onChangeMonth, today, holidays, selecte
           const full = info.isCoachDay && free === 0
           const sel = selected && sameDay(selected.date, date)
           const isToday = sameDay(date, today)
+          // Un día que ya pasó no se agenda: ni se abre ni muestra disponibilidad.
+          const esPasado = !isToday && date.getTime() < today.getTime()
 
           return (
             <motion.button
               key={day}
               whileTap={{ scale: 0.92 }}
-              disabled={info.isHoliday}
+              disabled={info.isHoliday || esPasado}
               onClick={() => onSelect(sel ? null : info)}
               className="relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all"
               style={{
@@ -67,14 +69,14 @@ export function MonthView({ currentDate, onChangeMonth, today, holidays, selecte
                   : full ? '1px solid rgba(230,57,70,0.35)'
                   : info.isCoachDay ? '1px solid rgba(48,209,88,0.22)'
                   : '1px solid rgba(255,255,255,0.05)',
-                cursor: info.isHoliday ? 'not-allowed' : 'pointer',
+                cursor: info.isHoliday || esPasado ? 'not-allowed' : 'pointer',
                 ...(hasBooking && !isBookedDay(date)
                   ? { opacity: 0.28, filter: 'blur(1.5px)' }
-                  : { opacity: info.isHoliday ? 0.75 : 1 }),
+                  : { opacity: esPasado ? 0.3 : info.isHoliday ? 0.75 : 1 }),
               }}
             >
               <span style={{
-                color: sel ? '#fff' : isToday ? AMBER : info.isHoliday ? 'rgba(255,255,255,0.4)' : 'white',
+                color: sel ? '#fff' : isToday ? AMBER : info.isHoliday || esPasado ? 'rgba(255,255,255,0.4)' : 'white',
                 fontSize: 13,
                 fontWeight: isToday || sel ? 800 : 600,
               }}>
