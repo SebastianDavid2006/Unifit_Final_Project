@@ -9,6 +9,7 @@ import type { ValuationForm } from '@/modules/students/StudentProfileData'
 
 interface Props {
   canCreateValuation: boolean
+  loading: boolean
   pagedAssessments: AssessmentItem[]
   totalAssessments: number
   ultimaRutina: string
@@ -29,6 +30,7 @@ interface Props {
 
 export function AssessmentTab({
   canCreateValuation,
+  loading,
   pagedAssessments,
   totalAssessments,
   ultimaRutina,
@@ -66,6 +68,7 @@ export function AssessmentTab({
       />
 
       <AssessmentList
+        loading={loading}
         pagedAssessments={pagedAssessments}
         totalAssessments={totalAssessments}
         setAssessmentPage={setAssessmentPage}

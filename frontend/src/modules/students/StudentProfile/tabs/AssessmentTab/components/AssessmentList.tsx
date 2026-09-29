@@ -1,11 +1,12 @@
 import { motion } from 'motion/react'
-import { Check, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Calendar, ListChecks } from 'lucide-react'
 import listImg from '@/assets/icons/objects/list.webp'
 import type { Dispatch, SetStateAction } from 'react'
 import type { AssessmentItem } from '@/services/valoracion.service'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
 
 interface AssessmentListProps {
+  loading: boolean
   pagedAssessments: AssessmentItem[]
   totalAssessments: number
   assessmentPage: number
@@ -18,6 +19,7 @@ interface AssessmentListProps {
 }
 
 export function AssessmentList({
+  loading,
   pagedAssessments,
   totalAssessments,
   setAssessmentPage,
@@ -28,6 +30,51 @@ export function AssessmentList({
   setShowAssessmentOptions,
 }: AssessmentListProps) {
   const isMobile = useIsMobile()
+  const mostrarSkeleton = loading && totalAssessments === 0
+  const sinValoraciones = !loading && totalAssessments === 0
+
+  if (mostrarSkeleton) {
+    return (
+      <div className="flex flex-col gap-2">
+        {[0, 1, 2].map(i => (
+          <div
+            key={i}
+            className="h-[72px] rounded-2xl animate-pulse"
+            style={{ background: 'rgba(0,0,0,0.04)' }}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  if (sinValoraciones) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center gap-3 rounded-2xl py-12 px-6 text-center"
+        style={{ background: 'rgba(0,0,0,0.02)', border: '1px dashed rgba(0,0,0,0.08)' }}
+      >
+        <div
+          className="w-12 h-12 rounded-2xl flex items-center justify-center"
+          style={{ background: 'rgba(18,112,183,0.08)' }}
+        >
+          <ListChecks size={22} style={{ color: 'rgba(0,0,0,0.2)' }} />
+        </div>
+        <p
+          className="text-sm font-bold"
+          style={{ color: '#0D1B2A', textShadow: '0 1px 2px rgba(0,0,0,0.08)' }}
+        >
+          Aún no tiene valoraciones.
+        </p>
+        <p
+          className="text-xs font-medium max-w-xs"
+          style={{ color: 'rgba(0,0,0,0.4)', textShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+        >
+          Cuando se realice una valoración aparecerá aquí.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col">
       {!isMobile && (
