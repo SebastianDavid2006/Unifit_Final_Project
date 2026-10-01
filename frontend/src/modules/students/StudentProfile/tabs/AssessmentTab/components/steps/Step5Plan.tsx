@@ -1,10 +1,11 @@
+import type { Dispatch, SetStateAction } from 'react'
 import { motion } from 'motion/react'
 import calendarImg from '@/assets/icons/objects/calendar.webp'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
 
 interface Step5PlanProps {
   valuationForm: ValuationForm
-  setValuationForm: (f: ValuationForm) => void
+  setValuationForm: Dispatch<SetStateAction<ValuationForm>>
   valuationViewMode: boolean
 }
 

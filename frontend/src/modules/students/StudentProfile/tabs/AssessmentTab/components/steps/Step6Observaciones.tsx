@@ -1,8 +1,9 @@
+import type { Dispatch, SetStateAction } from 'react'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
 
 interface Step6ObservacionesProps {
   valuationForm: ValuationForm
-  setValuationForm: (f: ValuationForm) => void
+  setValuationForm: Dispatch<SetStateAction<ValuationForm>>
   valuationViewMode: boolean
 }
 
@@ -35,10 +36,10 @@ export function Step6Observaciones({ valuationForm, setValuationForm, valuationV
           rows={6}
           className="w-full px-3 py-2.5 rounded-xl text-sm font-medium outline-none transition-all duration-200 resize-none"
           style={TEXTAREA_STYLE.base}
-          onMouseEnter={e => { if (e.target !== document.activeElement) { Object.assign(e.target.style, TEXTAREA_STYLE.hover) } }}
-          onMouseLeave={e => { if (e.target !== document.activeElement) { Object.assign(e.target.style, TEXTAREA_STYLE.base) } }}
-          onFocus={e => { Object.assign(e.target.style, TEXTAREA_STYLE.focus) }}
-          onBlur={e => { Object.assign(e.target.style, TEXTAREA_STYLE.base) }}
+          onMouseEnter={e => { if (e.target !== document.activeElement) { Object.assign(e.currentTarget.style, TEXTAREA_STYLE.hover) } }}
+          onMouseLeave={e => { if (e.target !== document.activeElement) { Object.assign(e.currentTarget.style, TEXTAREA_STYLE.base) } }}
+          onFocus={e => { Object.assign(e.currentTarget.style, TEXTAREA_STYLE.focus) }}
+          onBlur={e => { Object.assign(e.currentTarget.style, TEXTAREA_STYLE.base) }}
         />
       </div>
     </div>

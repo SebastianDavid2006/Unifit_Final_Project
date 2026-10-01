@@ -69,7 +69,7 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
   const [routineSuccess, setRoutineSuccess] = useState(false)
   const [routineStep, setRoutineStep] = useState(1)
   const [routineForm, setRoutineForm] = useState({
-    name: '', description: '', duration: '', frequency: '', level: 'Intermedio',
+    name: '', description: '', duration: '', frequency: '', level: 'Principiante',
   })
   const [currentRoutine, setCurrentRoutine] = useState<AiRoutine | null>(null)
   const [routineRows, setRoutineRows] = useState<RoutineRow[]>([])
@@ -133,8 +133,12 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
 const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
   const currentTab = tab ?? localTab
   const setTab = onTabChange ?? setLocalTab
-  const imc = (student.weight / ((student.height / 100) ** 2)).toFixed(1)
-  const imcNum = parseFloat(imc)
+  const valoracionActual = assessments[0] ?? null
+  const metricasActuales = valoracionActual
+    ? { peso: valoracionActual.pesoKg, estatura: valoracionActual.estaturaCm, imc: valoracionActual.imc }
+    : null
+  const fmtMetrica = (v: number | null | undefined, unidad = '') => (v == null || Number.isNaN(v) ? '—' : `${v}${unidad}`)
+  const imc = fmtMetrica(metricasActuales?.imc)
   const objetivoFisico = assessments[0]
     ? [assessments[0].objetivoTarjetas?.[0], assessments[0].objetivoDetalle].filter(Boolean).join(' — ')
     : ''
@@ -228,6 +232,17 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
     exerciseCatalog,
   })
 
+  // Abre la valoración actual (la más reciente) en modo solo lectura
+  const verValoracionActual = () => {
+    if (!valoracionActual) return
+    setSelectedAssessment(valoracionActual)
+    loadAssessmentIntoForm(valoracionActual)
+    setValuationStep(1)
+    setValuationSuccess(false)
+    setValuationViewMode(true)
+    setShowNewValuationModal(true)
+  }
+
   const ASSESSMENT_PAGE_SIZE = 6
   const assessmentTotalPages = Math.max(1, Math.ceil(assessments.length / ASSESSMENT_PAGE_SIZE))
   const assessmentCurrentPage = Math.min(assessmentPage, assessmentTotalPages)
@@ -253,7 +268,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
               <div className="text-left h-full">
 
               {currentTab === 'general' && (
-                <OverviewTab student={editable} imc={imc} objetivo={objetivoFisico} onShowInfo={() => setShowInfoModal(true)} onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))} />
+                <OverviewTab student={editable} metricas={metricasActuales} cargandoValoracion={loadingAssessments} objetivo={objetivoFisico} onVerValoracion={verValoracionActual} onShowInfo={() => setShowInfoModal(true)} onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))} />
               )}
               {currentTab === 'actividad' && (
                 <ProgressTab
@@ -279,7 +294,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                   pagedAssessments={pagedAssessments}
                   totalAssessments={assessments.length}
                   ultimaRutina={assessments[0]?.routine?.nombre ?? ''}
-                  proximaValoracion={assessments[0]?.next ?? null}
+                  proximaCita={{ fecha: editable.nextAssessment ?? '', tipo: editable.nextApptType, tipoOtro: editable.nextApptOther }}
                   assessmentPage={assessmentPage}
                   setAssessmentPage={setAssessmentPage}
                   assessmentTotalPages={assessmentTotalPages}
@@ -374,8 +389,8 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                       fields: [
                         { label: 'EPS', value: student.eps },
                         { label: 'Grupo sanguíneo', value: student.bloodType },
-                        { label: 'Peso', value: `${student.weight} kg` },
-                        { label: 'Altura', value: `${student.height} cm` },
+                        { label: 'Peso', value: fmtMetrica(metricasActuales?.peso, ' kg') },
+                        { label: 'Altura', value: fmtMetrica(metricasActuales?.estatura, ' cm') },
                         { label: 'IMC', value: imc },
                       ],
                     },
@@ -440,7 +455,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
             setRoutineDays([])
             setShowAddDayMenu(false)
             setRoutineStep(1)
-            setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+            setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Principiante' })
             setRoutineRows([])
             setSelectedRoutineDay(null)
             setRoutineDayPage(1)
@@ -645,7 +660,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                 id_valoracion: routineValoracionId,
                 nombre: routineForm.name || 'Rutina personalizada',
                 duracion: routineForm.duration || '8 semanas',
-                nivel: routineForm.level || 'Intermedio',
+                nivel: routineForm.level || 'Principiante',
                 observaciones: routineForm.description || '',
                 ejercicios: routineRows.map(r => ({
                   id_ejercicio: r.id_exercise ?? r.id,
@@ -670,7 +685,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
             setRoutineDays([])
             setShowAddDayMenu(false)
             setRoutineStep(1)
-            setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+            setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Principiante' })
             setRoutineRows([])
             setSelectedRoutineDay(null)
             setRoutineDayPage(1)

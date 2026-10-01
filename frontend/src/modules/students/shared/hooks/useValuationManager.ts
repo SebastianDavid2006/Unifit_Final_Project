@@ -119,7 +119,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     } else if (deps.confirmCancel === 'routine') {
       setShowNewRoutineModal(false)
       setRoutineStep(1)
-      setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+      setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Principiante' })
       setRoutineRows([])
       setSelectedRoutineDay(null)
       setRoutineDayPage(1)
@@ -254,7 +254,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
       description: backend.observaciones ?? '',
       duration: backend.duracion ?? 'ocho_semanas',
       frequency: rows.length ? `${new Set(rows.map(r => r.dia)).size} días/semana` : '',
-      level: (backend.nivel as 'Principiante' | 'Intermedio' | 'Avanzado') ?? 'Intermedio',
+      level: backend.nivel as 'Principiante' | 'Intermedio' | 'Avanzado',
       rows,
     }
   }, [])

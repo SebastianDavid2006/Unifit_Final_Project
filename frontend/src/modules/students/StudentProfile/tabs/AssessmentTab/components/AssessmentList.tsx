@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Check, ChevronLeft, ChevronRight, Calendar, ListChecks } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, ListChecks } from 'lucide-react'
 import listImg from '@/assets/icons/objects/list.webp'
 import type { Dispatch, SetStateAction } from 'react'
 import type { AssessmentItem } from '@/services/valoracion.service'
@@ -9,7 +9,6 @@ interface AssessmentListProps {
   loading: boolean
   pagedAssessments: AssessmentItem[]
   totalAssessments: number
-  assessmentPage: number
   setAssessmentPage: Dispatch<SetStateAction<number>>
   assessmentTotalPages: number
   assessmentCurrentPage: number
@@ -78,10 +77,9 @@ export function AssessmentList({
   return (
     <div className="flex flex-col">
       {!isMobile && (
-        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_auto] items-center gap-4 px-4 mb-2">
+        <div className="grid grid-cols-[1.5fr_1fr_1fr_auto] items-center gap-4 px-4 mb-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: 'rgba(0,0,0,0.25)' }}>Valoración</p>
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-center" style={{ color: 'rgba(0,0,0,0.25)' }}>Fecha</p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-center" style={{ color: 'rgba(0,0,0,0.25)' }}>Próxima fecha</p>
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-center" style={{ color: 'rgba(0,0,0,0.25)' }}>Rutina</p>
           <div className="w-8" />
         </div>
@@ -100,7 +98,7 @@ export function AssessmentList({
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08, ease: [0.16, 1, 0.3, 1], duration: 0.5 }}
-              className={`relative items-center gap-4 p-4 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${isMobile ? 'flex flex-col' : 'grid grid-cols-[1.5fr_1fr_1fr_1fr_auto]'}`}
+              className={`relative items-center gap-4 p-4 rounded-2xl transition-all duration-300 cursor-pointer overflow-hidden ${isMobile ? 'flex flex-col' : 'grid grid-cols-[1.5fr_1fr_1fr_auto]'}`}
               style={{
                 background: isFirst ? 'linear-gradient(135deg, #1270B7, #7ec8e3)' : '#FFFFFF',
                 border: isFirst ? 'none' : '1px solid rgba(0,0,0,0.04)',
@@ -155,14 +153,6 @@ export function AssessmentList({
               {!isMobile && (
                 <>
                   <p className="text-xs font-semibold text-center" style={{ color: isFirst ? '#FFFFFF' : 'rgba(0,0,0,0.5)' }}>{v.date}</p>
-
-                  {v.next ? (
-                    <p className="text-xs font-bold text-center" style={{ color: isFirst ? '#FFFFFF' : '#1270B7' }}>{v.next}</p>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium w-fit justify-self-center" style={{ background: isFirst ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.06)', color: isFirst ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.4)' }}>
-                      <Calendar size={11} strokeWidth={2} /> No programada
-                    </span>
-                  )}
 
                   {v.routine ? (
                     <span className="inline-flex items-center justify-self-center px-2.5 py-1 rounded-lg text-xs font-semibold w-fit text-center" style={{ background: isFirst ? 'rgba(255,255,255,0.22)' : 'rgba(26,138,63,0.12)', color: isFirst ? '#FFFFFF' : '#1A8A3F' }}>

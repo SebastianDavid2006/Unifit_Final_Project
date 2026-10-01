@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from 'react'
 import { motion } from 'motion/react'
 import musculoIcon from '@/assets/icons/anatomy/musculoskeletal.webp'
 import lungsIcon from '@/assets/icons/anatomy/lungs.webp'
@@ -9,7 +10,7 @@ import type { ValuationForm } from '@/modules/students/StudentProfileData'
 
 interface Step4AntecedentesProps {
   valuationForm: ValuationForm
-  setValuationForm: (f: ValuationForm) => void
+  setValuationForm: Dispatch<SetStateAction<ValuationForm>>
   valuationViewMode: boolean
 }
 
@@ -102,10 +103,10 @@ export function Step4Antecedentes({ valuationForm, setValuationForm, valuationVi
           rows={3}
           className="w-full px-3 py-2.5 rounded-xl text-sm font-medium outline-none transition-all duration-200 resize-none"
           style={TEXTAREA_STYLE.base}
-          onMouseEnter={e => { if (e.target !== document.activeElement) { Object.assign(e.target.style, TEXTAREA_STYLE.hover) } }}
-          onMouseLeave={e => { if (e.target !== document.activeElement) { Object.assign(e.target.style, TEXTAREA_STYLE.base) } }}
-          onFocus={e => { Object.assign(e.target.style, TEXTAREA_STYLE.focus) }}
-          onBlur={e => { Object.assign(e.target.style, TEXTAREA_STYLE.base) }}
+          onMouseEnter={e => { if (e.target !== document.activeElement) { Object.assign(e.currentTarget.style, TEXTAREA_STYLE.hover) } }}
+          onMouseLeave={e => { if (e.target !== document.activeElement) { Object.assign(e.currentTarget.style, TEXTAREA_STYLE.base) } }}
+          onFocus={e => { Object.assign(e.currentTarget.style, TEXTAREA_STYLE.focus) }}
+          onBlur={e => { Object.assign(e.currentTarget.style, TEXTAREA_STYLE.base) }}
         />
       </div>
     </div>

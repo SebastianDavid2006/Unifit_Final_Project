@@ -113,7 +113,7 @@ export function useValuationManager(deps: UseValuationManagerDeps) {
     } else if (deps.confirmCancel === 'routine') {
       setShowNewRoutineModal(false)
       setRoutineStep(1)
-      setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Intermedio' })
+      setRoutineForm({ name: '', description: '', duration: '', frequency: '', level: 'Principiante' })
       setRoutineRows([])
       setSelectedRoutineDay(null)
       setRoutineDayPage(1)

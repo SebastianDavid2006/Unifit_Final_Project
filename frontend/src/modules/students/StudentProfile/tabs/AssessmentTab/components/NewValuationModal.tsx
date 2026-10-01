@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from 'react'
 ﻿import { motion, AnimatePresence } from 'motion/react'
 import { X } from 'lucide-react'
 import viewGif from '@/assets/icons/animated/actions/view.gif'
@@ -13,9 +14,9 @@ import type { ValuationForm } from '@/modules/students/StudentProfileData'
 interface NewValuationModalProps {
   isOpen: boolean
   valuationForm: ValuationForm
-  setValuationForm: (f: ValuationForm) => void
+  setValuationForm: Dispatch<SetStateAction<ValuationForm>>
   valuationStep: number
-  setValuationStep: (s: number) => void
+  setValuationStep: (s: number | ((prev: number) => number)) => void
   valuationViewMode: boolean
   setValuationViewMode: (v: boolean) => void
   valuationSuccess: boolean
@@ -40,7 +41,7 @@ const STEPS = [
 function StepContent({ valuationStep, valuationForm, setValuationForm, valuationViewMode }: {
   valuationStep: number
   valuationForm: ValuationForm
-  setValuationForm: (f: ValuationForm) => void
+  setValuationForm: Dispatch<SetStateAction<ValuationForm>>
   valuationViewMode: boolean
 }) {
   switch (valuationStep) {

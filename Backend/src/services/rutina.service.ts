@@ -382,7 +382,7 @@ async function transicionarSesion(idSesion: string, estadoFinal: 'finalizada' | 
       estado: estadoFinal,
       hora_fin: new Date(),
       // Al cancelar el progreso se reinicia: se descartan las marcas de la sesión.
-      ejercicios_marcados: estadoFinal === 'cancelada' ? [] : sesion.ejercicios_marcados,
+      ...(estadoFinal === 'cancelada' && { ejercicios_marcados: [] }),
     },
   })
 }

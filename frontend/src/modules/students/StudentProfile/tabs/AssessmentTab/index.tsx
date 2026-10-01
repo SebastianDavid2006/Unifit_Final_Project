@@ -13,7 +13,7 @@ interface Props {
   pagedAssessments: AssessmentItem[]
   totalAssessments: number
   ultimaRutina: string
-  proximaValoracion: string | null
+  proximaCita: { fecha: string; tipo?: 'valoracion' | 'registro' | 'seguimiento' | 'otro'; tipoOtro?: string }
   assessmentPage: number
   setAssessmentPage: Dispatch<SetStateAction<number>>
   assessmentTotalPages: number
@@ -34,7 +34,7 @@ export function AssessmentTab({
   pagedAssessments,
   totalAssessments,
   ultimaRutina,
-  proximaValoracion,
+  proximaCita,
   setAssessmentPage,
   assessmentTotalPages,
   assessmentCurrentPage,
@@ -59,7 +59,7 @@ export function AssessmentTab({
         canCreateValuation={canCreateValuation}
         totalAssessments={totalAssessments}
         ultimaRutina={ultimaRutina}
-        proximaValoracion={proximaValoracion}
+        proximaCita={proximaCita}
         setValuationStep={setValuationStep}
         setValuationSuccess={setValuationSuccess}
         setValuationViewMode={setValuationViewMode}

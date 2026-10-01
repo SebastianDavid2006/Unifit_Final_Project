@@ -1,8 +1,6 @@
 import { TrophyView } from '@/assets/models/ui/objects/trophy/TrophyModel'
-import type { Student } from '@/modules/students/StudentProfileData'
 
 interface PhysicalGoalCardProps {
-  student: Student
   objetivo: string
   className?: string
 }
@@ -22,7 +20,7 @@ export function PhysicalGoalCard({ objetivo, className = '' }: PhysicalGoalCardP
           <p className="text-lg font-extrabold capitalize" style={{ color: '#B8860B' }}>Objetivo físico</p>
         </div>
         <div className="rounded-2xl p-4" style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.15)' }}>
-          <p className="text-sm font-bold leading-relaxed" style={{ color: '#B8860B' }}>{student.goal?.trim() || 'Sin objetivo registrado'}</p>
+          <p className="text-sm font-bold leading-relaxed" style={{ color: '#B8860B' }}>{objetivo?.trim() || 'Sin objetivo registrado'}</p>
         </div>
       </div>
     </div>

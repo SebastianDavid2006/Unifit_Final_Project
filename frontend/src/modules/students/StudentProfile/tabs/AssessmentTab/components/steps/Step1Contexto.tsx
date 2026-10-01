@@ -1,3 +1,4 @@
+import type { Dispatch, SetStateAction } from 'react'
 import { motion } from 'motion/react'
 import weightLossIcon from '@/assets/icons/objects/metric_belt.webp'
 import armIcon2 from '@/assets/icons/objects/dumbbel.webp'
@@ -9,7 +10,7 @@ import type { ValuationForm } from '@/modules/students/StudentProfileData'
 
 interface Step1ContextoProps {
   valuationForm: ValuationForm
-  setValuationForm: (f: ValuationForm) => void
+  setValuationForm: Dispatch<SetStateAction<ValuationForm>>
   valuationViewMode: boolean
 }
 
@@ -39,10 +40,10 @@ export function Step1Contexto({ valuationForm, setValuationForm, valuationViewMo
               border: '1px solid transparent',
               paddingRight: 32,
             }}
-            onMouseEnter={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'; e.target.style.borderColor = 'rgba(0,0,0,0.06)' } }}
-            onMouseLeave={e => { if (e.target !== document.activeElement) { e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.borderColor = 'transparent' } }}
-            onFocus={e => { e.target.style.borderColor = '#1270B7'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.target.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
-            onBlur={e => { e.target.style.borderColor = 'transparent'; e.target.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.target.style.boxShadow = 'none' }}
+            onMouseEnter={e => { if (e.target !== document.activeElement) { e.currentTarget.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' } }}
+            onMouseLeave={e => { if (e.target !== document.activeElement) { e.currentTarget.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.currentTarget.style.borderColor = 'transparent' } }}
+            onFocus={e => { e.currentTarget.style.borderColor = '#1270B7'; e.currentTarget.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.12) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.08) 0%, transparent 50%), rgba(18,112,183,0.04)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,112,183,0.08)' }}
+            onBlur={e => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.background = 'radial-gradient(ellipse at 30% 20%, rgba(18,112,183,0.08) 0%, transparent 60%), radial-gradient(ellipse at 70% 80%, rgba(18,112,183,0.05) 0%, transparent 50%), rgba(0,0,0,0.03)'; e.currentTarget.style.boxShadow = 'none' }}
           >
             <option value="">Seleccionar nivel</option>
             <option value="Sedentario">Sedentario</option>

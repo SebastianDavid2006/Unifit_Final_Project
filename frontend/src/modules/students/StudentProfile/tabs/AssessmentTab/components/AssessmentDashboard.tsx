@@ -9,12 +9,14 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
 import { cardStyle, emptyValuationForm } from '@/modules/students/StudentProfileData'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
+import { typeColors, typeLabels } from '@/modules/agenda/AgendaModule/data'
+import { agendaTipoToAppt } from '@/modules/agenda/AgendaModule/backend'
 
 interface AssessmentDashboardProps {
   canCreateValuation: boolean
   totalAssessments: number
   ultimaRutina: string
-  proximaValoracion: string | null
+  proximaCita: { fecha: string; tipo?: 'valoracion' | 'registro' | 'seguimiento' | 'otro'; tipoOtro?: string }
   setValuationStep: Dispatch<SetStateAction<number>>
   setValuationSuccess: (v: boolean) => void
   setValuationViewMode: (v: boolean) => void
@@ -34,7 +36,7 @@ export function AssessmentDashboard({
   canCreateValuation,
   totalAssessments,
   ultimaRutina,
-  proximaValoracion,
+  proximaCita,
   setValuationStep,
   setValuationSuccess,
   setValuationViewMode,
@@ -42,11 +44,12 @@ export function AssessmentDashboard({
   setShowNewValuationModal,
 }: AssessmentDashboardProps) {
   const isMobile = useIsMobile()
+  const tipoKey = proximaCita.tipo ? agendaTipoToAppt(proximaCita.tipo) : null
   const cardCols = isMobile ? 'grid-cols-2' : (canCreateValuation ? 'grid-cols-4' : 'grid-cols-3')
   const items = [
     { label: 'Total de valoraciones', value: `${totalAssessments}`, model: 'list' },
     { label: 'Última rutina realizada', value: ultimaRutina || 'N/A', model: 'calendar' },
-    { label: 'Fecha de la próxima valoración', value: proximaValoracion || 'N/A', model: 'calendar', highlight: true },
+    { label: 'Fecha de la próxima cita', value: proximaCita.fecha || 'Por agendar', model: 'calendar', highlight: true },
   ]
   return (
     <div className={`grid ${cardCols} gap-4`}>
@@ -57,7 +60,7 @@ export function AssessmentDashboard({
             key={m.label}
             whileHover={{ scale: 1.03 }}
             transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
-            className="relative rounded-2xl flex flex-col items-center text-center group"
+            className="relative rounded-2xl flex flex-col items-center justify-center text-center group"
             style={{ ...cardStyle, padding: isMobile ? '1rem' : '1.5rem' }}
           >
             <div
@@ -76,6 +79,21 @@ export function AssessmentDashboard({
               color: m.highlight ? '#30D158' : 'rgba(0,0,0,0.5)',
               marginTop: isMobile ? '0.5rem' : '0.75rem',
             }}>{m.label}</p>
+            {m.highlight && tipoKey && (
+              <>
+                <span
+                  className={`inline-flex items-center rounded-lg font-bold ${isMobile ? 'px-2.5 py-1 text-xs mt-2' : 'px-3 py-1.5 text-sm mt-3'}`}
+                  style={{ background: typeColors[tipoKey] + '1F', color: typeColors[tipoKey] }}
+                >
+                  {typeLabels[tipoKey]}
+                </span>
+                {proximaCita.tipo === 'otro' && proximaCita.tipoOtro && (
+                  <span className="text-[10px] font-medium mt-1.5 max-w-full break-words" style={{ color: 'rgba(0,0,0,0.45)' }}>
+                    {proximaCita.tipoOtro}
+                  </span>
+                )}
+              </>
+            )}
           </motion.div>
         )
       })}
@@ -84,7 +102,7 @@ export function AssessmentDashboard({
         <motion.div
           whileHover={{ boxShadow: '0 12px 40px rgba(230,57,70,0.3), 0 0 60px rgba(230,57,70,0.1)' }}
           transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.4 }}
-          className="relative rounded-2xl flex flex-col items-center text-center group cursor-pointer"
+          className="relative rounded-2xl flex flex-col items-center justify-center text-center group cursor-pointer"
           style={{
             borderRadius: 20,
             background: 'radial-gradient(ellipse at 20% 30%, rgba(230,57,70,0.9) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(18,112,183,0.4) 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, rgba(241,200,39,0.25) 0%, transparent 50%), #CC0033',

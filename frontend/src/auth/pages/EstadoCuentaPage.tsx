@@ -12,7 +12,7 @@ const CONTENIDO = {
     Icono: ShieldOff,
     color: '#FF8FA3',
     titulo: 'Cuenta inactiva',
-    mensaje: 'Tu cuenta está inactiva. Comunícate con el administrador.',
+    mensaje: 'Tu cuenta ha sido deshabilitada. Comunícate con el administrador.',
   },
   pendiente: {
     Icono: Hourglass,

@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from 'react'
+import type { MutableRefObject, ReactNode, Ref } from 'react'
 import { useCallback, useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
 import { ArrowLeft } from 'lucide-react'
@@ -49,7 +49,7 @@ export function AuthShell({
     (el: HTMLVideoElement | null) => {
       desktopVideoRef.current = el
       if (typeof bgVideoRef === 'function') bgVideoRef(el)
-      else if (bgVideoRef) bgVideoRef.current = el
+      else if (bgVideoRef) (bgVideoRef as MutableRefObject<HTMLVideoElement | null>).current = el
     },
     [bgVideoRef],
   )

@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, Plus, Trash2, ChevronLeft, ChevronRight, Sparkles, PenLine, Bot } from 'lucide-react'
 import editGif from '@/assets/icons/animated/actions/edit.gif'
@@ -22,7 +23,7 @@ interface NewRoutineModalProps {
   routineForm: { name: string; description: string; duration: string; frequency: string; level: string }
   setRoutineForm: (f: any) => void
   routineStep: number
-  setRoutineStep: (s: number) => void
+  setRoutineStep: (s: number | ((prev: number) => number)) => void
   routineViewMode: boolean
   setRoutineViewMode: (v: boolean) => void
   routineFromAssessment: boolean
@@ -145,7 +146,8 @@ function StepContent({
       return (
         <RoutineStep2Ejercicios
           routineViewMode={routineViewMode}
-          {...rest}
+          hintMensaje={hintMensaje}
+          {...(rest as Omit<ComponentProps<typeof RoutineStep2Ejercicios>, 'routineViewMode' | 'hintMensaje'>)}
         />
       )
     default:

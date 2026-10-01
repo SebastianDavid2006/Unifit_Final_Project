@@ -9,7 +9,7 @@ export function verificarEstado(rutasExceptuadas: string[] = []) {
 
     if (req.usuario.estado === 'inactivo') {
       res.status(403).json({
-        mensaje: 'Tu cuenta está inactiva. Comunícate con el administrador.',
+        mensaje: 'Tu cuenta ha sido deshabilitada. Comunícate con el administrador.',
         codigo: 'CUENTA_INACTIVA',
       })
       return

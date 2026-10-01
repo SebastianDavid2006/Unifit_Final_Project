@@ -53,6 +53,8 @@ export interface Student {
   faculty?: string
   semester?: string
   nextAssessment?: string
+  nextApptType?: 'valoracion' | 'registro' | 'seguimiento' | 'otro'
+  nextApptOther?: string
   status?: 'active' | 'inactive' | 'process'
   role?: 'estudiante' | 'profesor' | 'administrativo'
   nivelFormacion?: string

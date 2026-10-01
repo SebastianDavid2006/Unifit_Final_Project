@@ -43,6 +43,9 @@ export interface AssessmentItem {
   objetivoDetalle: string
   metrics: { label: string; value: string }[]
   estatura: string
+  pesoKg: number | null
+  estaturaCm: number | null
+  imc: number | null
   masaMagra: string
   grasaVisceral: string
   presionArterial: string
@@ -100,6 +103,9 @@ function mapBackendToFrontend(b: BackendValoracion, index: number): AssessmentIt
       { label: 'Masa Muscular', value: `${med.masa_muscular} kg` },
     ] : [],
     estatura: med ? `${med.estatura} m` : '',
+    pesoKg: med ? Number(med.peso) : null,
+    estaturaCm: med ? (Number(med.estatura) < 3 ? Math.round(Number(med.estatura) * 100) : Number(med.estatura)) : null,
+    imc: med ? Number(med.imc) : null,
     masaMagra: med ? `${med.masa_magra} kg` : '',
     grasaVisceral: med ? String(med.grasa_visceral) : '',
     presionArterial: dm?.presion_arterial ?? '',

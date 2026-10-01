@@ -23,7 +23,7 @@ export function AttendanceHeader({
   monthNames,
 }: AttendanceHeaderProps) {
   const isMobile = useIsMobile()
-  const views = isMobile ? ['semana'] : ['semana', 'mes', 'año']
+  const views: Array<'semana' | 'mes' | 'año'> = isMobile ? ['semana'] : ['semana', 'mes', 'año']
 
   return (
     <div className="rounded-2xl" style={{

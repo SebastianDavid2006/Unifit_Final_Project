@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import request from 'supertest'
 import app from '../src/app'
 import { prisma } from '../src/utils/prisma'
@@ -20,6 +20,27 @@ const TABLAS_LIMPIEZA: Array<{ model: any; id: string }> = [
   { model: prisma.cupo, id: 'id_cupo' },
 ]
 const idsPrevios = new Map<string, Set<string>>()
+
+// Regla vigente: una sola cita pendiente por usuario. Las citas pendientes reales de los usuarios
+// de prueba se apartan (cancelado) durante la corrida y se restauran al terminar.
+let citasApartadas: string[] = []
+
+async function apartarCitasPendientes(idsUsuario: string[]): Promise<void> {
+  const previas = await prisma.agenda.findMany({
+    where: { id_usuario: { in: idsUsuario }, estado: 'pendiente' },
+    select: { id_agenda: true },
+  })
+  citasApartadas = previas.map((c) => c.id_agenda)
+  if (citasApartadas.length) {
+    await prisma.agenda.updateMany({ where: { id_agenda: { in: citasApartadas } }, data: { estado: 'cancelado' } })
+  }
+}
+
+async function restaurarCitasApartadas(): Promise<void> {
+  if (citasApartadas.length) {
+    await prisma.agenda.updateMany({ where: { id_agenda: { in: citasApartadas } }, data: { estado: 'pendiente' } })
+  }
+}
 
 async function tomarIdsExistentes(): Promise<void> {
   for (const tabla of TABLAS_LIMPIEZA) {
@@ -59,10 +80,22 @@ beforeAll(async () => {
   pendienteId = pendiente!.id_usuario
 
   await tomarIdsExistentes()
+  await apartarCitasPendientes([directoId, pendienteId])
 })
+
+// Cierra las citas pendientes creadas en esta corrida para los usuarios de prueba
+// (regla: una sola pendiente por usuario). No toca las que ya existían.
+async function cerrarPendientesDeCorrida(): Promise<void> {
+  const previos = idsPrevios.get('id_agenda') ?? new Set<string>()
+  await prisma.agenda.updateMany({
+    where: { id_usuario: { in: [directoId, pendienteId] }, estado: 'pendiente', id_agenda: { notIn: [...previos] } },
+    data: { estado: 'completado' },
+  })
+}
 
 afterAll(async () => {
   await borrarSoloCreadosEnCorrida()
+  await restaurarCitasApartadas()
 })
 
 function token(key: string): string {
@@ -70,6 +103,8 @@ function token(key: string): string {
 }
 
 describe.sequential('Agenda - CRUD', () => {
+  beforeAll(cerrarPendientesDeCorrida)
+  beforeEach(cerrarPendientesDeCorrida)
   it('POST /agenda - admin crea cita para usuario', async () => {
     const res = await request(app)
       .post('/api/agenda')
@@ -276,6 +311,7 @@ describe.sequential('Agenda - CRUD', () => {
 })
 
 describe.sequential('Cupos - Publicación y reserva', () => {
+  beforeAll(cerrarPendientesDeCorrida)
   it('POST /cupos/publicar - admin publica cupos por día', async () => {
     const res = await request(app)
       .post('/api/cupos/publicar')
@@ -419,6 +455,7 @@ describe.sequential('Cupos - Publicación y reserva', () => {
 })
 
 describe.sequential('Cupos - Quitar cupo (DELETE)', () => {
+  beforeAll(cerrarPendientesDeCorrida)
   it('DELETE /cupos/:id - admin elimina cupo libre → 200 y ya no aparece', async () => {
     await request(app)
       .post('/api/cupos/publicar')
@@ -493,6 +530,8 @@ describe.sequential('Cupos - Quitar cupo (DELETE)', () => {
 })
 
 describe.sequential('Agenda - Seguridad y escalada', () => {
+  beforeAll(cerrarPendientesDeCorrida)
+  beforeEach(cerrarPendientesDeCorrida)
   let citaDirectoA: string
   let citaDirectoB: string
   let cupoParaVencimiento: string
@@ -612,6 +651,7 @@ describe.sequential('Agenda - Seguridad y escalada', () => {
 })
 
 describe.sequential('Agenda - Bloques, opción A y cancelación', () => {
+  beforeAll(cerrarPendientesDeCorrida)
   let cupoOpA: string
   let citaResA: string
   let cupoB: string
@@ -652,6 +692,7 @@ describe.sequential('Agenda - Bloques, opción A y cancelación', () => {
   })
 
   it('POST /agenda - cita directa SIN cupo en bloque libre', async () => {
+    await cerrarPendientesDeCorrida()
     const res = await request(app)
       .post('/api/agenda')
       .set('Authorization', `Bearer ${token('entrenadorToken')}`)
@@ -671,6 +712,7 @@ describe.sequential('Agenda - Bloques, opción A y cancelación', () => {
   })
 
   it('PUT /agenda/:id - reprogramar libera el cupo anterior y toma el del destino', async () => {
+    await cerrarPendientesDeCorrida()
     const pub = await request(app)
       .post('/api/cupos/publicar')
       .set('Authorization', `Bearer ${token('adminToken')}`)
@@ -791,6 +833,7 @@ describe.sequential('Agenda - Bloques, opción A y cancelación', () => {
 })
 
 describe.sequential('Cupos - Reserva con tipo (valoración/registro)', () => {
+  beforeAll(cerrarPendientesDeCorrida)
   const publicarDia = async (fecha: string, dia: string) => {
     const res = await request(app)
       .post('/api/cupos/publicar')
@@ -818,7 +861,7 @@ describe.sequential('Cupos - Reserva con tipo (valoración/registro)', () => {
 
     expect(res.status).toBe(201)
     expect(res.body.tipo).toBe('valoracion')
-    expect(res.body.observaciones).toContain('Valoración')
+    expect(res.body.observaciones).toBe('Reservado a través de cupo')
 
     const miCita = await request(app)
       .get('/api/usuarios/me/cita')
@@ -838,7 +881,7 @@ describe.sequential('Cupos - Reserva con tipo (valoración/registro)', () => {
       .send({ tipo: 'valoracion' })
 
     expect(res.status).toBe(400)
-    expect(res.body.mensaje).toBe('Ya tienes una cita de valoración pendiente')
+    expect(res.body.mensaje).toBe('Ya tienes una cita pendiente')
 
     const sigueLibre = await cupoLibreDe('2026-12-15')
     expect(sigueLibre).not.toBeNull()

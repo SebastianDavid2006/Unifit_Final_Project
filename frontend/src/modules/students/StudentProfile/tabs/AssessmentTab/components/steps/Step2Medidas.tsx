@@ -1,8 +1,9 @@
+import type { Dispatch, SetStateAction } from 'react'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
 
 interface Step2MedidasProps {
   valuationForm: ValuationForm
-  setValuationForm: (f: ValuationForm) => void
+  setValuationForm: Dispatch<SetStateAction<ValuationForm>>
   valuationViewMode: boolean
 }
 
@@ -47,10 +48,10 @@ export function Step2Medidas({ valuationForm, setValuationForm, valuationViewMod
               onChange={e => setValuationForm(p => ({ ...p, [field.key]: e.target.value }))}
               className="px-3 py-2 rounded-xl text-sm font-medium outline-none w-full transition-all duration-200"
               style={INPUT_STYLE.base}
-              onMouseEnter={e => { if (e.target !== document.activeElement) { Object.assign(e.target.style, INPUT_STYLE.hover) } }}
-              onMouseLeave={e => { if (e.target !== document.activeElement) { Object.assign(e.target.style, INPUT_STYLE.base) } }}
-              onFocus={e => { Object.assign(e.target.style, INPUT_STYLE.focus) }}
-              onBlur={e => { Object.assign(e.target.style, INPUT_STYLE.base) }}
+              onMouseEnter={e => { if (e.target !== document.activeElement) { Object.assign(e.currentTarget.style, INPUT_STYLE.hover) } }}
+              onMouseLeave={e => { if (e.target !== document.activeElement) { Object.assign(e.currentTarget.style, INPUT_STYLE.base) } }}
+              onFocus={e => { Object.assign(e.currentTarget.style, INPUT_STYLE.focus) }}
+              onBlur={e => { Object.assign(e.currentTarget.style, INPUT_STYLE.base) }}
             />
           </div>
         ))}

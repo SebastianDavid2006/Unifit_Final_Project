@@ -321,6 +321,13 @@ export async function obtenerUsuarioPorId(idUsuario: string) {
       huella: { select: { id_huella: true, indice_sensor: true, activo: true } },
       aceptaciones: { select: { id_doc_legal: true, fecha_aceptacion: true, documento: { select: { tipo: true } } } },
       acudiente_de: true,
+      _count: { select: { valoraciones: true } },
+      // Misma regla que en el listado: la pendiente más cercana que aún no ha terminado
+      agenda_usuario: {
+        where: { estado: 'pendiente', fecha: { gte: inicioDeHoyUTC() } },
+        orderBy: [{ fecha: 'asc' }, { hora_inicio: 'asc' }],
+        select: { fecha: true, hora_inicio: true, hora_fin: true, tipo: true, tipo_otro: true },
+      },
     },
   })
 
@@ -339,6 +346,8 @@ export async function obtenerUsuarioPorId(idUsuario: string) {
     acepta_contrato: usuario.aceptaciones.some((a) => a.documento.tipo === 'contrato_gym'),
     acepta_tratamiento: usuario.aceptaciones.some((a) => a.documento.tipo === 'tratamiento_datos'),
     acudiente: usuario.acudiente_de ?? null,
+    valoraciones_count: usuario._count.valoraciones,
+    proxima_cita: proximaCita(usuario.agenda_usuario),
     estudiante: usuario.estudiante,
     profesor: usuario.profesor,
     administrativo: usuario.administrativo,

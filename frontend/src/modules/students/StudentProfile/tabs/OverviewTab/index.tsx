@@ -3,6 +3,7 @@ import { ContactCard } from './components/ContactCard'
 import { AcademicInfoCard } from './components/AcademicInfoCard'
 import { StudentCenterSection } from './components/StudentCenterSection'
 import { CurrentMetricsCard } from './components/CurrentMetricsCard'
+import type { MetricasActuales } from './components/CurrentMetricsCard'
 import { PhysicalGoalCard } from './components/PhysicalGoalCard'
 import { AcudienteCard } from './components/AcudienteCard'
 import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
@@ -14,29 +15,29 @@ import { isMinor as isMinorHelper } from '@/lib/dateUtils'
 
 interface Props {
   student: Student
-  imc: string
+  metricas: MetricasActuales | null
+  cargandoValoracion?: boolean
   objetivo: string
+  onVerValoracion: () => void
   onShowInfo: () => void
   onUpdate: (patch: Partial<Student>) => void
 }
 
-export function OverviewTab({ student, imc, objetivo, onShowInfo, onUpdate }: Props) {
+export function OverviewTab({ student, metricas, cargandoValoracion, objetivo, onVerValoracion, onShowInfo, onUpdate }: Props) {
   const isMobile = useIsMobile()
   const esAlumno = esEstudiante(student)
   const mostrarAcudiente = useMemo(
     () => esAlumno && (isMinorHelper(student.birthDate) || Boolean(student.acudiente)),
     [esAlumno, student.birthDate, student.acudiente],
   )
-  const mostrarObjetivo = useMemo(
-    () => (student.valoraciones ?? 0) > 0 || Boolean(student.goal?.trim()),
-    [student.valoraciones, student.goal],
-  )
+  // Se muestra siempre que exista una valoración actual (la más reciente)
+  const mostrarObjetivo = metricas !== null
 
   if (isMobile) {
     return (
       <div className="space-y-4">
         <StudentCenterSection student={student} onShowInfo={onShowInfo} />
-        {mostrarObjetivo && <PhysicalGoalCard student={student} />}
+        {mostrarObjetivo && <PhysicalGoalCard objetivo={objetivo} />}
         {mostrarAcudiente && <AcudienteCard student={student} />}
       </div>
     )
@@ -59,8 +60,8 @@ export function OverviewTab({ student, imc, objetivo, onShowInfo, onUpdate }: Pr
         <StudentCenterSection student={student} onShowInfo={onShowInfo} className="lg:col-start-2 lg:row-start-1 lg:row-span-3" />
 
         <IdentityAccessCard student={student} onUpdate={onUpdate} className="lg:col-start-3 lg:row-start-1" />
-        <CurrentMetricsCard student={student} imc={imc} className="lg:col-start-3 lg:row-start-2" />
-        {mostrarObjetivo && <PhysicalGoalCard student={student} objetivo={objetivo} className="lg:col-start-3 lg:row-start-3" />}
+        <CurrentMetricsCard metricas={metricas} cargando={cargandoValoracion} onVerValoracion={onVerValoracion} className="lg:col-start-3 lg:row-start-2" />
+        {mostrarObjetivo && <PhysicalGoalCard objetivo={objetivo} className="lg:col-start-3 lg:row-start-3" />}
       </div>
     </div>
   )
