@@ -44,7 +44,7 @@ sequenceDiagram
 
     FE->>BE: POST /biometria/enrolar (JWT)
     Note over BE: Crea Huella con activo=false
-    loop Polling (cada 2s)
+    loop Polling (cada 5s)
         BR->>BE: GET /biometria/pendientes (x-api-key)
     end
     BR->>HW: ENROLL:5
@@ -123,14 +123,24 @@ El firmware se escribe en el ESP32 con PlatformIO/Arduino IDE. Véase `config.h`
 
 Proceso Node.js que corre en la máquina de recepción conectada al ESP32. Se ubica en [`esp32-as608/bridge/`](esp32-as608/bridge/).
 
-Variables de entorno necesarias:
+Configuración: el bridge lee su propio archivo `esp32-as608/bridge/.env` (cargado con
+`dotenv` desde la carpeta del script, sin importar el directorio de lanzamiento). Se
+crea copiando la plantilla:
+
+```bash
+cd esp32-as608/bridge
+cp .env.example .env   # y edita BIOMETRIA_API_KEY
+```
+
+Variables (valores por defecto entre paréntesis):
 
 ```env
-PUERTO_SERIAL=COM3
+PUERTO_SERIAL=COM3            # opcional; vacío = autodetección
 BAUD_RATE=115200
 BACKEND_URL=http://localhost:3000/api
-BIOMETRIA_API_KEY=una_clave_secreta_larga
-INTERVALO_POLL_MS=2000
+BIOMETRIA_API_KEY=una_clave_secreta_larga   # obligatoria
+INTERVALO_POLL_MS=5000
+TIMEOUT_DETECCION_MS=4000
 INTERVALO_VERIFY_MS=1000
 COOLDOWN_VERIFY_MS=5000
 TIMEOUT_VERIFY_MS=13000
@@ -139,9 +149,14 @@ TIMEOUT_VERIFY_MS=13000
 `PUERTO_SERIAL` es opcional: si se omite, el bridge detecta solo el ESP32 (CH340 /
 CP210x / Espressif) y lo confirma leyendo su mensaje `ready`.
 
-`BIOMETRIA_API_KEY` debe ser **la misma** que tiene el backend en su entorno (ver
-`BIOMETRIA_API_KEY` en `docker-compose.yml`); es la credencial con la que el bridge
-llama a `/api/biometria/*` y `/api/asistencia/sensor`.
+`BIOMETRIA_API_KEY` debe ser **idéntica** a la del backend. Su valor se define en el
+`.env` raíz del proyecto, que `docker-compose.yml` interpola hacia el contenedor del
+backend (`BIOMETRIA_API_KEY: ${BIOMETRIA_API_KEY}`). El `.env` del bridge **no** se
+alimenta de ahí: hay que copiar el valor a mano. Es la credencial con la que el bridge
+llama a `/api/biometria/*` y `/api/asistencia/sensor`. Si falta, el bridge aborta al
+arrancar; si no coincide, el backend responde `401`. Ojo: una variable
+`BIOMETRIA_API_KEY` ya definida en el entorno del sistema tiene prioridad sobre el
+`.env`.
 
 Para ejecutarlo:
 
@@ -163,11 +178,19 @@ VERIFY\n     -- Capturar y comparar contra todas las huellas
 Respuestas del ESP32 (JSON):
 
 ```json
+{"tipo":"ready","mensaje":"..."}
+{"tipo":"info","templates":3}
+{"tipo":"enroll_step","paso":1,"mensaje":"..."}
 {"tipo":"enroll_result","ok":true,"slot":5}
 {"tipo":"enroll_result","ok":false,"error":"Sin dedo detectado"}
 {"tipo":"verify_result","ok":true,"slot":2}
 {"tipo":"verify_result","ok":false,"error":"Huella no encontrada"}
 ```
+
+- `ready`: el ESP32 terminó de arrancar; el bridge no inicia el polling hasta recibirlo.
+- `info`: cantidad de templates guardados en el sensor (solo se loguea).
+- `enroll_step`: progreso del enrolamiento (`paso` 1–3). El bridge lo reenvía a
+  `PATCH /biometria/paso`, y de ahí salen los 3 mensajes que muestra la UI al capturar.
 
 ## Seguridad
 
@@ -184,5 +207,3 @@ Respuestas del ESP32 (JSON):
   reproducir un `.wav` por evento sin tocar el firmware).
 - **Indicador luminoso** en el puente o en el propio sensor.
 - **Auto-verificación en firmware** para eliminar el ciclo de sondeo del bridge.
-
-Ver [`docs/protocolo-biometrico.md`](../docs/protocolo-biometrico.md) para el detalle completo del protocolo.

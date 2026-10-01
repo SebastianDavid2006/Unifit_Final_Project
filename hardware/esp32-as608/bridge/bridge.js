@@ -1,3 +1,5 @@
+// Carga bridge/.env sin importar desde qué directorio se lance el proceso
+require('dotenv').config({ path: require('path').join(__dirname, '.env') })
 const { SerialPort } = require('serialport')
 const { ReadlineParser } = require('@serialport/parser-readline')
 const axios = require('axios')
@@ -401,7 +403,11 @@ async function registrarAsistencia(indiceSensor) {
 log('=== Bridge Biométrico UNIFIT ===')
 log(`Backend: ${BACKEND_URL}`)
 log(`Baud Rate: ${BAUD_RATE}`)
-log(`API Key: ${API_KEY ? '***configurada***' : 'NO CONFIGURADA'} (usa la misma del backend)`)
+if (!API_KEY) {
+  log('ERROR: BIOMETRIA_API_KEY no está definida. Copia .env.example a .env y usa la misma key del backend.')
+  process.exit(1)
+}
+log('API Key: ***configurada***')
 log(`Asistencia por huella: cada ${INTERVALO_VERIFY_MS}ms, cooldown ${COOLDOWN_VERIFY_MS}ms`)
 
 ;(async () => {
