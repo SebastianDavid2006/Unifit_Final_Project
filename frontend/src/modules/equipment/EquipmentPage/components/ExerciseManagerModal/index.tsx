@@ -31,6 +31,7 @@ interface ExerciseManagerModalProps {
   }
   onClose: () => void
   onSave: () => void
+  saving: boolean
   onFormChange: (form: any) => void
   onStepChange: (step: number) => void
   onConfirmClose: (v: boolean) => void
@@ -180,6 +181,7 @@ export function ExerciseManagerModal(props: ExerciseManagerModalProps) {
                   editing={!!props.editing}
                   step={props.step}
                   nameTrimmed={!!props.form.name.trim()}
+                  saving={props.saving}
                   onStepChange={props.onStepChange}
                   onConfirmClose={() => props.onConfirmClose(true)}
                   onSave={props.onSave}

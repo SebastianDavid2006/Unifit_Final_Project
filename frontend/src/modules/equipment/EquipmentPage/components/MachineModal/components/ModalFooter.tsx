@@ -1,16 +1,17 @@
 import { motion } from 'motion/react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { BLUE_GRAD, GREEN_GRAD, ORANGE_GRAD } from '@/data/shared/constants'
 
 interface ModalFooterProps {
   editingMachine: boolean
   step: number
   nameTrimmed: boolean
+  saving: boolean
   onStepChange: (step: number) => void
   onSave: () => void
 }
 
-export function ModalFooter({ editingMachine, step, nameTrimmed, onStepChange, onSave }: ModalFooterProps) {
+export function ModalFooter({ editingMachine, step, nameTrimmed, saving, onStepChange, onSave }: ModalFooterProps) {
   return (
     <div className="flex-shrink-0 p-6 pt-4" style={{
       borderTop: '1px solid rgba(0,0,0,0.04)',
@@ -22,6 +23,7 @@ export function ModalFooter({ editingMachine, step, nameTrimmed, onStepChange, o
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onStepChange(step - 1)}
+            disabled={saving}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-medium cursor-pointer"
             style={{ background: 'rgba(0,0,0,0.04)', color: step > 0 ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.15)' }}
           >
@@ -34,10 +36,12 @@ export function ModalFooter({ editingMachine, step, nameTrimmed, onStepChange, o
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.92 }}
             onClick={() => { if (step < 2) onStepChange(step + 1); else onSave() }}
+            disabled={saving}
             className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
             style={{
               background: step === 0 && !nameTrimmed ? 'rgba(0,0,0,0.15)' : (editingMachine ? ORANGE_GRAD : (step === 2 ? GREEN_GRAD : BLUE_GRAD)),
-              cursor: step === 0 && !nameTrimmed ? 'not-allowed' : 'pointer',
+              cursor: saving ? 'wait' : (step === 0 && !nameTrimmed ? 'not-allowed' : 'pointer'),
+              opacity: saving ? 0.75 : 1,
             }}
           >
             {step < 2 ? (
@@ -45,7 +49,13 @@ export function ModalFooter({ editingMachine, step, nameTrimmed, onStepChange, o
                 Siguiente <ChevronRight size={14} />
               </>
             ) : (
-              editingMachine ? 'Guardar Cambios' : 'Registrar Máquina'
+              saving ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" /> Guardando…
+                </>
+              ) : (
+                editingMachine ? 'Guardar Cambios' : 'Registrar Máquina'
+              )
             )}
           </motion.button>
         </div>

@@ -204,9 +204,10 @@ export default function EquipmentPage(props: Props) {
         exercises={ex.exercises}
         onClose={() => machine.closeModal()}
         onSave={handleSaveMachine}
+        saving={machine.saving}
         onFormChange={f => machine.setForm(f)}
         onStepChange={s => machine.setStep(s)}
-        onConfirmClose={v => machine.setShowConfirmClose(v)}
+        onConfirmClose={v => { if (!machine.saving) machine.setShowConfirmClose(v) }}
         onToggleExerciseSelection={id => machine.toggleExerciseSelection(id)}
       />
 
@@ -222,9 +223,10 @@ export default function EquipmentPage(props: Props) {
         form={ex.form}
         onClose={() => ex.closeModal()}
         onSave={handleSaveExercise}
+        saving={ex.saving}
         onFormChange={f => ex.setForm(f)}
         onStepChange={s => ex.setStep(s)}
-        onConfirmClose={v => ex.setConfirmClose(v)}
+        onConfirmClose={v => { if (!ex.saving) ex.setConfirmClose(v) }}
         onAskCreateAnother={v => ex.setAskCreateAnother(v)}
         onCreatedCountChange={v => ex.setCreatedCount(v)}
         onCreateAnotherNo={handleExerciseCreateAnotherNo}

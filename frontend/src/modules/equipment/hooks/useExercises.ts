@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { muscleToZones } from '@/data/shared/constants'
 import * as ejercicioService from '@/services/ejercicio.service'
 import { mensajeError } from '@/lib/api'
@@ -36,6 +36,9 @@ export function useExercises() {
   const [form, setForm] = useState<ExForm>(defaultForm)
   const [filterZone, setFilterZone] = useState('')
   const [saveError, setSaveError] = useState<string | null>(null)
+  // Guarda contra el doble envío: el ref corta los clics del mismo instante (el estado aún no se repintó)
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
 
   const loadExercises = useCallback(async (incluir: boolean) => {
     try {
@@ -85,6 +88,9 @@ export function useExercises() {
 
   async function save() {
     if (!form.name.trim()) return null
+    if (savingRef.current) return null
+    savingRef.current = true
+    setSaving(true)
     const zoneFromGroups = form.muscleGroups.length > 0
       ? (form.muscleGroups.includes('General') ? [...new Set(['Cardio', 'Pesas Libres'])] : form.muscleGroups.flatMap(g => muscleToZones[g] || []))
       : []
@@ -112,6 +118,9 @@ export function useExercises() {
       console.error('Error saving exercise:', err)
       setSaveError(mensajeError(err))
       return null
+    } finally {
+      savingRef.current = false
+      setSaving(false)
     }
   }
 
@@ -168,6 +177,7 @@ export function useExercises() {
     filterZone,
     setFilterZone,
     saveError,
+    saving,
     clearSaveError: () => setSaveError(null),
     openAdd,
     openEdit,

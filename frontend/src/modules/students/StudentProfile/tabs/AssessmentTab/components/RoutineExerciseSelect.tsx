@@ -207,7 +207,8 @@ export function RoutineExerciseSelect({ row, routineViewMode, open, exerciseCata
                     </p>
                   ) : (
                     catExercises.map(ex => {
-                      const activeItem = row.name === ex.name
+                      // Por id: dos ejercicios con el mismo nombre no deben verse como el mismo
+                      const activeItem = row.id_exercise ? row.id_exercise === ex.id : row.name === ex.name
                       return (
                         <button
                           key={ex.id}

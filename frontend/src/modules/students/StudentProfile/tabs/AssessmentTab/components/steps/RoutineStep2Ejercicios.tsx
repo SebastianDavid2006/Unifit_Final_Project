@@ -83,7 +83,7 @@ function ExerciseRow({
 }) {
   const [catFilter, setCatFilter] = useState<string[]>([])
   const [search, setSearch] = useState('')
-  const selectedEx = exerciseCatalog.find(ex => ex.id === row.id_exercise) ?? exerciseCatalog.find(ex => ex.name === row.name)
+  const selectedEx = exerciseCatalog.find(ex => ex.id === row.id_exercise) ?? (row.id_exercise ? undefined : exerciseCatalog.find(ex => ex.name === row.name))
   const groups = selectedEx?.muscleGroups ?? []
   const repSplit = row.reps.split('-')
   const repsMinInt = parseInt((repSplit[0] ?? '').trim(), 10)

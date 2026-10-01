@@ -33,6 +33,7 @@ interface MachineModalProps {
   exercises: Exercise[]
   onClose: () => void
   onSave: () => void
+  saving: boolean
   onFormChange: (form: any) => void
   onStepChange: (step: number) => void
   onConfirmClose: (v: boolean) => void
@@ -200,6 +201,7 @@ export function MachineModal(props: MachineModalProps) {
                     editingMachine={!!props.editingMachine}
                     step={props.step}
                     nameTrimmed={!!props.form.name.trim()}
+                    saving={props.saving}
                     onStepChange={props.onStepChange}
                     onSave={props.onSave}
                   />

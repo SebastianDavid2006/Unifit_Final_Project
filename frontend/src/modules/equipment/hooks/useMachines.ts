@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import * as maquinaService from '@/services/maquina.service'
 import { mensajeError } from '@/lib/api'
 
@@ -34,6 +34,9 @@ export function useMachines(search: string) {
   const [showConfirmClose, setShowConfirmClose] = useState(false)
   const [form, setForm] = useState<MachineForm>(defaultForm)
   const [saveError, setSaveError] = useState<string | null>(null)
+  // Guarda contra el doble envío: el ref corta los clics del mismo instante (el estado aún no se repintó)
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
 
   const loadMachines = useCallback(async (incluir: boolean) => {
     try {
@@ -87,6 +90,9 @@ export function useMachines(search: string) {
 
   async function save() {
     if (!form.name.trim()) return null
+    if (savingRef.current) return null
+    savingRef.current = true
+    setSaving(true)
     const data = {
       name: form.name.trim(),
       zone: form.muscleGroups.join(', ') || 'General',
@@ -114,6 +120,9 @@ export function useMachines(search: string) {
       console.error('Error saving machine:', err)
       setSaveError(mensajeError(err))
       return null
+    } finally {
+      savingRef.current = false
+      setSaving(false)
     }
   }
 
@@ -171,6 +180,7 @@ export function useMachines(search: string) {
     form,
     setForm,
     saveError,
+    saving,
     clearSaveError: () => setSaveError(null),
     openAdd,
     openEdit,
