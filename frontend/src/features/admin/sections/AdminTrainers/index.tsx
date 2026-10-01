@@ -2,11 +2,13 @@
 import { getPersonal, mapBackendToTrainer, registrarUsuario } from '@/services/usuario.service'
 import type { Trainer } from '@/services/usuario.service'
 import NewUserModal from './components/NewUserModal'
+import CompleteStaffModal from './components/CompleteStaffModal'
 import TrainersList from './sections/TrainersList'
 import TrainerDetail from './sections/TrainerDetail/TrainerDetail'
 import PermissionsSection from './sections/PermissionsSection'
 import { PAGE_SIZE } from './data'
-import { mensajeError } from '@/lib/api'
+import { api, mensajeError } from '@/lib/api'
+import { toast } from 'sonner'
 import { MAP_GENERO, MAP_GRUPO, MAP_PARENTESCO } from '@/data/config/catalogosRegistro'
 
 interface NewUserPayload {
@@ -25,10 +27,14 @@ interface NewUserPayload {
   tipo_usuario: string
   id_cargo?: string
   id_area?: string
+  primerNombre: string
+  segundoNombre: string
+  primerApellido: string
+  segundoApellido: string
+  aceptaDatos: boolean
 }
 
 function buildStaffPayload(user: NewUserPayload): Record<string, unknown> {
-  const np = user.name.trim().split(/\s+/)
   const docMatch = user.document.match(/^([A-Za-z]+)\.\s*(.+)$/)
   const tipoDoc = docMatch ? docMatch[1] : 'CC'
   const numeroDoc = docMatch ? docMatch[2] : user.document
@@ -38,10 +44,10 @@ function buildStaffPayload(user: NewUserPayload): Record<string, unknown> {
   const parentesco = MAP_PARENTESCO[user.contactRelation]
 
   return {
-    primer_nombre: np[0] ?? '',
-    segundo_nombre: np.length >= 4 ? np[1] : (np.length === 3 ? np[1] : undefined),
-    primer_apellido: np.length >= 2 ? np[np.length >= 3 ? np.length - 1 : 1] : '',
-    segundo_apellido: np.length >= 4 ? np.slice(2, np.length - 1).join(' ') : undefined,
+    primer_nombre: user.primerNombre.trim(),
+    segundo_nombre: user.segundoNombre.trim() || undefined,
+    primer_apellido: user.primerApellido.trim(),
+    segundo_apellido: user.segundoApellido.trim() || undefined,
     email_contacto: user.email?.trim() || '',
     telefono_contacto: user.phone?.trim() || undefined,
     documento: numeroDoc,
@@ -74,6 +80,7 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
   const [globalAdmin, setGlobalAdmin] = useState(true)
   const [page, setPage] = useState(1)
   const [showNewUser, setShowNewUser] = useState(false)
+  const [porCompletar, setPorCompletar] = useState<Trainer | null>(null)
 
   useEffect(() => {
     getPersonal()
@@ -90,8 +97,18 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
   }))
 
   function handleSelectTrainer(t: Trainer) {
+    // Un pendiente abre directo el modal para completar su registro (igual que con los usuarios)
+    if (t.status === 'process') {
+      setPorCompletar(t)
+      return
+    }
     setSelectedTrainer(t)
     onSelectTrainer?.()
+  }
+
+  async function recargarPersonal() {
+    const data = await getPersonal()
+    setTrainers(data.map(mapBackendToTrainer))
   }
 
   const filtered = useMemo(() => {
@@ -114,7 +131,20 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
 
   async function handleNewUserSuccess(user: NewUserPayload) {
     const payload = buildStaffPayload(user)
-    await registrarUsuario(payload)
+    const { usuario } = await registrarUsuario(payload)
+
+    // El personal solo necesita el tratamiento de datos para quedar 'activo'.
+    // Sin esta aceptación quedaba 'pendiente' y nunca podía ingresar.
+    // El usuario ya existe en este punto: si falla, se avisa en vez de lanzar el error
+    // (reintentar el registro daría 409 por documento/correo duplicado).
+    if (user.aceptaDatos) {
+      try {
+        await api.put(`/usuarios/${usuario.id_usuario}/aceptar-documento`, { tipo_documento_legal: 'tratamiento_datos' })
+      } catch (err) {
+        toast.error(`${user.primerNombre} quedó registrado, pero no se pudo registrar el tratamiento de datos: ${mensajeError(err)}`)
+      }
+    }
+
     const data = await getPersonal()
     setTrainers(data.map(mapBackendToTrainer))
   }
@@ -153,6 +183,16 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
         onOpenNewUser={() => setShowNewUser(true)}
       />
       <NewUserModal open={showNewUser} onClose={() => setShowNewUser(false)} onSuccess={handleNewUserSuccess} />
+      <CompleteStaffModal
+        open={porCompletar !== null}
+        trainerId={porCompletar?.id ?? ''}
+        trainerName={porCompletar?.name ?? ''}
+        onClose={() => setPorCompletar(null)}
+        onCompleted={async () => {
+          await recargarPersonal()
+          toast.success(`${porCompletar?.firstName ?? 'La persona'} quedó activo`)
+        }}
+      />
     </>
   )
 })

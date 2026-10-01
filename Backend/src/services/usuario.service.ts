@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../utils/prisma'
 import { HttpError } from '../utils/HttpError'
+import { citaVigente } from '../utils/cita-vigencia'
 import type {
   Genero,
   GrupoSanguineo,
@@ -196,6 +197,22 @@ export function usuarioPublico(usuario: { id_usuario: string; primer_nombre: str
   }
 }
 
+function proximaCita(citas: Array<{ fecha: Date; hora_inicio: Date; hora_fin: Date | null; tipo: string; tipo_otro: string | null }>) {
+  const c = citas.find(citaVigente)
+  if (!c) return null
+  return {
+    fecha: c.fecha.toISOString().slice(0, 10),
+    hora: c.hora_inicio.toISOString().slice(11, 16),
+    tipo: c.tipo,
+    tipo_otro: c.tipo_otro,
+  }
+}
+
+function inicioDeHoyUTC(): Date {
+  const n = new Date()
+  return new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()))
+}
+
 export async function listarUsuarios() {
   const usuarios = await prisma.usuario.findMany({
     where: { rol: 'usuario' },
@@ -209,7 +226,13 @@ export async function listarUsuarios() {
       acudiente_de: true,
       _count: { select: { valoraciones: true } },
       asistencias: { orderBy: { fecha: 'desc' }, take: 1, select: { hora_ingreso: true } },
-      valoraciones: { where: { activo: true }, orderBy: { fecha: 'desc' }, take: 1, select: { proxima_valoracion: true } },
+      // Próxima cita: la pendiente más cercana (cualquier tipo) que aún no ha terminado.
+      // Se traen todas las de hoy en adelante porque la de hoy puede estar ya vencida.
+      agenda_usuario: {
+        where: { estado: 'pendiente', fecha: { gte: inicioDeHoyUTC() } },
+        orderBy: [{ fecha: 'asc' }, { hora_inicio: 'asc' }],
+        select: { fecha: true, hora_inicio: true, hora_fin: true, tipo: true, tipo_otro: true },
+      },
     },
   })
 
@@ -226,7 +249,7 @@ export async function listarUsuarios() {
     acudiente: u.acudiente_de ?? null,
     valoraciones_count: u._count.valoraciones,
     ultimo_ingreso: u.asistencias[0]?.hora_ingreso ?? null,
-    proxima_valoracion: u.valoraciones[0]?.proxima_valoracion ?? null,
+    proxima_cita: proximaCita(u.agenda_usuario),
     estudiante: u.estudiante
       ? {
           id_programa: u.estudiante.id_programa,
@@ -322,8 +345,20 @@ export async function obtenerUsuarioPorId(idUsuario: string) {
   }
 }
 
-export async function aceptarDocumento(idUsuario: string, idActivador: string, tipoDocumento: 'contrato_gym' | 'tratamiento_datos') {
-  console.log('aceptarDocumento service:', { idUsuario, idActivador, tipoDocumento })
+export async function aceptarDocumento(
+  idUsuario: string,
+  idActivador: string,
+  tipoDocumento: 'contrato_gym' | 'tratamiento_datos',
+  rolActivador: 'admin' | 'entrenador' | 'usuario',
+) {
+  const destino = await prisma.usuario.findUnique({ where: { id_usuario: idUsuario }, select: { rol: true } })
+  if (!destino) throw new HttpError(404, 'Usuario no encontrado')
+
+  // El personal solo lo completa un admin: un entrenador no puede activar a otro personal
+  if (destino.rol !== 'usuario' && rolActivador !== 'admin') {
+    throw new HttpError(403, 'Solo un administrador puede completar el registro del personal')
+  }
+
   const docLegal = await prisma.documentoLegal.findFirst({
     where: { tipo: tipoDocumento, estado: 'vigente' },
   })
@@ -508,7 +543,8 @@ export async function verificarYActivarSiCompleto(tx: Tx, idUsuario: string): Pr
     select: { parq_realizado: true, estado: true, fecha_nacimiento: true, rol: true },
   })
 
-  if (!usuario || usuario.estado === 'activo') return
+  // Solo los pendientes se activan solos: un inactivo se reactiva únicamente con activarUsuario
+  if (!usuario || usuario.estado !== 'pendiente') return
 
   const esStaff = usuario.rol === 'admin' || usuario.rol === 'entrenador'
 

@@ -47,6 +47,25 @@ export function cerrarSesion(): void {
   window.dispatchEvent(new Event(SESION_CAMBIADA))
 }
 
+export const RUTA_CUENTA_INACTIVA = '/cuenta-inactiva'
+export const RUTA_CUENTA_PENDIENTE = '/cuenta-pendiente'
+
+// Única fuente de verdad de "a dónde va esta persona". Login, guards y wrappers la
+// usan: cuando cada uno decidía por su cuenta, el personal pendiente rebotaba
+// entre /incorporacion y su dashboard sin fin.
+export function rutaInicial(usuario: Pick<UsuarioSesion, 'rol' | 'estado' | 'debe_cambiar_password'>): string {
+  if (usuario.estado === 'inactivo') return RUTA_CUENTA_INACTIVA
+  if (usuario.estado === 'pendiente') {
+    // El miembro agenda su cita; el personal no tiene nada que hacer hasta que un admin lo complete
+    return usuario.rol === 'usuario' ? '/incorporacion' : RUTA_CUENTA_PENDIENTE
+  }
+  if (usuario.debe_cambiar_password) return '/cambiar-clave'
+  const platform = mapRolToPlatform(usuario.rol)
+  if (platform === 'student') return '/usuario/inicio'
+  if (platform === 'trainer') return '/entrenador/dashboard'
+  return '/admin/dashboard'
+}
+
 export function mapRolToPlatform(rol: Rol): Platform {
   switch (rol) {
     case 'admin':

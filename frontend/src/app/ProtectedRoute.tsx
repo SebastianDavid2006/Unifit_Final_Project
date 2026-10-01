@@ -1,6 +1,5 @@
 import { Navigate } from 'react-router'
-import { toast } from 'sonner'
-import { getToken, cerrarSesion, mapRolToPlatform, type Rol } from '@/lib/auth'
+import { getToken, mapRolToPlatform, rutaInicial, type Rol } from '@/lib/auth'
 import { useSesion } from '@/lib/sesion'
 
 interface ProtectedRouteProps {
@@ -15,21 +14,11 @@ export function ProtectedRoute({ children, rolesPermitidos }: ProtectedRouteProp
     return <Navigate to="/login" replace />
   }
 
-  if (usuario.estado === 'inactivo') {
-    cerrarSesion()
-    toast.error('Tu cuenta ha sido suspendida')
-    return <Navigate to="/login" replace />
-  }
-
-  // 'pendiente' va a /incorporacion, que sí está registrada en App.tsx.
-  // Antes apuntaba a /usuario/activacion, ruta inexistente que caía en
-  // /usuario/* y volvía a pasar por este guard: bucle infinito de redirección.
-  if (usuario.estado === 'pendiente') {
-    return <Navigate to="/incorporacion" replace />
-  }
-
-  if (usuario.debe_cambiar_password) {
-    return <Navigate to="/cambiar-clave" replace />
+  // Inactivo, pendiente (miembro o personal) y cambio de contraseña pendiente: cada uno tiene su
+  // pantalla y la decide rutaInicial. Las rutas destino deben existir en App.tsx y no volver a
+  // pasar por este guard, o el redireccionamiento entra en bucle.
+  if (usuario.estado !== 'activo' || usuario.debe_cambiar_password) {
+    return <Navigate to={rutaInicial(usuario)} replace />
   }
 
   if (rolesPermitidos && !rolesPermitidos.includes(usuario.rol)) {

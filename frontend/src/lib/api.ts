@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { cerrarSesion, getToken } from './auth'
+import { cerrarSesion, getToken, RUTA_CUENTA_INACTIVA } from './auth'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
@@ -19,6 +19,15 @@ api.interceptors.response.use(
   (error: unknown) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       cerrarSesion()
+    }
+    // Cuenta desactivada (en el login o con la sesión abierta): sin sesión y a la pantalla de aviso
+    if (
+      axios.isAxiosError(error) &&
+      error.response?.status === 403 &&
+      (error.response.data as { codigo?: string } | undefined)?.codigo === 'CUENTA_INACTIVA'
+    ) {
+      cerrarSesion()
+      if (window.location.pathname !== RUTA_CUENTA_INACTIVA) window.location.assign(RUTA_CUENTA_INACTIVA)
     }
     return Promise.reject(error)
   },

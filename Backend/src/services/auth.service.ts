@@ -24,6 +24,11 @@ export async function login(datos: { email_contacto: string; password: string })
     throw new HttpError(401, 'Credenciales inválidas')
   }
 
+  // Se valida después de la contraseña para no revelar qué cuentas existen o están inactivas
+  if (usuario.estado === 'inactivo') {
+    throw new HttpError(403, 'Tu cuenta está inactiva. Comunícate con el administrador.', 'CUENTA_INACTIVA')
+  }
+
   const expiresIn = process.env.JWT_EXPIRES_IN ?? '8h'
 
   const token = jwt.sign(

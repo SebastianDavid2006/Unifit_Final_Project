@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router'
-import { guardarSesion, getToken, cerrarSesion, mapRolToPlatform } from '@/lib/auth'
+import { guardarSesion, getToken, cerrarSesion, mapRolToPlatform, rutaInicial, RUTA_CUENTA_INACTIVA, RUTA_CUENTA_PENDIENTE } from '@/lib/auth'
 import { SesionProvider, useSesion } from '@/lib/sesion'
 import { toast, Toaster } from 'sonner'
 import { LoginPage } from '@/auth/pages/LoginPage'
 import { RegisterPage } from '@/auth/pages/RegisterPage'
 import { ChangePasswordPage } from '@/auth/pages/ChangePasswordPage'
 import { OnboardingPage } from '@/auth/pages/OnboardingPage'
+import { EstadoCuentaPage, type VarianteEstadoCuenta } from '@/auth/pages/EstadoCuentaPage'
 import { TrainerPage } from '@/features/trainer/pages/TrainerPage'
 import TrainerEquipamientoMaquinas from '@/features/trainer/pages/TrainerEquipamientoMaquinas'
 import TrainerEquipamientoEjercicios from '@/features/trainer/pages/TrainerEquipamientoEjercicios'
@@ -55,14 +56,7 @@ function LoginPageWrapper() {
 
   // El estado de sesión viene del provider. Si hay usuario, se redirige
   // directo a su pantalla correspondiente (única fuente de verdad).
-  if (usuario) {
-    if (usuario.estado === 'pendiente') return <Navigate to="/incorporacion" replace />
-    if (usuario.debe_cambiar_password) return <Navigate to="/cambiar-clave" replace />
-    const platform = mapRolToPlatform(usuario.rol)
-    if (platform === 'student') return <Navigate to="/usuario/inicio" replace />
-    if (platform === 'trainer') return <Navigate to="/entrenador/dashboard" replace />
-    return <Navigate to="/admin/dashboard" replace />
-  }
+  if (usuario) return <Navigate to={rutaInicial(usuario)} replace />
 
   return (
     <LoginPage
@@ -87,7 +81,7 @@ function ChangePasswordWrapper() {
 
   // SOLO permitir si estado === 'activo' Y debe_cambiar_password
   if (usuario.estado !== 'activo' || !usuario.debe_cambiar_password) {
-    return <Navigate to="/incorporacion" replace />
+    return <Navigate to={rutaInicial(usuario)} replace />
   }
 
   return (
@@ -110,21 +104,9 @@ function OnboardingWrapper() {
   const { usuario } = useSesion()
   if (!usuario) return <Navigate to="/login" replace />
 
-  // Si ya está activo, ir directo a la app
-  if (usuario.estado === 'activo') {
-    const platform = mapRolToPlatform(usuario.rol)
-    if (platform === 'student') return <Navigate to="/usuario/inicio" replace />
-    if (platform === 'trainer') return <Navigate to="/entrenador/dashboard" replace />
-    return <Navigate to="/admin/dashboard" replace />
-  }
-
-  // Solo usuarios con rol='usuario' pasan por onboarding
-  if (usuario.rol !== 'usuario') {
-    // Admin/Entrenador: ir directo a su app
-    const platform = mapRolToPlatform(usuario.rol)
-    if (platform === 'student') return <Navigate to="/usuario/inicio" replace />
-    if (platform === 'trainer') return <Navigate to="/entrenador/dashboard" replace />
-    return <Navigate to="/admin/dashboard" replace />
+  // Onboarding solo es para miembros (rol 'usuario') pendientes: el resto va a su pantalla
+  if (usuario.estado !== 'pendiente' || usuario.rol !== 'usuario') {
+    return <Navigate to={rutaInicial(usuario)} replace />
   }
 
   return (
@@ -147,12 +129,26 @@ function OnboardingWrapper() {
   )
 }
 
+function EstadoCuentaWrapper({ variante }: { variante: VarianteEstadoCuenta }) {
+  const navigate = useNavigate()
+  const { usuario } = useSesion()
+  const ruta = variante === 'inactiva' ? RUTA_CUENTA_INACTIVA : RUTA_CUENTA_PENDIENTE
+
+  // Quien ya no está en este estado (p. ej. un admin acaba de activarlo) sigue a su pantalla
+  if (usuario) {
+    const destino = rutaInicial(usuario)
+    if (destino !== ruta) return <Navigate to={destino} replace />
+  }
+
+  return <EstadoCuentaPage variante={variante} onVolver={() => { cerrarSesion(); navigate('/login') }} />
+}
+
 function LogoutWrapper() {
   cerrarSesion()
   return <Navigate to="/login" replace />
 }
 
-const AUTH_ROUTES = ['/login', '/registro', '/cambiar-clave', '/incorporacion', '/incorporacion/asistencia-presencial']
+const AUTH_ROUTES = ['/login', '/registro', '/cambiar-clave', '/incorporacion', '/incorporacion/asistencia-presencial', RUTA_CUENTA_INACTIVA, RUTA_CUENTA_PENDIENTE]
 
 function AppShell() {
   const location = useLocation()
@@ -186,7 +182,10 @@ function AppShell() {
           <Route path="/incorporacion" element={<OnboardingWrapper />} />
           {/* /incorporacion/asistencia-presencial = cita ya agendada (espera) */}
       <Route path="/incorporacion/asistencia-presencial" element={<OnboardingWrapper />} />
-          <Route path="/usuario/*" element={<ProtectedRoute rolesPermitidos={['usuario']}><StudentApp /></ProtectedRoute>} />
+          {/* Pantallas de aviso, públicas y estáticas: el backend es quien impide el acceso */}
+          <Route path={RUTA_CUENTA_INACTIVA} element={<EstadoCuentaWrapper variante="inactiva" />} />
+          <Route path={RUTA_CUENTA_PENDIENTE} element={<EstadoCuentaWrapper variante="pendiente" />} />
+          <Route path="/usuario/*"element={<ProtectedRoute rolesPermitidos={['usuario']}><StudentApp /></ProtectedRoute>} />
           <Route path="/admin/*" element={<ProtectedRoute rolesPermitidos={['admin']}><AdminPage /></ProtectedRoute>}>
             <Route path="gestion" element={<GestionLayout />}>
               <Route index element={<Navigate to="usuarios" replace />} />

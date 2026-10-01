@@ -67,7 +67,7 @@ app.use((_req: Request, res: Response) => {
 
 app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (error instanceof HttpError) {
-    res.status(error.status).json({ mensaje: error.message })
+    res.status(error.status).json({ mensaje: error.message, ...(error.codigo && { codigo: error.codigo }) })
     return
   }
 

@@ -204,6 +204,14 @@ export const registrarSchema = z
   })
 
 export async function registrar(req: Request, res: Response): Promise<void> {
+  // Solo el admin crea personal (admin/entrenador); el entrenador únicamente crea miembros.
+  // Se autoriza antes de validar el cuerpo: la autorización no depende de que los datos sean válidos.
+  const rolSolicitado = req.body?.rol
+  if (rolSolicitado !== undefined && rolSolicitado !== 'usuario' && req.usuario!.rol !== 'admin') {
+    res.status(403).json({ mensaje: 'Solo un administrador puede registrar personal' })
+    return
+  }
+
   const parsed = await registrarSchema.safeParseAsync(req.body)
 
   if (!parsed.success) {
@@ -280,7 +288,7 @@ export async function aceptarDocumentoHandler(req: Request, res: Response): Prom
   }
 
   try {
-    await aceptarDocumento(id, req.usuario!.id_usuario, parsed.data.tipo_documento_legal)
+    await aceptarDocumento(id, req.usuario!.id_usuario, parsed.data.tipo_documento_legal, req.usuario!.rol)
     res.json({ mensaje: `Documento "${parsed.data.tipo_documento_legal}" aceptado correctamente` })
   } catch (error) {
     if (error instanceof HttpError) {

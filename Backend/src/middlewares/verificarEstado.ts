@@ -8,7 +8,10 @@ export function verificarEstado(rutasExceptuadas: string[] = []) {
     }
 
     if (req.usuario.estado === 'inactivo') {
-      res.status(403).json({ mensaje: 'Debes completar tu registro presencial para acceder a esta sección' })
+      res.status(403).json({
+        mensaje: 'Tu cuenta está inactiva. Comunícate con el administrador.',
+        codigo: 'CUENTA_INACTIVA',
+      })
       return
     }
 
@@ -25,6 +28,9 @@ export function verificarEstado(rutasExceptuadas: string[] = []) {
       return
     }
 
-    res.status(403).json({ mensaje: 'Debes completar tu registro presencial para acceder a esta sección' })
+    res.status(403).json({
+      mensaje: 'Debes completar tu registro presencial para acceder a esta sección',
+      codigo: 'REGISTRO_PENDIENTE',
+    })
   }
 }

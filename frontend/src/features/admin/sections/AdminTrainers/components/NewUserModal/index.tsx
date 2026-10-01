@@ -17,7 +17,7 @@ import { validarPasoInfo, validarPasoRol } from '@/lib/validacionRegistro'
 interface NewUserModalProps {
   open: boolean
   onClose: () => void
-  onSuccess?: (user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string; tipo_usuario: string; id_cargo?: string; id_area?: string }) => void | Promise<void>
+  onSuccess?: (user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string; tipo_usuario: string; id_cargo?: string; id_area?: string; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; aceptaDatos: boolean }) => void | Promise<void>
 }
 
 export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalProps) {
@@ -145,6 +145,11 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
         tipo_usuario: tipoUsuario ?? 'profesor',
         id_cargo: idCargo,
         id_area: idArea,
+        primerNombre: form.primerNombre,
+        segundoNombre: form.segundoNombre,
+        primerApellido: form.primerApellido,
+        segundoApellido: form.segundoApellido,
+        aceptaDatos,
       })
       setSuccess(true)
       confetti({
