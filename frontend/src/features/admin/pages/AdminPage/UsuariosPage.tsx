@@ -13,8 +13,9 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // La pantalla de carga solo aplica a la primera carga: si se recarga desde aquí (p. ej. al
+  // registrar un usuario) no se desmonta la lista, para no cerrar el modal con su pantalla de éxito.
   const reload = () => {
-    setLoading(true)
     setError('')
     getUsuarios()
       .then(data => setStudents(data.map(mapBackendToStudent)))

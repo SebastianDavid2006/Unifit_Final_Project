@@ -36,7 +36,6 @@ export interface AssessmentItem {
   color: string
   type: string
   evaluador: string
-  score: number
   routine?: { id: string; nombre: string; fechaCreacion: string } | null
   nivelActividad: string
   objetivoTarjetas: string[]
@@ -56,18 +55,6 @@ export interface AssessmentItem {
   observacionesEntrenador: string
   diasDisponibles: string[]
   observacionesFinales: string
-}
-
-function formatScore(m: BackendValoracion): number {
-  const med = m.medidas_corporales
-  if (!med) return 50
-  let score = 70
-  if (med.imc >= 18.5 && med.imc <= 25) score += 10
-  if (med.grasa_corporal < 25) score += 5
-  if (med.masa_muscular > 30) score += 5
-  const dm = m.datos_medicos
-  if (dm && dm.resistencia_muscular > 30) score += 5
-  return Math.min(score, 100)
 }
 
 function getColor(tipo: string): string {
@@ -91,7 +78,6 @@ function mapBackendToFrontend(b: BackendValoracion, index: number): AssessmentIt
     color: getColor(b.tipo),
     type: b.tipo.charAt(0).toUpperCase() + b.tipo.slice(1),
     evaluador,
-    score: formatScore(b),
     routine: b.rutina ? { id: b.rutina.id_rutina, nombre: b.rutina.nombre, fechaCreacion: b.rutina.fecha_creacion } : null,
     nivelActividad: mapNivelActividadBackToFront(b.nivel_actividad),
     objetivoTarjetas: mapObjetivosArrayBackToFront(b.objetivos),

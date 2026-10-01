@@ -1,8 +1,3 @@
-import { Activity, BarChart2, Calendar, FileText, Target, Dumbbell, Trophy, User, Flame, Zap, Heart, Star } from 'lucide-react'
-import { AiRoutine, RoutineRow } from '@/modules/students/aiRoutineTypes'
-import type { Student as ProfileStudent, ValuationForm } from '@/modules/students/StudentProfileData'
-import type { AssessmentItem } from '@/services/valoracion.service'
-
 export interface Student {
   id: string
   name: string
@@ -37,64 +32,7 @@ export interface Student {
   area?: string
 }
 
-export interface RoutineWithAssessment {
-  routine: AiRoutine
-  assessment: AssessmentItem
-  progress: {
-    completedSessions: number
-    totalSessions: number
-    lastSession: string | null
-    adherence: number
-  }
-}
-
-export interface Achievement {
-  name: string
-  icon: React.ReactNode
-  unlocked: boolean
-  description: string
-  color: string
-}
-
-export interface RankingItem {
-  position: number
-  name: string
-  faculty: string
-  score: number
-  isUser?: boolean
-}
-
 export type MobileTab = 'home' | 'routines' | 'agenda' | 'profile'
-
-export interface CoachMessage {
-  text: string
-  highlight?: string
-  highlightColor?: string
-}
-
-export interface UpcomingSession {
-  name: string
-  date: string
-}
-
-export interface BodyComposition {
-  label: string
-  value: string
-  change: string
-  color: string
-}
-
-export interface StatsCard {
-  label: string
-  value: string
-  icon: React.ReactNode
-  color: string
-}
-
-export interface NextSession {
-  name: string
-  date: string
-}
 
 export interface ExerciseRow {
   idRutinaEjercicio?: string

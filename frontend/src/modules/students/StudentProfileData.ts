@@ -42,14 +42,9 @@ export interface Student {
   modality: string
   jornada: string
   graduationStatus: string
-  adherence: number
   lastVisit: string
   avatar: string
-  goal: string
   valoraciones?: number
-  sessions: number
-  weight: number
-  height: number
   faculty?: string
   semester?: string
   nextAssessment?: string

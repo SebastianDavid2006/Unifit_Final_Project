@@ -9,7 +9,7 @@ const PAGE_SIZE = 10
 
 function fmtHora(iso: string | null): string {
   if (!isValidDate(iso)) return '—'
-  return new Date(iso!).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso!).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
 }
 
 function fmtFecha(iso: string): string {

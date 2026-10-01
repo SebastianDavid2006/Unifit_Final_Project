@@ -23,9 +23,13 @@ export function formatDateES(date: string | undefined | null, options: Intl.Date
   return new Date(date!).toLocaleDateString('es-CO', options)
 }
 
-export function formatDateTimeES(date: string | undefined | null, options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }): string {
+// Mismo patrón que la próxima cita: "1 de octubre · 08:00" (sin año, mes completo, 24 h)
+export function formatDateTimeES(date: string | undefined | null): string {
   if (!isValidDate(date)) return 'No registrado'
-  return new Date(date!).toLocaleString('es-CO', options)
+  const d = new Date(date!)
+  const dia = d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })
+  const hora = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+  return `${dia} · ${hora}`
 }
 
 const MESES_ES: Record<string, number> = {

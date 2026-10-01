@@ -10,8 +10,6 @@ export const GREEN_BLUE_GRAD = 'linear-gradient(135deg, #22C55E, #1270B7)'
 
 export const PAGE_SIZE = 6
 
-export type RoleFilter = 'all' | 'trainer' | 'admin'
-
 export const roleMeta: Record<'trainer' | 'admin', { label: string; icon: typeof Shield | typeof GraduationCap; color: string; bg: string; border: string }> = {
   trainer: { label: 'Entrenador', icon: GraduationCap, color: BLUE, bg: 'rgba(18,112,183,0.1)', border: 'rgba(18,112,183,0.18)' },
   admin: { label: 'Administrador', icon: Shield, color: RED, bg: 'rgba(244,56,67,0.1)', border: 'rgba(244,56,67,0.18)' },

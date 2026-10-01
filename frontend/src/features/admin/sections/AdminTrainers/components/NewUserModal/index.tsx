@@ -170,7 +170,8 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
         segundoApellido: form.segundoApellido,
         aceptaDatos,
       })
-      const avisoPendiente = resultado?.aviso ?? ''
+      // onSuccess puede no devolver nada (void): solo se lee el aviso si llegó un objeto
+      const avisoPendiente = (typeof resultado === 'object' ? resultado.aviso : undefined) ?? ''
       setAviso(avisoPendiente)
       setSuccess(true)
       // Con un aviso de pendiente no se celebra: la cuenta aún no está activa

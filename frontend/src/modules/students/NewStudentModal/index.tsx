@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { X, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import confetti from 'canvas-confetti'
-import DemoInbox from '@/modules/students/components/DemoInbox'
 import { api, mensajeError, mapearErroresBackend } from '@/lib/api'
 import { useProgramasAgrupados } from '@/hooks/useCatalogo'
 import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
@@ -59,7 +58,6 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
   const [success, setSuccess] = useState(false)
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
-  const [showInbox, setShowInbox] = useState(false)
   const [createdEmail, setCreatedEmail] = useState('')
   const [error, setError] = useState('')
   const [erroresCampo, setErroresCampo] = useState<Record<string, string[]>>({})
@@ -321,7 +319,6 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
               {success ? (
                 <SuccessView
                   createdEmail={createdEmail}
-                  onShowInbox={() => setShowInbox(true)}
                   onClose={onClose}
                 />
               ) : (
@@ -624,7 +621,6 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
               </AnimatePresence>
             </motion.div>
           </motion.div>
-          <DemoInbox open={showInbox} onClose={() => setShowInbox(false)} />
         </>
       )}
     </AnimatePresence>

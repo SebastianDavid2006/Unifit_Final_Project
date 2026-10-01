@@ -36,18 +36,13 @@ export interface Student {
   modality: string
   jornada: string
   graduationStatus: string
-  adherence: number
   status: 'active' | 'inactive' | 'process'
   lastVisit: string
   nextAssessment: string
   nextApptType?: 'valoracion' | 'registro' | 'seguimiento' | 'otro'
   nextApptOther?: string
   avatar: string
-  goal: string
-  sessions: number
   valoraciones: number
-  weight: number
-  height: number
   tipo_usuario?: 'estudiante' | 'profesor' | 'administrativo'
   cargo?: string
   area?: string

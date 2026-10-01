@@ -36,7 +36,6 @@ import { useIsMobile } from '@/shared/components/ui/use-mobile'
 import { SignatureModal } from '@/modules/students/StudentProfile/shared/components/SignatureModal'
 import { CancelConfirmModal } from '@/modules/students/StudentProfile/shared/components/CancelConfirmModal'
 import { StudentInfoModal } from '@/modules/students/StudentProfile/tabs/OverviewTab/components/StudentInfoModal'
-import { ValuationDetailModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/ValuationDetailModal'
 import { AIGenerationModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/AIGenerationModal'
 import { RoutineDetailModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/RoutineDetailModal'
 import { NewValuationModal } from '@/modules/students/StudentProfile/tabs/AssessmentTab/components/NewValuationModal'
@@ -63,7 +62,6 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
   const [signatureModalOpen, setSignatureModalOpen] = useState(false)
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null)
   const [showAssessmentOptions, setShowAssessmentOptions] = useState(false)
-  const [showValuationModal, setShowValuationModal] = useState(false)
   const [showRoutineViewModal, setShowRoutineViewModal] = useState(false)
   const [showNewRoutineModal, setShowNewRoutineModal] = useState(false)
   const [routineSuccess, setRoutineSuccess] = useState(false)
@@ -567,13 +565,6 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Modal detalle de valoración */}
-        <ValuationDetailModal
-          isOpen={!!(showValuationModal && selectedAssessment)}
-          assessment={selectedAssessment}
-          onClose={() => setShowValuationModal(false)}
-        />
 
         {/* Modal detalle de rutina */}
         <RoutineDetailModal

@@ -3,11 +3,10 @@ import coachCongratsImg from '@/assets/illustrations/characters/coach/coach_cong
 
 interface SuccessViewProps {
   createdEmail: string
-  onShowInbox: () => void
   onClose: () => void
 }
 
-export function SuccessView({ createdEmail, onShowInbox, onClose }: SuccessViewProps) {
+export function SuccessView({ createdEmail, onClose }: SuccessViewProps) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}

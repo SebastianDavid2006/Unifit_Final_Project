@@ -10,7 +10,6 @@ interface AssessmentItem {
   type: string
   evaluator?: string
   evaluador?: string
-  score: number
   metrics: { label: string; value: string }[]
   nivelActividad: string
   objetivoTarjetas: string[]

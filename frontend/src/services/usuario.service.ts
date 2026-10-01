@@ -78,10 +78,11 @@ function buildName(u: BackendUsuario) {
 }
 
 function buildAvatar(u: BackendUsuario) {
-  return `${(u.primer_nombre ?? '')[0] ?? ''}${(u.primer_apellido ?? '')[0] ?? ''}`.toUpperCase()
+  return iniciales(u.primer_nombre, u.primer_apellido)
 }
 
 import { formatDateES, formatDateTimeES } from '@/lib/dateUtils'
+import { iniciales } from '@/lib/auth'
 
 function formatDate(dateStr?: string): string {
   return formatDateES(dateStr, { day: '2-digit', month: 'short', year: 'numeric' })
@@ -169,18 +170,13 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     modality: estudiante?.modalidad ?? '',
     jornada: estudiante?.jornada ?? '',
     graduationStatus: estudiante?.es_egresado ? 'Egresado' : 'No egresado',
-    adherence: 0,
     status: STATUS_MAP[u.estado] ?? 'process',
     lastVisit: u.ultimo_ingreso ? formatDateTimeES(u.ultimo_ingreso) : '',
     nextAssessment: u.proxima_cita ? formatProximaCita(u.proxima_cita.fecha, u.proxima_cita.hora) : 'Por agendar',
     nextApptType: u.proxima_cita?.tipo,
     nextApptOther: u.proxima_cita?.tipo_otro ?? undefined,
     avatar: buildAvatar(u),
-    goal: '',
-    sessions: 0,
     valoraciones: u.valoraciones_count ?? 0,
-    weight: 0,
-    height: 0,
     tipo_usuario: u.tipo_usuario,
     cargo,
     area,
