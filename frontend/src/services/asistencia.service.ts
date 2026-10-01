@@ -25,6 +25,17 @@ export interface PaginatedAsistencia {
   asistencias: AsistenciaRecord[]
 }
 
+export async function getHistorialUsuario(
+  idUsuario: string,
+  page = 1,
+  pageSize = 10
+): Promise<PaginatedAsistencia> {
+  const res = await api.get<PaginatedAsistencia>(`/asistencia/usuario/${idUsuario}`, {
+    params: { page, pageSize },
+  })
+  return res.data
+}
+
 export async function getMiHistorial(
   page = 1,
   pageSize = 20

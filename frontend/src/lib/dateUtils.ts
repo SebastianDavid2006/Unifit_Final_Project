@@ -32,6 +32,22 @@ export function formatDateTimeES(date: string | undefined | null): string {
   return `${dia} · ${hora}`
 }
 
+// Hora en formato 24 h ("00:40"); h23 evita que la medianoche salga como "24:00" o "12:00 a. m."
+export function formatHoraES(date: string | undefined | null): string {
+  if (!isValidDate(date)) return '—'
+  return new Date(date!).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+}
+
+// "1h 45min" / "50min" / "1h"
+export function formatDuracionMin(min: number | null | undefined): string {
+  if (min == null) return '—'
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (h > 0 && m > 0) return `${h}h ${m}min`
+  if (h > 0) return `${h}h`
+  return `${m}min`
+}
+
 const MESES_ES: Record<string, number> = {
   ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5,
   jul: 6, ago: 7, sep: 8, oct: 9, nov: 10, dic: 11,

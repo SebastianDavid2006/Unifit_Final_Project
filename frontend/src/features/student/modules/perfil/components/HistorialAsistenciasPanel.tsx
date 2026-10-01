@@ -1,30 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
-import { CalendarClock, Clock, LogIn, LogOut, AlertCircle } from 'lucide-react'
+import { CalendarClock, Clock, LogIn, LogOut, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getMiHistorial, type AsistenciaRecord } from '@/services/asistencia.service'
 import { cardStyle, GREEN, FIRE, BLUE, AMBER } from '@/features/student/components/ui/fitness'
-import { isValidDate, formatDateES } from '@/lib/dateUtils'
+import { formatDateES, formatHoraES, formatDuracionMin } from '@/lib/dateUtils'
 
 const PAGE_SIZE = 10
-
-function fmtHora(iso: string | null): string {
-  if (!isValidDate(iso)) return '—'
-  return new Date(iso!).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
-}
-
-function fmtFecha(iso: string): string {
-  if (!isValidDate(iso)) return '—'
-  return formatDateES(iso, { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-function fmtDuracion(min: number | null): string {
-  if (min == null) return '—'
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  if (h > 0 && m > 0) return `${h}h ${m}min`
-  if (h > 0) return `${h}h`
-  return `${m}min`
-}
 
 function Row({ a }: { a: AsistenciaRecord }) {
   const sinSalida = !a.hora_salida
@@ -34,7 +15,7 @@ function Row({ a }: { a: AsistenciaRecord }) {
       <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <CalendarClock size={15} style={{ color: BLUE }} />
-          <p className="text-white font-bold" style={{ fontSize: 13 }}>{fmtFecha(a.fecha)}</p>
+          <p className="text-white font-bold" style={{ fontSize: 13 }}>{formatDateES(a.fecha, { day: 'numeric', month: 'long' })}</p>
         </div>
         {sinSalida ? (
           <span className="px-2.5 py-1 rounded-full font-bold" style={{ background: FIRE + '14', border: `1px solid ${FIRE}33`, color: FIRE, fontSize: 10 }}>
@@ -53,7 +34,7 @@ function Row({ a }: { a: AsistenciaRecord }) {
             <LogIn size={12} style={{ color: GREEN }} />
             <span className="uppercase tracking-wider" style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.35)' }}>Entrada</span>
           </div>
-          <p className="text-white font-black" style={{ fontSize: 13 }}>{fmtHora(a.hora_ingreso)}</p>
+          <p className="text-white font-black" style={{ fontSize: 13 }}>{formatHoraES(a.hora_ingreso)}</p>
         </div>
 
         <div className="rounded-xl p-2.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -61,7 +42,7 @@ function Row({ a }: { a: AsistenciaRecord }) {
             <LogOut size={12} style={{ color: sinSalida ? FIRE : BLUE }} />
             <span className="uppercase tracking-wider" style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.35)' }}>Salida</span>
           </div>
-          <p className="text-white font-black" style={{ fontSize: 13 }}>{fmtHora(a.hora_salida)}</p>
+          <p className="text-white font-black" style={{ fontSize: 13 }}>{formatHoraES(a.hora_salida)}</p>
         </div>
 
         <div className="rounded-xl p-2.5 sm:col-span-1" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -69,7 +50,7 @@ function Row({ a }: { a: AsistenciaRecord }) {
             <Clock size={12} style={{ color: AMBER }} />
             <span className="uppercase tracking-wider" style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.35)' }}>Duración</span>
           </div>
-          <p className="text-white font-black" style={{ fontSize: 13 }}>{fmtDuracion(a.duracion_minutos)}</p>
+          <p className="text-white font-black" style={{ fontSize: 13 }}>{formatDuracionMin(a.duracion_minutos)}</p>
         </div>
       </div>
 
@@ -89,48 +70,27 @@ export function HistorialAsistenciasPanel() {
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const sentinelRef = useRef<HTMLDivElement>(null)
-  const loadingRef = useRef(false)
+  const [reintento, setReintento] = useState(0)
 
-  const cargar = useCallback(async (p: number) => {
-    if (loadingRef.current) return
-    loadingRef.current = true
+  useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    try {
-      const data = await getMiHistorial(p, PAGE_SIZE)
-      setItems(prev => (p === 1 ? data.asistencias : [...prev, ...data.asistencias]))
-      setTotalPages(data.totalPages)
-      setError(false)
-    } catch {
-      setError(true)
-    } finally {
-      loadingRef.current = false
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    cargar(1)
-  }, [cargar])
-
-  useEffect(() => {
-    const el = sentinelRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && !loadingRef.current && page < totalPages) {
-          setPage(prev => {
-            const next = prev + 1
-            cargar(next)
-            return next
-          })
+    getMiHistorial(page, PAGE_SIZE)
+      .then(data => {
+        if (cancelled) return
+        // Página fuera de rango (se borraron registros): volver a la última válida
+        if (data.asistencias.length === 0 && data.totalPages > 0 && page > data.totalPages) {
+          setPage(data.totalPages)
+          return
         }
-      },
-      { rootMargin: '200px' }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [page, totalPages, cargar])
+        setItems(data.asistencias)
+        setTotalPages(data.totalPages)
+        setError(false)
+      })
+      .catch(() => { if (!cancelled) setError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [page, reintento])
 
   if (loading && items.length === 0) {
     return (
@@ -147,7 +107,7 @@ export function HistorialAsistenciasPanel() {
       <div className="rounded-2xl p-6 text-center" style={cardStyle}>
         <p className="text-white font-bold" style={{ fontSize: 14 }}>No se pudo cargar el historial</p>
         <button
-          onClick={() => cargar(1)}
+          onClick={() => setReintento(n => n + 1)}
           className="mt-3 px-4 py-2 rounded-xl font-black uppercase tracking-wider"
           style={{ background: BLUE, color: '#fff', fontSize: 11 }}
         >
@@ -167,16 +127,35 @@ export function HistorialAsistenciasPanel() {
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="space-y-3" style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
         {items.map((a, i) => (
           <motion.div key={a.id_asistencia} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.04, 0.3) }}>
             <Row a={a} />
           </motion.div>
         ))}
       </div>
-      <div ref={sentinelRef} className="h-8" />
-      {loading && items.length > 0 && (
-        <p className="text-center py-2" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>Cargando más…</p>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page <= 1 || loading}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl font-black uppercase tracking-wider"
+            style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.7)', fontSize: 10, opacity: page <= 1 || loading ? 0.4 : 1 }}
+          >
+            <ChevronLeft size={13} /> Anterior
+          </button>
+          <span className="text-center font-bold" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, minWidth: 90 }}>
+            Página {page} de {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages || loading}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl font-black uppercase tracking-wider"
+            style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.7)', fontSize: 10, opacity: page >= totalPages || loading ? 0.4 : 1 }}
+          >
+            Siguiente <ChevronRight size={13} />
+          </button>
+        </div>
       )}
     </>
   )

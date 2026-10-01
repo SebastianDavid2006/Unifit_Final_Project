@@ -19,7 +19,7 @@ import coachMagicImg from '@/assets/illustrations/characters/coach/coach_magic.w
 import assessmentSceneImg from '@/assets/scenes/physical_assessment.webp'
 import routineSceneImg from '@/assets/scenes/physical_routine.webp'
 import { AiRoutine, RoutineRow } from '../aiRoutineTypes'
-import { cardStyle, emptyValuationForm, monthNames, numOnly } from '../StudentProfileData'
+import { cardStyle, emptyValuationForm, numOnly } from '../StudentProfileData'
 import type { Student, ValuationForm } from '../StudentProfileData'
 import type { AssessmentItem } from '@/services/valoracion.service'
 import { getValoracionesPorUsuario, crearValoracion } from '@/services/valoracion.service'
@@ -28,7 +28,6 @@ import { OverviewTab } from '@/modules/students/StudentProfile/tabs/OverviewTab'
 import { ProgressTab } from '@/modules/students/StudentProfile/tabs/ProgressTab'
 import { AssessmentTab } from '@/modules/students/StudentProfile/tabs/AssessmentTab'
 import { IdentityAccessCard } from '@/modules/students/components/IdentityAccessCard'
-import { useCalendarNavigation } from '@/shared/hooks/useCalendarNavigation'
 import { useMeshInput } from '@/shared/hooks/useMeshInput'
 import { useValuationManager } from '@/modules/students/shared/hooks/useValuationManager'
 import { useRoutineManager } from '@/modules/students/shared/hooks/useRoutineManager'
@@ -55,10 +54,6 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
   const [localTab, setLocalTab] = useState('general')
   const [modalOpen, setModalOpen] = useState(false)
   const [showInfoModal, setShowInfoModal] = useState(false)
-  const [vistaCalendario, setVistaCalendario] = useState<'semana' | 'mes' | 'año'>('mes')
-  const [hoveredCol, setHoveredCol] = useState<number | null>(null)
-  const [hoveredCell, setHoveredCell] = useState<{w: number; d: number} | null>(null)
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 4, 4))
   const [signatureModalOpen, setSignatureModalOpen] = useState(false)
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null)
   const [showAssessmentOptions, setShowAssessmentOptions] = useState(false)
@@ -108,7 +103,6 @@ export function StudentProfile({ student, tab = 'general', onTabChange, canCreat
   })
 
   // Hooks
-  const calendarNav = useCalendarNavigation({ monthNames })
   const meshInput = useMeshInput()
 
   // Fetch assessments from backend
@@ -269,21 +263,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
                 <OverviewTab student={editable} metricas={metricasActuales} cargandoValoracion={loadingAssessments} objetivo={objetivoFisico} onVerValoracion={verValoracionActual} onShowInfo={() => setShowInfoModal(true)} onUpdate={patch => setEditable(prev => ({ ...prev, ...patch }))} />
               )}
               {currentTab === 'actividad' && (
-                <ProgressTab
-                  vistaCalendario={vistaCalendario}
-                  setVistaCalendario={setVistaCalendario}
-                  hoveredCol={hoveredCol}
-                  setHoveredCol={setHoveredCol}
-                  hoveredCell={hoveredCell}
-                  setHoveredCell={setHoveredCell}
-                  currentDate={currentDate}
-                  setCurrentDate={setCurrentDate}
-                  prevPeriod={calendarNav.prevPeriod}
-                  nextPeriod={calendarNav.nextPeriod}
-                  formatWeekRange={calendarNav.formatWeekRange}
-                  monthNames={monthNames}
-                  getWeekStart={calendarNav.getWeekStart}
-                />
+                <ProgressTab studentId={student.id} />
               )}
               {currentTab === 'valoracion' && (
                 <AssessmentTab
