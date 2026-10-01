@@ -81,7 +81,7 @@ export default function UsuarioDetalle() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <p className="text-lg font-bold" style={{ color: '#1A1A1E' }}>{error || 'Estudiante no encontrado'}</p>
+          <p className="text-lg font-bold" style={{ color: '#1A1A1E' }}>{error || 'Usuario no encontrado'}</p>
           <button
             onClick={() => navigate(basePath)}
             className="mt-4 px-4 py-2 rounded-xl text-sm font-bold text-white"

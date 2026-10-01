@@ -86,7 +86,7 @@ export default function DocsSection() {
                 <ScalesOfJusticeView />
               </div>
               <h4 className="text-sm font-bold" style={{ color: '#1D1D1F' }}>{meta.hint}</h4>
-              <p className="text-[11px] mt-1.5" style={{ color: 'rgba(0,0,0,0.3)' }}>PDF vigente para estudiantes</p>
+              <p className="text-[11px] mt-1.5" style={{ color: 'rgba(0,0,0,0.3)' }}>PDF vigente para usuarios</p>
 
               <div className="mt-4 flex items-center gap-1.5 rounded-xl px-3 py-2 w-fit text-[10px] font-bold" style={{ background: doc?.url_pdf ? `${meta.color}0D` : 'rgba(0,0,0,0.03)', color: doc?.url_pdf ? meta.color : 'rgba(0,0,0,0.35)' }}>
                 <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: doc?.url_pdf ? meta.color : 'rgba(0,0,0,0.2)' }} />

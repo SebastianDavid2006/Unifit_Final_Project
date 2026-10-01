@@ -42,7 +42,7 @@ export default function PermissionsSection({ trainer, globalAdmin, onToggleGloba
             <p className="text-sm font-bold" style={{ color: '#FFFFFF' }}>Administrador Global</p>
             <p className="text-[11px] mt-1 leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
               Acceso completo a todas las funcionalidades del sistema:{' '}
-              gestión de usuarios, entrenadores y estudiantes, configuración
+              gestión de entrenadores y usuarios, configuración
               de la plataforma, dashboard y reportes, documentación y
               registros de auditoría.
             </p>

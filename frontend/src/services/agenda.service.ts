@@ -69,6 +69,11 @@ function normFecha(v: string): string {
   return v.slice(0, 10)
 }
 
+// El backend devuelve HH:MM:SS; la UI trabaja con HH:MM
+function normHora(v: string): string {
+  return v.slice(0, 5)
+}
+
 function mapAgendaBackToFront(a: BackendAgenda): FrontendAgenda {
   const estudiante = a.usuario
     ? `${a.usuario.primer_nombre} ${a.usuario.primer_apellido}`.trim()
@@ -77,8 +82,8 @@ function mapAgendaBackToFront(a: BackendAgenda): FrontendAgenda {
     id: a.id_agenda,
     id_usuario: a.id_usuario,
     fecha: normFecha(a.fecha),
-    horaInicio: a.hora_inicio,
-    horaFin: a.hora_fin ?? '',
+    horaInicio: normHora(a.hora_inicio),
+    horaFin: a.hora_fin ? normHora(a.hora_fin) : '',
     tipo: a.tipo,
     tipoOtro: a.tipo_otro ?? '',
     estado: a.estado,
@@ -91,8 +96,8 @@ function mapCupoBackToFront(c: BackendCupo): FrontendCupo {
   return {
     id: c.id_cupo,
     fecha: normFecha(c.fecha),
-    horaInicio: c.hora_inicio,
-    horaFin: c.hora_fin,
+    horaInicio: normHora(c.hora_inicio),
+    horaFin: normHora(c.hora_fin),
   }
 }
 
@@ -131,6 +136,11 @@ export async function cambiarEstadoAgenda(id: string, estado: FrontendAgenda['es
   return mapAgendaBackToFront(data)
 }
 
+export async function cancelarCita(id: string): Promise<FrontendAgenda> {
+  const { data } = await api.post<BackendAgenda>(`/agenda/${id}/cancelar`)
+  return mapAgendaBackToFront(data)
+}
+
 export async function eliminarAgenda(id: string) {
   const { data } = await api.delete(`/agenda/${id}`)
   return data
@@ -166,11 +176,12 @@ export async function getCuposDisponibles(): Promise<FrontendCupo[]> {
 
 export async function reservarCupo(
   idCupo: string,
-  tipo?: 'registro' | 'valoracion',
+  tipo?: BackendAgenda['tipo'],
+  tipoOtro?: string,
 ): Promise<FrontendAgenda> {
   const { data } = await api.post<BackendAgenda>(
     `/cupos/${idCupo}/reservar`,
-    tipo ? { tipo } : undefined,
+    tipo ? { tipo, ...(tipo === 'otro' && { tipo_otro: tipoOtro }) } : undefined,
   )
   return mapAgendaBackToFront(data)
 }

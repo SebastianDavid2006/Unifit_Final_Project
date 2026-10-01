@@ -40,6 +40,8 @@ export interface Student {
   status: 'active' | 'inactive' | 'process'
   lastVisit: string
   nextAssessment: string
+  nextApptType?: 'valoracion' | 'registro' | 'seguimiento' | 'otro'
+  nextApptOther?: string
   avatar: string
   goal: string
   sessions: number

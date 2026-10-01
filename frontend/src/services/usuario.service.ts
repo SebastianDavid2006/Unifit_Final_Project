@@ -35,7 +35,7 @@ export interface BackendUsuario {
   acudiente?: { primer_nombre: string; segundo_nombre?: string; primer_apellido: string; segundo_apellido?: string; tipo_documento: string; documento: string; parentesco?: string; telefono_contacto?: string } | null
   valoraciones_count?: number
   ultimo_ingreso?: string | null
-  proxima_valoracion?: string | null
+  proxima_cita?: { fecha: string; hora: string; tipo: 'valoracion' | 'registro' | 'seguimiento' | 'otro'; tipo_otro: string | null } | null
 }
 
 export interface Trainer {
@@ -85,6 +85,12 @@ import { formatDateES, formatDateTimeES } from '@/lib/dateUtils'
 
 function formatDate(dateStr?: string): string {
   return formatDateES(dateStr, { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+// "3 de noviembre · 14:00": mes completo, sin año
+function formatProximaCita(fecha: string, hora: string): string {
+  const dia = new Date(`${fecha}T12:00:00`).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })
+  return `${dia} · ${hora}`
 }
 
 function toDateInputValue(dateStr?: string | null): string {
@@ -166,7 +172,9 @@ export function mapBackendToStudent(u: BackendUsuario): Student {
     adherence: 0,
     status: STATUS_MAP[u.estado] ?? 'process',
     lastVisit: u.ultimo_ingreso ? formatDateTimeES(u.ultimo_ingreso) : '',
-    nextAssessment: u.proxima_valoracion ? formatDateTimeES(u.proxima_valoracion) : 'Por agendar',
+    nextAssessment: u.proxima_cita ? formatProximaCita(u.proxima_cita.fecha, u.proxima_cita.hora) : 'Por agendar',
+    nextApptType: u.proxima_cita?.tipo,
+    nextApptOther: u.proxima_cita?.tipo_otro ?? undefined,
     avatar: buildAvatar(u),
     goal: '',
     sessions: 0,

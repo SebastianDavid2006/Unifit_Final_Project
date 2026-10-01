@@ -58,9 +58,15 @@ const publicarCuposSchema = z.object({
     .min(1),
 })
 
-const reservarCupoSchema = z.object({
-  tipo: z.enum(['valoracion', 'registro']).optional(),
-})
+const reservarCupoSchema = z
+  .object({
+    tipo: z.enum(['valoracion', 'registro', 'seguimiento', 'otro']).optional(),
+    tipo_otro: z.string().trim().max(200).optional(),
+  })
+  .refine((d) => d.tipo !== 'otro' || !!d.tipo_otro, {
+    message: 'Debes especificar el detalle de la cita',
+    path: ['tipo_otro'],
+  })
 
 export async function getAgenda(_req: Request, res: Response): Promise<void> {
   res.json(await listarAgenda())
@@ -172,7 +178,7 @@ export async function postReservarCupo(req: Request, res: Response): Promise<voi
   }
 
   try {
-    const agenda = await reservarCupo(req.params.id as string, req.usuario!.id_usuario, parsed.data.tipo ?? 'registro')
+    const agenda = await reservarCupo(req.params.id as string, req.usuario!.id_usuario, parsed.data.tipo ?? 'registro', parsed.data.tipo_otro)
     res.status(201).json(agenda)
   } catch (error) {
     if (!responderErrorPrisma(error, res)) throw error

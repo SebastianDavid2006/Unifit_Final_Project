@@ -9,7 +9,7 @@ import {
   offset, sameDay, weekStart, sessionDateTimeOf, HOURS_24_MS,
   setCuposDisponiblesPorFecha, getCupoIdPorSlot, type CupoSlot,
 } from './agendaUtils'
-import { getCuposDisponibles, getMiAgenda, reservarCupo, obtenerFestivos } from '@/services/agenda.service'
+import { getCuposDisponibles, getMiAgenda, reservarCupo, cancelarCita, obtenerFestivos, type BackendAgenda } from '@/services/agenda.service'
 import { MonthView } from './components/MonthView'
 import { WeekView } from './components/WeekView'
 import { DayView } from './components/DayView'
@@ -41,14 +41,14 @@ export function AgendaPage() {
 
   /* ---- Flujo de reserva ---- */
   const [pendingBooking, setPendingBooking] = useState<{ info: DayAvailability; time: string } | null>(null)
-  const [booked, setBooked] = useState<{ date: Date; time: string } | null>(null)
+  const [booked, setBooked] = useState<{ id?: string; date: Date; time: string; tipo?: BackendAgenda['tipo']; tipoOtro?: string } | null>(null)
   const [successOpen, setSuccessOpen] = useState(false)
   const [cuposTick, setCuposTick] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const refresh = () => {
-    setIsLoading(true)
+  const refresh = (silent = false) => {
+    if (!silent) setIsLoading(true)
     setError(null)
     Promise.all([getCuposDisponibles(), getMiAgenda()])
       .then(([cupos, miagenda]) => {
@@ -61,9 +61,16 @@ export function AgendaPage() {
         }
         setCuposDisponiblesPorFecha(porFecha, refs)
 
-        const activa = miagenda.find(a => a.estado === 'pendiente')
+        // Solo cuenta la próxima cita pendiente que aún no ha pasado
+        const ahora = Date.now()
+        const activa = miagenda
+          .filter(a => a.estado === 'pendiente'
+            && sessionDateTimeOf(new Date(a.fecha + 'T12:00:00'), a.horaInicio).getTime() > ahora)
+          .sort((a, b) =>
+            sessionDateTimeOf(new Date(a.fecha + 'T12:00:00'), a.horaInicio).getTime()
+            - sessionDateTimeOf(new Date(b.fecha + 'T12:00:00'), b.horaInicio).getTime())[0]
         if (activa) {
-          setBooked({ date: new Date(activa.fecha + 'T12:00:00'), time: activa.horaInicio })
+          setBooked({ id: activa.id, date: new Date(activa.fecha + 'T12:00:00'), time: activa.horaInicio, tipo: activa.tipo, tipoOtro: activa.tipoOtro })
         } else {
           setBooked(null)
         }
@@ -77,7 +84,7 @@ export function AgendaPage() {
     refresh()
   }, [])
 
-  const confirmBooking = async () => {
+  const confirmBooking = async (tipo: BackendAgenda['tipo'], tipoOtro?: string) => {
     if (!pendingBooking) return
     const idCupo = getCupoIdPorSlot(pendingBooking.info.date, pendingBooking.time)
     if (!idCupo) {
@@ -86,8 +93,8 @@ export function AgendaPage() {
       return
     }
     try {
-      await reservarCupo(idCupo)
-      setBooked({ date: pendingBooking.info.date, time: pendingBooking.time })
+      await reservarCupo(idCupo, tipo, tipoOtro)
+      setBooked({ date: pendingBooking.info.date, time: pendingBooking.time, tipo, tipoOtro })
       setPendingBooking(null)
       setSelected(null)
       setSuccessOpen(true)
@@ -98,10 +105,28 @@ export function AgendaPage() {
     }
   }
 
-  const cancelSession = () => {
+  const cancelSession = async () => {
+    if (booked?.id) {
+      try {
+        await cancelarCita(booked.id)
+      } catch {
+        setError('No se pudo cancelar tu cita')
+        return
+      }
+    }
     setBooked(null)
     setSuccessOpen(false)
+    refresh()
   }
+
+  // Al volver a la pestaña se recarga, para reflejar reagendas hechas por el staff
+  useEffect(() => {
+    const onFocus = () => refresh(true)
+    window.addEventListener('focus', onFocus)
+    // Los cupos cuyo bloque ya comenzó desaparecen solos
+    const timer = setInterval(() => refresh(true), 60_000)
+    return () => { window.removeEventListener('focus', onFocus); clearInterval(timer) }
+  }, [])
 
   /* Días distintos al de la cita activa se ven difuminados */
   const isBookedDay = (d: Date) => !!booked && sameDay(d, booked.date)

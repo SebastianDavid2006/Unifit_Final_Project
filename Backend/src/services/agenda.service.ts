@@ -1,10 +1,16 @@
 import { prisma } from '../utils/prisma'
 import { HttpError } from '../utils/HttpError'
 import { fmtDate, obtenerFestivos } from './festivos.service'
+import { citaVigente } from '../utils/cita-vigencia'
 
 function horaToStr(d: Date | null): string | null {
   if (!d) return null
   return d.toISOString().substring(11, 19)
+}
+
+function inicioDeHoyUTC(): Date {
+  const n = new Date()
+  return new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()))
 }
 
 function mapAgenda(a: any) {
@@ -156,6 +162,14 @@ function validarAgendable(fechaAlmacenada: Date, horaInicio: Date) {
   if (dia.getTime() === hoy.getTime() && bloqueYaComenzo(horaInicio, ahora)) {
     throw new HttpError(400, 'El bloque ya comenzó')
   }
+  // El gimnasio no atiende domingos ni festivos
+  if (dia.getDay() === 0) {
+    throw new HttpError(400, 'No se pueden agendar citas los domingos')
+  }
+  const fechaStr = fmtDiaLocal(fechaAlmacenada)
+  if (obtenerFestivos(dia.getFullYear()).some((h) => h.date === fechaStr)) {
+    throw new HttpError(400, 'No se pueden agendar citas en días festivos')
+  }
 }
 
 export async function listarCupos(): Promise<CupoConReserva[]> {
@@ -175,7 +189,16 @@ export async function listarCupos(): Promise<CupoConReserva[]> {
     orderBy: [{ fecha: 'asc' }, { hora_inicio: 'asc' }],
   })
 
-  return cupos.map((c) => ({
+  // Los cupos libres cuyo bloque ya comenzó (o de días pasados) se omiten; los reservados se conservan
+  const ahora = new Date()
+  const hoyUTC = Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate())
+  const visibles = cupos.filter((c) =>
+    !!c.agenda
+    || c.fecha.getTime() > hoyUTC
+    || (c.fecha.getTime() === hoyUTC && !bloqueYaComenzo(c.hora_inicio, ahora)),
+  )
+
+  return visibles.map((c) => ({
     id_cupo: c.id_cupo,
     fecha: fmtDiaLocal(c.fecha),
     hora_inicio: horaToStr(c.hora_inicio),
@@ -274,6 +297,13 @@ export async function crearAgenda(data: CrearAgendaData, id_creador: string) {
       select: { id_agenda: true },
     })
     if (ocupado) throw new HttpError(409, 'Ese bloque ya está ocupado')
+
+    // Una sola cita pendiente por usuario (cualquier tipo); las ya pasadas no cuentan
+    const pendientes = await tx.agenda.findMany({
+      where: { id_usuario: data.id_usuario, estado: 'pendiente', fecha: { gte: inicioDeHoyUTC() } },
+      select: { fecha: true, hora_inicio: true, hora_fin: true },
+    })
+    if (pendientes.some(citaVigente)) throw new HttpError(400, 'El usuario ya tiene una cita pendiente')
 
     // Opción A: si el bloque tiene un cupo público libre, la cita directa lo consume
     const cupoLibre = await tx.cupo.findFirst({
@@ -495,11 +525,16 @@ export async function publicarCupos(data: PublicarCuposData, id_creador: string)
   }
 
   // Cargar festivos colombianos dinámicamente (cálculo por año, fuente única)
-  const year = fechaInicio.getFullYear()
-  const festivoSet = new Set(obtenerFestivos(year).map(h => h.date))
+  const festivoSet = new Set<string>()
+  for (let y = fechaInicio.getFullYear(); y <= fechaFin.getFullYear(); y++) {
+    for (const h of obtenerFestivos(y)) festivoSet.add(h.date)
+  }
 
   const porDiaJS = new Map<number, RangoHorario[]>()
   for (const cfg of data.horarios_por_dia) {
+    if (cfg.dia === 'dom') {
+      throw new HttpError(400, 'No se pueden publicar cupos los domingos')
+    }
     const js = DIA_SEMANA_JS[cfg.dia]
     if (cfg.rangos.length === 0) {
       throw new HttpError(400, `El día ${cfg.dia} no tiene ningún horario`)
@@ -614,7 +649,8 @@ export async function listarCuposDisponibles() {
 export async function reservarCupo(
   id_cupo: string,
   id_usuario: string,
-  tipo: 'registro' | 'valoracion' = 'registro',
+  tipo: 'registro' | 'valoracion' | 'seguimiento' | 'otro' = 'registro',
+  tipo_otro?: string,
 ) {
   return prisma.$transaction(async (tx) => {
     const cupo = await tx.cupo.findUnique({
@@ -636,19 +672,14 @@ export async function reservarCupo(
     })
     if (!usuario) throw new HttpError(404, 'Usuario no encontrado')
 
-    if (tipo === 'valoracion') {
-      const valoracionPendiente = await tx.agenda.findFirst({
-        where: { id_usuario, tipo: 'valoracion', estado: 'pendiente' },
-        select: { id_agenda: true },
+    {
+      // Una sola cita pendiente por usuario, sin importar el tipo. Una cita que ya terminó no bloquea nuevas reservas
+      const pendientes = await tx.agenda.findMany({
+        where: { id_usuario, estado: 'pendiente', fecha: { gte: inicioDeHoyUTC() } },
+        select: { fecha: true, hora_inicio: true, hora_fin: true },
       })
-      if (valoracionPendiente) throw new HttpError(400, 'Ya tienes una cita de valoración pendiente')
+      if (pendientes.some(citaVigente)) throw new HttpError(400, 'Ya tienes una cita pendiente')
     }
-
-    const citaMismoDia = await tx.agenda.findFirst({
-      where: { id_usuario, fecha: cupo.fecha, estado: { not: 'cancelado' } },
-      select: { id_agenda: true },
-    })
-    if (citaMismoDia) throw new HttpError(400, 'Ya tienes una cita para este día')
 
     const agenda = await tx.agenda.create({
       data: {
@@ -659,7 +690,8 @@ export async function reservarCupo(
         hora_inicio: cupo.hora_inicio,
         hora_fin: cupo.hora_fin,
         tipo,
-        observaciones: tipo === 'valoracion' ? 'Valoración reservada a través de cupo' : 'Reservado a través de cupo',
+        tipo_otro: tipo === 'otro' ? tipo_otro : null,
+        observaciones: 'Reservado a través de cupo',
       },
       include: {
         usuario: {

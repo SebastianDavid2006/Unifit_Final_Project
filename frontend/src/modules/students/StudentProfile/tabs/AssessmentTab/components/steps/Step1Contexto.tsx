@@ -152,7 +152,7 @@ export function Step1Contexto({ valuationForm, setValuationForm, valuationViewMo
             value={valuationForm.objetivoDetalle}
             readOnly={valuationViewMode}
             onChange={e => setValuationForm(p => ({ ...p, objetivoDetalle: e.target.value }))}
-            placeholder="Describe a detalle el objetivo del estudiante..."
+            placeholder="Describe a detalle el objetivo del usuario..."
             rows={3}
             className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition-all duration-200 resize-none relative"
             style={{

@@ -1,17 +1,35 @@
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { CalendarCheck, Clock, Lock, CheckCircle2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { DayAvailability } from '@/features/student/types/student'
 import { AMBER, GREEN } from '@/features/student/components/ui/fitness'
+import type { BackendAgenda } from '@/services/agenda.service'
+import { agendaTipoToAppt } from '@/modules/agenda/AgendaModule/backend'
+import { typeColors, typeLabels } from '@/modules/agenda/AgendaModule/data'
+
+type TipoCita = BackendAgenda['tipo']
+const TIPOS: TipoCita[] = ['registro', 'valoracion', 'seguimiento', 'otro']
+const TIPO_OTRO_MAX = 200
+const tipoColor = (t: TipoCita) => typeColors[agendaTipoToAppt(t)]
+const tipoLabel = (t: TipoCita) => typeLabels[agendaTipoToAppt(t)]
 
 interface BookingConfirmModalProps {
   pending: { info: DayAvailability; time: string } | null
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: (tipo: TipoCita, tipoOtro?: string) => void
 }
 
 export function BookingConfirmModal({ pending, onClose, onConfirm }: BookingConfirmModalProps) {
+  const [tipo, setTipo] = useState<TipoCita>('registro')
+  const [tipoOtro, setTipoOtro] = useState('')
+  useEffect(() => {
+    if (pending) { setTipo('registro'); setTipoOtro('') }
+  }, [pending])
+  const detalle = tipoOtro.trim()
+  const puedeConfirmar = tipo !== 'otro' || detalle.length > 0
+
   return (
     <AnimatePresence>
       {pending && (
@@ -51,6 +69,43 @@ export function BookingConfirmModal({ pending, onClose, onConfirm }: BookingConf
                 <Clock size={13} /> {pending.time} h
               </p>
             </div>
+            <div className="mt-4 text-left">
+              <p style={{ color: 'rgba(255,255,255,0.52)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>Tipo de cita</p>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {TIPOS.map(t => {
+                  const sel = tipo === t
+                  const color = tipoColor(t)
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTipo(t)}
+                      className="py-2.5 rounded-xl font-black"
+                      style={{
+                        fontSize: 11.5,
+                        background: sel ? color + '26' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${sel ? color : 'rgba(255,255,255,0.1)'}`,
+                        color: sel ? color : 'rgba(255,255,255,0.55)',
+                      }}
+                    >
+                      {tipoLabel(t)}
+                    </button>
+                  )
+                })}
+              </div>
+              {tipo === 'otro' && (
+                <div className="mt-2">
+                  <input
+                    value={tipoOtro}
+                    onChange={e => setTipoOtro(e.target.value.slice(0, TIPO_OTRO_MAX))}
+                    placeholder="Especifica el motivo de la cita"
+                    className="w-full px-3.5 py-2.5 rounded-xl outline-none"
+                    style={{ fontSize: 12.5, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)', color: '#fff' }}
+                  />
+                  <p className="text-right" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, marginTop: 3 }}>{tipoOtro.length}/{TIPO_OTRO_MAX}</p>
+                </div>
+              )}
+            </div>
             <p className="flex items-center justify-center gap-1.5 mt-3" style={{ color: AMBER, fontSize: 10.5, fontWeight: 600 }}>
               <Lock size={11} />
               Cancelación disponible solo hasta 24 horas antes
@@ -66,9 +121,10 @@ export function BookingConfirmModal({ pending, onClose, onConfirm }: BookingConf
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                onClick={onConfirm}
+                onClick={() => puedeConfirmar && onConfirm(tipo, tipo === 'otro' ? detalle : undefined)}
+                disabled={!puedeConfirmar}
                 className="flex-1 py-3.5 rounded-2xl font-black uppercase tracking-wider"
-                style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 11, boxShadow: '0 14px 36px rgba(48,209,88,0.3)' }}
+                style={{ background: `linear-gradient(135deg, ${GREEN}, #7CE495)`, color: '#052e12', fontSize: 11, boxShadow: '0 14px 36px rgba(48,209,88,0.3)', opacity: puedeConfirmar ? 1 : 0.4, cursor: puedeConfirmar ? 'pointer' : 'not-allowed' }}
               >
                 Sí, reservar
               </motion.button>
@@ -82,7 +138,7 @@ export function BookingConfirmModal({ pending, onClose, onConfirm }: BookingConf
 
 interface BookingSuccessModalProps {
   open: boolean
-  booked: { date: Date; time: string } | null
+  booked: { date: Date; time: string; tipo?: TipoCita; tipoOtro?: string } | null
   onClose: () => void
 }
 
@@ -152,6 +208,11 @@ export function BookingSuccessModal({ open, booked, onClose }: BookingSuccessMod
               <p className="flex items-center justify-center gap-1.5" style={{ color: '#7CE495', fontSize: 12.5, fontWeight: 800, marginTop: 4 }}>
                 <Clock size={13} /> {booked.time} h
               </p>
+              {booked.tipo && (
+                <p style={{ color: tipoColor(booked.tipo), fontSize: 12, fontWeight: 800, marginTop: 6 }}>
+                  {tipoLabel(booked.tipo)}{booked.tipo === 'otro' && booked.tipoOtro ? ` · ${booked.tipoOtro}` : ''}
+                </p>
+              )}
             </div>
 
             <motion.button

@@ -179,13 +179,13 @@ describe.sequential('Agenda - CRUD', () => {
       .put(`/api/agenda/${citaEditableId}`)
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
-        fecha: '2026-12-08',
+        fecha: '2026-12-17',
         hora_inicio: '17:00',
       })
 
     expect(res.status).toBe(200)
     expect(res.body.id_agenda).toBe(citaEditableId)
-    expect(res.body.fecha.slice(0, 10)).toBe('2026-12-08')
+    expect(res.body.fecha.slice(0, 10)).toBe('2026-12-17')
     // hora_inicio viaja tal cual el bloque elegido (sin corrimiento de zona horaria)
     expect(res.body.hora_inicio).toBe('17:00:00')
   })
@@ -311,6 +311,19 @@ describe.sequential('Cupos - Publicación y reserva', () => {
     expect(res.status).toBe(400)
   })
 
+  it('POST /cupos/publicar - domingo → 400', async () => {
+    const res = await request(app)
+      .post('/api/cupos/publicar')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        fecha_inicio: '2026-12-20',
+        fecha_fin: '2026-12-20',
+        horarios_por_dia: [{ dia: 'dom', rangos: [{ inicio: '09:00', fin: '10:00' }] }],
+      })
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toContain('domingos')
+  })
+
   it('POST /cupos/publicar - fecha pasada → 400', async () => {
     const res = await request(app)
       .post('/api/cupos/publicar')
@@ -367,7 +380,7 @@ describe.sequential('Cupos - Publicación y reserva', () => {
     expect(res.status).toBe(400)
   })
 
-  it('POST /cupos/:id/reservar - segundo cupo el mismo día del mismo usuario → 400', async () => {
+  it('POST /cupos/:id/reservar - segunda cita con una pendiente vigente → 400', async () => {
     const cupos = await cuposCreadosEnCorrida()
     const cupoDiaLibre = await prisma.cupo.findFirst({ where: { agenda: { is: null }, id_cupo: { in: cupos } } })
     expect(cupoDiaLibre).toBeTruthy()
@@ -439,14 +452,14 @@ describe.sequential('Cupos - Quitar cupo (DELETE)', () => {
       .post('/api/cupos/publicar')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
-        fecha_inicio: '2026-12-06',
-        fecha_fin: '2026-12-06',
-        horarios_por_dia: [{ dia: 'dom', rangos: [{ inicio: '09:00', fin: '10:00' }] }],
+        fecha_inicio: '2026-12-22',
+        fecha_fin: '2026-12-22',
+        horarios_por_dia: [{ dia: 'mar', rangos: [{ inicio: '09:00', fin: '10:00' }] }],
       })
       .expect(201)
 
     const cupo = await prisma.cupo.findFirst({
-      where: { fecha: new Date('2026-12-06T00:00:00'), agenda: { is: null } },
+      where: { fecha: new Date('2026-12-22T00:00:00'), agenda: { is: null } },
     })
     const reserva = await request(app)
       .post(`/api/cupos/${cupo!.id_cupo}/reservar`)
@@ -690,6 +703,24 @@ describe.sequential('Agenda - Bloques, opción A y cancelación', () => {
     expect(cupos.body.find((c: any) => c.id_cupo === cupoB).reserva.id_agenda).toBe(citaResA)
   })
 
+  it('POST /agenda - domingo → 400', async () => {
+    const res = await request(app)
+      .post('/api/agenda')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ id_usuario: directoId, fecha: '2026-12-20', hora_inicio: '09:00', tipo: 'seguimiento' })
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toContain('domingos')
+  })
+
+  it('POST /agenda - festivo → 400', async () => {
+    const res = await request(app)
+      .post('/api/agenda')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({ id_usuario: directoId, fecha: '2026-12-08', hora_inicio: '09:00', tipo: 'seguimiento' })
+    expect(res.status).toBe(400)
+    expect(res.body.mensaje).toContain('festivos')
+  })
+
   it('POST /agenda/:id/cancelar - dueño cancela cita futura y libera el cupo', async () => {
     const res = await request(app)
       .post(`/api/agenda/${citaResA}/cancelar`)
@@ -743,7 +774,7 @@ describe.sequential('Agenda - Bloques, opción A y cancelación', () => {
     const crear = await request(app)
       .post('/api/agenda')
       .set('Authorization', `Bearer ${token('adminToken')}`)
-      .send({ id_usuario: pendienteId, fecha: '2026-12-20', hora_inicio: '09:00', tipo: 'registro' })
+      .send({ id_usuario: pendienteId, fecha: '2026-12-19', hora_inicio: '09:00', tipo: 'registro' })
     expect(crear.status).toBe(201)
     citaDePendiente = crear.body.id_agenda
 

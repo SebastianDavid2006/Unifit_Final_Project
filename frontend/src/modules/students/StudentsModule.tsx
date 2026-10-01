@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
+import { agendaTipoToAppt } from '@/modules/agenda/AgendaModule/backend'
+import { typeColors, typeLabels } from '@/modules/agenda/AgendaModule/data'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, Plus, ChevronRight, ChevronLeft } from 'lucide-react'
 import studentsImg from '@/assets/illustrations/characters/students/students_group.webp'
@@ -84,7 +86,7 @@ export default function StudentsModule({ students, search, onSearchChange, onSel
     })
   }, [students, search, filterSelections])
 
-  const tableHeaders = ['Nombre', 'PROGRAMA / CARGO', 'PERFIL', 'Último Ingreso', 'Próxima Valoración', 'Valoraciones', 'Estado']
+  const tableHeaders = ['Nombre', 'PROGRAMA / CARGO', 'PERFIL', 'Último Ingreso', 'Próxima Cita', 'Valoraciones', 'Estado']
 
   const statusMap: Record<Student['status'], { label: string; color: string; bg: string }> = {
     active: { label: 'Activo', color: '#1E8E3E', bg: 'rgba(34,197,94,0.13)' },
@@ -171,7 +173,7 @@ export default function StudentsModule({ students, search, onSearchChange, onSel
                 whileTap={{ opacity: 0.35, transition: { duration: 0.12 } }}
                 className="overflow-hidden whitespace-nowrap"
               >
-                <span className="text-xs font-bold">Nuevo Estudiante</span>
+                <span className="text-xs font-bold">Nuevo Usuario</span>
               </motion.div>
               <motion.div
                 whileTap={{ scale: 0.85, opacity: 0.35, transition: { duration: 0.12 } }}
@@ -453,7 +455,22 @@ export default function StudentsModule({ students, search, onSearchChange, onSel
                       <p className="text-xs font-semibold truncate" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : '#1A1A1E' }}>{s.tipo_usuario === 'estudiante' ? s.program : `${s.cargo ?? '—'} — ${s.area ?? '—'}`}</p>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : 'rgba(18,112,183,0.1)', color: isProcess ? '#FFFFFF' : '#0E6FBF' }}>{s.tipo_usuario === 'estudiante' ? 'Estudiante' : s.tipo_usuario === 'profesor' ? 'Profesor' : 'Administrativo'}</span>
                       <p className="text-xs font-medium" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'Completar proceso' : (s.lastVisit || 'Sin ingreso registrado')}</p>
-                      <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{isProcess ? 'Completar proceso' : s.nextAssessment}</p>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.9)' : (s.nextAssessment === 'Por agendar' ? '#E8A00B' : '#0D1B2A') }}>{s.nextAssessment}</p>
+                        {s.nextApptType && (() => {
+                          const key = agendaTipoToAppt(s.nextApptType)
+                          const color = typeColors[key]
+                          return (
+                            <span
+                              className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold mt-1 w-fit"
+                              style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : color + '1F', color: isProcess ? '#FFFFFF' : color, cursor: s.nextApptType === 'otro' && s.nextApptOther ? 'help' : undefined }}
+                              title={s.nextApptType === 'otro' ? s.nextApptOther : undefined}
+                            >
+                              {typeLabels[key]}
+                            </span>
+                          )
+                        })()}
+                      </div>
                       <p className="text-xs font-bold" style={{ color: isProcess ? 'rgba(255,255,255,0.6)' : '#1A1A1E' }}>{isProcess ? 'Completar proceso' : `${s.valoraciones} ${s.valoraciones === 1 ? 'registro' : 'registros'}`}</p>
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold w-fit" style={{ background: isProcess ? 'rgba(255,255,255,0.2)' : statusMap[s.status].bg, color: isProcess ? '#FFFFFF' : statusMap[s.status].color }}>
                         <span className="w-1.5 h-1.5 rounded-full" style={{ background: isProcess ? '#FFFFFF' : statusMap[s.status].color }} />

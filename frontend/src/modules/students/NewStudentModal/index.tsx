@@ -434,7 +434,7 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
                       {resume && (
                         <div className="mt-3 px-4 py-3 rounded-xl text-[11px] font-semibold" style={{ background: 'rgba(18,112,183,0.07)', border: '1px solid rgba(18,112,183,0.25)', color: '#0B5E9B' }}>
                           <p className="mb-1">
-                            Este estudiante ya está registrado pero quedó pendiente de:{' '}
+                            Este usuario ya está registrado pero quedó pendiente de:{' '}
                             <span className="font-bold">{resume.faltan.map(f => REQUISITOS.find(r => r.id === f)!.label).join(', ')}</span>.
                           </p>
                           <p className="mb-3" style={{ color: 'rgba(11,94,155,0.8)', fontWeight: 500 }}>

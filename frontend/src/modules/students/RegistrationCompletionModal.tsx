@@ -128,7 +128,7 @@ export default function RegistrationCompletionModal({ open, onClose, onComplete,
           </div>
         </div>
         <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.4 }} className="text-base font-bold text-center" style={{ color: '#1A1A1E' }}>
-          {isAllAccepted ? '¡Documentos ya completados!' : '¡Estudiante registrado exitosamente!'}
+          {isAllAccepted ? '¡Documentos ya completados!' : '¡Usuario registrado exitosamente!'}
         </motion.p>
         <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.4 }} className="text-sm font-medium text-center max-w-xs leading-relaxed" style={{ color: 'rgba(0,0,0,0.45)' }}>
           {isAllAccepted

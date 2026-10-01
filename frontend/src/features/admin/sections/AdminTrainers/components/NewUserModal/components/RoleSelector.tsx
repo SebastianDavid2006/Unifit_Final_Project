@@ -7,8 +7,8 @@ const ROLE_OPTIONS: { id: UserRole; label: string; desc: string; features: strin
   {
     id: 'trainer',
     label: 'Entrenador',
-    desc: 'Encargado de la gestión deportiva y el acompañamiento de los estudiantes.',
-    features: ['Gestión de estudiantes', 'Rutinas y programas', 'Valoraciones físicas', 'Agenda de citas'],
+    desc: 'Encargado de la gestión deportiva y el acompañamiento de los usuarios.',
+    features: ['Gestión de usuarios', 'Rutinas y programas', 'Valoraciones físicas', 'Agenda de citas'],
     icon: GraduationCap,
     gradient: 'linear-gradient(135deg, #1270B7, #0E5D9E)',
     accent: '#1270B7',

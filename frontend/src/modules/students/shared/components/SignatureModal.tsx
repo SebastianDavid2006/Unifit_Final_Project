@@ -12,7 +12,7 @@ export function SignatureModal({ isOpen, onClose }: SignatureModalProps) {
     <ModalShell isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Firma del Estudiante</h3>
+          <h3 className="text-base font-bold" style={{ color: '#0D1B2A' }}>Firma del Usuario</h3>
           <p className="text-xs mt-0.5" style={{ color: 'rgba(0,0,0,0.4)' }}>Contrato Firmado</p>
         </div>
         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={onClose}

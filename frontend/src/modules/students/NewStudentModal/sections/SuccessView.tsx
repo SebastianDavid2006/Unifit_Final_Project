@@ -63,7 +63,7 @@ export function SuccessView({ createdEmail, onShowInbox, onClose }: SuccessViewP
         className="text-lg font-bold text-center"
         style={{ color: '#1A1A1E' }}
       >
-        ¡Estudiante registrado exitosamente!
+        ¡Usuario registrado exitosamente!
       </motion.p>
       <motion.p
         initial={{ opacity: 0, y: 10 }}

@@ -29,7 +29,7 @@ interface NewValuationModalProps {
 }
 
 const STEPS = [
-  { num: 1, title: 'Contexto del estudiante' },
+  { num: 1, title: 'Contexto del usuario' },
   { num: 2, title: 'Medidas corporales' },
   { num: 3, title: 'Evaluación Clínica' },
   { num: 4, title: 'Antecedentes de salud' },

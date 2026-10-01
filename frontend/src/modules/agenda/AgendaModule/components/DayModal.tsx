@@ -240,7 +240,7 @@ export function DayModal({ date, onClose, status, appts, onAddAppointment, onEdi
               <button onClick={isHoliday || esPasado ? undefined : onAddAppointment} disabled={isHoliday || esPasado}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white transition-all"
                 style={{ background: MESH_GRAD, opacity: isHoliday || esPasado ? 0.4 : 1, cursor: isHoliday || esPasado ? 'not-allowed' : 'pointer' }}
-              ><Plus size={15} /> {isHoliday ? 'No disponible en día festivo' : esPasado ? 'No disponible en días pasados' : 'Agendar Cita'}</button>
+              ><Plus size={15} /> {isHoliday ? (status?.domingo ? 'No disponible los domingos' : 'No disponible en día festivo') : esPasado ? 'No disponible en días pasados' : 'Agendar Cita'}</button>
             </div>
           </motion.div>
         </motion.div>

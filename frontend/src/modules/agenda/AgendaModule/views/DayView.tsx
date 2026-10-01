@@ -25,6 +25,7 @@ interface DayViewProps {
 export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onPrev, onNext, isExpanded, onToggleExpand, currentMonth, getDayStatus, getApptsForDate, onSlotClick, onEditAppt }: DayViewProps) {
   const ds = fmtDate(currentMonth)
   const holidayName = getDayStatus(ds).holiday || null
+  const esDomingo = !!getDayStatus(ds).domingo
   const isHoliday = !!holidayName
   const timeText = fullscreen ? 'text-[10px]' : 'text-[9px]'
   const apptText = fullscreen ? 'text-[11px]' : 'text-[10px]'
@@ -54,7 +55,7 @@ export function DayView({ fullscreen, viewTitle, viewMode, onViewModeChange, onP
   const holidayBanner = holidayName && (
     <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ background: `${RED}0D`, borderColor: `${RED}22` }}>
       <CalendarDays size={14} style={{ color: RED, flexShrink: 0 }} />
-      <span className={`font-bold ${timeText}`} style={{ color: RED }}>Día festivo · {holidayName}</span>
+      <span className={`font-bold ${timeText}`} style={{ color: RED }}>{esDomingo ? 'Cerrado' : `Día festivo · ${holidayName}`}</span>
     </div>
   )
 

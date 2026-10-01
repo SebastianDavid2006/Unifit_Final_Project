@@ -40,9 +40,10 @@ interface AppointmentModalProps {
   studentMatches: StudentMatch[]
   studentListOpen: boolean
   setStudentListOpen: (v: boolean) => void
+  error?: string | null
 }
 
-export function AppointmentModal({ show, title = 'Nueva Cita', editing = false, dirty = false, onClose, onBack, onSave, onDelete, apptType, onTypeChange, fecha, onStepFecha, blocks, ocupados, cuposLibres, startTime, onStartChange, student, onStudentChange, studentMatches, studentListOpen, setStudentListOpen }: AppointmentModalProps) {
+export function AppointmentModal({ show, title = 'Nueva Cita', editing = false, dirty = false, onClose, onBack, onSave, onDelete, apptType, onTypeChange, fecha, onStepFecha, blocks, ocupados, cuposLibres, startTime, onStartChange, student, onStudentChange, studentMatches, studentListOpen, setStudentListOpen, error }: AppointmentModalProps) {
   const [confirmDel, setConfirmDel] = useState(false)
   const [filter, setFilter] = useState<'ALL' | 'AM' | 'PM'>('ALL')
 
@@ -157,6 +158,14 @@ export function AppointmentModal({ show, title = 'Nueva Cita', editing = false, 
                       )
                     })}
                   </div>
+                  {(visibleBlocks.length === 0 || visibleBlocks.every(b => {
+                    const k = keyOf(b.inicio)
+                    return vencidoDe(k) || ocupados.has(k)
+                  })) && (
+                    <p className="text-sm font-bold text-center mt-3" style={{ color: 'rgba(0,0,0,0.45)' }}>
+                      No hay cupos disponibles
+                    </p>
+                  )}
                   {selectedBlock && (
                     <p className="text-[11px] font-semibold mt-3" style={{ color: 'rgba(0,0,0,0.4)' }}>
                       {keyOf(selectedBlock.inicio)} – {selectedBlock.fin.slice(0, 5)} {selectedBlock.bloque}
@@ -203,16 +212,17 @@ export function AppointmentModal({ show, title = 'Nueva Cita', editing = false, 
                         style={{ overflow: 'hidden' }}
                       >
                         <div>
-                          <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.55)' }}>Estudiante</label>
-                          <input value={student} onChange={e => { onStudentChange(e.target.value); setStudentListOpen(true) }}
+                          <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.55)' }}>Usuario</label>
+                          <input value={student} readOnly={editing} disabled={editing}
+                            onChange={e => { onStudentChange(e.target.value); setStudentListOpen(true) }}
                             onFocus={e => { setStudentListOpen(true); focusMesh(e.currentTarget) }}
                             onBlur={e => { setTimeout(() => setStudentListOpen(false), 120); blurMesh(e.currentTarget) }}
-                            placeholder="Escribe el nombre del estudiante…"
+                            placeholder="Escribe el nombre del usuario…"
                             className="w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium outline-none"
-                            style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E' }}
+                            style={{ background: meshInputBg, border: '1px solid transparent', color: '#1A1A1E', opacity: editing ? 0.6 : 1, cursor: editing ? 'not-allowed' : undefined }}
                             onMouseEnter={e => enterMesh(e.currentTarget)}
                             onMouseLeave={e => leaveMesh(e.currentTarget)} />
-                          {studentListOpen && studentMatches.length > 0 && (
+                          {!editing && studentListOpen && studentMatches.length > 0 && (
                             <div className="mt-2 rounded-xl overflow-hidden" style={{ background: '#fff', border: '1px solid rgba(18,112,183,0.15)', boxShadow: '0 8px 24px rgba(18,112,183,0.12)' }}>
                               {studentMatches.slice(0, 6).map((s, i) => (
                                 <button
@@ -239,6 +249,11 @@ export function AppointmentModal({ show, title = 'Nueva Cita', editing = false, 
                   </AnimatePresence>
                 </div>
               </div>
+              {error && (
+                <div className="mt-5 rounded-xl px-4 py-3 text-xs font-semibold" style={{ background: `${RED}14`, border: `1px solid ${RED}40`, color: RED }}>
+                  {error}
+                </div>
+              )}
               <div className="mt-6">
                 {editing ? (
                   <div className="flex gap-3">

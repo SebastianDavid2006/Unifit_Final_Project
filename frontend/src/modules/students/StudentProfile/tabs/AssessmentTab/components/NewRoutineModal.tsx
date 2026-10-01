@@ -86,7 +86,7 @@ function RoutineCreateChoice({ onStartAI, onManual }: { onStartAI: () => void; o
           <Sparkles size={22} style={{ color: '#8B5CF6' }} />
           <span className="text-sm font-bold" style={{ color: '#7C3AED' }}>Generar con IA</span>
           <span className="text-[11px] text-center" style={{ color: 'rgba(0,0,0,0.45)' }}>
-            Basada en la valoración y antecedentes del estudiante
+            Basada en la valoración y antecedentes del usuario
           </span>
         </button>
         <button
@@ -332,7 +332,7 @@ export function NewRoutineModal(props: NewRoutineModalProps) {
                 <div className="flex items-center gap-2 text-[11px] leading-relaxed text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2" style={{ borderColor: 'rgba(217,119,6,0.25)' }}>
                   <Bot size={18} style={{ color: '#1270B7', flexShrink: 0 }} />
                   <span>
-                    Recuerda: esta rutina fue sugerida por la IA. Revisa cada ejercicio (zona de carga, nivel, series y descanso) antes de guardarla, en especial si el estudiante reporta antecedentes médicos.
+                    Recuerda: esta rutina fue sugerida por la IA. Revisa cada ejercicio (zona de carga, nivel, series y descanso) antes de guardarla, en especial si la persona reporta antecedentes médicos.
                   </span>
                 </div>
               )}

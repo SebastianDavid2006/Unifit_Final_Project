@@ -22,6 +22,8 @@ export interface DayStatus {
   open: string
   close: string
   holiday?: string | null
+  /** Domingo: el gimnasio no atiende (se trata como día cerrado, igual que un festivo) */
+  domingo?: boolean
 }
 
 // Rejilla horaria de las vistas. Fuente única = backend GET /agenda/bloques (regla 1).

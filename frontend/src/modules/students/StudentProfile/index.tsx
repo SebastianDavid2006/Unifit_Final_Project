@@ -617,7 +617,7 @@ const RED_GRAD = 'linear-gradient(135deg, #FF6B6B, #E63946)'
           onStartAI={startAiRoutine}
           onCreated={async () => {
             if (!routineValoracionId) {
-              alert('No se encontró la valoración asociada. Crea primero una valoración para este estudiante.')
+              alert('No se encontró la valoración asociada. Crea primero una valoración para este usuario.')
               return
             }
             const sinEjercicio = routineRows.filter(r => !esUuidValido(r.id_exercise ?? r.id))

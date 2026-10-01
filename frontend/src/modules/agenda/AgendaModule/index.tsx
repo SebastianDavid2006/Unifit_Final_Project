@@ -20,6 +20,7 @@ import {
   crearAgenda, editarAgenda, eliminarAgenda, eliminarCupo,
   getAgenda, getBloques, getCupos, obtenerFestivos, publicarCupos, type BloqueDelDia, type CupoConReserva, type HorarioPorDia,
 } from '@/services/agenda.service'
+import { mensajeError } from '@/lib/api'
 import { getUsuario } from '@/lib/auth'
 
 interface AgendaStudent {
@@ -62,6 +63,16 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  // Errores del formulario de cita: viven dentro del modal y se limpian al abrirlo o cerrarlo
+  const [apptError, setApptError] = useState<string | null>(null)
+
+  useEffect(() => { setApptError(null) }, [showApptModal])
+  // El aviso global (acciones fuera del modal) se descarta solo
+  useEffect(() => {
+    if (!actionError) return
+    const t = setTimeout(() => setActionError(null), 6000)
+    return () => clearTimeout(t)
+  }, [actionError])
   const byName = useRef<Map<string, string>>(new Map())
 
   const [newApptType, setNewApptType] = useState<AppointmentType>('initial_assessment')
@@ -119,6 +130,9 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
   function getDayStatus(dateStr: string): DayStatus {
     const hol = festivos.get(dateStr)
     if (hol) return { active: false, open: '08:00', close: '22:00', holiday: hol }
+    if (new Date(`${dateStr}T12:00:00`).getDay() === 0) {
+      return { active: false, open: '08:00', close: '22:00', holiday: 'Cerrado', domingo: true }
+    }
     return { active: true, open: '08:00', close: '22:00', holiday: null }
   }
 
@@ -149,10 +163,10 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
 
   async function handleSaveAppointment() {
     if (!selectedDate) return
-    setActionError(null)
+    setApptError(null)
     const bloque = bloques.find(b => b.inicio.slice(0, 5) === newApptStart)
     if (!bloque) {
-      setActionError('Selecciona un bloque válido (08:00 – 22:00)')
+      setApptError('Selecciona un bloque válido (08:00 – 22:00)')
       return
     }
     const fecha = selectedDate
@@ -176,7 +190,7 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
       }
       const idUsuario = byName.current.get(newApptStudent)
       if (!idUsuario) {
-        setActionError('Selecciona un estudiante de la lista para crear la cita')
+        setApptError('Selecciona un usuario de la lista para crear la cita')
         return
       }
       const creada = await crearAgenda({ id_usuario: idUsuario, fecha, hora_inicio, hora_fin, tipo, tipo_otro })
@@ -185,7 +199,7 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
       setNewApptStudent('')
       void refreshCupos()
     } catch (e) {
-      setActionError('No se pudo guardar la cita')
+      setApptError(mensajeError(e) === 'Error inesperado' ? 'No se pudo guardar la cita' : mensajeError(e))
     }
   }
 
@@ -207,7 +221,7 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
       setEditingApptId(null)
       void refreshCupos()
     } catch (e) {
-      setActionError('No se pudo eliminar la cita')
+      ;(showApptModal ? setApptError : setActionError)('No se pudo eliminar la cita')
     }
   }
 
@@ -270,7 +284,8 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
       setPublishedDates(new Set(updated.map(c => c.fecha)))
       return true
     } catch (e) {
-      setActionError('No se pudo publicar los cupos del día')
+      const msg = mensajeError(e)
+      setActionError(msg === 'Error inesperado' ? 'No se pudo publicar los cupos del día' : msg)
       return false
     }
   }
@@ -425,6 +440,7 @@ export default function AgendaModule({ students = [] }: { students?: AgendaStude
         studentMatches={studentMatches}
         studentListOpen={studentListOpen}
         setStudentListOpen={setStudentListOpen}
+        error={apptError}
       />
 
       <AnimatePresence>

@@ -48,8 +48,11 @@ function makeDayInfo(date: Date, today: Date, cuposPorFecha: Map<string, CupoSlo
   const isToday = date.toDateString() === today.toDateString()
   const isPast = date < today && !isToday
   const slots = isPast ? [] : cuposPorFecha.get(formatDateKey(date)) ?? []
+  // Los domingos el gimnasio no atiende: se bloquean igual que un festivo.
+  const esDomingo = date.getDay() === 0
+  const nombreCierre = holidayName ?? (esDomingo ? 'Domingo' : undefined)
   // Sin cupos publicados no hay nada que agendar: se informa que no se publicaron.
-  return { date, isToday, isPast, isHoliday: holidayName !== undefined, holidayName, isRestDay: slots.length === 0, slots }
+  return { date, isToday, isPast, isHoliday: nombreCierre !== undefined, holidayName: nombreCierre, isRestDay: slots.length === 0, slots }
 }
 
 interface SessionUser {
@@ -120,6 +123,7 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
   const [cuposError, setCuposError] = useState<string | null>(null)
   const [bookError, setBookError] = useState<string | null>(null)
   const [citaCheck, setCitaCheck] = useState(0)
+  const [citaCaducada, setCitaCaducada] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const today = useMemo(() => new Date(), [])
 
@@ -174,22 +178,50 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
   // El 404 es la respuesta esperada cuando todavía no tiene cita.
   useEffect(() => {
     if (phase === 'schedule') {
-      api.get('/usuarios/me/cita')
+      api.get('/usuarios/me/cita', { params: { _: Date.now() } })
         .then(res => {
           const cita = res.data as CitaResponse
           if (cita && cita.fecha && cita.hora_inicio) {
-            const hora = new Date(cita.hora_inicio).toTimeString().slice(0, 5)
-            setSelectedDay(makeDayInfo(new Date(cita.fecha + 'T12:00:00'), today, new Map()))
+            // El backend devuelve ISO (fecha "2026-10-01T00:00:00.000Z", hora "1970-01-01T08:00:00.000Z"):
+            // se toman los componentes textuales para evitar Invalid Date y desfases de zona horaria.
+            const hora = cita.hora_inicio.includes('T')
+              ? cita.hora_inicio.slice(11, 16)
+              : cita.hora_inicio.slice(0, 5)
+            setSelectedDay(makeDayInfo(new Date(cita.fecha.slice(0, 10) + 'T12:00:00'), today, new Map()))
             setSelectedTime(hora)
+            setCitaCaducada(false)
             setPhase('waiting')
             navigate('/incorporacion/asistencia-presencial', { replace: true })
           }
         })
         .catch(err => {
-          if (err.response?.status !== 404) console.error(err)
+          // 410 = tenía cita pendiente pero ya venció
+          if (err.response?.status === 410) setCitaCaducada(true)
+          else if (err.response?.status !== 404) console.error(err)
         })
     }
   }, [phase, today, navigate, citaCheck])
+
+  // En la pantalla de espera se valida que la cita siga vigente: si venció (o no existe),
+  // se vuelve a /incorporacion (con aviso si caducó).
+  useEffect(() => {
+    if (phase !== 'waiting') return
+    api.get('/usuarios/me/cita', { params: { _: Date.now() } })
+      .then(res => {
+        const cita = res.data as CitaResponse
+        if (cita?.fecha && cita.hora_inicio) {
+          const hora = cita.hora_inicio.includes('T') ? cita.hora_inicio.slice(11, 16) : cita.hora_inicio.slice(0, 5)
+          setSelectedDay(makeDayInfo(new Date(cita.fecha.slice(0, 10) + 'T12:00:00'), today, new Map()))
+          setSelectedTime(hora)
+        }
+      })
+      .catch(err => {
+        const status = err.response?.status
+        if (status === 410) setCitaCaducada(true)
+        if (status === 410 || status === 404) navigate('/incorporacion', { replace: true })
+        else console.error(err)
+      })
+  }, [phase, today, navigate])
 
   // Cargar los cupos reales publicados por el gimnasio (fuente única de disponibilidad)
   useEffect(() => {
@@ -229,7 +261,7 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
     setBookError(null)
 
     try {
-      await reservarCupo(selectedCupoId, 'valoracion')
+      await reservarCupo(selectedCupoId)
       setShowSuccessModal(true)
       setTimeout(() => {
         setShowSuccessModal(false)
@@ -262,6 +294,9 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
       <h2 className="text-xl font-bold text-white mb-4">Cita agendada</h2>
       <p className="text-lg text-gray-300 mb-2">
         Tu cita ha sido programada para el <strong>{selectedDay?.date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</strong> a las <strong>{selectedTime}</strong>.
+      </p>
+      <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+        Si necesitas reagendar tu cita, comunícate con un administrador.
       </p>
       <div className="mt-8 max-w-md mx-auto p-6 rounded-xl border" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)' }}>
         <p className="font-semibold text-white mb-3">Próximos pasos:</p>
@@ -310,6 +345,12 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                     </div>
                   </div>
 
+                  {citaCaducada && (
+                    <div className="rounded-xl px-4 py-3 mb-4 text-sm font-semibold text-center" style={{ background: 'rgba(230,57,70,0.12)', border: '1px solid rgba(230,57,70,0.4)', color: '#FF8FA3' }}>
+                      Tu cita caducó. Debes agendar nuevamente.
+                    </div>
+                  )}
+
                   <motion.h1
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -317,7 +358,7 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                     className="uppercase italic font-black text-white mb-2 text-center"
                     style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', letterSpacing: '0.04em' }}
                   >
-                    Agenda tu valoración
+                    Agenda tu cita
                   </motion.h1>
 
                   <motion.p
@@ -327,7 +368,7 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                     className="text-sm text-center mb-6"
                     style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}
                   >
-                    Selecciona día y hora para tu primera valoración física
+                    Debes asistir al gimnasio para completar tu proceso
                   </motion.p>
 
                   {loadingCupos && (
@@ -377,7 +418,7 @@ export function OnboardingPage({ session, initialPhase = 'schedule', onComplete,
                       </span>
                       <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ background: AMBER }} />
-                        Festivo
+                        Festivo o domingo
                       </span>
                     </div>
 
