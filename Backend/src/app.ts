@@ -51,6 +51,11 @@ app.use('/uploads',
   cors(opcionesCors),
   (req, res, next) => {
     res.header('Cross-Origin-Resource-Policy', 'cross-origin')
+    // Los PDF se muestran en un <iframe> del frontend, que es otro origen (otro puerto).
+    // X-Frame-Options no admite una lista de orígenes, así que aquí se reemplaza por
+    // frame-ancestors con los mismos orígenes permitidos en CORS. El resto de la API conserva SAMEORIGIN.
+    res.removeHeader('X-Frame-Options')
+    res.header('Content-Security-Policy', `frame-ancestors 'self' ${ORIGENES_PERMITIDOS.join(' ')}`)
     next()
   },
   express.static(path.join(process.cwd(), 'uploads')))

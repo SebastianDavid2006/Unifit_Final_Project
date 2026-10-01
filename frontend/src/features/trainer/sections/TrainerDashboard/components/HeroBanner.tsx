@@ -1,8 +1,10 @@
 import { motion } from 'motion/react'
 import coachImg from '@/assets/illustrations/characters/coach/coach_default.webp'
 import { BLUE_GRAD } from '@/data/shared/constants'
+import { useSesion } from '@/lib/sesion'
 
 export default function HeroBanner() {
+  const { usuario } = useSesion()
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -34,10 +36,10 @@ export default function HeroBanner() {
           <div className="min-w-0">
             <p className="text-[10px] md:text-[11px] font-bold tracking-[0.18em] uppercase mb-1 md:mb-1.5" style={{ color: 'rgba(0,0,0,0.25)' }}>{new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
             <h1 className="text-2xl md:text-[2.8rem] font-extrabold leading-tight" style={{ color: '#1A1A1E', letterSpacing: '-0.04em' }}>
-              Buenos días,
+              Hola,
             </h1>
             <h2 className="text-2xl md:text-[2.8rem] font-extrabold leading-tight text-gradient-warm" style={{ letterSpacing: '-0.04em' }}>
-              Sebastián.
+              {usuario?.primer_nombre ?? ''}.
             </h2>
           </div>
         </div>
