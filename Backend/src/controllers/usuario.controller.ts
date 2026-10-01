@@ -61,12 +61,13 @@ export const registrarSchema = z
     segundo_apellido: nombreSchema.optional(),
     email_contacto: z
       .string()
+      .trim()
       .email('El correo electrónico no es válido')
       .max(254, 'El correo electrónico es demasiado largo')
       .transform((v) => v.toLowerCase())
       .refine((email) => !DISPOSABLE_DOMAINS.has(email.split('@')[1] ?? ''), 'Dominio de correo no permitido'),
     telefono_contacto: telefonoSchema.optional(),
-    documento: z.string().min(1, 'El documento es requerido'),
+    documento: z.string().trim().min(1, 'El documento es requerido').max(20, 'El documento es demasiado largo'),
     tipo_documento: z.enum(TipoDocumento).default(TipoDocumento.CC),
     fecha_nacimiento: z
       .string({ error: 'Fecha de nacimiento es requerida' })
@@ -97,7 +98,7 @@ export const registrarSchema = z
     // Estudiante
     id_programa: z.string().uuid().optional(),
     numero_carnet: z.string().optional(),
-    semestre: z.coerce.number().int().min(1).optional(),
+    semestre: z.coerce.number().int().min(1, 'El semestre mínimo es 1').max(12, 'El semestre máximo es 12').optional(),
     modalidad: z.enum(ModalidadEstudiante).optional(),
     jornada: z.enum(JornadaEstudiante).optional(),
     es_egresado: z.boolean().optional(),
@@ -121,6 +122,11 @@ export const registrarSchema = z
     if (esEstudiante) {
       if (!val.id_programa) {
         ctx.addIssue({ code: 'custom', path: ['id_programa'], message: 'id_programa es requerido para estudiantes' })
+      } else {
+        const programa = await prisma.programa.findUnique({ where: { id_programa: val.id_programa } })
+        if (!programa || !programa.activo) {
+          ctx.addIssue({ code: 'custom', path: ['id_programa'], message: 'La carrera no existe o está inactiva' })
+        }
       }
       if (val.rol && val.rol !== 'usuario') {
         ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Un estudiante solo puede tener rol de usuario' })
@@ -136,30 +142,29 @@ export const registrarSchema = z
       if (val.rol && !['admin', 'entrenador', 'usuario'].includes(val.rol)) {
         ctx.addIssue({ code: 'custom', path: ['rol'], message: 'Rol inválido para staff' })
       }
-      // Cargo y área son SIEMPRE requeridos para staff real
+      // Staff real debe ser mayor de 18 años
+      if (val.fecha_nacimiento) {
+        validarEdad(val.fecha_nacimiento, val.rol, ctx, ['fecha_nacimiento'])
+      }
+    }
+
+    // --- Cargo y área: obligatorios para staff real y para profesor/administrativo ---
+    if (esStaffReal || !esEstudiante) {
       if (!val.id_cargo) {
-        ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'id_cargo es requerido para staff' })
-      }
-      if (!val.id_area) {
-        ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'id_area es requerido para staff' })
-      }
-      // Validar cargo existe y está activo
-      if (val.id_cargo) {
+        ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'El cargo es requerido' })
+      } else {
         const cargo = await prisma.cargo.findUnique({ where: { id_cargo: val.id_cargo } })
         if (!cargo || !cargo.activo) {
           ctx.addIssue({ code: 'custom', path: ['id_cargo'], message: 'Cargo no existe o está inactivo' })
         }
       }
-      // Validar área existe y está activa
-      if (val.id_area) {
+      if (!val.id_area) {
+        ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'El área es requerida' })
+      } else {
         const area = await prisma.area.findUnique({ where: { id_area: val.id_area } })
         if (!area || !area.activo) {
           ctx.addIssue({ code: 'custom', path: ['id_area'], message: 'Área no existe o está inactiva' })
         }
-      }
-      // Staff real debe ser mayor de 18 años
-      if (val.fecha_nacimiento) {
-        validarEdad(val.fecha_nacimiento, val.rol, ctx, ['fecha_nacimiento'])
       }
     }
 

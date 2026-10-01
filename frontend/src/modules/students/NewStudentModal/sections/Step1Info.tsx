@@ -8,6 +8,7 @@ import type { TipoUsuario } from '@/modules/students/NewStudentData'
 import { UNIVERSIDADES, NIVELES, UNIVERSIDAD_LABELS, NIVEL_LABELS, type Universidad, type NivelPrograma } from '@/types/catalogo'
 import type { useProgramasAgrupados } from '@/hooks/useCatalogo'
 import type { Cargo, Area } from '@/types/catalogo'
+import { AvisoCatalogo } from '@/shared/components/AvisoCatalogo'
 
 interface Step1InfoProps {
   form: any
@@ -19,10 +20,11 @@ interface Step1InfoProps {
   catalogo: ReturnType<typeof useProgramasAgrupados>
   cargos: Cargo[]
   areas: Area[]
+  staff: { loading: boolean; error: boolean; reintentar: () => void; cargos: Cargo[]; areas: Area[] }
   erroresCampo?: Record<string, string[]>
 }
 
-export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, isMinor, catalogo, cargos, areas, erroresCampo = {} }: Step1InfoProps) {
+export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, isMinor, catalogo, cargos, areas, staff, erroresCampo = {} }: Step1InfoProps) {
   const sectionTitle = (title: string) => (
     <div className="flex items-center gap-2 pt-2 pb-1">
       <div className="w-0.5 h-5 rounded-full" style={{ background: BLUE_GRAD }} />
@@ -175,6 +177,11 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               placeholder="Seleccionar carrera"
             />
           </div>
+          {catalogo.error ? (
+            <AvisoCatalogo mensaje="No se pudieron cargar las carreras." onReintentar={catalogo.reintentar} />
+          ) : !catalogo.loading && catalogo.nombres((form.institucion as Universidad) || 'uni_colombia', (form.nivelFormacion as NivelPrograma) || 'tecnico').length === 0 && (
+            <AvisoCatalogo mensaje="No hay carreras disponibles para esta institución y nivel. Elige otra combinación." />
+          )}
           <div className="grid grid-cols-2 gap-4">
             <Select label="Semestre" value={form.semestre} onChange={v => set('semestre', v)} options={['1', '2', '3', '4', '5', '6', '7', '8', '9']} required errors={erroresCampo.semestre} placeholder="Seleccionar semestre" />
             <Select label="Jornada" value={form.jornada} onChange={v => set('jornada', v)} options={JORNADAS} required errors={erroresCampo.jornada} placeholder="Seleccionar jornada" />
@@ -205,6 +212,11 @@ export function Step1Info({ form, set, tipoUsuario, toggleTipoUsuario, setForm, 
               placeholder="Seleccionar área"
             />
           </div>
+          {staff.error ? (
+            <AvisoCatalogo mensaje="No se pudieron cargar los cargos y áreas." onReintentar={staff.reintentar} />
+          ) : !staff.loading && (staff.cargos.length === 0 || staff.areas.length === 0) && (
+            <AvisoCatalogo mensaje="No hay cargos o áreas disponibles. Contacta al administrador." />
+          )}
         </>
       )}
 

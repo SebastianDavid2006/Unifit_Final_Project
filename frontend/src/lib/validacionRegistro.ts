@@ -1,7 +1,7 @@
 // ============================================================================
-// MANTENER EN SINCRONÍA con Backend/src/controllers/usuario.controller.ts
-// Bloques: DOC_REGEX (L41-47), EDAD_MIN/EDAD_MAX (registrarSchema L.92-103),
-// telefonoSchema (L57-75), nombreSchema (L49-55). Mensajes de formato idénticos.
+// MANTENER EN SINCRONÍA con Backend/src/utils/validaciones-usuario.ts (nombre,
+// teléfono, documento, edad) y registrarSchema en usuario.controller.ts (email, EPS).
+// Mensajes de formato idénticos a los del backend.
 // ============================================================================
 
 export const DOC_REGEX: Record<string, RegExp> = {
@@ -15,9 +15,10 @@ export const DOC_REGEX: Record<string, RegExp> = {
 export const EDAD_MIN = 15
 export const EDAD_MAX = 70
 
-const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s-]+$/
+const NOMBRE_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü]+(?:[\s-][A-Za-zÁÉÍÓÚáéíóúÑñÜü]+)*$/
 const REPETIDO_REGEX = /(.)\1{3,}/
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Misma regla que z.email() del backend: sin puntos consecutivos ni inicial, dominio con TLD de 2+ letras.
+const EMAIL_REGEX = /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}$/
 
 function nombreErrores(val: string | undefined): string[] {
   if (!val?.trim()) return ['Este campo es requerido']
@@ -25,7 +26,7 @@ function nombreErrores(val: string | undefined): string[] {
   const errores: string[] = []
   if (v.length < 2) errores.push('Muy corto')
   if (v.length > 50) errores.push('Muy largo')
-  if (!NOMBRE_REGEX.test(v)) errores.push('Solo letras, espacios y guiones')
+  if (!NOMBRE_REGEX.test(v)) errores.push('Solo letras, con un solo espacio o guion entre palabras')
   if (REPETIDO_REGEX.test(v)) errores.push('Valor no válido')
   return errores
 }
@@ -95,6 +96,7 @@ export interface PasoInfo {
   fechaNac?: string
   genero?: string
   numCarnet?: string
+  programa?: string
   cargo?: string
   area?: string
   nombreContacto?: string
@@ -133,6 +135,7 @@ export function validarPasoInfo(form: PasoInfo, opts?: RamaOpciones): Record<str
 
   if (opts?.incluyeRama) {
     if (opts.tipoUsuario === 'estudiante') {
+      if (!form.programa) set('programa', ['Selecciona una carrera'])
       if (!form.numCarnet?.trim()) {
         set('numCarnet', ['Número de carnet es requerido'])
       } else {

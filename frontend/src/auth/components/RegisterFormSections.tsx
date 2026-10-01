@@ -6,6 +6,7 @@ import {
 import type { TipoUsuario } from '@/data/config/registration'
 import { useProgramasAgrupados } from '@/hooks/useCatalogo'
 import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
+import { AvisoCatalogo } from '@/shared/components/AvisoCatalogo'
 import { UNIVERSIDADES, NIVELES, UNIVERSIDAD_LABELS, NIVEL_LABELS, type Universidad, type NivelPrograma } from '@/types/catalogo'
 import {
   Select as UiSelect,
@@ -28,7 +29,8 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
   const set = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }))
 
   const catalogo = useProgramasAgrupados()
-  const { cargos, areas } = useCatalogoStaff()
+  const staff = useCatalogoStaff()
+  const { cargos, areas } = staff
 
   const inputStyle = {
     background: 'rgba(255,255,255,0.06)',
@@ -275,6 +277,11 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
             })}
             {select('Carrera', 'programa', catalogo.nombres((form.institucion as Universidad) || 'uni_colombia', (form.nivelFormacion as NivelPrograma) || 'tecnico'), { required: true })}
           </div>
+          {catalogo.error ? (
+            <AvisoCatalogo oscuro mensaje="No se pudieron cargar las carreras." onReintentar={catalogo.reintentar} />
+          ) : !catalogo.loading && catalogo.nombres((form.institucion as Universidad) || 'uni_colombia', (form.nivelFormacion as NivelPrograma) || 'tecnico').length === 0 && (
+            <AvisoCatalogo oscuro mensaje="No hay carreras disponibles para esta institución y nivel. Elige otra combinación." />
+          )}
           <div className="grid grid-cols-2 gap-3">
             {select('Semestre', 'semestre', ['1', '2', '3', '4', '5', '6', '7', '8', '9'], { required: true })}
             {select('Jornada', 'jornada', JORNADAS, { required: true })}
@@ -289,6 +296,11 @@ export function RegisterFormSections({ form, setForm, tipoUsuario, toggleTipoUsu
             {select('Cargo', 'cargo', cargos.map(c => ({ value: c.id_cargo ?? c.id, label: c.nombre })), { required: true })}
             {select('Área', 'area', areas.map(a => ({ value: a.id_area ?? a.id, label: a.nombre })), { required: true })}
           </div>
+          {staff.error ? (
+            <AvisoCatalogo oscuro mensaje="No se pudieron cargar los cargos y áreas." onReintentar={staff.reintentar} />
+          ) : !staff.loading && (staff.cargos.length === 0 || staff.areas.length === 0) && (
+            <AvisoCatalogo oscuro mensaje="No hay cargos o áreas disponibles. Contacta al administrador." />
+          )}
         </>
       )}
     </div>

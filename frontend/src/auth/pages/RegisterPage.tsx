@@ -17,6 +17,7 @@ import { RegisterFormSections } from '@/auth/components/RegisterFormSections'
 import { RegisterIntroOverlay } from '@/auth/components/RegisterIntroOverlay'
 import { useAuthLayout } from '@/auth/hooks/useAuthLayout'
 import { isMinor as isMinorUtil } from '@/lib/dateUtils'
+import { validarPasoInfo, validarAcudiente } from '@/lib/validacionRegistro'
 import logotipo from '@/assets/logo/logo.webp'
 import welcomeDesktop from '@/assets/scenes/videos/welcome_desktop.mp4'
 import welcomeMobile from '@/assets/scenes/videos/welcome_mobile.mp4'
@@ -135,7 +136,7 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
       payload.acudiente_documento = form.acudienteDocumento?.trim()
       payload.acudiente_tipo_documento = form.acudienteTipoDocumento || 'CC'
       payload.acudiente_parentesco = form.parentescoAcudiente ? MAP_PARENTESCO[form.parentescoAcudiente] ?? form.parentescoAcudiente.toLowerCase().replace(/\s+/g, '_') : undefined
-      payload.acudiente_telefono_contacto = form.acudienteTelefonoContacto?.trim()
+      payload.acudiente_telefono_contacto = form.acudienteTelefonoContacto?.trim() || undefined
     }
 
     if (tipoUsuario === 'estudiante') {
@@ -158,7 +159,14 @@ export function RegisterPage({ onBack }: RegisterPageProps) {
   }
 
   const handleNext = async () => {
-    if (!canGoNext()) {
+    const erroresLocales = {
+      ...validarPasoInfo(form, { tipoUsuario: tipoUsuario ?? undefined, incluyeRama: true }),
+      ...(isMinor ? validarAcudiente(form) : {}),
+    }
+    const hayErrores = Object.keys(erroresLocales).length > 0
+    if (hayErrores || !canGoNext()) {
+      setErroresCampo(erroresLocales)
+      setError(!tipoUsuario ? 'Selecciona tu tipo de usuario' : hayErrores ? 'Revisa los campos marcados en rojo' : 'Completa los campos obligatorios')
       setShake(true)
       setTimeout(() => setShake(false), 500)
       return

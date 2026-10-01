@@ -71,7 +71,8 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
   const currentStepLabel = steps.find(s => s.num === step)?.label ?? ''
 
   const catalogo = useProgramasAgrupados()
-  const { cargos, areas } = useCatalogoStaff()
+  const staff = useCatalogoStaff()
+  const { cargos, areas } = staff
 
   useEffect(() => {
     if (open) {
@@ -392,6 +393,7 @@ export default function NewStudentModal({ open, onClose, onRegistered }: NewStud
                             catalogo={catalogo}
                             cargos={cargos}
                             areas={areas}
+                            staff={staff}
                             erroresCampo={erroresCampo}
                           />
                         )}

@@ -13,6 +13,7 @@ import type { NewUserForm, UserRole, TipoUsuarioStaff } from './data'
 import { useCatalogoStaff } from '@/hooks/useCatalogoStaff'
 import { mensajeError, mapearErroresBackend } from '@/lib/api'
 import { validarPasoInfo, validarPasoRol } from '@/lib/validacionRegistro'
+import { AvisoCatalogo } from '@/shared/components/AvisoCatalogo'
 
 interface NewUserModalProps {
   open: boolean
@@ -35,7 +36,8 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   const [error, setError] = useState('')
   const [erroresCampo, setErroresCampo] = useState<Record<string, string[]>>({})
   const [loading, setLoading] = useState(false)
-  const { cargos, areas } = useCatalogoStaff()
+  const staff = useCatalogoStaff()
+  const { cargos, areas } = staff
 
   useEffect(() => {
     if (open) {
@@ -245,6 +247,11 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                     >
                       {step === 1 && <PersonalInfoSection form={form} onChange={set} erroresCampo={erroresCampo} isStaff />}
                       {step === 2 && <DataConsentSection accepted={aceptaDatos} onChange={setAceptaDatos} />}
+                      {step === 4 && (staff.error ? (
+                        <div className="mb-4"><AvisoCatalogo mensaje="No se pudieron cargar los cargos y áreas." onReintentar={staff.reintentar} /></div>
+                      ) : !staff.loading && (cargos.length === 0 || areas.length === 0) && (
+                        <div className="mb-4"><AvisoCatalogo mensaje="No hay cargos o áreas disponibles. Contacta al administrador." /></div>
+                      ))}
                       {(step === 3 || step === 4) && (
                         <RoleSelector
                           parte={step === 3 ? 'rol' : 'vinculo'}

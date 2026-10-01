@@ -15,14 +15,21 @@ export interface ProgramaOpcion {
 export function useProgramasAgrupados() {
   const [programas, setProgramas] = useState<Programa[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [intento, setIntento] = useState(0)
 
   useEffect(() => {
+    let vigente = true
     setLoading(true)
+    setError(false)
     listarProgramas()
-      .then(setProgramas)
-      .catch(() => setProgramas([]))
-      .finally(() => setLoading(false))
-  }, [])
+      .then(data => { if (vigente) setProgramas(data) })
+      .catch(() => { if (vigente) { setProgramas([]); setError(true) } })
+      .finally(() => { if (vigente) setLoading(false) })
+    return () => { vigente = false }
+  }, [intento])
+
+  const reintentar = useCallback(() => setIntento(n => n + 1), [])
 
   const programasDe = useCallback((universidad: Universidad, nivel: NivelPrograma): Programa[] => {
     return programas.filter(p => p.universidad === universidad && p.tipo_programa === nivel)
@@ -39,6 +46,8 @@ export function useProgramasAgrupados() {
   return {
     programas,
     loading,
+    error,
+    reintentar,
     universidades: UNIVERSIDADES,
     niveles: NIVELES,
     universidadLabel: (u: Universidad) => UNIVERSIDAD_LABELS[u],

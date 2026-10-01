@@ -20,7 +20,10 @@ export const nombreSchema = z
   .trim()
   .min(2, 'Muy corto')
   .max(50, 'Muy largo')
-  .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s-]+$/, 'Solo letras, espacios y guiones')
+  .regex(
+    /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü]+(?:[\s-][A-Za-zÁÉÍÓÚáéíóúÑñÜü]+)*$/,
+    'Solo letras, con un solo espacio o guion entre palabras',
+  )
   .refine((val) => !/(.)\1{3,}/.test(val), 'Valor no válido')
 
 export const telefonoSchema = z
