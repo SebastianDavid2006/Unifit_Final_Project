@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react'
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
 ﻿import { motion, AnimatePresence } from 'motion/react'
 import { X } from 'lucide-react'
 import viewGif from '@/assets/icons/animated/actions/view.gif'
@@ -10,6 +10,7 @@ import { Step4Antecedentes } from './steps/Step4Antecedentes'
 import { Step5Plan } from './steps/Step5Plan'
 import { Step6Observaciones } from './steps/Step6Observaciones'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
+import { validarPasoValoracion, primerPasoInvalido, type ErroresValoracion } from '@/lib/validacionValoracion'
 
 interface NewValuationModalProps {
   isOpen: boolean
@@ -38,7 +39,8 @@ const STEPS = [
   { num: 6, title: 'Observaciones finales' },
 ] as const
 
-function StepContent({ valuationStep, valuationForm, setValuationForm, valuationViewMode }: {
+function StepContent({ valuationStep, valuationForm, setValuationForm, valuationViewMode, errores }: {
+  errores: ErroresValoracion
   valuationStep: number
   valuationForm: ValuationForm
   setValuationForm: Dispatch<SetStateAction<ValuationForm>>
@@ -46,8 +48,8 @@ function StepContent({ valuationStep, valuationForm, setValuationForm, valuation
 }) {
   switch (valuationStep) {
     case 1: return <Step1Contexto valuationForm={valuationForm} setValuationForm={setValuationForm} valuationViewMode={valuationViewMode} />
-    case 2: return <Step2Medidas valuationForm={valuationForm} setValuationForm={setValuationForm} valuationViewMode={valuationViewMode} />
-    case 3: return <Step3Clinica valuationForm={valuationForm} setValuationForm={setValuationForm} valuationViewMode={valuationViewMode} />
+    case 2: return <Step2Medidas valuationForm={valuationForm} setValuationForm={setValuationForm} valuationViewMode={valuationViewMode} errores={errores} />
+    case 3: return <Step3Clinica valuationForm={valuationForm} setValuationForm={setValuationForm} valuationViewMode={valuationViewMode} errores={errores} />
     case 4: return <Step4Antecedentes valuationForm={valuationForm} setValuationForm={setValuationForm} valuationViewMode={valuationViewMode} />
     case 5: return <Step5Plan valuationForm={valuationForm} setValuationForm={setValuationForm} valuationViewMode={valuationViewMode} />
     case 6: return <Step6Observaciones valuationForm={valuationForm} setValuationForm={setValuationForm} valuationViewMode={valuationViewMode} />
@@ -72,6 +74,30 @@ export function NewValuationModal({
   onCreateManual,
   onSave,
 }: NewValuationModalProps) {
+  const [mostrarErrores, setMostrarErrores] = useState(false)
+  useEffect(() => { setMostrarErrores(false) }, [valuationStep, isOpen])
+  const erroresPaso: ErroresValoracion = valuationViewMode ? {} : validarPasoValoracion(valuationStep, valuationForm)
+  const erroresVisibles: ErroresValoracion = mostrarErrores ? erroresPaso : {}
+  // Los pasos 2 y 3 muestran el error junto al campo; el resto en un aviso bajo el paso.
+  const avisoPaso = valuationStep === 2 || valuationStep === 3 ? [] : Object.values(erroresVisibles)
+
+  const avanzar = () => {
+    if (valuationStep < 6) {
+      if (Object.keys(erroresPaso).length > 0) { setMostrarErrores(true); return }
+      setValuationStep(s => s + 1)
+    } else if (valuationViewMode) {
+      onClose()
+    } else {
+      const pasoMalo = primerPasoInvalido(valuationForm)
+      if (pasoMalo !== null) {
+        if (pasoMalo !== valuationStep) setValuationStep(pasoMalo)
+        setMostrarErrores(true)
+        return
+      }
+      onSave()
+    }
+  }
+
   if (!isOpen) return null
   const handleClose = () => {
     if (valuationViewMode || valuationSuccess) {
@@ -175,7 +201,13 @@ export function NewValuationModal({
                     valuationForm={valuationForm}
                     setValuationForm={setValuationForm}
                     valuationViewMode={valuationViewMode}
+                    errores={erroresVisibles}
                   />
+                  {avisoPaso.length > 0 && (
+                    <ul role="alert" className="mt-4 rounded-xl px-3 py-2 text-xs font-semibold space-y-0.5" style={{ background: 'rgba(244,56,67,0.08)', color: '#F43843' }}>
+                      {avisoPaso.map(m => <li key={m}>{m}</li>)}
+                    </ul>
+                  )}
                 </motion.div>
               )}
             </div>
@@ -205,15 +237,7 @@ export function NewValuationModal({
                       type="button"
                       whileHover={valuationStep < 6 ? { scale: 1.04, boxShadow: '0 8px 25px rgba(18,112,183,0.35)', transition: { duration: 0.15 } } : {}}
                       whileTap={valuationStep < 6 ? { scale: 0.92, boxShadow: '0 2px 8px rgba(18,112,183,0.2)', transition: { duration: 0.1 } } : {}}
-                      onClick={() => {
-                        if (valuationStep < 6) {
-                          setValuationStep(s => s + 1)
-                        } else if (valuationViewMode) {
-                          onClose()
-                        } else {
-                          onSave()
-                        }
-                      }}
+                      onClick={avanzar}
                       className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold text-white cursor-pointer"
                       style={{
                         background: !valuationViewMode && valuationStep === 6 ? 'linear-gradient(135deg, #22C55E, #16A34A)' : 'linear-gradient(135deg, #1270B7, #7ec8e3)',

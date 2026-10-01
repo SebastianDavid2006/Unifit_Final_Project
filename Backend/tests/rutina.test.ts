@@ -5,6 +5,13 @@ import app from '../src/app'
 import { prisma } from '../src/utils/prisma'
 import { normalizarDia } from '../src/services/ai.service'
 
+// Medidas y datos clínicos son obligatorios al crear una valoración.
+const BLOQUES_CLINICOS = {
+  medidas: { peso: 75, estatura: 175, imc: 24.5, grasa_corporal: 18, masa_muscular: 32, masa_magra: 60, grasa_visceral: 8 },
+  datos_medicos: { presion_arterial: '120/80', edad_metabolica: 25, agua_corporal: 58, resistencia_muscular: 30 },
+}
+
+
 // El "día de hoy" normalizado (sin acentos) — los fixtures de sesión usan HOY
 // para que la suite pase cualquier día de la semana.
 const HOY = normalizarDia(new Date().toLocaleDateString('es-CO', { weekday: 'long' }))
@@ -813,6 +820,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'activo',
         objetivos: ['salud'],
@@ -1043,6 +1051,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'activo',
         objetivos: ['salud'],
@@ -1126,6 +1135,7 @@ describe.sequential('Rutina - Sesiones (SesionRutina)', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'activo',
         objetivos: ['salud'],
@@ -1213,6 +1223,7 @@ describe.sequential('Rutina - Única activa (estado finalizada)', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'activo',
         objetivos: ['salud'],
@@ -1241,6 +1252,7 @@ describe.sequential('Rutina - Única activa (estado finalizada)', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'activo',
         objetivos: ['salud'],

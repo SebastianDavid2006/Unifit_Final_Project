@@ -3,6 +3,13 @@ import request from 'supertest'
 import app from '../src/app'
 import { prisma } from '../src/utils/prisma'
 
+// Medidas y datos clínicos son obligatorios al crear una valoración.
+const BLOQUES_CLINICOS = {
+  medidas: { peso: 75, estatura: 175, imc: 24.5, grasa_corporal: 18, masa_muscular: 32, masa_magra: 60, grasa_visceral: 8 },
+  datos_medicos: { presion_arterial: '120/80', edad_metabolica: 25, agua_corporal: 58, resistencia_muscular: 30 },
+}
+
+
 let adminId: string
 let entrenadorId: string
 let directoId: string
@@ -104,7 +111,7 @@ describe('Valoración - CRUD', () => {
         dias_disponibles: ['lunes', 'miercoles', 'viernes'],
         medidas: {
           peso: 75,
-          estatura: 1.75,
+          estatura: 175,
           imc: 24.5,
           grasa_corporal: 18,
           masa_muscular: 32,
@@ -129,6 +136,7 @@ describe('Valoración - CRUD', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('entrenadorToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'ligero',
         objetivos: ['salud'],
@@ -145,6 +153,7 @@ describe('Valoración - CRUD', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'ligero',
         objetivos: ['salud'],
@@ -162,6 +171,7 @@ describe('Valoración - CRUD', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('usuarioToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'activo',
         objetivos: ['salud'],
@@ -262,6 +272,7 @@ describe('Valoración - PAR-Q validation', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: inactivoId,
         nivel_actividad: 'activo',
         objetivos: ['salud'],
@@ -280,6 +291,7 @@ describe('Valoración - Tipo calculado (inicial/seguimiento/actual)', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'moderado',
         objetivos: ['acondicionamiento_fisico'],
@@ -344,6 +356,7 @@ describe('Valoración - Auth guards', () => {
       .post('/api/valoraciones')
       .set('Authorization', 'Bearer invalid-token')
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'activo',
         objetivos: ['salud'],
@@ -377,6 +390,7 @@ describe('Valoración - Validación de datos', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'nivel_invalido',
         objetivos: ['salud'],
@@ -392,6 +406,7 @@ describe('Valoración - Validación de datos', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'activo',
         objetivos: [],
@@ -407,6 +422,7 @@ describe('Valoración - Validación de datos', () => {
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: directoId,
         nivel_actividad: 'activo',
         objetivos: ['salud'],
@@ -417,11 +433,33 @@ describe('Valoración - Validación de datos', () => {
     expect(res.status).toBe(400)
   })
 
+  it.each([
+    ['sin medidas', { datos_medicos: BLOQUES_CLINICOS.datos_medicos }],
+    ['sin datos clínicos', { medidas: BLOQUES_CLINICOS.medidas }],
+    ['con medidas fuera de rango', { ...BLOQUES_CLINICOS, medidas: { ...BLOQUES_CLINICOS.medidas, peso: 7500 } }],
+    ['con presión arterial inválida', { ...BLOQUES_CLINICOS, datos_medicos: { ...BLOQUES_CLINICOS.datos_medicos, presion_arterial: 'asdf' } }],
+  ])('POST /valoraciones - %s → 400', async (_nombre, bloques) => {
+    const res = await request(app)
+      .post('/api/valoraciones')
+      .set('Authorization', `Bearer ${token('adminToken')}`)
+      .send({
+        ...bloques,
+        id_usuario: directoId,
+        nivel_actividad: 'activo',
+        objetivos: ['salud'],
+        tipo_antecedentes: [],
+        dias_disponibles: ['lunes'],
+      })
+
+    expect(res.status).toBe(400)
+  })
+
   it('POST /valoraciones - usuario_id inexistente → 404', async () => {
     const res = await request(app)
       .post('/api/valoraciones')
       .set('Authorization', `Bearer ${token('adminToken')}`)
       .send({
+        ...BLOQUES_CLINICOS,
         id_usuario: '00000000-0000-0000-0000-000000000000',
         nivel_actividad: 'activo',
         objetivos: ['salud'],
@@ -450,6 +488,7 @@ describe.sequential('Valoración - Validación por relación con la rutina', () 
         .post('/api/valoraciones')
         .set('Authorization', `Bearer ${token('adminToken')}`)
         .send({
+          ...BLOQUES_CLINICOS,
           id_usuario: directoId,
           nivel_actividad: 'activo',
           objetivos: ['salud'],

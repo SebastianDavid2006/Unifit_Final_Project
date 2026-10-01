@@ -10,50 +10,52 @@ import {
   listarValoracionesPorUsuario,
 } from '../services/valoracion.service'
 import { responderErrorPrisma } from '../utils/prisma-errors'
+import { medidasSchema, datosMedicosSchema, textoCorto, textoLargo } from '../utils/validaciones-valoracion'
 
-const medidasSchema = z.object({
-  peso: z.number().positive(),
-  estatura: z.number().positive(),
-  imc: z.number().positive(),
-  grasa_corporal: z.number().min(0).max(100),
-  masa_muscular: z.number().positive(),
-  masa_magra: z.number().positive(),
-  grasa_visceral: z.number().min(0),
-})
+const objetivosSchema = z.array(z.enum(ObjetivoUsuario)).min(1, 'Selecciona al menos un objetivo').max(6)
+const diasSchema = z.array(z.enum(DiaSemana)).min(1, 'Selecciona al menos un día disponible').max(7)
 
-const datosMedicosSchema = z.object({
-  presion_arterial: z.string().min(1),
-  edad_metabolica: z.number().positive(),
-  agua_corporal: z.number().min(0).max(100),
-  resistencia_muscular: z.number().positive(),
-})
+// Si el objetivo es "otro" el detalle deja de ser opcional: sin él no hay objetivo real.
+function exigirDetalleOtro(
+  v: { objetivos?: ObjetivoUsuario[]; objetivo_detalle?: string },
+  ctx: z.RefinementCtx,
+): void {
+  if (v.objetivos?.includes(ObjetivoUsuario.otro) && !v.objetivo_detalle) {
+    ctx.addIssue({ code: 'custom', path: ['objetivo_detalle'], message: 'Describe el objetivo cuando eliges "Otro"' })
+  }
+}
 
-const crearValoracionSchema = z.object({
-  id_usuario: z.string().uuid(),
-  nivel_actividad: z.enum(NivelActividad),
-  objetivos: z.array(z.enum(ObjetivoUsuario)).min(1),
-  objetivo_detalle: z.string().optional(),
-  tipo_antecedentes: z.array(z.enum(TipoAntecedente)),
-  observaciones_antecedentes: z.string().optional(),
-  observaciones_finales: z.string().optional(),
-  dias_disponibles: z.array(z.enum(DiaSemana)).min(1),
-  proxima_valoracion: z.coerce.date().optional(),
-  medidas: medidasSchema.optional(),
-  datos_medicos: datosMedicosSchema.optional(),
-})
+const crearValoracionSchema = z
+  .object({
+    id_usuario: z.string().uuid(),
+    nivel_actividad: z.enum(NivelActividad),
+    objetivos: objetivosSchema,
+    objetivo_detalle: textoCorto('El detalle del objetivo').optional(),
+    tipo_antecedentes: z.array(z.enum(TipoAntecedente)).max(10),
+    observaciones_antecedentes: textoLargo('Las observaciones de antecedentes').optional(),
+    observaciones_finales: textoLargo('Las observaciones finales').optional(),
+    dias_disponibles: diasSchema,
+    proxima_valoracion: z.coerce.date().optional(),
+    // Al crear, ambos bloques son obligatorios; al editar siguen siendo opcionales.
+    medidas: medidasSchema,
+    datos_medicos: datosMedicosSchema,
+  })
+  .superRefine(exigirDetalleOtro)
 
-const editarValoracionSchema = z.object({
-  nivel_actividad: z.enum(NivelActividad).optional(),
-  objetivos: z.array(z.enum(ObjetivoUsuario)).min(1).optional(),
-  objetivo_detalle: z.string().optional(),
-  tipo_antecedentes: z.array(z.enum(TipoAntecedente)).optional(),
-  observaciones_antecedentes: z.string().optional(),
-  observaciones_finales: z.string().optional(),
-  dias_disponibles: z.array(z.enum(DiaSemana)).min(1).optional(),
-  proxima_valoracion: z.coerce.date().optional(),
-  medidas: medidasSchema.optional(),
-  datos_medicos: datosMedicosSchema.optional(),
-})
+const editarValoracionSchema = z
+  .object({
+    nivel_actividad: z.enum(NivelActividad).optional(),
+    objetivos: objetivosSchema.optional(),
+    objetivo_detalle: textoCorto('El detalle del objetivo').optional(),
+    tipo_antecedentes: z.array(z.enum(TipoAntecedente)).max(10).optional(),
+    observaciones_antecedentes: textoLargo('Las observaciones de antecedentes').optional(),
+    observaciones_finales: textoLargo('Las observaciones finales').optional(),
+    dias_disponibles: diasSchema.optional(),
+    proxima_valoracion: z.coerce.date().optional(),
+    medidas: medidasSchema.optional(),
+    datos_medicos: datosMedicosSchema.optional(),
+  })
+  .superRefine(exigirDetalleOtro)
 
 export async function getValoraciones(_req: Request, res: Response): Promise<void> {
   res.json(await listarValoracionesActivas())

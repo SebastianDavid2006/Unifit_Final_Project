@@ -49,7 +49,7 @@ export async function login(datos: { email_contacto: string; password: string })
 export async function cambiarPassword(idUsuario: string, passwordActual: string, passwordNueva: string) {
   const usuario = await prisma.usuario.findUnique({
     where: { id_usuario: idUsuario },
-    select: { password_hash: true },
+    select: { password_hash: true, documento: true },
   })
 
   if (!usuario) {
@@ -63,6 +63,11 @@ export async function cambiarPassword(idUsuario: string, passwordActual: string,
   const passwordValida = await bcrypt.compare(passwordActual, usuario.password_hash)
   if (!passwordValida) {
     throw new HttpError(401, 'Contraseña actual incorrecta')
+  }
+
+  // La contraseña temporal es el documento: no puede volver a serlo.
+  if (passwordNueva === usuario.documento) {
+    throw new HttpError(400, 'La nueva contraseña no puede ser tu número de documento')
   }
 
   const passwordHash = await bcrypt.hash(passwordNueva, SALT_ROUNDS)

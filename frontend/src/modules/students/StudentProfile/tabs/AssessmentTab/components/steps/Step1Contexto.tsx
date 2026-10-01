@@ -7,6 +7,7 @@ import healthIcon from '@/assets/icons/health/health.webp'
 import trophyIcon from '@/assets/icons/objects/trophy.webp'
 import otroIcon from '@/assets/icons/ui/star.webp'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
+import { MAX_TEXTO_CORTO } from '@/lib/validacionValoracion'
 
 interface Step1ContextoProps {
   valuationForm: ValuationForm
@@ -151,6 +152,7 @@ export function Step1Contexto({ valuationForm, setValuationForm, valuationViewMo
           }} />
           <textarea
             value={valuationForm.objetivoDetalle}
+            maxLength={MAX_TEXTO_CORTO}
             readOnly={valuationViewMode}
             onChange={e => setValuationForm(p => ({ ...p, objetivoDetalle: e.target.value }))}
             placeholder="Describe a detalle el objetivo del usuario..."

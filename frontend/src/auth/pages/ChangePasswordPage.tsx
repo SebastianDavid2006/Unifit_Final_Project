@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { motion } from 'motion/react'
 import { ArrowRight } from 'lucide-react'
-import { api, mensajeError } from '@/lib/api'
+import { api, mensajeError, erroresDeCampo } from '@/lib/api'
+import { errorCambioPassword, requisitosPassword } from '@/lib/validacionPassword'
 import { AuthShell } from '@/auth/components/AuthShell'
 import { PasswordField } from '@/auth/components/PasswordField'
 import logotipo from '@/assets/logo/logo.webp'
@@ -28,18 +29,9 @@ export function ChangePasswordPage({ email, onSuccess, onBack }: ChangePasswordP
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!currentPass) {
-      setError('Ingresa tu contraseña actual')
-      triggerShake()
-      return
-    }
-    if (newPass.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres')
-      triggerShake()
-      return
-    }
-    if (newPass !== confirmPass) {
-      setError('Las contraseñas no coinciden')
+    const errorLocal = errorCambioPassword(currentPass, newPass, confirmPass)
+    if (errorLocal) {
+      setError(errorLocal)
       triggerShake()
       return
     }
@@ -47,7 +39,9 @@ export function ChangePasswordPage({ email, onSuccess, onBack }: ChangePasswordP
       await api.put('/auth/cambiar-password', { password_actual: currentPass, password_nueva: newPass, confirmar_password: confirmPass })
       onSuccess()
     } catch (err) {
-      setError(mensajeError(err))
+      // Prioriza el detalle del campo (p. ej. "demasiado común") sobre el genérico "Datos inválidos"
+      const detalle = erroresDeCampo(err).flatMap(c => c.mensajes)[0]
+      setError(detalle ?? mensajeError(err))
       triggerShake()
     }
   }
@@ -81,7 +75,14 @@ export function ChangePasswordPage({ email, onSuccess, onBack }: ChangePasswordP
         <PasswordField value={currentPass} onChange={setCurrentPass} autoComplete="current-password" />
 
         <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>NUEVA CONTRASEÑA</label>
-        <PasswordField value={newPass} onChange={setNewPass} autoComplete="new-password" />
+        <PasswordField value={newPass} onChange={v => { setNewPass(v); setError('') }} autoComplete="new-password" className="mb-2" />
+        <ul className="mb-4 grid grid-cols-2 gap-x-3 gap-y-1">
+          {requisitosPassword(newPass).map(r => (
+            <li key={r.id} className="text-[11px] font-medium flex items-center gap-1.5" style={{ color: r.cumple ? '#22C55E' : 'rgba(255,255,255,0.4)' }}>
+              <span aria-hidden>{r.cumple ? '✓' : '○'}</span>{r.texto}
+            </li>
+          ))}
+        </ul>
 
         <label className="block mb-2 text-xs font-bold" style={{ color: 'rgba(255,255,255,0.5)' }}>CONFIRMAR NUEVA CONTRASEÑA</label>
         <PasswordField value={confirmPass} onChange={setConfirmPass} autoComplete="new-password" className="mb-6" />

@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
+import { MAX_TEXTO_LARGO } from '@/lib/validacionValoracion'
 
 interface Step6ObservacionesProps {
   valuationForm: ValuationForm
@@ -30,6 +31,7 @@ export function Step6Observaciones({ valuationForm, setValuationForm, valuationV
       <div className="flex flex-col gap-1">
         <textarea
           value={valuationForm.observacionesFinales}
+          maxLength={MAX_TEXTO_LARGO}
           readOnly={valuationViewMode}
           onChange={e => setValuationForm(p => ({ ...p, observacionesFinales: e.target.value }))}
           placeholder="Escribe aquí las observaciones finales..."

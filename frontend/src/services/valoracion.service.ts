@@ -65,6 +65,12 @@ function getColor(tipo: string): string {
   }
 }
 
+// Registros antiguos guardaron la estatura en metros (< 3); hoy todo se guarda en cm.
+function estaturaEnCm(valor: number | string): number {
+  const n = Number(valor)
+  return n < 3 ? Math.round(n * 100) : n
+}
+
 function mapBackendToFrontend(b: BackendValoracion, index: number): AssessmentItem {
   const med = b.medidas_corporales
   const dm = b.datos_medicos
@@ -88,9 +94,9 @@ function mapBackendToFrontend(b: BackendValoracion, index: number): AssessmentIt
       { label: 'Grasa Corporal', value: `${med.grasa_corporal}%` },
       { label: 'Masa Muscular', value: `${med.masa_muscular} kg` },
     ] : [],
-    estatura: med ? `${med.estatura} m` : '',
+    estatura: med ? `${estaturaEnCm(med.estatura)} cm` : '',
     pesoKg: med ? Number(med.peso) : null,
-    estaturaCm: med ? (Number(med.estatura) < 3 ? Math.round(Number(med.estatura) * 100) : Number(med.estatura)) : null,
+    estaturaCm: med ? estaturaEnCm(med.estatura) : null,
     imc: med ? Number(med.imc) : null,
     masaMagra: med ? `${med.masa_magra} kg` : '',
     grasaVisceral: med ? String(med.grasa_visceral) : '',
@@ -130,8 +136,8 @@ export interface CrearValoracionPayload {
   observaciones_finales?: string
   dias_disponibles: string[]
   proxima_valoracion?: string
-  medidas?: { peso: number; estatura: number; imc: number; grasa_corporal: number; masa_muscular: number; masa_magra: number; grasa_visceral: number }
-  datos_medicos?: { presion_arterial: string; edad_metabolica: number; agua_corporal: number; resistencia_muscular: number }
+  medidas: { peso: number; estatura: number; imc: number; grasa_corporal: number; masa_muscular: number; masa_magra: number; grasa_visceral: number }
+  datos_medicos: { presion_arterial: string; edad_metabolica: number; agua_corporal: number; resistencia_muscular: number }
 }
 
 export async function crearValoracion(form: {
@@ -156,24 +162,18 @@ export async function crearValoracion(form: {
     observaciones_antecedentes: form.observacionesEntrenador || undefined,
     observaciones_finales: form.observacionesFinales || undefined,
     dias_disponibles: mapDiasArrayFrontToBack(form.diasDisponibles),
-  }
-
-  if (form.peso) {
-    payload.medidas = {
+    medidas: {
       peso: parseFloat(form.peso), estatura: parseFloat(form.estatura),
       imc: parseFloat(form.imc), grasa_corporal: parseFloat(form.grasaCorporal),
       masa_muscular: parseFloat(form.masaMuscular), masa_magra: parseFloat(form.masaMagra),
       grasa_visceral: parseFloat(form.grasaVisceral),
-    }
-  }
-
-  if (form.presionArterial && form.edadMetabolica && form.aguaCorporal && form.resistenciaMuscular) {
-    payload.datos_medicos = {
-      presion_arterial: form.presionArterial,
+    },
+    datos_medicos: {
+      presion_arterial: form.presionArterial.trim(),
       edad_metabolica: parseFloat(form.edadMetabolica),
       agua_corporal: parseFloat(form.aguaCorporal),
       resistencia_muscular: parseFloat(form.resistenciaMuscular),
-    }
+    },
   }
 
   const { data } = await api.post('/valoraciones', payload)

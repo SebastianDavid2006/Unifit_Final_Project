@@ -5,6 +5,7 @@ import { registrarUsuario } from '../services/usuario.service'
 import { registrarSchema } from './usuario.controller'
 import { responderErrorPrisma } from '../utils/prisma-errors'
 import { HttpError } from '../utils/HttpError'
+import { passwordNuevaSchema } from '../utils/validaciones-password'
 
 const loginSchema = z.object({
   email_contacto: z.string().email('El correo electrónico no es válido'),
@@ -13,17 +14,16 @@ const loginSchema = z.object({
 
 const cambiarPasswordSchema = z
   .object({
-    password_actual: z.string().min(1),
-    password_nueva: z.string().min(8),
-    confirmar_password: z.string().min(8),
+    password_actual: z.string().min(1, 'La contraseña actual es requerida'),
+    password_nueva: passwordNuevaSchema,
+    confirmar_password: z.string().min(1, 'Confirma la nueva contraseña'),
   })
   .superRefine((v, ctx) => {
     if (v.password_nueva !== v.confirmar_password) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['confirmar_password'],
-        message: 'Las contraseñas no coinciden',
-      })
+      ctx.addIssue({ code: 'custom', path: ['confirmar_password'], message: 'Las contraseñas no coinciden' })
+    }
+    if (v.password_nueva === v.password_actual) {
+      ctx.addIssue({ code: 'custom', path: ['password_nueva'], message: 'La nueva contraseña debe ser distinta de la actual' })
     }
   })
 

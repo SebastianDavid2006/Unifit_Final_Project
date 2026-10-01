@@ -1,10 +1,12 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
+import { CAMPOS_MEDIDAS, type ErroresValoracion } from '@/lib/validacionValoracion'
 
 interface Step2MedidasProps {
   valuationForm: ValuationForm
   setValuationForm: Dispatch<SetStateAction<ValuationForm>>
   valuationViewMode: boolean
+  errores?: ErroresValoracion
 }
 
 const CAMPOS = [
@@ -34,7 +36,7 @@ const INPUT_STYLE = {
   },
 } as const
 
-export function Step2Medidas({ valuationForm, setValuationForm, valuationViewMode }: Step2MedidasProps) {
+export function Step2Medidas({ valuationForm, setValuationForm, valuationViewMode, errores = {} }: Step2MedidasProps) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3">
@@ -43,16 +45,22 @@ export function Step2Medidas({ valuationForm, setValuationForm, valuationViewMod
             <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>{field.label}</label>
             <input
               type={field.type}
+              min={CAMPOS_MEDIDAS[field.key].min}
+              max={CAMPOS_MEDIDAS[field.key].max}
+              step={CAMPOS_MEDIDAS[field.key].entero ? 1 : 'any'}
+              onKeyDown={e => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault() }}
               readOnly={valuationViewMode}
               value={(valuationForm as any)[field.key]}
               onChange={e => setValuationForm(p => ({ ...p, [field.key]: e.target.value }))}
               className="px-3 py-2 rounded-xl text-sm font-medium outline-none w-full transition-all duration-200"
-              style={INPUT_STYLE.base}
+              aria-invalid={!!errores[field.key]}
+              style={errores[field.key] ? { ...INPUT_STYLE.base, borderColor: '#F43843' } : INPUT_STYLE.base}
               onMouseEnter={e => { if (e.target !== document.activeElement) { Object.assign(e.currentTarget.style, INPUT_STYLE.hover) } }}
               onMouseLeave={e => { if (e.target !== document.activeElement) { Object.assign(e.currentTarget.style, INPUT_STYLE.base) } }}
               onFocus={e => { Object.assign(e.currentTarget.style, INPUT_STYLE.focus) }}
               onBlur={e => { Object.assign(e.currentTarget.style, INPUT_STYLE.base) }}
             />
+            {errores[field.key] && <span role="alert" className="text-[11px] font-semibold" style={{ color: '#F43843' }}>{errores[field.key]}</span>}
           </div>
         ))}
       </div>

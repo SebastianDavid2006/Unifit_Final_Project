@@ -7,6 +7,7 @@ import cardioHealthIcon from '@/assets/icons/anatomy/cardio.webp'
 import liverIcon from '@/assets/icons/anatomy/liver.webp'
 import mindIcon from '@/assets/icons/health/mind.webp'
 import type { ValuationForm } from '@/modules/students/StudentProfileData'
+import { MAX_TEXTO_LARGO } from '@/lib/validacionValoracion'
 
 interface Step4AntecedentesProps {
   valuationForm: ValuationForm
@@ -97,6 +98,7 @@ export function Step4Antecedentes({ valuationForm, setValuationForm, valuationVi
         <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.6)' }}>Observaciones del entrenador</label>
         <textarea
           value={valuationForm.observacionesEntrenador}
+          maxLength={MAX_TEXTO_LARGO}
           readOnly={valuationViewMode}
           onChange={e => setValuationForm(p => ({ ...p, observacionesEntrenador: e.target.value }))}
           placeholder="Notas del entrenador sobre los antecedentes..."
