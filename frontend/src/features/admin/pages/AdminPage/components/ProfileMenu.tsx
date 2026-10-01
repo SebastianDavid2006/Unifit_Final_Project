@@ -2,15 +2,18 @@ import { motion, AnimatePresence } from 'motion/react'
 import { LogOut, User } from 'lucide-react'
 import { RED_GRAD } from '../data'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
+import { useSesion } from '@/lib/sesion'
+import { identidadVisible } from '@/lib/auth'
 
-export default function ProfileMenu({ isPermissions, open, onToggle, onLogout, onOpenProfile }: {
-  isPermissions: boolean
+export default function ProfileMenu({ open, onToggle, onLogout, onOpenProfile }: {
   open: boolean
   onToggle: () => void
   onLogout?: () => void
   onOpenProfile?: () => void
 }) {
   const isMobile = useIsMobile()
+  const { usuario } = useSesion()
+  const { nombre, iniciales } = identidadVisible(usuario)
   return (
     <>
       <div className="relative flex-shrink-0">
@@ -22,9 +25,9 @@ export default function ProfileMenu({ isPermissions, open, onToggle, onLogout, o
           className={`flex items-center rounded-xl cursor-pointer overflow-hidden ${isMobile ? 'hidden' : ''}`}
           style={{
             height: 38,
-            background: isPermissions ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.12)',
+            background: 'rgba(255,255,255,0.12)',
             backdropFilter: 'blur(24px) saturate(1.6)',
-            border: `1px solid ${isPermissions ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.25)'}`,
+            border: '1px solid rgba(255,255,255,0.25)',
             boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
           }}
         >
@@ -32,7 +35,7 @@ export default function ProfileMenu({ isPermissions, open, onToggle, onLogout, o
             className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
             style={{ background: RED_GRAD }}
           >
-            AD
+            {iniciales}
           </div>
         </motion.button>
 
@@ -49,7 +52,7 @@ export default function ProfileMenu({ isPermissions, open, onToggle, onLogout, o
                 style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 16px 48px rgba(0,0,0,0.12)' }}
               >
                 <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                  <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>Admin UNIFIT</p>
+                  <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{nombre}</p>
                   <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Plataforma de Administración</p>
                 </div>
                 <motion.button

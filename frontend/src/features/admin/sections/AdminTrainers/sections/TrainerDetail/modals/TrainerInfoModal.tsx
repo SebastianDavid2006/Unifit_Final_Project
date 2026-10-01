@@ -7,6 +7,7 @@ import { StudentCardView } from '@/assets/models/ui/objects/student_card/Student
 import { TelephoneView } from '@/assets/models/ui/objects/telephone/TelephoneModel'
 import { BLUE_GRAD, GREEN_BLUE_GRAD, RED } from '../../../data'
 import { TIPO_DOC, GENEROS } from '@/data/config/catalogosRegistro'
+import SinDato from '@/shared/components/SinDato'
 
 interface TrainerInfoModalProps {
   isOpen: boolean
@@ -292,7 +293,7 @@ export function TrainerInfoModal({ isOpen, trainer, editMode, draft, onClose, on
                               />
                             )
                           ) : (
-                            <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{valor || '—'}</p>
+                            <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{valor || <SinDato />}</p>
                           )}
                         </div>
                       )

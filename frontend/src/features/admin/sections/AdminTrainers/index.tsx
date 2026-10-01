@@ -5,7 +5,6 @@ import NewUserModal from './components/NewUserModal'
 import CompleteStaffModal from './components/CompleteStaffModal'
 import TrainersList from './sections/TrainersList'
 import TrainerDetail from './sections/TrainerDetail/TrainerDetail'
-import PermissionsSection from './sections/PermissionsSection'
 import { PAGE_SIZE } from './data'
 import { api, mensajeError } from '@/lib/api'
 import { toast } from 'sonner'
@@ -69,15 +68,13 @@ function buildStaffPayload(user: NewUserPayload): Record<string, unknown> {
 interface AdminTrainersProps {
   search: string
   onSelectTrainer?: () => void
-  trainerTab?: string
 }
 
-const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersProps>(({ search, onSelectTrainer, trainerTab }, ref) => {
+const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersProps>(({ search, onSelectTrainer }, ref) => {
   const [trainers, setTrainers] = useState<Trainer[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null)
-  const [globalAdmin, setGlobalAdmin] = useState(true)
   const [page, setPage] = useState(1)
   const [showNewUser, setShowNewUser] = useState(false)
   const [porCompletar, setPorCompletar] = useState<Trainer | null>(null)
@@ -135,18 +132,21 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
 
     // El personal solo necesita el tratamiento de datos para quedar 'activo'.
     // Sin esta aceptación quedaba 'pendiente' y nunca podía ingresar.
-    // El usuario ya existe en este punto: si falla, se avisa en vez de lanzar el error
-    // (reintentar el registro daría 409 por documento/correo duplicado).
+    // El usuario ya existe en este punto: si falla, se devuelve un aviso en vez de lanzar el error
+    // (reintentar el registro daría 409 por documento/correo duplicado). El modal lo muestra
+    // en su pantalla final y la persona se completa desde la lista (clic sobre el pendiente).
+    let aviso: string | undefined
     if (user.aceptaDatos) {
       try {
         await api.put(`/usuarios/${usuario.id_usuario}/aceptar-documento`, { tipo_documento_legal: 'tratamiento_datos' })
       } catch (err) {
-        toast.error(`${user.primerNombre} quedó registrado, pero no se pudo registrar el tratamiento de datos: ${mensajeError(err)}`)
+        aviso = `Se registró a ${user.primerNombre}, pero quedó pendiente del tratamiento de datos (${mensajeError(err)}). Complétalo desde la lista de personal: haz clic sobre su nombre.`
       }
     }
 
     const data = await getPersonal()
     setTrainers(data.map(mapBackendToTrainer))
+    return { aviso }
   }
 
   if (loading) {
@@ -166,9 +166,6 @@ const AdminTrainers = forwardRef<{ clearSelection: () => void }, AdminTrainersPr
   }
 
   if (selectedTrainer) {
-    if (trainerTab && trainerTab === 'permissions') {
-      return <PermissionsSection trainer={selectedTrainer} globalAdmin={globalAdmin} onToggleGlobalAdmin={() => setGlobalAdmin(!globalAdmin)} />
-    }
     return <TrainerDetail key={selectedTrainer.id} trainer={selectedTrainer} />
   }
 

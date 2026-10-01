@@ -201,17 +201,9 @@ export function AppointmentModal({ show, title = 'Nueva Cita', editing = false, 
                       })}
                     </div>
                   </div>
-                  <AnimatePresence initial={false}>
-                    {apptType !== 'event' && (
-                      <motion.div
-                        key="student-field"
-                        initial={{ opacity: 0, filter: 'blur(8px)', height: 0 }}
-                        animate={{ opacity: 1, filter: 'blur(0px)', height: 'auto' }}
-                        exit={{ opacity: 0, filter: 'blur(8px)', height: 0 }}
-                        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                        style={{ overflow: 'hidden' }}
-                      >
-                        <div>
+                  {/* El backend exige un usuario en cualquier cita (incluido el tipo "Otro"), así que el campo siempre se muestra */}
+                  <div>
+                    <div>
                           <label className="text-xs font-bold" style={{ color: 'rgba(0,0,0,0.55)' }}>Usuario</label>
                           <input value={student} readOnly={editing} disabled={editing}
                             onChange={e => { onStudentChange(e.target.value); setStudentListOpen(true) }}
@@ -243,10 +235,8 @@ export function AppointmentModal({ show, title = 'Nueva Cita', editing = false, 
                               ))}
                             </div>
                           )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                    </div>
+                  </div>
                 </div>
               </div>
               {error && (

@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { LogOut, User } from 'lucide-react'
 import { useIsMobile } from '@/shared/components/ui/use-mobile'
+import { useSesion } from '@/lib/sesion'
+import { identidadVisible } from '@/lib/auth'
 
 const RED_GRAD = 'linear-gradient(135deg, #F43843, #FF6B8A, #CC0033)'
 
@@ -11,6 +13,8 @@ export default function ProfileMenu({ open, onToggle, onLogout, onOpenProfile }:
   onOpenProfile?: () => void
 }) {
   const isMobile = useIsMobile()
+  const { usuario } = useSesion()
+  const { nombre, iniciales } = identidadVisible(usuario)
   return (
     <div className="relative flex-shrink-0">
       <motion.button
@@ -31,7 +35,7 @@ export default function ProfileMenu({ open, onToggle, onLogout, onOpenProfile }:
             className="w-[38px] h-[38px] rounded-xl flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
             style={{ background: RED_GRAD }}
           >
-            SM
+            {iniciales}
           </div>
         </motion.button>
 
@@ -48,7 +52,7 @@ export default function ProfileMenu({ open, onToggle, onLogout, onOpenProfile }:
               style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 16px 48px rgba(0,0,0,0.12)' }}
             >
               <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>Sebastián Morales</p>
+                <p className="text-xs font-bold" style={{ color: '#1A1A1E' }}>{nombre}</p>
                 <p className="text-[10px] mt-0.5" style={{ color: 'rgba(0,0,0,0.35)' }}>Plataforma de Entrenadores</p>
               </div>
               <motion.button

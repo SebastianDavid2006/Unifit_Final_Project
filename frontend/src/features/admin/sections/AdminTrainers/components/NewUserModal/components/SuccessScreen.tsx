@@ -2,7 +2,7 @@ import { motion } from 'motion/react'
 import coachCongratsImg from '@/assets/illustrations/characters/coach_2/coach_2_congratulations.webp'
 import { GREEN_GRAD } from '../data'
 
-export default function SuccessScreen({ onClose }: { onClose: () => void }) {
+export default function SuccessScreen({ onClose, aviso }: { onClose: () => void; aviso?: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -58,17 +58,29 @@ export default function SuccessScreen({ onClose }: { onClose: () => void }) {
         className="text-2xl font-bold text-center"
         style={{ color: '#1A1A1E' }}
       >
-        ¡Usuario registrado exitosamente!
+        {aviso ? 'Usuario registrado, pero pendiente' : '¡Usuario registrado exitosamente!'}
       </motion.p>
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.45, duration: 0.4 }}
-        className="text-xs font-semibold mt-3 text-center max-w-sm leading-relaxed"
-        style={{ color: '#555' }}
-      >
-        Registro exitoso. Su usuario es su correo electrónico y su contraseña es su número de documento; deberá cambiarla la primera vez que ingrese al sistema para comenzar su experiencia en UNIFIT.
-      </motion.p>
+      {aviso ? (
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.4 }}
+          className="text-xs font-semibold mt-3 text-center max-w-sm leading-relaxed px-4 py-3 rounded-xl"
+          style={{ color: '#8A5A00', background: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.35)' }}
+        >
+          {aviso}
+        </motion.p>
+      ) : (
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.4 }}
+          className="text-xs font-semibold mt-3 text-center max-w-sm leading-relaxed"
+          style={{ color: '#555' }}
+        >
+          Registro exitoso. Su usuario es su correo electrónico y su contraseña es su número de documento; deberá cambiarla la primera vez que ingrese al sistema para comenzar su experiencia en UNIFIT.
+        </motion.p>
+      )}
       <motion.button
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

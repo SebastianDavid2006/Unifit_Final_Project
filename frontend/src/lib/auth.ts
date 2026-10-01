@@ -21,7 +21,25 @@ const USUARIO_KEY = 'unifit_usuario'
 // sin que cada uno de los 10 call sites tenga que sincronizarse a mano.
 export const SESION_CAMBIADA = 'unifit:sesion'
 
+// Aviso de "te desactivaron / tu cuenta está inactiva". Como el inactivo ya no tiene sesión,
+// /cuenta-inactiva necesita esta marca para saber que llegó por un motivo real y no tecleando la URL.
+// Es solo comodidad de interfaz: la seguridad la aplica el backend.
+const MARCA_INACTIVA_KEY = 'unifit_cuenta_inactiva'
+
+export function marcarCuentaInactiva(): void {
+  try { sessionStorage.setItem(MARCA_INACTIVA_KEY, '1') } catch { /* sin sessionStorage: se mostrará el login */ }
+}
+
+export function hayMarcaCuentaInactiva(): boolean {
+  try { return sessionStorage.getItem(MARCA_INACTIVA_KEY) === '1' } catch { return false }
+}
+
+export function limpiarMarcaCuentaInactiva(): void {
+  try { sessionStorage.removeItem(MARCA_INACTIVA_KEY) } catch { /* nada que limpiar */ }
+}
+
 export function guardarSesion(token: string, usuario: UsuarioSesion): void {
+  limpiarMarcaCuentaInactiva()
   localStorage.setItem(TOKEN_KEY, token)
   localStorage.setItem(USUARIO_KEY, JSON.stringify(usuario))
   window.dispatchEvent(new Event(SESION_CAMBIADA))
@@ -45,6 +63,21 @@ export function cerrarSesion(): void {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USUARIO_KEY)
   window.dispatchEvent(new Event(SESION_CAMBIADA))
+}
+
+// Iniciales de avatar: primera letra del primer nombre y del primer apellido.
+// Fuente única: la usan las listas, el layout del usuario y los menús de perfil.
+export function iniciales(primerNombre?: string | null, primerApellido?: string | null): string {
+  return `${(primerNombre ?? '')[0] ?? ''}${(primerApellido ?? '')[0] ?? ''}`.toUpperCase()
+}
+
+// Nombre visible ("Nombre Apellido") e iniciales para avatares y menús de perfil
+export function identidadVisible(usuario: Pick<UsuarioSesion, 'primer_nombre' | 'primer_apellido'> | null): { nombre: string; iniciales: string } {
+  if (!usuario) return { nombre: '', iniciales: '' }
+  return {
+    nombre: `${usuario.primer_nombre} ${usuario.primer_apellido}`.trim(),
+    iniciales: iniciales(usuario.primer_nombre, usuario.primer_apellido),
+  }
 }
 
 export const RUTA_CUENTA_INACTIVA = '/cuenta-inactiva'

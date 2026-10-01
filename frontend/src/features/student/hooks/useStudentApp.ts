@@ -5,6 +5,7 @@ import { getRutinasPorUsuario, type FrontendRutina } from '@/services/rutina.ser
 import { getValoracionesPorUsuario, type AssessmentItem } from '@/services/valoracion.service'
 import { mapDuracionBackToFront, mapNivelBackToFront, mapGrupoMuscularBackToFront, mapDiaBackToFront } from '@/services/mapper'
 import { getImageUrl } from '@/lib/config'
+import { iniciales } from '@/lib/auth'
 
 interface StudentAppContextType {
   student: Student | null
@@ -50,7 +51,7 @@ const ESTADO_LABEL: Record<string, string> = {
 
 function mapBackendToStudent(u: BackendUsuario): Student {
   const buildName = `${u.primer_nombre} ${u.segundo_nombre ?? ''} ${u.primer_apellido} ${u.segundo_apellido ?? ''}`.replace(/\s+/g, ' ').trim()
-  const avatar = `${(u.primer_nombre ?? '')[0] ?? ''}${(u.primer_apellido ?? '')[0] ?? ''}`.toUpperCase()
+  const avatar = iniciales(u.primer_nombre, u.primer_apellido)
   const estudiante = u.estudiante
 
   return {

@@ -1,4 +1,4 @@
-import { User, FileText, Shield } from 'lucide-react'
+import { User, FileText, Shield, Building2 } from 'lucide-react'
 import { TIPO_DOC, GENEROS, GRUPOS_SANGRE, MODALIDADES, JORNADAS, PARENTESCOS } from '@/data/config/catalogosRegistro'
 
 export {
@@ -16,6 +16,7 @@ export const STEPS = [
   { num: 1, label: 'Información personal', icon: User },
   { num: 2, label: 'Tratamiento de datos', icon: FileText },
   { num: 3, label: 'Rol del usuario', icon: Shield },
+  { num: 4, label: 'Vínculo y cargo', icon: Building2 },
 ]
 
 export const INITIAL_FORM = {

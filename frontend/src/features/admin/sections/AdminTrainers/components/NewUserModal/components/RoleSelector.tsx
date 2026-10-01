@@ -31,7 +31,9 @@ const TIPO_OPTIONS: { id: TipoUsuarioStaff; label: string; desc: string; icon: t
   { id: 'administrativo', label: 'Administrativo', desc: 'Puede gestionar configuración, usuarios y reportes.', icon: Building2 },
 ]
 
-export default function RoleSelector({ role, onRoleChange, tipoUsuario, onTipoUsuarioChange, cargos, areas, idCargo, idArea, onCargoChange, onAreaChange }: {
+export default function RoleSelector({ parte, role, onRoleChange, tipoUsuario, onTipoUsuarioChange, cargos, areas, idCargo, idArea, onCargoChange, onAreaChange }: {
+  /** 'rol' = paso del rol; 'vinculo' = paso de vínculo institucional, cargo y área */
+  parte: 'rol' | 'vinculo'
   role: UserRole | null
   onRoleChange: (r: UserRole) => void
   tipoUsuario: TipoUsuarioStaff | null
@@ -45,6 +47,7 @@ export default function RoleSelector({ role, onRoleChange, tipoUsuario, onTipoUs
 }) {
   return (
     <div className="flex flex-col gap-6 py-2">
+      {parte === 'rol' && (<>
       {/* ── Sección: Rol ────────────────────────────────── */}
       <div className="flex flex-col items-center text-center">
         <h2 className="text-xl font-extrabold" style={{ color: '#1A1A1E' }}>Selecciona el rol</h2>
@@ -150,6 +153,16 @@ export default function RoleSelector({ role, onRoleChange, tipoUsuario, onTipoUs
         })}
       </div>
 
+      </>)}
+
+      {parte === 'vinculo' && (<>
+      <div className="flex flex-col items-center text-center">
+        <h2 className="text-xl font-extrabold" style={{ color: '#1A1A1E' }}>Define su lugar en la institución</h2>
+        <p className="text-sm mt-1.5" style={{ color: 'rgba(0,0,0,0.5)' }}>
+          Indica el vínculo institucional, el cargo y el área de esta persona
+        </p>
+      </div>
+
       {/* ── Sección: Tipo de usuario ────────────────────── */}
       <div className="flex flex-col text-center">
         <p className="text-xs font-bold mb-3" style={{ color: 'rgba(0,0,0,0.45)' }}>
@@ -249,6 +262,7 @@ export default function RoleSelector({ role, onRoleChange, tipoUsuario, onTipoUs
           </div>
         </div>
       </div>
+      </>)}
     </div>
   )
 }

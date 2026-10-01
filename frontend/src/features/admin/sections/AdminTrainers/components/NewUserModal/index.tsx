@@ -17,7 +17,7 @@ import { validarPasoInfo, validarPasoRol } from '@/lib/validacionRegistro'
 interface NewUserModalProps {
   open: boolean
   onClose: () => void
-  onSuccess?: (user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string; tipo_usuario: string; id_cargo?: string; id_area?: string; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; aceptaDatos: boolean }) => void | Promise<void>
+  onSuccess?: (user: { name: string; email: string; phone: string; role: string; contactName: string; contactPhone: string; contactRelation: string; document: string; birthDate: string; gender: string; eps: string; bloodType: string; tipo_usuario: string; id_cargo?: string; id_area?: string; primerNombre: string; segundoNombre: string; primerApellido: string; segundoApellido: string; aceptaDatos: boolean }) => void | { aviso?: string } | Promise<void | { aviso?: string }>
 }
 
 export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalProps) {
@@ -29,6 +29,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   const [idCargo, setIdCargo] = useState('')
   const [idArea, setIdArea] = useState('')
   const [success, setSuccess] = useState(false)
+  const [aviso, setAviso] = useState('')
   const [shake, setShake] = useState(false)
   const [confirmClose, setConfirmClose] = useState(false)
   const [error, setError] = useState('')
@@ -46,6 +47,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       setIdCargo('')
       setIdArea('')
       setSuccess(false)
+      setAviso('')
       setShake(false)
       setConfirmClose(false)
       setError('')
@@ -83,7 +85,8 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
       return required.every(v => v !== undefined && v !== '')
     }
     if (step === 2) return aceptaDatos
-    if (step === 3) return role !== null && tipoUsuario !== null && idCargo !== '' && idArea !== ''
+    if (step === 3) return role !== null
+    if (step === 4) return tipoUsuario !== null && idCargo !== '' && idArea !== ''
     return true
   }
 
@@ -103,9 +106,22 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
         return
       }
     } else if (step === 3) {
+      if (!role) {
+        setError('Selecciona un rol para continuar')
+        triggerShake()
+        return
+      }
+    } else if (step === 4) {
       const nuevosErrores = validarPasoRol(role, tipoUsuario, idCargo, idArea)
       setErroresCampo(nuevosErrores)
       if (Object.keys(nuevosErrores).length > 0) {
+        // El paso no tiene mensajes por campo: se dice qué falta para que no parezca que el botón no responde
+        const faltan = [
+          nuevosErrores.tipoUsuario && 'vínculo institucional',
+          nuevosErrores.idCargo && 'cargo',
+          nuevosErrores.idArea && 'área',
+        ].filter(Boolean).join(', ')
+        setError(`Completa: ${faltan}`)
         triggerShake()
         return
       }
@@ -120,7 +136,10 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
   }
 
   const handlePrev = () => {
-    if (step > 1) setStep(p => p - 1)
+    if (step > 1) {
+      setError('')
+      setStep(p => p - 1)
+    }
   }
 
   const submitForm = async () => {
@@ -129,7 +148,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
     setLoading(true)
     try {
       const nombreCompleto = `${form.primerNombre} ${form.segundoNombre} ${form.primerApellido} ${form.segundoApellido}`.replace(/\s+/g, ' ').trim()
-      await onSuccess?.({
+      const resultado = await onSuccess?.({
         name: nombreCompleto,
         email: form.email,
         phone: form.telefono,
@@ -151,15 +170,25 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
         segundoApellido: form.segundoApellido,
         aceptaDatos,
       })
+      const avisoPendiente = resultado?.aviso ?? ''
+      setAviso(avisoPendiente)
       setSuccess(true)
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.55 },
-        colors: ['#1270B7', '#F43843', '#22C55E', '#F5A623'],
-      })
+      // Con un aviso de pendiente no se celebra: la cuenta aún no está activa
+      if (!avisoPendiente) {
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.55 },
+          colors: ['#1270B7', '#F43843', '#22C55E', '#F5A623'],
+        })
+      }
     } catch (err) {
-      setError(mensajeError(err))
+      // 409: la persona ya existe. Si quedó pendiente se dice dónde completarla en vez de dejar un error genérico
+      const respuesta = (err as { response?: { status?: number; data?: { usuario_existente?: { estado?: string } } } }).response
+      const hint = respuesta?.status === 409 && respuesta.data?.usuario_existente?.estado === 'pendiente'
+        ? '. Está pendiente de activación: ciérralo y haz clic sobre su nombre en la lista de personal para completarla.'
+        : ''
+      setError(mensajeError(err) + hint)
       setErroresCampo(mapearErroresBackend(err))
       triggerShake()
     } finally {
@@ -195,7 +224,7 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
             onClick={e => e.stopPropagation()}
           >
             {success ? (
-              <SuccessScreen onClose={onClose} />
+              <SuccessScreen onClose={onClose} aviso={aviso} />
             ) : (
               <AnimatePresence mode="wait">
                 <motion.div
@@ -215,8 +244,9 @@ export default function NewUserModal({ open, onClose, onSuccess }: NewUserModalP
                     >
                       {step === 1 && <PersonalInfoSection form={form} onChange={set} erroresCampo={erroresCampo} isStaff />}
                       {step === 2 && <DataConsentSection accepted={aceptaDatos} onChange={setAceptaDatos} />}
-                      {step === 3 && (
+                      {(step === 3 || step === 4) && (
                         <RoleSelector
+                          parte={step === 3 ? 'rol' : 'vinculo'}
                           role={role}
                           onRoleChange={setRole}
                           tipoUsuario={tipoUsuario}

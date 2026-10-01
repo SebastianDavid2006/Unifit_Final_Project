@@ -9,6 +9,7 @@ import { ModalShell } from '@/modules/students/shared/components/ModalShell'
 import type { Student } from '../../../../StudentProfileData'
 import { esEstudiante, esPersonal } from '../../../../StudentProfileData'
 import { calcAge, isMinor } from '@/lib/dateUtils'
+import SinDato from '@/shared/components/SinDato'
 
 const BLUE_GRAD = 'linear-gradient(135deg, #1270B7, #7ec8e3)'
 const GREEN = '#22C55E'
@@ -219,9 +220,9 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                   model: <StudentCardView />,
                   fields: [
                     { key: 'firstName', label: 'Primer nombre', value: editable.firstName },
-                    { key: 'secondName', label: 'Segundo nombre', value: editable.secondName || '—' },
+                    { key: 'secondName', label: 'Segundo nombre', value: editable.secondName || '' },
                     { key: 'lastName', label: 'Primer apellido', value: editable.lastName },
-                    { key: 'secondLastName', label: 'Segundo apellido', value: editable.secondLastName || '—' },
+                    { key: 'secondLastName', label: 'Segundo apellido', value: editable.secondLastName || '' },
                     { key: 'document', label: 'Documento', value: `${editable.documentType}. ${editable.documentNumber}`, readOnly: true },
                     { key: 'birthDate', label: 'Fecha de nacimiento', value: editable.birthDate ? new Date(editable.birthDate).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'No registrado' },
                     { key: 'gender', label: 'Género', value: editable.gender },
@@ -234,8 +235,8 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                   fields:
                     personal
                       ? [
-                          { key: 'area', label: 'Área', value: editable.area || '—' },
-                          { key: 'cargo', label: 'Cargo', value: editable.cargo || '—' },
+                          { key: 'area', label: 'Área', value: editable.area || '' },
+                          { key: 'cargo', label: 'Cargo', value: editable.cargo || '' },
                         ]
                       : [
                           { key: 'carnetId', label: 'Número carnet', value: editable.carnetId, readOnly: true },
@@ -263,7 +264,7 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                     { key: 'email', label: 'Email', value: editable.email },
                     { key: 'phone', label: 'Teléfono', value: editable.phone },
                     { key: 'contactName', label: 'Contacto de emergencia', value: editable.contactName },
-                    { key: 'contactRelation', label: 'Parentesco', value: editable.contactRelation || '—' },
+                    { key: 'contactRelation', label: 'Parentesco', value: editable.contactRelation || '' },
                     { key: 'contactPhone', label: 'Teléfono de emergencia', value: editable.contactPhone },
                   ],
                 },
@@ -308,7 +309,7 @@ export function StudentInfoModal({ isOpen, student, editable, onClose, onUpdate 
                             style={{ color: '#0D1B2A' }}
                           />
                         ) : (
-                          <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{f.value || '—'}</p>
+                          <p className="text-sm font-semibold" style={{ color: '#0D1B2A' }}>{f.value || <SinDato />}</p>
                         )}
                       </div>
                     ))}

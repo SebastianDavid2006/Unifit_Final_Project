@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { BLUE_GRAD, GREEN_GRAD } from '../data'
+import { BLUE_GRAD, GREEN_GRAD, STEPS } from '../data'
 
 export default function ModalFooter({ step, onPrev, onNext, loading }: {
   step: number
@@ -8,7 +8,7 @@ export default function ModalFooter({ step, onPrev, onNext, loading }: {
   onNext: () => void
   loading?: boolean
 }) {
-  const isLast = step === 3
+  const isLast = step === STEPS.length
   return (
     <div className="flex-shrink-0 p-6 pt-4" style={{
       borderTop: '1px solid rgba(0,0,0,0.04)',

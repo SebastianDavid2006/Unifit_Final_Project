@@ -7,8 +7,8 @@ import ProfileMenu from './ProfileMenu'
 import type { AdminSection } from '../data'
 
 export default function Topbar({
-  section, isPermissions,
-  trainerDetailOpen, trainerTab, onTrainerTabChange, onTrainerBack,
+  section,
+  trainerDetailOpen, onTrainerBack,
   trainerSearch, onTrainerSearchChange, trainerSearchFocused, onTrainerSearchFocusChange,
   gymSelectedStudent, gymStudentTab, onGymStudentTabChange, onGymBack, gymTab,
   gymStudentSearch, onGymStudentSearchChange, gymStudentSearchFocused, onGymStudentSearchFocusChange,
@@ -21,10 +21,7 @@ export default function Topbar({
   profileMenuOpen, onProfileMenuToggle, onLogout, onOpenProfile,
 }: {
   section: AdminSection
-  isPermissions: boolean
   trainerDetailOpen: boolean
-  trainerTab: string
-  onTrainerTabChange: (t: string) => void
   onTrainerBack: () => void
   trainerSearch: string
   onTrainerSearchChange: (v: string) => void
@@ -68,10 +65,7 @@ export default function Topbar({
       <div className="relative px-7 pt-5 pb-3 flex items-center gap-3">
         {section === 'trainers' && (
           <TrainersToolbar
-            isPermissions={isPermissions}
             trainerDetailOpen={trainerDetailOpen}
-            trainerTab={trainerTab}
-            onTrainerTabChange={onTrainerTabChange}
             onTrainerBack={onTrainerBack}
             trainerSearch={trainerSearch}
             onTrainerSearchChange={onTrainerSearchChange}
@@ -117,7 +111,7 @@ export default function Topbar({
           />
         )}
         <div className="flex items-center gap-3 ml-auto">
-          <ProfileMenu isPermissions={isPermissions} open={profileMenuOpen} onToggle={onProfileMenuToggle} onLogout={onLogout} onOpenProfile={onOpenProfile} />
+          <ProfileMenu open={profileMenuOpen} onToggle={onProfileMenuToggle} onLogout={onLogout} onOpenProfile={onOpenProfile} />
         </div>
       </div>
     </div>

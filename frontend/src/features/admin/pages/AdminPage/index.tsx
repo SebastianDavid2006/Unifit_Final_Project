@@ -10,7 +10,6 @@ import AdminStats from '@/features/admin/sections/AdminStats'
 import BackgroundDecor from '@/shared/components/BackgroundDecor'
 import StaffProfile from '@/shared/components/StaffProfile'
 import Sidebar from './components/Sidebar'
-import PermissionsOverlay from './components/PermissionsOverlay'
 import Topbar from './components/Topbar'
 import StatsCalendar from './components/StatsCalendar'
 import GymFloatingToolbar from './components/GymFloatingToolbar'
@@ -49,7 +48,6 @@ export function AdminPage() {
   const [trainerSearch, setTrainerSearch] = useState('')
   const [trainerSearchFocused, setTrainerSearchFocused] = useState(false)
   const [trainerDetailOpen, setTrainerDetailOpen] = useState(false)
-  const [trainerTab, setTrainerTab] = useState('overview')
   const [gymTab, setGymTab] = useState('students')
   const [gymStudentSearch, setGymStudentSearch] = useState('')
   const [gymStudentSearchFocused, setGymStudentSearchFocused] = useState(false)
@@ -107,7 +105,6 @@ export function AdminPage() {
       .catch(() => {})
       .finally(() => setStudentsLoading(false))
   }, [])
-  const isPermissions = section === 'trainers' && trainerDetailOpen && trainerTab === 'permissions'
 
   return (
     <div className="flex size-full overflow-y-auto mesh-bg relative">
@@ -121,14 +118,9 @@ export function AdminPage() {
       />
 
       <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden relative" style={{ paddingBottom: isMobile ? '70px' : 0, paddingLeft: expanded ? '208px' : '68px', paddingRight: isMobile ? '16px' : '24px', maxWidth: '100%' }}>
-        <PermissionsOverlay visible={isPermissions} />
-
         <Topbar
           section={isGestion ? 'gym' : section}
-          isPermissions={isPermissions}
           trainerDetailOpen={trainerDetailOpen}
-          trainerTab={trainerTab}
-          onTrainerTabChange={setTrainerTab}
           onTrainerBack={() => { setTrainerDetailOpen(false); trainerRef.current?.clearSelection() }}
           trainerSearch={trainerSearch}
           onTrainerSearchChange={setTrainerSearch}
@@ -180,7 +172,7 @@ export function AdminPage() {
           >
             {section === 'dashboard' && <AdminDashboardView />}
             {section === 'stats' && <AdminStats tab={statsTab} showCareerFilter={showCareerFilter} statsRange={statsRange} />}
-            {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} trainerTab={trainerTab} />}
+            {section === 'trainers' && <AdminTrainers ref={trainerRef} search={trainerSearch} onSelectTrainer={() => setTrainerDetailOpen(true)} />}
             {section === 'gym' && isGestion && <Outlet />}
             {section === 'gym' && !isGestion && (
               <AdminGym

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router'
-import { guardarSesion, getToken, cerrarSesion, mapRolToPlatform, rutaInicial, RUTA_CUENTA_INACTIVA, RUTA_CUENTA_PENDIENTE } from '@/lib/auth'
+import { guardarSesion, getToken, cerrarSesion, mapRolToPlatform, rutaInicial, hayMarcaCuentaInactiva, limpiarMarcaCuentaInactiva, RUTA_CUENTA_INACTIVA, RUTA_CUENTA_PENDIENTE } from '@/lib/auth'
 import { SesionProvider, useSesion } from '@/lib/sesion'
 import { toast, Toaster } from 'sonner'
 import { LoginPage } from '@/auth/pages/LoginPage'
@@ -140,7 +140,16 @@ function EstadoCuentaWrapper({ variante }: { variante: VarianteEstadoCuenta }) {
     if (destino !== ruta) return <Navigate to={destino} replace />
   }
 
-  return <EstadoCuentaPage variante={variante} onVolver={() => { cerrarSesion(); navigate('/login') }} />
+  // Entrar tecleando la URL no tiene sentido: sin sesión pendiente (o sin aviso de desactivación) se va al login
+  const llegoPorUnMotivo = usuario !== null || (variante === 'inactiva' && hayMarcaCuentaInactiva())
+  if (!llegoPorUnMotivo) return <Navigate to="/login" replace />
+
+  return (
+    <EstadoCuentaPage
+      variante={variante}
+      onVolver={() => { limpiarMarcaCuentaInactiva(); cerrarSesion(); navigate('/login') }}
+    />
+  )
 }
 
 function LogoutWrapper() {

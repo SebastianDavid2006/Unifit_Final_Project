@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { cerrarSesion, getToken, RUTA_CUENTA_INACTIVA } from './auth'
+import { cerrarSesion, getToken, marcarCuentaInactiva, RUTA_CUENTA_INACTIVA } from './auth'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
@@ -26,6 +26,7 @@ api.interceptors.response.use(
       error.response?.status === 403 &&
       (error.response.data as { codigo?: string } | undefined)?.codigo === 'CUENTA_INACTIVA'
     ) {
+      marcarCuentaInactiva()
       cerrarSesion()
       if (window.location.pathname !== RUTA_CUENTA_INACTIVA) window.location.assign(RUTA_CUENTA_INACTIVA)
     }
